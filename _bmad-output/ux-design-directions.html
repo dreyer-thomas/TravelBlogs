@@ -1,0 +1,546 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>TravelBlogs Design Directions</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Fraunces:wght@400;600;700&family=Source+Serif+4:wght@400;500;600&family=DM+Sans:wght@400;500;700&display=swap');
+
+    :root {
+      --terracotta: #d46a4c;
+      --teal: #1f6f78;
+      --sand: #f2e2c4;
+      --ivory: #fbf7f1;
+      --charcoal: #2d2a26;
+      --warm-gray: #6b635b;
+      --olive: #4f7a4a;
+      --amber: #d9a441;
+      --clay: #b34a3c;
+      --shadow: rgba(45, 42, 38, 0.12);
+      --radius-lg: 18px;
+      --radius-md: 12px;
+      --radius-sm: 8px;
+      --space-1: 4px;
+      --space-2: 8px;
+      --space-3: 12px;
+      --space-4: 16px;
+      --space-5: 20px;
+      --space-6: 24px;
+      --space-7: 28px;
+      --space-8: 32px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "DM Sans", system-ui, -apple-system, sans-serif;
+      color: var(--charcoal);
+      background: linear-gradient(180deg, #fdf4ea 0%, #fbf7f1 45%, #f7efe4 100%);
+      min-height: 100vh;
+    }
+
+    header {
+      padding: 40px 6vw 24px;
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-4);
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      background: rgba(212, 106, 76, 0.12);
+      color: var(--clay);
+      font-weight: 600;
+      letter-spacing: 0.3px;
+      text-transform: uppercase;
+      font-size: 12px;
+    }
+
+    h1 {
+      font-family: "Fraunces", serif;
+      font-size: clamp(32px, 4vw, 52px);
+      margin: 0;
+    }
+
+    p.lead {
+      max-width: 720px;
+      line-height: 1.6;
+      color: var(--warm-gray);
+      margin: 0;
+    }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-3);
+      align-items: center;
+      padding: 0 6vw 24px;
+    }
+
+    .toolbar label {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 14px;
+      border-radius: 999px;
+      background: #fff;
+      border: 1px solid rgba(31, 111, 120, 0.15);
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    .directions {
+      display: grid;
+      gap: 28px;
+      padding: 0 6vw 60px;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    }
+
+    .direction-card {
+      background: #fff;
+      border-radius: var(--radius-lg);
+      box-shadow: 0 18px 40px var(--shadow);
+      padding: var(--space-6);
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-4);
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.35s ease, box-shadow 0.35s ease;
+    }
+
+    .direction-card:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 22px 50px rgba(45, 42, 38, 0.2);
+    }
+
+    .direction-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: var(--space-3);
+    }
+
+    .direction-title {
+      font-family: "Fraunces", serif;
+      font-size: 22px;
+      margin: 0;
+    }
+
+    .direction-sub {
+      color: var(--warm-gray);
+      font-size: 14px;
+      margin: 0;
+    }
+
+    .direction-meta {
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.4px;
+      text-transform: uppercase;
+      color: var(--clay);
+    }
+
+    .screen {
+      border-radius: var(--radius-md);
+      border: 1px solid rgba(45, 42, 38, 0.08);
+      background: var(--ivory);
+      overflow: hidden;
+      min-height: 260px;
+      display: grid;
+      grid-template-rows: auto 1fr;
+    }
+
+    .screen .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 14px;
+      font-size: 12px;
+      font-weight: 600;
+      background: rgba(255, 255, 255, 0.8);
+      border-bottom: 1px solid rgba(45, 42, 38, 0.08);
+    }
+
+    .screen .content {
+      padding: 14px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .pill {
+      display: inline-flex;
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: rgba(31, 111, 120, 0.12);
+      color: var(--teal);
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    .entry {
+      background: #fff;
+      border-radius: var(--radius-sm);
+      padding: 10px 12px;
+      display: grid;
+      gap: 6px;
+    }
+
+    .entry .media {
+      border-radius: 8px;
+      height: 62px;
+      background: linear-gradient(135deg, rgba(212, 106, 76, 0.18), rgba(31, 111, 120, 0.2));
+    }
+
+    .entry h4 {
+      margin: 0;
+      font-size: 13px;
+    }
+
+    .entry p {
+      margin: 0;
+      font-size: 11px;
+      color: var(--warm-gray);
+    }
+
+    .screen.large-hero .content {
+      gap: 14px;
+    }
+
+    .screen.large-hero .hero {
+      border-radius: 12px;
+      min-height: 90px;
+      background: linear-gradient(120deg, rgba(212, 106, 76, 0.3), rgba(242, 226, 196, 0.6));
+      padding: 12px;
+      display: grid;
+      align-content: end;
+      color: var(--charcoal);
+      font-weight: 600;
+      font-size: 13px;
+    }
+
+    .screen.split {
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: auto 1fr;
+    }
+
+    .screen.split .content {
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .screen.split .map {
+      border-radius: 10px;
+      background: linear-gradient(135deg, rgba(31, 111, 120, 0.2), rgba(242, 226, 196, 0.6));
+      min-height: 120px;
+    }
+
+    .screen.gallery .content {
+      grid-template-columns: repeat(3, 1fr);
+    }
+
+    .screen.gallery .entry {
+      padding: 0;
+      overflow: hidden;
+    }
+
+    .screen.gallery .entry .media {
+      height: 80px;
+      border-radius: 0;
+    }
+
+    .screen.timeline .content {
+      gap: 12px;
+    }
+
+    .screen.timeline .entry {
+      display: grid;
+      grid-template-columns: 18px 1fr;
+      gap: 10px;
+      align-items: start;
+    }
+
+    .screen.timeline .entry .dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: var(--terracotta);
+      margin-top: 6px;
+    }
+
+    .compare-zone {
+      padding: 0 6vw 60px;
+      display: none;
+      gap: 24px;
+    }
+
+    .compare-zone.active {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    }
+
+    .compare-zone .direction-card {
+      border: 2px dashed rgba(31, 111, 120, 0.35);
+    }
+
+    .note {
+      font-size: 13px;
+      color: var(--warm-gray);
+      padding: 0 6vw 40px;
+    }
+
+    @media (max-width: 720px) {
+      header {
+        padding: 32px 8vw 16px;
+      }
+      .toolbar {
+        padding: 0 8vw 20px;
+      }
+      .directions {
+        padding: 0 8vw 50px;
+      }
+      .compare-zone {
+        padding: 0 8vw 40px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <span class="badge">Design Directions</span>
+    <h1>TravelBlogs Visual Directions</h1>
+    <p class="lead">Six distinct visual directions based on the warm, human foundation. Each explores a different balance of storytelling, navigation clarity, and media presence.</p>
+  </header>
+
+  <div class="toolbar">
+    <label><input type="checkbox" data-compare="Sunlit Journal" /> Compare: Sunlit Journal</label>
+    <label><input type="checkbox" data-compare="Atlas Path" /> Compare: Atlas Path</label>
+    <label><input type="checkbox" data-compare="Postcard Stack" /> Compare: Postcard Stack</label>
+    <label><input type="checkbox" data-compare="Gallery Pulse" /> Compare: Gallery Pulse</label>
+    <label><input type="checkbox" data-compare="Timeline Drift" /> Compare: Timeline Drift</label>
+    <label><input type="checkbox" data-compare="Quiet Reader" /> Compare: Quiet Reader</label>
+  </div>
+
+  <section class="compare-zone" id="compareZone"></section>
+
+  <section class="directions" id="directionGrid">
+    <article class="direction-card" data-name="Sunlit Journal">
+      <div class="direction-header">
+        <div>
+          <h2 class="direction-title">Sunlit Journal</h2>
+          <p class="direction-sub">Warm editorial with a hero story card.</p>
+        </div>
+        <span class="direction-meta">Story-first</span>
+      </div>
+      <div class="screen large-hero">
+        <div class="topbar">
+          <span>Tokyo 2024</span>
+          <span class="pill">Latest</span>
+        </div>
+        <div class="content">
+          <div class="hero">Latest entry: Sunrise ramen stroll</div>
+          <div class="entry">
+            <div class="media"></div>
+            <h4>Market lanes</h4>
+            <p>Quick notes and photos, easy to skim.</p>
+          </div>
+          <div class="entry">
+            <div class="media"></div>
+            <h4>Lantern night</h4>
+            <p>Soft gradients, calm reading rhythm.</p>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <article class="direction-card" data-name="Atlas Path">
+      <div class="direction-header">
+        <div>
+          <h2 class="direction-title">Atlas Path</h2>
+          <p class="direction-sub">Map + timeline blend for orientation.</p>
+        </div>
+        <span class="direction-meta">Journey-aware</span>
+      </div>
+      <div class="screen split">
+        <div class="topbar">
+          <span>Active trip</span>
+          <span class="pill">Map View</span>
+        </div>
+        <div class="content">
+          <div class="map"></div>
+          <div class="entry">
+            <div class="media"></div>
+            <h4>Kyoto steps</h4>
+            <p>Entry pinned to the map for context.</p>
+          </div>
+          <div class="entry">
+            <div class="media"></div>
+            <h4>Temple stroll</h4>
+            <p>Short timeline snippets stack.</p>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <article class="direction-card" data-name="Postcard Stack">
+      <div class="direction-header">
+        <div>
+          <h2 class="direction-title">Postcard Stack</h2>
+          <p class="direction-sub">Layered cards for easy scanning.</p>
+        </div>
+        <span class="direction-meta">Collectible</span>
+      </div>
+      <div class="screen">
+        <div class="topbar">
+          <span>Latest stories</span>
+          <span class="pill">8 new</span>
+        </div>
+        <div class="content">
+          <div class="entry">
+            <div class="media"></div>
+            <h4>Ocean cliffs</h4>
+            <p>Readable, postcard-like layout.</p>
+          </div>
+          <div class="entry">
+            <div class="media"></div>
+            <h4>Street cafe</h4>
+            <p>Stacked cards feel familiar.</p>
+          </div>
+          <div class="entry">
+            <div class="media"></div>
+            <h4>Train ride</h4>
+            <p>Simple and predictable navigation.</p>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <article class="direction-card" data-name="Gallery Pulse">
+      <div class="direction-header">
+        <div>
+          <h2 class="direction-title">Gallery Pulse</h2>
+          <p class="direction-sub">Media-first grid with story cues.</p>
+        </div>
+        <span class="direction-meta">Immersive</span>
+      </div>
+      <div class="screen gallery">
+        <div class="topbar">
+          <span>Trip media</span>
+          <span class="pill">Auto-play</span>
+        </div>
+        <div class="content">
+          <div class="entry"><div class="media"></div></div>
+          <div class="entry"><div class="media"></div></div>
+          <div class="entry"><div class="media"></div></div>
+          <div class="entry"><div class="media"></div></div>
+          <div class="entry"><div class="media"></div></div>
+          <div class="entry"><div class="media"></div></div>
+        </div>
+      </div>
+    </article>
+
+    <article class="direction-card" data-name="Timeline Drift">
+      <div class="direction-header">
+        <div>
+          <h2 class="direction-title">Timeline Drift</h2>
+          <p class="direction-sub">Chronological storytelling, no clutter.</p>
+        </div>
+        <span class="direction-meta">Flow state</span>
+      </div>
+      <div class="screen timeline">
+        <div class="topbar">
+          <span>March 12</span>
+          <span class="pill">Day 4</span>
+        </div>
+        <div class="content">
+          <div class="entry">
+            <div class="dot"></div>
+            <div>
+              <h4>Morning market</h4>
+              <p>Short summary with calm rhythm.</p>
+            </div>
+          </div>
+          <div class="entry">
+            <div class="dot"></div>
+            <div>
+              <h4>River walk</h4>
+              <p>Easy vertical progression.</p>
+            </div>
+          </div>
+          <div class="entry">
+            <div class="dot"></div>
+            <div>
+              <h4>Night lights</h4>
+              <p>Readable for all ages.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <article class="direction-card" data-name="Quiet Reader">
+      <div class="direction-header">
+        <div>
+          <h2 class="direction-title">Quiet Reader</h2>
+          <p class="direction-sub">Minimal chrome, long-form focus.</p>
+        </div>
+        <span class="direction-meta">Calm</span>
+      </div>
+      <div class="screen">
+        <div class="topbar">
+          <span>New entry</span>
+          <span class="pill">Read mode</span>
+        </div>
+        <div class="content">
+          <div class="entry">
+            <h4>Day 6: Kyoto</h4>
+            <p>Large type, generous line height, no clutter.</p>
+          </div>
+          <div class="entry">
+            <div class="media"></div>
+            <p>Media punctuates the story flow.</p>
+          </div>
+          <div class="entry">
+            <p>Continue reading, scroll back through the trip.</p>
+          </div>
+        </div>
+      </div>
+    </article>
+  </section>
+
+  <p class="note">Tip: select two directions above to compare them side-by-side. Use this to decide the best navigation style and visual weight.</p>
+
+  <script>
+    const compareZone = document.getElementById('compareZone');
+    const grid = document.getElementById('directionGrid');
+    const checkboxes = document.querySelectorAll('[data-compare]');
+
+    const rebuildCompare = () => {
+      compareZone.innerHTML = '';
+      const selected = Array.from(checkboxes)
+        .filter((cb) => cb.checked)
+        .map((cb) => cb.getAttribute('data-compare'));
+
+      if (selected.length === 0) {
+        compareZone.classList.remove('active');
+        return;
+      }
+
+      compareZone.classList.add('active');
+      selected.slice(0, 2).forEach((name) => {
+        const card = grid.querySelector(`[data-name="${name}"]`);
+        if (card) {
+          compareZone.appendChild(card.cloneNode(true));
+        }
+      });
+    };
+
+    checkboxes.forEach((cb) => cb.addEventListener('change', rebuildCompare));
+  </script>
+</body>
+</html>

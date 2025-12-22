@@ -1,0 +1,20 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Trip {
+  id            String   @id @default(cuid())
+  title         String
+  startDate     DateTime
+  endDate       DateTime
+  coverImageUrl String?
+  ownerId       String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Future relations: entries, shareLinks, tripAccess
+}

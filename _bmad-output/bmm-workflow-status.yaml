@@ -1,0 +1,66 @@
+# Workflow Status Template
+
+# This tracks progress through BMM methodology Analysis, Planning, and Solutioning phases.
+# Implementation phase is tracked separately in sprint-status.yaml
+
+# STATUS DEFINITIONS:
+# ==================
+# Initial Status (before completion):
+#   - required: Must be completed to progress
+#   - optional: Can be completed but not required
+#   - recommended: Strongly suggested but not required
+#   - conditional: Required only if certain conditions met (e.g., if_has_ui)
+#
+# Completion Status:
+#   - {file-path}: File created/found (e.g., "docs/product-brief.md")
+#   - skipped: Optional/conditional workflow that was skipped
+
+generated: "2025-12-20"
+last_updated: "2025-12-21T17:38:47Z"
+project: "TravelBlogs"
+project_type: "web-app"
+selected_track: "method"
+field_type: "greenfield"
+user_description: "Web app to write travel blogs with trips and per-trip blog entries with text and images."
+brainstorm_requested: true
+research_requested: true
+product_brief_requested: true
+workflow_path: "_bmad/bmm/workflows/workflow-status/paths/method-greenfield.yaml"
+workflow_status:
+  - phase: 0
+    name: "Discovery (Optional)"
+    workflows:
+      - id: "brainstorm-project"
+        status: "_bmad-output/analysis/brainstorming-session-2025-12-20.md"
+      - id: "research"
+        status: "_bmad-output/analysis/research/placeholder.md"
+      - id: "product-brief"
+        status: "_bmad-output/analysis/product-brief-TravelBlogs-2025-12-20.md"
+  - phase: 1
+    name: "Planning"
+    workflows:
+      - id: "prd"
+        status: "_bmad-output/prd.md"
+        completed_at: "2025-12-21T14:15:40Z"
+      - id: "create-ux-design"
+        status: "_bmad-output/ux-design-specification.md"
+        completed_at: "2025-12-21T14:18:02Z"
+  - phase: 2
+    name: "Solutioning"
+    workflows:
+      - id: "create-architecture"
+        status: "_bmad-output/architecture.md"
+        completed_at: "2025-12-21T17:38:47Z"
+      - id: "create-epics-and-stories"
+        status: "required"
+      - id: "test-design"
+        status: "recommended"
+      - id: "validate-architecture"
+        status: "optional"
+      - id: "implementation-readiness"
+        status: "required"
+  - phase: 3
+    name: "Implementation"
+    workflows:
+      - id: "sprint-planning"
+        status: "required"

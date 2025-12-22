@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TravelBlogs Clickable Mock</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="left">
+      <button class="hamburger" id="tripMenu" aria-label="Trips">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+      <div class="trip-title">
+        <span id="currentTrip">Japan 2024</span>
+      </div>
+    </div>
+    <div class="right">
+      <div class="avatar" id="userAvatar" title="Account">
+        <span>TA</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="layout-column">
+    <section class="hero full-width">
+      <div class="hero-text">
+        <p class="eyebrow">Overview</p>
+        <h2>Japan 2024</h2>
+        <p class="muted">A two-week hop through Tokyo, Kyoto, Osaka. Street food, shrines, and night walks.</p>
+        <p class="muted">12 entries · Drafts: 1 · Offline-ready</p>
+        <button class="primary hero-cta" id="heroAddEntry">+ Add new entry</button>
+      </div>
+      <div class="map-container">
+        <div class="map">
+          <svg class="route" viewBox="0 0 100 100" preserveAspectRatio="none">
+            <polyline points="20,18 38,22 62,45 72,58 50,64 28,70" />
+          </svg>
+          <div class="pin" data-id="1" style="top:18%;left:20%;">1</div>
+          <div class="pin" data-id="2" style="top:22%;left:38%;">2</div>
+          <div class="pin" data-id="3" style="top:45%;left:62%;">3</div>
+          <div class="pin" data-id="4" style="top:58%;left:72%;">4</div>
+          <div class="pin" data-id="5" style="top:64%;left:50%;">5</div>
+          <div class="pin" data-id="6" style="top:70%;left:28%;">6</div>
+        </div>
+      </div>
+    </section>
+
+    <div class="entries" id="timeline">
+      <article class="card" data-id="1">
+        <div class="card-media"></div>
+        <div class="card-body">
+          <div class="meta tags">
+            <span class="badge new">Tokyo</span>
+            <span class="badge new">Mar 12</span>
+          </div>
+          <h4>Tsukiji Market lunch</h4>
+          <p>Quick capture of street food stalls and seafood tasting notes.</p>
+        </div>
+      </article>
+      <article class="card" data-id="2">
+        <div class="card-media"></div>
+        <div class="card-body">
+          <div class="meta tags">
+            <span class="badge new">Kyoto</span>
+            <span class="badge new">Mar 11</span>
+          </div>
+          <h4>Fushimi Inari hike</h4>
+          <p>Tori gates trail at sunrise; notes on crowd flow and photo spots.</p>
+        </div>
+      </article>
+      <article class="card" data-id="3">
+        <div class="card-media"></div>
+        <div class="card-body">
+          <div class="meta tags">
+            <span class="badge new">Osaka</span>
+            <span class="badge new">Mar 10</span>
+          </div>
+          <h4>Dotonbori night walk</h4>
+          <p>Neon, canal reflections, and takoyaki stand impressions.</p>
+        </div>
+      </article>
+      <article class="card" data-id="4">
+        <div class="card-media"></div>
+        <div class="card-body">
+          <div class="meta tags">
+            <span class="badge new">Nara</span>
+            <span class="badge new">Mar 9</span>
+          </div>
+          <h4>Nara park stroll</h4>
+          <p>Deer encounters, temples, and a calm afternoon sketching.</p>
+        </div>
+      </article>
+      <article class="card" data-id="5">
+        <div class="card-media"></div>
+        <div class="card-body">
+          <div class="meta tags">
+            <span class="badge new">Hakone</span>
+            <span class="badge new">Mar 8</span>
+          </div>
+          <h4>Onsen break</h4>
+          <p>Foggy morning, lake views, and notes on the best rotenburo.</p>
+        </div>
+      </article>
+      <article class="card" data-id="6">
+        <div class="card-media"></div>
+        <div class="card-body">
+          <div class="meta tags">
+            <span class="badge new">Tokyo</span>
+            <span class="badge new">Mar 7</span>
+          </div>
+          <h4>Shinjuku nights</h4>
+          <p>Skyscraper views, bar hopping in Golden Gai, late ramen notes.</p>
+        </div>
+      </article>
+    </div>
+  </main>
+
+  <section class="detail hidden" id="detailView">
+    <header class="detail-topbar">
+      <button class="ghost" id="backToList">← Back</button>
+      <div class="detail-meta">
+        <span class="badge new" id="detailLocation">Tokyo</span>
+        <span class="badge new" id="detailDate">Mar 12</span>
+        <button class="ghost" id="editToggle">Edit</button>
+      </div>
+    </header>
+    <div class="detail-hero" id="detailHero">
+      <div class="detail-hero-overlay"></div>
+      <div class="detail-hero-content">
+        <div class="detail-hero-text">
+          <h2 id="detailTitle" contenteditable="false">Tsukiji Market lunch</h2>
+          <p class="muted" id="detailSummary" contenteditable="false">Quick capture of street food stalls and seafood tasting notes.</p>
+          <div class="meta tags">
+            <span class="badge new" id="detailLocation">Tokyo</span>
+            <span class="badge new" id="detailDate">Mar 12</span>
+          </div>
+        </div>
+        <div class="detail-map">
+          <div class="map mini-map">
+            <div class="pin active" id="detailPin" style="top:45%;left:62%;">●</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <article class="detail-body">
+      <div class="richtext" id="detailBody" contenteditable="false">
+        <p>Full journal text goes here...</p>
+      </div>
+    </article>
+    <section class="gallery" id="detailGallery">
+      <div class="gallery-header">
+        <h3>Media</h3>
+        <button class="ghost" id="addMediaBtn" disabled>+ Add</button>
+      </div>
+      <div class="gallery-grid">
+        <div class="gallery-item"></div>
+        <div class="gallery-item"></div>
+        <div class="gallery-item"></div>
+        <div class="gallery-item"></div>
+      </div>
+    </section>
+  </section>
+
+  <div class="modal hidden" id="newEntryModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>New Entry</h3>
+        <button class="ghost" id="closeNewEntry">✕</button>
+      </div>
+      <div class="form">
+        <label>Title<input id="newTitle" placeholder="e.g., Tsukiji Market lunch"></label>
+        <label>Location<input id="newLocation" placeholder="City/spot"></label>
+        <label>Date<input id="newDate" placeholder="Mar 13"></label>
+        <label>Summary<textarea id="newSummary" rows="3" placeholder="Short description"></textarea></label>
+      </div>
+      <div class="actions">
+        <button class="ghost" id="cancelNewEntry">Cancel</button>
+        <button class="primary" id="saveNewEntry">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="menu hidden" id="userMenu">
+    <div class="menu-panel">
+      <button class="ghost block" id="logoutBtn">Logout</button>
+    </div>
+  </div>
+
+  <div class="drawer hidden" id="tripDrawer">
+    <div class="drawer-panel">
+      <div class="drawer-header">
+        <h3>Trips</h3>
+        <button class="ghost" id="closeTripDrawer">✕</button>
+      </div>
+      <ul class="trip-list">
+        <li class="trip-item selected">Japan 2024 · 12 entries</li>
+        <li class="trip-item">Patagonia 2023 · 18 entries</li>
+        <li class="trip-item">Iceland 2022 · 9 entries</li>
+      </ul>
+      <button class="primary block" id="createTrip">+ New trip</button>
+    </div>
+    <div class="drawer-overlay" id="tripDrawerOverlay"></div>
+  </div>
+
+  <div class="modal hidden" id="lightbox">
+    <div class="modal-content lightbox-content">
+      <button class="ghost close" id="closeLightbox">✕</button>
+      <button class="ghost nav left" id="lightboxPrev">←</button>
+      <div class="lightbox-image" id="lightboxImage"></div>
+      <button class="ghost nav right" id="lightboxNext">→</button>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

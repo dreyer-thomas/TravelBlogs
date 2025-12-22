@@ -1,0 +1,89 @@
+# generated: 2025-12-21T18:40:16Z
+# project: TravelBlogs
+# project_key: travelblogs
+# tracking_system: file-system
+# story_location: /Users/tommy/Development/TravelBlogs/_bmad-output/implementation-artifacts
+
+# STATUS DEFINITIONS:
+# ==================
+# Epic Status:
+#   - backlog: Epic not yet started
+#   - in-progress: Epic actively being worked on
+#   - done: All stories in epic completed
+#
+# Epic Status Transitions:
+#   - backlog → in-progress: Automatically when first story is created (via create-story)
+#   - in-progress → done: Manually when all stories reach 'done' status
+#
+# Story Status:
+#   - backlog: Story only exists in epic file
+#   - ready-for-dev: Story file created in stories folder
+#   - in-progress: Developer actively working on implementation
+#   - review: Ready for code review (via Dev's code-review workflow)
+#   - done: Story completed
+#
+# Retrospective Status:
+#   - optional: Can be completed but not required
+#   - done: Retrospective has been completed
+#
+# WORKFLOW NOTES:
+# ===============
+# - Epic transitions to 'in-progress' automatically when first story is created
+# - Stories can be worked in parallel if team capacity allows
+# - SM typically creates next story after previous one is 'done' to incorporate learnings
+# - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
+
+generated: 2025-12-21T18:40:16Z
+project: TravelBlogs
+project_key: travelblogs
+tracking_system: file-system
+story_location: /Users/tommy/Development/TravelBlogs/_bmad-output/implementation-artifacts
+
+development_status:
+  epic-0: in-progress
+  0-1-creator-sign-in-single-account: ready-for-dev
+  epic-0-retrospective: optional
+
+  epic-1: backlog
+  1-1-initialize-project-from-starter-template: backlog
+  1-2-create-trip: backlog
+  1-3-delete-trip: backlog
+  1-4-edit-trip-metadata: backlog
+  1-5-view-trip-list: backlog
+  epic-1-retrospective: optional
+
+  epic-2: backlog
+  2-1-add-blog-entry: backlog
+  2-2-edit-blog-entry: backlog
+  2-3-multi-file-media-upload: backlog
+  2-4-delete-blog-entry: backlog
+  epic-2-retrospective: optional
+
+  epic-3: backlog
+  3-1-view-entry-single-page-reader: backlog
+  3-2-entry-navigation: backlog
+  3-3-trip-overview-with-latest-entries: backlog
+  epic-3-retrospective: optional
+
+  epic-4: backlog
+  4-1-create-shareable-trip-link: backlog
+  4-2-regenerate-shareable-trip-link: backlog
+  4-3-revoke-shareable-trip-link: backlog
+  epic-4-retrospective: optional
+
+  epic-5: backlog
+  5-1-admin-creates-user-accounts: backlog
+  5-2-user-sign-in: backlog
+  5-3-admin-changes-user-role: backlog
+  5-4-invite-viewers-to-a-trip: backlog
+  5-5-enable-contributor-access-for-a-viewer: backlog
+  5-6-viewer-access-to-invited-trips: backlog
+  5-7-contributor-adds-and-edits-entries: backlog
+  5-8-admin-deactivates-user: backlog
+  epic-5-retrospective: optional
+
+  epic-6: backlog
+  6-1-trip-map-view: backlog
+  6-2-trip-timeline-view: backlog
+  6-3-extract-coordinates-from-photo-metadata: backlog
+  epic-6-retrospective: optional
