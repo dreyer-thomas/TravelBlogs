@@ -401,6 +401,47 @@ So that I can select the story image, insert inline photos, or remove images wit
 **Then** the image is removed from the entry media and no longer selectable for story or inline use  
 **And** any inline references matching `![...](<url>)` are removed from the entry text
 
+### Story 2.7: Full-Screen Photo Viewer
+
+As a viewer,
+I want to open any entry photo in full screen,
+So that I can see the image in detail without leaving the entry.
+
+**Acceptance Criteria:**
+
+**Given** I am viewing an entry with inline photos in the text  
+**When** I click an inline photo  
+**Then** the photo opens in a full-screen viewer  
+**And** I can exit the viewer to return to the entry view  
+**And** the viewer shows an overlay with a close/back control and image position (e.g., "2 of 8")  
+**And** I can use the left and right arrow keys to move between photos  
+**And** I can press Escape to close the viewer  
+
+**Given** I am viewing an entry with photos in the media section  
+**When** I click a photo in the media section  
+**Then** the photo opens in a full-screen viewer  
+**And** I can exit the viewer to return to the entry view  
+**And** on touch devices I can swipe left or right to move between photos  
+**And** I can pinch to zoom the photo
+
+### Story 2.8: Media Slideshow Viewer
+
+As a viewer,
+I want to start a slideshow from the media section,
+So that I can view entry photos hands-free.
+
+**Acceptance Criteria:**
+
+**Given** I am viewing an entry with photos in the media section  
+**When** I select the "Start slideshow" action  
+**Then** the photos open in a full-screen slideshow  
+**And** each photo displays for 5 seconds before advancing  
+**And** after the last photo, the slideshow repeats from the first photo  
+**And** I can pause and resume the slideshow  
+**And** I can move to the next or previous photo using on-screen controls  
+**And** I can press Escape to exit the slideshow  
+**And** I can click a visible close button to exit the slideshow
+
 ## Epic 3: Entry Reading & Navigation (MVP)
 
 Viewers and creators can read entries in a fast, media-first, single-page experience with clear navigation.

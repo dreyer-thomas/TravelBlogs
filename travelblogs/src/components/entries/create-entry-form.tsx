@@ -702,6 +702,7 @@ const CreateEntryForm = ({ tripId, onEntryCreated }: CreateEntryFormProps) => {
             id="entry-media-upload"
             name="media"
             type="file"
+            aria-label="Entry image library"
             accept={ENTRY_MEDIA_ALLOWED_MIME_TYPES.join(",")}
             multiple
             onChange={handleMediaChange}

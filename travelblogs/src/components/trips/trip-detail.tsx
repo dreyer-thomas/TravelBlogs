@@ -207,15 +207,6 @@ const TripDetail = ({ tripId }: TripDetailProps) => {
                 {formatDate(trip.startDate)} – {formatDate(trip.endDate)}
               </p>
             </div>
-            <div className="flex flex-wrap items-center gap-3">
-              <Link
-                href={`/trips/${trip.id}/edit`}
-                className="rounded-xl bg-[#1F6F78] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#195C63]"
-              >
-                Edit trip
-              </Link>
-              <DeleteTripModal tripId={trip.id} tripTitle={trip.title} />
-            </div>
           </header>
 
           {trip.coverImageUrl && isCoverImageUrl(trip.coverImageUrl) ? (
@@ -238,6 +229,7 @@ const TripDetail = ({ tripId }: TripDetailProps) => {
             </div>
           </div>
         </section>
+
 
         <section className="rounded-2xl border border-black/10 bg-white p-8 shadow-sm">
           <div className="flex flex-wrap items-center justify-between gap-4">
@@ -314,6 +306,25 @@ const TripDetail = ({ tripId }: TripDetailProps) => {
               })}
             </div>
           )}
+        </section>
+
+        <section className="rounded-2xl border border-black/10 bg-white p-6 shadow-sm">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <p className="text-xs uppercase tracking-[0.2em] text-[#6B635B]">
+                Trip actions
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center gap-3">
+              <Link
+                href={`/trips/${trip.id}/edit`}
+                className="rounded-xl bg-[#1F6F78] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#195C63]"
+              >
+                Edit trip
+              </Link>
+              <DeleteTripModal tripId={trip.id} tripTitle={trip.title} />
+            </div>
+          </div>
         </section>
       </main>
     </div>
