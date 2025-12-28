@@ -33,16 +33,18 @@ const DeleteTripModal = ({ tripId, tripTitle }: DeleteTripModalProps) => {
     try {
       const response = await fetch(`/api/trips/${tripId}`, {
         method: "DELETE",
+        credentials: "include",
       });
-      const body = await response.json();
+      const body = await response.json().catch(() => null);
 
-      if (!response.ok) {
+      if (!response.ok || body?.error) {
         setErrorMessage(body?.error?.message ?? "Unable to delete the trip.");
         setIsDeleting(false);
         return;
       }
 
-      router.push("/trips");
+      router.replace("/trips");
+      router.refresh();
     } catch {
       setErrorMessage("Unable to delete the trip.");
       setIsDeleting(false);

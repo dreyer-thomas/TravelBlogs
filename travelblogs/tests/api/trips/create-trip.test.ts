@@ -114,6 +114,52 @@ describe("POST /api/trips", () => {
     expect(body.error.code).toBe("VALIDATION_ERROR");
   });
 
+  it("returns validation errors for invalid cover image URLs", async () => {
+    getToken.mockResolvedValue({ sub: "creator" });
+
+    const request = new Request("http://localhost/api/trips", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        title: "Invalid URL",
+        startDate: "2025-03-10",
+        endDate: "2025-03-22",
+        coverImageUrl: "javascript:alert(1)",
+      }),
+    });
+
+    const response = await post(request);
+    const body = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(body.error.code).toBe("VALIDATION_ERROR");
+  });
+
+  it("rejects cover images that are not from the upload endpoint", async () => {
+    getToken.mockResolvedValue({ sub: "creator" });
+
+    const request = new Request("http://localhost/api/trips", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        title: "External Cover",
+        startDate: "2025-03-10",
+        endDate: "2025-03-22",
+        coverImageUrl: "https://example.com/cover.jpg",
+      }),
+    });
+
+    const response = await post(request);
+    const body = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(body.error.code).toBe("VALIDATION_ERROR");
+  });
+
   it("returns validation errors when end date precedes start date", async () => {
     getToken.mockResolvedValue({ sub: "creator" });
 

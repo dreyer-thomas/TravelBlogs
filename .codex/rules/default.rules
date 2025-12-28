@@ -7,3 +7,7 @@ prefix_rule(pattern=["curl", "-s", "https://registry.npmjs.org/prisma/latest"], 
 prefix_rule(pattern=["curl", "-s", "https://registry.npmjs.org/zod/latest"], decision="allow")
 prefix_rule(pattern=["curl", "-s", "https://registry.npmjs.org/next-auth/latest"], decision="allow")
 prefix_rule(pattern=["curl", "-s", "https://registry.npmjs.org/@reduxjs/toolkit/latest"], decision="allow")
+prefix_rule(pattern=["npx", "create-next-app@latest", "travelblogs", "--ts", "--app", "--tailwind", "--eslint", "--src-dir", "--import-alias", "@/*"], decision="allow")
+prefix_rule(pattern=["npx", "create-next-app@latest", "--help"], decision="allow")
+prefix_rule(pattern=["npm", "install"], decision="allow")
+prefix_rule(pattern=["lsof", "-ti:3000"], decision="allow")

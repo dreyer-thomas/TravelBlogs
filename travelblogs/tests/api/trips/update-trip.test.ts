@@ -67,7 +67,7 @@ describe("PATCH /api/trips/[id]", () => {
         title: "Updated Title",
         startDate: "2025-04-02",
         endDate: "2025-04-06",
-        coverImageUrl: "https://example.com/cover.jpg",
+        coverImageUrl: "/uploads/trips/cover.jpg",
       }),
     });
 
@@ -81,8 +81,43 @@ describe("PATCH /api/trips/[id]", () => {
     expect(body.data.title).toBe("Updated Title");
     expect(body.data.startDate).toBe("2025-04-02T00:00:00.000Z");
     expect(body.data.endDate).toBe("2025-04-06T00:00:00.000Z");
-    expect(body.data.coverImageUrl).toBe("https://example.com/cover.jpg");
+    expect(body.data.coverImageUrl).toBe("/uploads/trips/cover.jpg");
     expect(updated?.title).toBe("Updated Title");
+  });
+
+  it("clears the cover image when an empty string is sent", async () => {
+    getToken.mockResolvedValue({ sub: "creator" });
+    const trip = await prisma.trip.create({
+      data: {
+        title: "With Cover",
+        startDate: new Date("2025-04-01"),
+        endDate: new Date("2025-04-05"),
+        coverImageUrl: "https://example.com/cover.jpg",
+        ownerId: "creator",
+      },
+    });
+
+    const request = new Request(`http://localhost/api/trips/${trip.id}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        title: "With Cover",
+        startDate: "2025-04-01",
+        endDate: "2025-04-05",
+        coverImageUrl: "",
+      }),
+    });
+
+    const response = await patch(request, { params: { id: trip.id } });
+    const body = await response.json();
+    const updated = await prisma.trip.findUnique({ where: { id: trip.id } });
+
+    expect(response.status).toBe(200);
+    expect(body.error).toBeNull();
+    expect(body.data.coverImageUrl).toBeNull();
+    expect(updated?.coverImageUrl).toBeNull();
   });
 
   it("rejects unauthenticated requests", async () => {
@@ -159,6 +194,68 @@ describe("PATCH /api/trips/[id]", () => {
     expect(body.error.code).toBe("NOT_FOUND");
   });
 
+  it("rejects invalid cover image URLs", async () => {
+    getToken.mockResolvedValue({ sub: "creator" });
+    const trip = await prisma.trip.create({
+      data: {
+        title: "Validation",
+        startDate: new Date("2025-04-01"),
+        endDate: new Date("2025-04-05"),
+        ownerId: "creator",
+      },
+    });
+
+    const request = new Request(`http://localhost/api/trips/${trip.id}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        title: "Validation",
+        startDate: "2025-04-01",
+        endDate: "2025-04-05",
+        coverImageUrl: "javascript:alert(1)",
+      }),
+    });
+
+    const response = await patch(request, { params: { id: trip.id } });
+    const body = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(body.error.code).toBe("VALIDATION_ERROR");
+  });
+
+  it("rejects non-upload cover URLs", async () => {
+    getToken.mockResolvedValue({ sub: "creator" });
+    const trip = await prisma.trip.create({
+      data: {
+        title: "External",
+        startDate: new Date("2025-04-01"),
+        endDate: new Date("2025-04-05"),
+        ownerId: "creator",
+      },
+    });
+
+    const request = new Request(`http://localhost/api/trips/${trip.id}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        title: "External",
+        startDate: "2025-04-01",
+        endDate: "2025-04-05",
+        coverImageUrl: "https://example.com/cover.jpg",
+      }),
+    });
+
+    const response = await patch(request, { params: { id: trip.id } });
+    const body = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(body.error.code).toBe("VALIDATION_ERROR");
+  });
+
   it("returns validation errors for invalid payloads", async () => {
     getToken.mockResolvedValue({ sub: "creator" });
     const trip = await prisma.trip.create({
@@ -179,6 +276,36 @@ describe("PATCH /api/trips/[id]", () => {
         title: "",
         startDate: "2025-04-10",
         endDate: "2025-04-01",
+      }),
+    });
+
+    const response = await patch(request, { params: { id: trip.id } });
+    const body = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(body.error.code).toBe("VALIDATION_ERROR");
+  });
+
+  it("rejects non-ISO date strings", async () => {
+    getToken.mockResolvedValue({ sub: "creator" });
+    const trip = await prisma.trip.create({
+      data: {
+        title: "Validation",
+        startDate: new Date("2025-04-01"),
+        endDate: new Date("2025-04-05"),
+        ownerId: "creator",
+      },
+    });
+
+    const request = new Request(`http://localhost/api/trips/${trip.id}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        title: "Validation",
+        startDate: "04/10/2025",
+        endDate: "2025-04-12",
       }),
     });
 

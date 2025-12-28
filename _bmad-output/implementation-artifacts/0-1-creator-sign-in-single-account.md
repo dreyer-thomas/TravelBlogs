@@ -1,6 +1,6 @@
 # Story 0.1: Creator Sign-In (Single Account)
 
-Status: ready-for-dev
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -27,24 +27,24 @@ so that only I can create and edit trips and entries.
 
 ## Tasks / Subtasks
 
-- [ ] Configure Auth.js single-creator sign-in (AC: 1, 2)
-  - [ ] Add Auth.js route at `src/app/api/auth/[...nextauth]/route.ts` with Credentials provider and JWT sessions
-  - [ ] Load creator credentials from `.env` (mirror keys in `.env.example`; do not use `.env.local`)
-  - [ ] Validate credentials server-side; return a clear error message on failure
-  - [ ] Do not add Prisma models or DB tables for users in this story
-- [ ] Add sign-in UI and flow (AC: 1, 2)
-  - [ ] Create `src/app/sign-in/page.tsx` with email/password form and error state
-  - [ ] Wire sign-in to Auth.js credentials flow and redirect to trips management on success
-- [ ] Protect management routes (AC: 3)
-  - [ ] Add session checks in `src/middleware.ts` for management paths
-  - [ ] Protect at minimum: `src/app/trips/` (manage), `src/app/entries/` (manage), any create/edit routes for trips/entries
-  - [ ] Redirect unauthenticated users to sign-in
-- [ ] Keep shareable links public (AC: 4)
-  - [ ] Exclude public trip/entry view routes (shareable link pages) from auth gating
-  - [ ] Treat read-only trip/entry viewers as public until Epic 4 defines a share-link route
-- [ ] Add tests for auth guard behavior (AC: 1-4)
-  - [ ] Place tests under `tests/` (e.g., `tests/api/auth`, `tests/components/auth`)
-  - [ ] Cover: valid sign-in, invalid sign-in, redirect on protected routes, public access to shareable links
+- [x] Configure Auth.js single-creator sign-in (AC: 1, 2)
+  - [x] Add Auth.js route at `src/app/api/auth/[...nextauth]/route.ts` with Credentials provider and JWT sessions
+  - [x] Load creator credentials from `.env` (mirror keys in `.env.example`; do not use `.env.local`)
+  - [x] Validate credentials server-side; return a clear error message on failure
+  - [x] Do not add Prisma models or DB tables for users in this story
+- [x] Add sign-in UI and flow (AC: 1, 2)
+  - [x] Create `src/app/sign-in/page.tsx` with email/password form and error state
+  - [x] Wire sign-in to Auth.js credentials flow and redirect to trips management on success
+- [x] Protect management routes (AC: 3)
+  - [x] Add session checks in `src/middleware.ts` for management paths
+  - [x] Protect at minimum: `src/app/trips/` (manage), `src/app/entries/` (manage), any create/edit routes for trips/entries
+  - [x] Redirect unauthenticated users to sign-in
+- [x] Keep shareable links public (AC: 4)
+  - [x] Exclude public trip/entry view routes (shareable link pages) from auth gating
+  - [x] Treat read-only trip/entry viewers as public until Epic 4 defines a share-link route
+- [x] Add tests for auth guard behavior (AC: 1-4)
+  - [x] Place tests under `tests/` (e.g., `tests/api/auth`, `tests/components/auth`)
+  - [x] Cover: valid sign-in, invalid sign-in, redirect on protected routes, public access to shareable links
 
 ## Dev Notes
 
@@ -78,11 +78,11 @@ so that only I can create and edit trips and entries.
 
 ### Completion Checklist
 
-- [ ] Credentials provider works with `.env` values; invalid credentials show error.
-- [ ] Unauthenticated access to management routes redirects to sign-in.
-- [ ] Shareable trip/entry views remain accessible without sign-in.
-- [ ] No new Prisma models or user tables introduced.
-- [ ] Tests added under `tests/` for auth and route guards.
+- [x] Credentials provider works with `.env` values; invalid credentials show error.
+- [x] Unauthenticated access to management routes redirects to sign-in.
+- [x] Shareable trip/entry views remain accessible without sign-in.
+- [x] No new Prisma models or user tables introduced.
+- [x] Tests added under `tests/` for auth and route guards.
 
 ### References
 
@@ -106,7 +106,23 @@ N/A
 
 - Story created from epics, PRD, architecture, UX, and project-context inputs.
 - Web research skipped due to restricted network access.
+- Implemented Auth.js credentials route, sign-in UI, and middleware gating with public entry/trip view exceptions.
+- Added test coverage for credential validation and middleware behavior (redirect + public access).
+- Tests: `npm run test`.
+- Hardened middleware to only allow explicit shareable trip routes and added server-side error messaging in auth flow.
+- Mapped Auth.js credential errors to clear sign-in messaging, including URL error handling.
 
 ### File List
 
 - `_bmad-output/implementation-artifacts/0-1-creator-sign-in-single-account.md`
+- `_bmad-output/implementation-artifacts/sprint-status.yaml`
+- `travelblogs/.env.example`
+- `travelblogs/package.json`
+- `travelblogs/package-lock.json`
+- `travelblogs/vitest.config.ts`
+- `travelblogs/src/app/api/auth/[...nextauth]/route.ts`
+- `travelblogs/src/app/sign-in/page.tsx`
+- `travelblogs/src/middleware.ts`
+- `travelblogs/src/utils/auth.ts`
+- `travelblogs/tests/api/auth/credentials.test.ts`
+- `travelblogs/tests/api/auth/middleware.test.ts`

@@ -30,6 +30,10 @@ const isProtectedPath = (pathname: string) => {
     return false;
   }
 
+  if (pathname.startsWith("/api/")) {
+    return false;
+  }
+
   if (pathname === "/sign-in") {
     return false;
   }
@@ -43,18 +47,6 @@ const isProtectedPath = (pathname: string) => {
   }
 
   if (pathname.startsWith("/entries")) {
-    return true;
-  }
-
-  if (pathname.startsWith("/api/trips")) {
-    return true;
-  }
-
-  if (pathname.startsWith("/api/entries")) {
-    return true;
-  }
-
-  if (pathname.startsWith("/api/media/upload")) {
     return true;
   }
 
@@ -83,8 +75,6 @@ export const config = {
   matcher: [
     "/trips/:path*",
     "/entries/:path*",
-    "/api/trips/:path*",
-    "/api/entries/:path*",
-    "/api/media/upload",
+    "/api/:path*",
   ],
 };

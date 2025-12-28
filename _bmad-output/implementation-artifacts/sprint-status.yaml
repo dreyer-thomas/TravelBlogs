@@ -1,4 +1,4 @@
-# generated: 2025-12-21T18:40:16Z
+# generated: 2025-12-21T22:33:18Z
 # project: TravelBlogs
 # project_key: travelblogs
 # tracking_system: file-system
@@ -33,7 +33,7 @@
 # - SM typically creates next story after previous one is 'done' to incorporate learnings
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
-generated: 2025-12-21T18:40:16Z
+generated: 2025-12-21T22:33:18Z
 project: TravelBlogs
 project_key: travelblogs
 tracking_system: file-system
@@ -41,19 +41,20 @@ story_location: /Users/tommy/Development/TravelBlogs/_bmad-output/implementation
 
 development_status:
   epic-0: in-progress
-  0-1-creator-sign-in-single-account: ready-for-dev
+  0-1-creator-sign-in-single-account: done
   epic-0-retrospective: optional
 
-  epic-1: backlog
-  1-1-initialize-project-from-starter-template: backlog
-  1-2-create-trip: backlog
-  1-3-delete-trip: backlog
-  1-4-edit-trip-metadata: backlog
-  1-5-view-trip-list: backlog
+  epic-1: in-progress
+  1-1-initialize-project-from-starter-template: done
+  1-2-create-trip: done
+  1-3-delete-trip: done
+  1-4-edit-trip-metadata: done
+  1-5-view-trip-list: done
+  1-6-trip-cover-image-upload: done
   epic-1-retrospective: optional
 
-  epic-2: backlog
-  2-1-add-blog-entry: backlog
+  epic-2: in-progress
+  2-1-add-blog-entry: ready-for-dev
   2-2-edit-blog-entry: backlog
   2-3-multi-file-media-upload: backlog
   2-4-delete-blog-entry: backlog
@@ -67,8 +68,8 @@ development_status:
 
   epic-4: backlog
   4-1-create-shareable-trip-link: backlog
-  4-2-regenerate-shareable-trip-link: backlog
-  4-3-revoke-shareable-trip-link: backlog
+  4-2-regenerate-shareable-link: backlog
+  4-3-revoke-shareable-link: backlog
   epic-4-retrospective: optional
 
   epic-5: backlog

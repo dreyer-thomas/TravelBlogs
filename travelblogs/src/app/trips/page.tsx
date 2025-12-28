@@ -1,33 +1,61 @@
-import Link from "next/link";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
+import { unstable_noStore as noStore } from "next/cache";
+import { headers } from "next/headers";
+import Link from "next/link";
 
-import { prisma } from "../../utils/db";
 import { authOptions } from "../../utils/auth-options";
+import TripCard from "../../components/trips/trip-card";
 
-const formatDate = (date: Date) =>
-  date.toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
+export const dynamic = "force-dynamic";
+
+type TripListItem = {
+  id: string;
+  title: string;
+  startDate: string;
+  endDate: string;
+  coverImageUrl: string | null;
+  updatedAt: string;
+};
+
+const loadTrips = async (baseUrl: string, cookieHeader: string) => {
+  const response = await fetch(`${baseUrl}/api/trips`, {
+    method: "GET",
+    headers: cookieHeader ? { cookie: cookieHeader } : {},
+    cache: "no-store",
   });
 
+  const body = await response.json().catch(() => null);
+
+  if (!response.ok || body?.error) {
+    throw new Error(body?.error?.message ?? "Unable to load trips.");
+  }
+
+  return (body?.data ?? []) as TripListItem[];
+};
+
 const TripsPage = async () => {
+  noStore();
   const session = await getServerSession(authOptions);
 
   if (!session?.user?.id) {
     redirect("/sign-in?callbackUrl=/trips");
   }
-  const ownerId = session.user.id;
 
-  const trips = await prisma.trip.findMany({
-    where: {
-      ownerId,
-    },
-    orderBy: {
-      startDate: "desc",
-    },
-  });
+  const headersList = await headers();
+  const cookieHeader = headersList.get("cookie") ?? "";
+  const forwardedHost = headersList.get("x-forwarded-host");
+  const host = forwardedHost ?? headersList.get("host") ?? "localhost:3000";
+  const protocol = headersList.get("x-forwarded-proto") ?? "http";
+  const baseUrl = `${protocol}://${host}`;
+  let trips: TripListItem[] = [];
+  let loadError: string | null = null;
+
+  try {
+    trips = await loadTrips(baseUrl, cookieHeader);
+  } catch (error) {
+    loadError = error instanceof Error ? error.message : "Unable to load trips.";
+  }
 
   return (
     <div className="min-h-screen bg-[#FBF7F1] px-6 py-12">
@@ -52,43 +80,37 @@ const TripsPage = async () => {
           </Link>
         </header>
 
-        {trips.length === 0 ? (
+        {loadError ? (
+          <section className="rounded-2xl border border-black/10 bg-white p-8 text-center">
+            <p className="text-sm text-[#B34A3C]">{loadError}</p>
+          </section>
+        ) : trips.length === 0 ? (
           <section className="rounded-2xl border border-dashed border-black/10 bg-white p-8 text-center">
             <h2 className="text-lg font-semibold text-[#2D2A26]">
               No trips yet
             </h2>
             <p className="mt-2 text-sm text-[#6B635B]">
-              Create your first trip to start capturing memories.
+              No trips yet. Create your first trip to start capturing your
+              journey.
             </p>
             <Link
               href="/trips/new"
-              className="mt-4 inline-flex rounded-xl border border-[#1F6F78] px-4 py-2 text-sm font-semibold text-[#1F6F78] transition hover:bg-[#1F6F78]/10"
+              className="mt-4 inline-flex rounded-xl bg-[#1F6F78] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#195C63] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F6F78]/40"
             >
-              Create your first trip
+              Create a trip
             </Link>
           </section>
         ) : (
           <section className="grid gap-4">
             {trips.map((trip) => (
-              <Link
+              <TripCard
                 key={trip.id}
-                href={`/trips/${trip.id}`}
-                className="rounded-2xl border border-black/10 bg-white p-5 transition hover:border-[#1F6F78]/40 hover:shadow-sm"
-              >
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <div>
-                    <h2 className="text-lg font-semibold text-[#2D2A26]">
-                      {trip.title}
-                    </h2>
-                    <p className="mt-1 text-sm text-[#6B635B]">
-                      {formatDate(trip.startDate)} – {formatDate(trip.endDate)}
-                    </p>
-                  </div>
-                  <span className="rounded-full bg-[#F2ECE3] px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-[#6B635B]">
-                    Active
-                  </span>
-                </div>
-              </Link>
+                id={trip.id}
+                title={trip.title}
+                startDate={trip.startDate}
+                endDate={trip.endDate}
+                coverImageUrl={trip.coverImageUrl}
+              />
             ))}
           </section>
         )}

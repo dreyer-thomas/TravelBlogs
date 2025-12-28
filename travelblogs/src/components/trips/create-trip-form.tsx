@@ -1,7 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+
+import {
+  COVER_IMAGE_ALLOWED_MIME_TYPES,
+  createCoverPreviewUrl,
+  validateCoverImageFile,
+} from "../../utils/media";
+import { uploadCoverImage } from "../../utils/cover-upload";
 
 type FieldErrors = {
   title?: string;
@@ -41,10 +48,6 @@ const getErrors = (values: FormValues) => {
     }
   }
 
-  if (values.coverImageUrl.trim() && !values.coverImageUrl.startsWith("http")) {
-    nextErrors.coverImageUrl = "Cover image must be a valid URL.";
-  }
-
   return nextErrors;
 };
 
@@ -54,8 +57,19 @@ const CreateTripForm = () => {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [coverImageUrl, setCoverImageUrl] = useState("");
+  const [coverPreviewUrl, setCoverPreviewUrl] = useState<string | null>(null);
+  const [coverUploading, setCoverUploading] = useState(false);
+  const [coverUploadProgress, setCoverUploadProgress] = useState(0);
   const [errors, setErrors] = useState<FieldErrors>({});
   const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    return () => {
+      if (coverPreviewUrl?.startsWith("blob:")) {
+        URL.revokeObjectURL(coverPreviewUrl);
+      }
+    };
+  }, [coverPreviewUrl]);
 
   const updateField = (field: keyof FormValues, value: string) => {
     const nextValues: FormValues = {
@@ -68,11 +82,58 @@ const CreateTripForm = () => {
     setErrors({ ...getErrors(nextValues) });
   };
 
+  const handleCoverChange = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    setErrors((prev) => ({ ...prev, coverImageUrl: undefined }));
+
+    const file = event.target.files?.[0] ?? null;
+    if (!file) {
+      setCoverPreviewUrl(null);
+      setCoverImageUrl("");
+      return;
+    }
+
+    const validationError = validateCoverImageFile(file);
+    if (validationError) {
+      setErrors((prev) => ({ ...prev, coverImageUrl: validationError }));
+      return;
+    }
+
+    setCoverPreviewUrl(createCoverPreviewUrl(file));
+    setCoverUploading(true);
+    setCoverUploadProgress(0);
+
+    try {
+      const uploadedUrl = await uploadCoverImage(file, {
+        onProgress: setCoverUploadProgress,
+      });
+      setCoverImageUrl(uploadedUrl);
+      setCoverUploadProgress(100);
+    } catch (error) {
+      setErrors((prev) => ({
+        ...prev,
+        coverImageUrl:
+          error instanceof Error
+            ? error.message
+            : "Unable to upload cover image.",
+      }));
+      setCoverUploadProgress(0);
+    } finally {
+      setCoverUploading(false);
+    }
+  };
+
   const hasFieldErrors = Boolean(
     errors.title || errors.startDate || errors.endDate || errors.coverImageUrl,
   );
   const canSubmit = Boolean(
-    title.trim() && startDate && endDate && !hasFieldErrors && !submitting,
+    title.trim() &&
+      startDate &&
+      endDate &&
+      !hasFieldErrors &&
+      !submitting &&
+      !coverUploading,
   );
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -114,6 +175,7 @@ const CreateTripForm = () => {
       }
 
       router.push(`/trips/${result.data.id}`);
+      router.refresh();
     } catch {
       setErrors({
         form: "Unable to create trip. Please try again.",
@@ -180,21 +242,35 @@ const CreateTripForm = () => {
       </label>
 
       <label className="block text-sm text-[#2D2A26]">
-        Cover image URL (optional)
+        Cover image (optional)
         <input
-          name="coverImageUrl"
-          type="url"
-          value={coverImageUrl}
-          onChange={(event) => {
-            const nextValue = event.target.value;
-            setCoverImageUrl(nextValue);
-            updateField("coverImageUrl", nextValue);
-          }}
+          name="coverImage"
+          type="file"
+          accept={COVER_IMAGE_ALLOWED_MIME_TYPES.join(",")}
+          onChange={handleCoverChange}
           className="mt-2 w-full rounded-xl border border-black/10 px-3 py-2 text-sm focus:border-[#1F6F78] focus:outline-none focus:ring-2 focus:ring-[#1F6F78]/20"
-          placeholder="https://"
         />
+        <p className="mt-2 text-xs text-[#6B635B]">
+          JPG, PNG, or WebP up to 5MB.
+        </p>
+        {coverPreviewUrl ? (
+          <div className="mt-3 overflow-hidden rounded-xl border border-black/10 bg-[#F2ECE3]">
+            <img
+              src={coverPreviewUrl}
+              alt="Cover preview"
+              className="h-40 w-full object-cover"
+            />
+          </div>
+        ) : null}
+        {coverUploading ? (
+          <div className="mt-2 text-xs text-[#6B635B]">
+            Uploading… {coverUploadProgress}%
+          </div>
+        ) : null}
         {errors.coverImageUrl ? (
-          <p className="mt-2 text-xs text-[#B34A3C]">{errors.coverImageUrl}</p>
+          <p className="mt-2 text-xs text-[#B34A3C]">
+            {errors.coverImageUrl}
+          </p>
         ) : null}
       </label>
 
