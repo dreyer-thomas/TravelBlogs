@@ -357,6 +357,24 @@ So that I can remove entries I no longer want to keep.
 **When** I return to the entry view  
 **Then** the entry remains unchanged
 
+### Story 2.5: Entry Title
+
+As a creator,
+I want to add a short title for each blog entry,
+So that the entry is summarized in one short message.
+
+**Acceptance Criteria:**
+
+**Given** I am creating or editing an entry  
+**When** I enter a title up to 80 characters  
+**Then** the title is saved with the entry  
+**And** it appears in the entry list and entry view header  
+
+**Given** I submit an entry without a title or with a title over 80 characters  
+**When** I attempt to save  
+**Then** I see a clear validation error  
+**And** the entry is not saved
+
 ## Epic 3: Entry Reading & Navigation (MVP)
 
 Viewers and creators can read entries in a fast, media-first, single-page experience with clear navigation.

@@ -9,19 +9,19 @@ export const dynamic = "force-dynamic";
 
 type TripDetailPageProps = {
   params: {
-    id: string;
-  } | Promise<{ id: string }>;
+    tripId: string;
+  } | Promise<{ tripId: string }>;
 };
 
 const TripDetailPage = async ({ params }: TripDetailPageProps) => {
   noStore();
-  const { id } = await params;
+  const { tripId } = await params;
   const session = await getServerSession(authOptions);
 
   if (!session?.user?.id) {
-    redirect(`/sign-in?callbackUrl=/trips/${id}`);
+    redirect(`/sign-in?callbackUrl=/trips/${tripId}`);
   }
-  return <TripDetail tripId={id} />;
+  return <TripDetail tripId={tripId} />;
 };
 
 export default TripDetailPage;

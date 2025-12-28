@@ -3,7 +3,7 @@ import { execSync } from "node:child_process";
 import type { PrismaClient } from "@prisma/client";
 import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
 
-const testDatabaseUrl = "file:./prisma/test.db";
+const testDatabaseUrl = "file:./prisma/test-trip-model.db";
 
 describe("Trip model", () => {
   let prisma: PrismaClient;

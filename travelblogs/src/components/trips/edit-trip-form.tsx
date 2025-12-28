@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 
 import {
@@ -144,6 +145,8 @@ const EditTripForm = ({ tripId, initialValues }: EditTripFormProps) => {
       !coverUploading,
   );
 
+  const isOptimizedImage = (url: string) => url.startsWith("/");
+
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setErrors({});
@@ -263,10 +266,13 @@ const EditTripForm = ({ tripId, initialValues }: EditTripFormProps) => {
         </p>
         {coverPreviewUrl ? (
           <div className="mt-3 overflow-hidden rounded-xl border border-black/10 bg-[#F2ECE3]">
-            <img
+            <Image
               src={coverPreviewUrl}
               alt="Cover preview"
+              width={1200}
+              height={720}
               className="h-40 w-full object-cover"
+              unoptimized={!isOptimizedImage(coverPreviewUrl)}
             />
           </div>
         ) : null}

@@ -1,10 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 import DeleteTripModal from "./delete-trip-modal";
+import CreateEntryForm from "../entries/create-entry-form";
 import { isCoverImageUrl } from "../../utils/media";
+import { stripInlineImages } from "../../utils/entry-content";
 
 type TripDetail = {
   id: string;
@@ -18,6 +22,21 @@ type TripDetailProps = {
   tripId: string;
 };
 
+type EntryMedia = {
+  id: string;
+  url: string;
+  createdAt: string;
+};
+
+type EntrySummary = {
+  id: string;
+  tripId: string;
+  text: string;
+  createdAt: string;
+  updatedAt: string;
+  media: EntryMedia[];
+};
+
 const formatDate = (value: string) =>
   new Date(value).toLocaleDateString("en-US", {
     month: "short",
@@ -25,10 +44,21 @@ const formatDate = (value: string) =>
     year: "numeric",
   });
 
+const formatEntryDate = (value: string) =>
+  new Date(value).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+
 const TripDetail = ({ tripId }: TripDetailProps) => {
+  const router = useRouter();
   const [trip, setTrip] = useState<TripDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [entries, setEntries] = useState<EntrySummary[]>([]);
+  const [entriesError, setEntriesError] = useState<string | null>(null);
+  const [entriesLoading, setEntriesLoading] = useState(true);
 
   useEffect(() => {
     let isActive = true;
@@ -70,13 +100,77 @@ const TripDetail = ({ tripId }: TripDetailProps) => {
     };
   }, [tripId]);
 
+  useEffect(() => {
+    let isActive = true;
+    setEntriesLoading(true);
+    setEntriesError(null);
+
+    const loadEntries = async () => {
+      try {
+        const response = await fetch(`/api/entries?tripId=${tripId}`, {
+          method: "GET",
+          credentials: "include",
+          cache: "no-store",
+        });
+        const body = await response.json().catch(() => null);
+
+        if (!response.ok || body?.error) {
+          throw new Error(body?.error?.message ?? "Unable to load entries.");
+        }
+
+        if (isActive) {
+          setEntries((body?.data as EntrySummary[]) ?? []);
+          setEntriesLoading(false);
+        }
+      } catch (err) {
+        if (isActive) {
+          setEntries([]);
+          setEntriesError(
+            err instanceof Error ? err.message : "Unable to load entries.",
+          );
+          setEntriesLoading(false);
+        }
+      }
+    };
+
+    loadEntries();
+
+    return () => {
+      isActive = false;
+    };
+  }, [tripId]);
+
+  const entriesByDate = useMemo(() => {
+    return [...entries].sort(
+      (left, right) =>
+        new Date(left.createdAt).getTime() - new Date(right.createdAt).getTime(),
+    );
+  }, [entries]);
+
+  const handleEntryCreated = (entry: EntrySummary) => {
+    setEntries((prev) => {
+      const next = [...prev.filter((item) => item.id !== entry.id), entry];
+      next.sort(
+        (left, right) =>
+          new Date(left.createdAt).getTime() -
+          new Date(right.createdAt).getTime(),
+      );
+      return next;
+    });
+    router.push(`/trips/${tripId}/entries/${entry.id}`);
+    router.refresh();
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-[#FBF7F1] px-6 py-12">
         <main className="mx-auto w-full max-w-3xl space-y-6">
-          <a href="/trips" className="text-sm text-[#1F6F78] hover:underline">
+          <Link
+            href="/trips"
+            className="text-sm text-[#1F6F78] hover:underline"
+          >
             ← Back to trips
-          </a>
+          </Link>
           <section className="rounded-2xl border border-black/10 bg-white p-8 shadow-sm">
             <p className="text-sm text-[#6B635B]">Loading trip…</p>
           </section>
@@ -89,9 +183,12 @@ const TripDetail = ({ tripId }: TripDetailProps) => {
     return (
       <div className="min-h-screen bg-[#FBF7F1] px-6 py-12">
         <main className="mx-auto w-full max-w-3xl space-y-6">
-          <a href="/trips" className="text-sm text-[#1F6F78] hover:underline">
+          <Link
+            href="/trips"
+            className="text-sm text-[#1F6F78] hover:underline"
+          >
             ← Back to trips
-          </a>
+          </Link>
           <section className="rounded-2xl border border-black/10 bg-white p-8 shadow-sm">
             <p className="text-sm text-[#B34A3C]">{error}</p>
           </section>
@@ -107,9 +204,9 @@ const TripDetail = ({ tripId }: TripDetailProps) => {
   return (
     <div className="min-h-screen bg-[#FBF7F1] px-6 py-12">
       <main className="mx-auto w-full max-w-3xl space-y-6">
-        <a href="/trips" className="text-sm text-[#1F6F78] hover:underline">
+        <Link href="/trips" className="text-sm text-[#1F6F78] hover:underline">
           ← Back to trips
-        </a>
+        </Link>
 
         <section className="rounded-2xl border border-black/10 bg-white p-8 shadow-sm">
           <header className="flex flex-wrap items-start justify-between gap-4">
@@ -125,12 +222,12 @@ const TripDetail = ({ tripId }: TripDetailProps) => {
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-3">
-              <a
+              <Link
                 href={`/trips/${trip.id}/edit`}
                 className="rounded-xl bg-[#1F6F78] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#195C63]"
               >
                 Edit trip
-              </a>
+              </Link>
               <DeleteTripModal tripId={trip.id} tripTitle={trip.title} />
             </div>
           </header>
@@ -154,6 +251,78 @@ const TripDetail = ({ tripId }: TripDetailProps) => {
               Creator
             </div>
           </div>
+        </section>
+
+        <section className="rounded-2xl border border-black/10 bg-white p-8 shadow-sm">
+          <header className="space-y-2">
+            <p className="text-xs uppercase tracking-[0.2em] text-[#6B635B]">
+              Entries
+            </p>
+            <h2 className="text-2xl font-semibold text-[#2D2A26]">
+              Daily updates
+            </h2>
+            <p className="text-sm text-[#6B635B]">
+              Browse each day&apos;s story in chronological order.
+            </p>
+          </header>
+
+          {entriesLoading ? (
+            <p className="mt-4 text-sm text-[#6B635B]">Loading entries…</p>
+          ) : entriesError ? (
+            <p className="mt-4 text-sm text-[#B34A3C]">{entriesError}</p>
+          ) : entriesByDate.length === 0 ? (
+            <p className="mt-4 text-sm text-[#6B635B]">
+              No entries yet. Add your first update below.
+            </p>
+          ) : (
+            <div className="mt-4 space-y-3">
+              {entriesByDate.map((entry) => {
+                const preview = stripInlineImages(entry.text);
+                const previewText =
+                  preview.length === 0
+                    ? "Photo update"
+                    : preview.length > 120
+                      ? `${preview.slice(0, 120)}…`
+                      : preview;
+
+                return (
+                  <Link
+                    key={entry.id}
+                    href={`/trips/${trip.id}/entries/${entry.id}`}
+                    className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-black/10 bg-white px-4 py-3 transition hover:border-[#1F6F78]/40 hover:shadow-sm"
+                  >
+                    <div>
+                      <p className="text-xs uppercase tracking-[0.2em] text-[#6B635B]">
+                        {formatEntryDate(entry.createdAt)}
+                      </p>
+                      <p className="mt-1 text-sm text-[#2D2A26]">
+                        {previewText}
+                      </p>
+                    </div>
+                    <span className="text-xs font-semibold uppercase tracking-[0.2em] text-[#1F6F78]">
+                      Open
+                    </span>
+                  </Link>
+                );
+              })}
+            </div>
+          )}
+        </section>
+
+        <section className="rounded-2xl border border-black/10 bg-white p-8 shadow-sm">
+          <header className="space-y-2">
+            <p className="text-xs uppercase tracking-[0.2em] text-[#6B635B]">
+              New entry
+            </p>
+            <h2 className="text-2xl font-semibold text-[#2D2A26]">
+              Add today&apos;s story
+            </h2>
+            <p className="text-sm text-[#6B635B]">
+              Mix text and inline photos, then add any extra shots to the photo
+              gallery.
+            </p>
+          </header>
+          <CreateEntryForm tripId={trip.id} onEntryCreated={handleEntryCreated} />
         </section>
       </main>
     </div>

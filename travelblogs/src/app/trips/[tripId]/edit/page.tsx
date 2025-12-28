@@ -8,24 +8,24 @@ import { authOptions } from "../../../../utils/auth-options";
 
 type EditTripPageProps = {
   params: {
-    id: string;
-  } | Promise<{ id: string }>;
+    tripId: string;
+  } | Promise<{ tripId: string }>;
 };
 
 const formatDateInput = (date: Date) => date.toISOString().slice(0, 10);
 
 const EditTripPage = async ({ params }: EditTripPageProps) => {
-  const { id } = await params;
+  const { tripId } = await params;
   const session = await getServerSession(authOptions);
 
   if (!session?.user?.id) {
-    redirect(`/sign-in?callbackUrl=/trips/${id}/edit`);
+    redirect(`/sign-in?callbackUrl=/trips/${tripId}/edit`);
   }
   const ownerId = session.user.id;
 
   const trip = await prisma.trip.findFirst({
     where: {
-      id,
+      id: tripId,
       ownerId,
     },
   });
