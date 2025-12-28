@@ -19,6 +19,8 @@ type EntryMedia = {
 type EntryDetail = {
   id: string;
   tripId: string;
+  title: string;
+  coverImageUrl?: string | null;
   text: string;
   createdAt: string;
   updatedAt: string;
@@ -180,7 +182,7 @@ const EntryDetail = ({ tripId, entryId }: EntryDetailProps) => {
                 {formatDate(entry.createdAt)}
               </p>
               <h1 className="text-3xl font-semibold text-[#2D2A26]">
-                Daily entry
+                {entry.title || "Daily entry"}
               </h1>
               <p className="text-sm text-[#6B635B]">
                 Updated {formatDate(entry.updatedAt)}

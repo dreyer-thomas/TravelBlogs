@@ -40,6 +40,65 @@ const resolveUploadDir = () => {
   return path.join(process.cwd(), "public", "uploads");
 };
 
+type UploadSuccess = {
+  fileName: string;
+  url: string;
+};
+
+type UploadFailure = {
+  fileName: string;
+  message: string;
+  isServerError?: boolean;
+};
+
+const uploadFile = async (
+  file: File,
+  uploadDir: string,
+): Promise<{ upload?: UploadSuccess; failure?: UploadFailure }> => {
+  const validationError = validateCoverImageFile(file);
+  if (validationError) {
+    return {
+      failure: {
+        fileName: file.name,
+        message: validationError,
+      },
+    };
+  }
+
+  const extension = getCoverImageExtension(file.type);
+  if (!extension) {
+    return {
+      failure: {
+        fileName: file.name,
+        message: "Cover image must be a JPG, PNG, or WebP file.",
+      },
+    };
+  }
+
+  try {
+    const safeName = `cover-${Date.now()}-${crypto.randomUUID()}.${extension}`;
+    const filePath = path.join(uploadDir, safeName);
+    const buffer = Buffer.from(await file.arrayBuffer());
+    await fs.writeFile(filePath, buffer);
+
+    return {
+      upload: {
+        fileName: file.name,
+        url: `${COVER_IMAGE_PUBLIC_PATH}/${safeName}`,
+      },
+    };
+  } catch (error) {
+    console.error("Failed to upload cover image", error);
+    return {
+      failure: {
+        fileName: file.name,
+        message: "Unable to upload image.",
+        isServerError: true,
+      },
+    };
+  }
+};
+
 export const POST = async (request: Request) => {
   try {
     const userId = await getUserId(request);
@@ -57,23 +116,11 @@ export const POST = async (request: Request) => {
       return jsonError(400, "INVALID_FORM_DATA", "Invalid form submission.");
     }
 
-    const file = formData.get(COVER_IMAGE_FIELD_NAME);
-    if (!file || !(file instanceof File)) {
+    const files = formData
+      .getAll(COVER_IMAGE_FIELD_NAME)
+      .filter((entry): entry is File => entry instanceof File);
+    if (files.length === 0) {
       return jsonError(400, "VALIDATION_ERROR", "Cover image file is required.");
-    }
-
-    const validationError = validateCoverImageFile(file);
-    if (validationError) {
-      return jsonError(400, "VALIDATION_ERROR", validationError);
-    }
-
-    const extension = getCoverImageExtension(file.type);
-    if (!extension) {
-      return jsonError(
-        400,
-        "VALIDATION_ERROR",
-        "Cover image must be a JPG, PNG, or WebP file.",
-      );
     }
 
     // MEDIA_UPLOAD_DIR can point to a NAS-mounted path; ensure it is web-served.
@@ -81,19 +128,48 @@ export const POST = async (request: Request) => {
     const uploadDir = path.join(uploadRoot, "trips");
     await fs.mkdir(uploadDir, { recursive: true });
 
-    const safeName = `cover-${Date.now()}-${crypto.randomUUID()}.${extension}`;
-    const filePath = path.join(uploadDir, safeName);
-    const buffer = Buffer.from(await file.arrayBuffer());
-    await fs.writeFile(filePath, buffer);
+    if (files.length === 1) {
+      const result = await uploadFile(files[0], uploadDir);
+      if (result.failure) {
+        const status = result.failure.isServerError ? 500 : 400;
+        const code = result.failure.isServerError
+          ? "INTERNAL_SERVER_ERROR"
+          : "VALIDATION_ERROR";
+        return jsonError(status, code, result.failure.message);
+      }
+
+      return NextResponse.json(
+        {
+          data: {
+            url: result.upload?.url ?? null,
+          },
+          error: null,
+        },
+        { status: 201 },
+      );
+    }
+
+    const results = await Promise.all(
+      files.map((file) => uploadFile(file, uploadDir)),
+    );
+
+    const uploads = results
+      .map((result) => result.upload)
+      .filter((upload): upload is UploadSuccess => Boolean(upload));
+    const failures = results
+      .map((result) => result.failure)
+      .filter((failure): failure is UploadFailure => Boolean(failure))
+      .map(({ fileName, message }) => ({ fileName, message }));
 
     return NextResponse.json(
       {
         data: {
-          url: `${COVER_IMAGE_PUBLIC_PATH}/${safeName}`,
+          uploads,
+          failures,
         },
         error: null,
       },
-      { status: 201 },
+      { status: 200 },
     );
   } catch (error) {
     console.error("Failed to upload cover image", error);

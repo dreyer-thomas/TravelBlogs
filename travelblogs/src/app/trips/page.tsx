@@ -62,9 +62,6 @@ const TripsPage = async () => {
       <main className="mx-auto w-full max-w-4xl space-y-8">
         <header className="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <p className="text-xs uppercase tracking-[0.2em] text-[#6B635B]">
-              Your Trips
-            </p>
             <h1 className="text-3xl font-semibold text-[#2D2A26]">
               Manage trips
             </h1>

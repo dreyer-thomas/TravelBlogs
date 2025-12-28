@@ -28,6 +28,15 @@ const getUserId = async (request: Request) => {
 
 const updateEntrySchema = z
   .object({
+    entryDate: z
+      .string()
+      .trim()
+      .optional()
+      .refine((value) => !value || !Number.isNaN(Date.parse(value)), {
+        message: "Entry date is required.",
+      }),
+    title: z.string().trim().min(1, "Entry title is required."),
+    coverImageUrl: z.string().trim().optional().nullable(),
     text: z.string().trim().min(1, "Entry text is required."),
     mediaUrls: z
       .array(z.string().trim().min(1, "Media URL is required."))
@@ -86,6 +95,8 @@ export const GET = async (
         data: {
           id: entry.id,
           tripId: entry.tripId,
+          title: entry.title,
+          coverImageUrl: entry.coverImageUrl,
           text: entry.text,
           createdAt: entry.createdAt.toISOString(),
           updatedAt: entry.updatedAt.toISOString(),
@@ -158,12 +169,30 @@ export const PATCH = async (
     if (!hasMedia && inlineImages.length === 0) {
       return jsonError(400, "VALIDATION_ERROR", "At least one photo is required.");
     }
+    if (
+      parsed.data.coverImageUrl &&
+      ![...inlineImages, ...((nextMediaUrls ?? entry.media.map((item) => item.url)))]
+        .includes(parsed.data.coverImageUrl)
+    ) {
+      return jsonError(
+        400,
+        "VALIDATION_ERROR",
+        "Story image must be one of the entry photos.",
+      );
+    }
 
     const updated = await prisma.entry.update({
       where: { id },
       data: {
+        title: parsed.data.title,
         text: parsed.data.text,
         updatedAt: new Date(),
+        ...(parsed.data.coverImageUrl !== undefined
+          ? { coverImageUrl: parsed.data.coverImageUrl }
+          : {}),
+        ...(parsed.data.entryDate
+          ? { createdAt: new Date(parsed.data.entryDate) }
+          : {}),
         ...(nextMediaUrls !== undefined
           ? {
               media: {
@@ -183,6 +212,8 @@ export const PATCH = async (
         data: {
           id: updated.id,
           tripId: updated.tripId,
+          title: updated.title,
+          coverImageUrl: updated.coverImageUrl,
           text: updated.text,
           createdAt: updated.createdAt.toISOString(),
           updatedAt: updated.updatedAt.toISOString(),

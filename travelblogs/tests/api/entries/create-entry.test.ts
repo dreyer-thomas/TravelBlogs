@@ -63,6 +63,8 @@ describe("POST /api/entries", () => {
       },
       body: JSON.stringify({
         tripId: trip.id,
+        title: "Roman morning",
+        coverImageUrl: "/uploads/entries/rome-1.jpg",
         text: "We explored Rome today.",
         mediaUrls: ["/uploads/entries/rome-1.jpg", "/uploads/entries/rome-2.jpg"],
       }),
@@ -79,6 +81,8 @@ describe("POST /api/entries", () => {
     expect(response.status).toBe(201);
     expect(body.error).toBeNull();
     expect(body.data.tripId).toBe(trip.id);
+    expect(body.data.title).toBe("Roman morning");
+    expect(body.data.coverImageUrl).toBe("/uploads/entries/rome-1.jpg");
     expect(body.data.text).toBe("We explored Rome today.");
     expect(body.data.media).toHaveLength(2);
     expect(createdEntry?.media.length).toBe(2);
@@ -102,6 +106,7 @@ describe("POST /api/entries", () => {
       body: JSON.stringify({
         tripId: trip.id,
         entryDate: "2025-05-02",
+        title: "A day to remember",
         text: "A day to remember.",
         mediaUrls: ["/uploads/entries/rome-1.jpg"],
       }),
@@ -138,6 +143,7 @@ describe("POST /api/entries", () => {
       },
       body: JSON.stringify({
         tripId: trip.id,
+        title: "Morning walk",
         text: "Morning walk ![Photo](/uploads/trips/cover-1760000000000-abc.jpg)",
         mediaUrls: [],
       }),
@@ -169,6 +175,7 @@ describe("POST /api/entries", () => {
       },
       body: JSON.stringify({
         tripId: trip.id,
+        title: "Should not be allowed",
         text: "Should not be allowed.",
         mediaUrls: ["/uploads/entries/rome-1.jpg"],
       }),
@@ -191,6 +198,7 @@ describe("POST /api/entries", () => {
       },
       body: JSON.stringify({
         tripId: "trip-123",
+        title: "No access",
         text: "No access.",
         mediaUrls: ["/uploads/entries/rome-1.jpg"],
       }),

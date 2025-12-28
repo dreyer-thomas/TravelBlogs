@@ -7,30 +7,68 @@ import { useRouter } from "next/navigation";
 import {
   createEntryPreviewUrl,
   ENTRY_MEDIA_ALLOWED_MIME_TYPES,
-  uploadEntryMedia,
+  uploadEntryMediaBatch,
   validateEntryMediaFile,
 } from "../../utils/entry-media";
 import { extractInlineImageUrls } from "../../utils/entry-content";
 
 type FieldErrors = {
+  date?: string;
+  title?: string;
   text?: string;
   media?: string;
   form?: string;
 };
 
+type UploadStatus = "idle" | "uploading" | "success" | "failed";
+
+type UploadItem = {
+  id: string;
+  file: File;
+  previewUrl?: string;
+  status: UploadStatus;
+  progress: number;
+  message?: string;
+  url?: string;
+  canRetry: boolean;
+};
+
 type EditEntryFormProps = {
   tripId: string;
   entryId: string;
+  initialEntryDate: string;
+  initialTitle: string;
+  initialCoverImageUrl?: string | null;
   initialText: string;
   initialMediaUrls: string[];
 };
 
+const isValidEntryDate = (value: string) =>
+  Boolean(value) && !Number.isNaN(Date.parse(value));
+
+const toDateInputValue = (value: string) => {
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime())
+    ? ""
+    : parsed.toISOString().slice(0, 10);
+};
+
 const getErrors = (
+  entryDate: string,
+  title: string,
   text: string,
   mediaUrls: string[],
   inlineImageUrls: string[],
 ) => {
   const nextErrors: FieldErrors = {};
+
+  if (!isValidEntryDate(entryDate)) {
+    nextErrors.date = "Entry date is required.";
+  }
+
+  if (!title.trim()) {
+    nextErrors.title = "Entry title is required.";
+  }
 
   if (!text.trim()) {
     nextErrors.text = "Entry text is required.";
@@ -44,20 +82,33 @@ const getErrors = (
   return nextErrors;
 };
 
+const createFileId = (file: File, index: number, batchId: string) =>
+  `${batchId}-${file.name}-${file.size}-${file.lastModified}-${index}`;
+
 const EditEntryForm = ({
   tripId,
   entryId,
+  initialEntryDate,
+  initialTitle,
+  initialCoverImageUrl,
   initialText,
   initialMediaUrls,
 }: EditEntryFormProps) => {
   const router = useRouter();
+  const [entryDate, setEntryDate] = useState(
+    toDateInputValue(initialEntryDate),
+  );
+  const [title, setTitle] = useState(initialTitle ?? "");
+  const [coverImageUrl, setCoverImageUrl] = useState(
+    initialCoverImageUrl ?? "",
+  );
   const [text, setText] = useState(initialText);
   const [mediaUrls, setMediaUrls] = useState<string[]>(initialMediaUrls);
   const [mediaPreviews, setMediaPreviews] = useState<string[]>(initialMediaUrls);
   const [mediaUploading, setMediaUploading] = useState(false);
-  const [mediaUploadProgress, setMediaUploadProgress] = useState(0);
   const [inlineUploading, setInlineUploading] = useState(false);
-  const [inlineUploadProgress, setInlineUploadProgress] = useState(0);
+  const [mediaUploadItems, setMediaUploadItems] = useState<UploadItem[]>([]);
+  const [inlineUploadItems, setInlineUploadItems] = useState<UploadItem[]>([]);
   const [errors, setErrors] = useState<FieldErrors>({});
   const [submitting, setSubmitting] = useState(false);
   const textAreaRef = useRef<HTMLTextAreaElement | null>(null);
@@ -66,6 +117,18 @@ const EditEntryForm = ({
     () => extractInlineImageUrls(text),
     [text],
   );
+  const availableStoryImages = useMemo(() => {
+    const urls = [...mediaUrls, ...inlineImageUrls];
+    const seen = new Set<string>();
+    return urls.filter((url) => {
+      const value = url.trim();
+      if (!value || seen.has(value)) {
+        return false;
+      }
+      seen.add(value);
+      return true;
+    });
+  }, [mediaUrls, inlineImageUrls]);
 
   useEffect(() => {
     return () => {
@@ -76,6 +139,15 @@ const EditEntryForm = ({
       });
     };
   }, [mediaPreviews]);
+
+  useEffect(() => {
+    if (
+      coverImageUrl &&
+      !availableStoryImages.includes(coverImageUrl)
+    ) {
+      setCoverImageUrl("");
+    }
+  }, [availableStoryImages, coverImageUrl]);
 
   const updateText = (value: string) => {
     setText(value);
@@ -89,6 +161,31 @@ const EditEntryForm = ({
     }));
   };
 
+  const updateTitle = (value: string) => {
+    setTitle(value);
+    setErrors((prev) => ({
+      ...prev,
+      title: value.trim() ? undefined : "Entry title is required.",
+    }));
+  };
+
+  const updateEntryDate = (value: string) => {
+    setEntryDate(value);
+    setErrors((prev) => ({
+      ...prev,
+      date: isValidEntryDate(value) ? undefined : "Entry date is required.",
+    }));
+  };
+
+  const handleDateBlur = () => {
+    if (!isValidEntryDate(entryDate)) {
+      setErrors((prev) => ({
+        ...prev,
+        date: "Entry date is required.",
+      }));
+    }
+  };
+
   const handleTextBlur = () => {
     if (!text.trim()) {
       setErrors((prev) => ({
@@ -98,65 +195,146 @@ const EditEntryForm = ({
     }
   };
 
+  const handleTitleBlur = () => {
+    if (!title.trim()) {
+      setErrors((prev) => ({
+        ...prev,
+        title: "Entry title is required.",
+      }));
+    }
+  };
+
   const handleMediaChange = async (
     event: React.ChangeEvent<HTMLInputElement>,
   ) => {
     setErrors((prev) => ({ ...prev, media: undefined }));
-    setMediaUploadProgress(0);
+    setMediaUploading(false);
 
     const files = Array.from(event.target.files ?? []);
     if (files.length === 0) {
       return;
     }
 
-    const validationError =
-      files.map((file) => validateEntryMediaFile(file)).find(Boolean) ?? null;
-    if (validationError) {
-      setErrors((prev) => ({
-        ...prev,
-        media: validationError,
-      }));
+    const batchId = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+    const fileIdMap = new Map<File, string>();
+    const invalidItems: UploadItem[] = [];
+    const uploadItems: UploadItem[] = [];
+    const validFiles: File[] = [];
+    const nextPreviews: string[] = [];
+
+    files.forEach((file, index) => {
+      const fileId = createFileId(file, index, batchId);
+      fileIdMap.set(file, fileId);
+      const validationError = validateEntryMediaFile(file);
+      if (validationError) {
+        invalidItems.push({
+          id: fileId,
+          file,
+          status: "failed",
+          progress: 0,
+          message: validationError,
+          canRetry: false,
+        });
+        return;
+      }
+
+      const previewUrl = createEntryPreviewUrl(file);
+      nextPreviews.push(previewUrl);
+      validFiles.push(file);
+      uploadItems.push({
+        id: fileId,
+        file,
+        previewUrl,
+        status: "uploading",
+        progress: 0,
+        canRetry: true,
+      });
+    });
+
+    setMediaPreviews((prev) => [...prev, ...nextPreviews]);
+    setMediaUploadItems((prev) => [...prev, ...invalidItems, ...uploadItems]);
+
+    if (validFiles.length === 0) {
       event.target.value = "";
       return;
     }
 
-    const nextPreviews = files.map((file) => createEntryPreviewUrl(file));
-    setMediaPreviews((prev) => [...prev, ...nextPreviews]);
     setMediaUploading(true);
-    setMediaUploadProgress(0);
 
-    try {
-      const uploadedUrls: string[] = [];
+    const result = await uploadEntryMediaBatch(validFiles, {
+      getFileId: (file) => fileIdMap.get(file) ?? file.name,
+      onFileProgress: (file, progress) => {
+        const fileId = fileIdMap.get(file) ?? file.name;
+        setMediaUploadItems((prev) =>
+          prev.map((item) =>
+            item.id === fileId
+              ? { ...item, status: "uploading", progress }
+              : item,
+          ),
+        );
+      },
+    });
 
-      for (const file of files) {
-        const url = await uploadEntryMedia(file, {
-          onProgress: setMediaUploadProgress,
-        });
-        uploadedUrls.push(url);
-      }
-
-      setMediaUrls((prev) => [...prev, ...uploadedUrls]);
-      setMediaPreviews((prev) => {
-        const kept = prev.filter((preview) => !preview.startsWith("blob:"));
-        return [...kept, ...uploadedUrls];
-      });
-      setMediaUploadProgress(100);
-      setErrors((prev) => ({ ...prev, media: undefined }));
-    } catch (error) {
-      setErrors((prev) => ({
+    if (result.uploads.length > 0) {
+      setMediaUrls((prev) => [
         ...prev,
-        media:
-          error instanceof Error
-            ? error.message
-            : "Unable to upload media files.",
-      }));
-      setMediaUrls((prev) => prev);
-      setMediaPreviews((prev) => prev.filter((preview) => !preview.startsWith("blob:")));
-      setMediaUploadProgress(0);
-    } finally {
-      setMediaUploading(false);
-      event.target.value = "";
+        ...result.uploads.map((upload) => upload.url),
+      ]);
+      setMediaPreviews((prev) =>
+        prev.map((preview) => {
+          const item = uploadItems.find(
+            (entry) => entry.previewUrl === preview,
+          );
+          const upload = item
+            ? result.uploads.find((entry) => entry.fileId === item.id)
+            : null;
+          return upload ? upload.url : preview;
+        }),
+      );
     }
+
+    setMediaUploadItems((prev) =>
+      prev.map((item) => {
+        const upload = result.uploads.find(
+          (entry) => entry.fileId === item.id,
+        );
+        if (upload) {
+          return {
+            ...item,
+            status: "success",
+            progress: 100,
+            url: upload.url,
+          };
+        }
+        const failure = result.failures.find(
+          (entry) => entry.fileId === item.id,
+        );
+        if (failure) {
+          return {
+            ...item,
+            status: "failed",
+            progress: 0,
+            message: failure.message,
+            canRetry: true,
+          };
+        }
+        return item;
+      }),
+    );
+    if (result.failures.length > 0) {
+      const failedIds = new Set(result.failures.map((failure) => failure.fileId));
+      const failedPreviewUrls = uploadItems
+        .filter((item) => item.previewUrl && failedIds.has(item.id))
+        .map((item) => item.previewUrl as string);
+      if (failedPreviewUrls.length > 0) {
+        setMediaPreviews((prev) =>
+          prev.filter((preview) => !failedPreviewUrls.includes(preview)),
+        );
+      }
+    }
+
+    setMediaUploading(false);
+    event.target.value = "";
   };
 
   const handleRemoveMedia = (url: string) => {
@@ -214,55 +392,111 @@ const EditEntryForm = ({
     event: React.ChangeEvent<HTMLInputElement>,
   ) => {
     setErrors((prev) => ({ ...prev, media: undefined }));
-    setInlineUploadProgress(0);
+    setInlineUploading(false);
 
     const files = Array.from(event.target.files ?? []);
     if (files.length === 0) {
       return;
     }
 
-    const validationError =
-      files.map((file) => validateEntryMediaFile(file)).find(Boolean) ?? null;
-    if (validationError) {
-      setErrors((prev) => ({
-        ...prev,
-        media: validationError,
-      }));
+    const batchId = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+    const fileIdMap = new Map<File, string>();
+    const invalidItems: UploadItem[] = [];
+    const uploadItems: UploadItem[] = [];
+    const validFiles: File[] = [];
+
+    files.forEach((file, index) => {
+      const fileId = createFileId(file, index, batchId);
+      fileIdMap.set(file, fileId);
+      const validationError = validateEntryMediaFile(file);
+      if (validationError) {
+        invalidItems.push({
+          id: fileId,
+          file,
+          status: "failed",
+          progress: 0,
+          message: validationError,
+          canRetry: false,
+        });
+        return;
+      }
+
+      validFiles.push(file);
+      uploadItems.push({
+        id: fileId,
+        file,
+        status: "uploading",
+        progress: 0,
+        canRetry: true,
+      });
+    });
+
+    setInlineUploadItems((prev) => [...prev, ...invalidItems, ...uploadItems]);
+
+    if (validFiles.length === 0) {
+      event.target.value = "";
       return;
     }
 
     setInlineUploading(true);
-    setInlineUploadProgress(0);
 
-    try {
-      const uploadedUrls: string[] = [];
-      for (const file of files) {
-        const url = await uploadEntryMedia(file, {
-          onProgress: setInlineUploadProgress,
-        });
-        uploadedUrls.push(url);
-      }
+    const result = await uploadEntryMediaBatch(validFiles, {
+      getFileId: (file) => fileIdMap.get(file) ?? file.name,
+      onFileProgress: (file, progress) => {
+        const fileId = fileIdMap.get(file) ?? file.name;
+        setInlineUploadItems((prev) =>
+          prev.map((item) =>
+            item.id === fileId
+              ? { ...item, status: "uploading", progress }
+              : item,
+          ),
+        );
+      },
+    });
 
-      insertInlineImages(uploadedUrls);
-      setInlineUploadProgress(100);
-    } catch (error) {
-      setErrors((prev) => ({
-        ...prev,
-        media:
-          error instanceof Error
-            ? error.message
-            : "Unable to upload inline photos.",
-      }));
-      setInlineUploadProgress(0);
-    } finally {
-      setInlineUploading(false);
-      event.target.value = "";
+    if (result.uploads.length > 0) {
+      insertInlineImages(result.uploads.map((upload) => upload.url));
     }
+    setInlineUploadItems((prev) =>
+      prev.map((item) => {
+        const upload = result.uploads.find(
+          (entry) => entry.fileId === item.id,
+        );
+        if (upload) {
+          return {
+            ...item,
+            status: "success",
+            progress: 100,
+            url: upload.url,
+          };
+        }
+        const failure = result.failures.find(
+          (entry) => entry.fileId === item.id,
+        );
+        if (failure) {
+          return {
+            ...item,
+            status: "failed",
+            progress: 0,
+            message: failure.message,
+            canRetry: true,
+          };
+        }
+        return item;
+      }),
+    );
+
+    setInlineUploading(false);
+    event.target.value = "";
   };
 
-  const hasFieldErrors = Boolean(errors.text || errors.media);
+  const hasFieldErrors = Boolean(
+    errors.date || errors.title || errors.text || errors.media,
+  );
   const canSubmit = Boolean(
-    text.trim() &&
+    isValidEntryDate(entryDate) &&
+      title.trim() &&
+      text.trim() &&
       (mediaUrls.length > 0 || inlineImageUrls.length > 0) &&
       !hasFieldErrors &&
       !submitting &&
@@ -272,11 +506,204 @@ const EditEntryForm = ({
 
   const isOptimizedImage = (url: string) => url.startsWith("/");
 
+  const renderUploadItems = (
+    items: UploadItem[],
+    onRetry: (item: UploadItem) => void,
+    onRemove: (item: UploadItem) => void,
+  ) => {
+    if (items.length === 0) {
+      return null;
+    }
+
+    return (
+      <ul className="mt-2 space-y-1 text-xs text-[#6B635B]">
+        {items.map((item) => (
+          <li
+            key={item.id}
+            className={`flex flex-wrap items-center justify-between gap-2 ${item.status === "failed" ? "text-[#B34A3C]" : ""}`}
+          >
+            <span className="min-w-0 flex-1 truncate">{item.file.name}</span>
+            <span>
+              {item.status === "uploading"
+                ? `Uploading ${item.progress}%`
+                : null}
+              {item.status === "success" ? "Uploaded" : null}
+              {item.status === "failed"
+                ? `Failed${item.message ? `: ${item.message}` : ""}`
+                : null}
+            </span>
+            {item.status === "failed" ? (
+              <div className="flex items-center gap-2">
+                {item.canRetry ? (
+                  <button
+                    type="button"
+                    onClick={() => onRetry(item)}
+                    className="rounded-full border border-[#B34A3C]/40 px-2 py-0.5 text-[11px] font-semibold text-[#B34A3C] transition hover:bg-[#B34A3C]/10"
+                  >
+                    Retry
+                  </button>
+                ) : null}
+                <button
+                  type="button"
+                  onClick={() => onRemove(item)}
+                  className="rounded-full border border-black/20 px-2 py-0.5 text-[11px] font-semibold text-[#2D2A26] transition hover:bg-black/5"
+                >
+                  Remove
+                </button>
+              </div>
+            ) : null}
+          </li>
+        ))}
+      </ul>
+    );
+  };
+
+  const retryMediaUpload = async (item: UploadItem) => {
+    setMediaUploadItems((prev) =>
+      prev.map((entry) =>
+        entry.id === item.id
+          ? { ...entry, status: "uploading", progress: 0, message: undefined }
+          : entry,
+      ),
+    );
+    setMediaUploading(true);
+
+    const result = await uploadEntryMediaBatch([item.file], {
+      getFileId: () => item.id,
+      onFileProgress: (_, progress) => {
+        setMediaUploadItems((prev) =>
+          prev.map((entry) =>
+            entry.id === item.id
+              ? { ...entry, status: "uploading", progress }
+              : entry,
+          ),
+        );
+      },
+    });
+
+    if (result.uploads.length > 0) {
+      const uploaded = result.uploads[0];
+      setMediaUrls((prev) => [...prev, uploaded.url]);
+      setMediaPreviews((prev) =>
+        item.previewUrl
+          ? prev.map((preview) =>
+              preview === item.previewUrl ? uploaded.url : preview,
+            )
+          : prev,
+      );
+      setMediaUploadItems((prev) =>
+        prev.map((entry) =>
+          entry.id === item.id
+            ? {
+                ...entry,
+                status: "success",
+                progress: 100,
+                url: uploaded.url,
+              }
+            : entry,
+        ),
+      );
+    } else if (result.failures.length > 0) {
+      setMediaUploadItems((prev) =>
+        prev.map((entry) =>
+          entry.id === item.id
+            ? {
+                ...entry,
+                status: "failed",
+                progress: 0,
+                message: result.failures[0].message,
+                canRetry: true,
+              }
+            : entry,
+        ),
+      );
+    }
+
+    setMediaUploading(false);
+  };
+
+  const removeMediaUpload = (item: UploadItem) => {
+    setMediaUploadItems((prev) => prev.filter((entry) => entry.id !== item.id));
+    if (item.previewUrl) {
+      setMediaPreviews((prev) =>
+        prev.filter((preview) => preview !== item.previewUrl),
+      );
+    }
+  };
+
+  const retryInlineUpload = async (item: UploadItem) => {
+    setInlineUploadItems((prev) =>
+      prev.map((entry) =>
+        entry.id === item.id
+          ? { ...entry, status: "uploading", progress: 0, message: undefined }
+          : entry,
+      ),
+    );
+    setInlineUploading(true);
+
+    const result = await uploadEntryMediaBatch([item.file], {
+      getFileId: () => item.id,
+      onFileProgress: (_, progress) => {
+        setInlineUploadItems((prev) =>
+          prev.map((entry) =>
+            entry.id === item.id
+              ? { ...entry, status: "uploading", progress }
+              : entry,
+          ),
+        );
+      },
+    });
+
+    if (result.uploads.length > 0) {
+      insertInlineImages([result.uploads[0].url]);
+      setInlineUploadItems((prev) =>
+        prev.map((entry) =>
+          entry.id === item.id
+            ? {
+                ...entry,
+                status: "success",
+                progress: 100,
+                url: result.uploads[0].url,
+              }
+            : entry,
+        ),
+      );
+    } else if (result.failures.length > 0) {
+      setInlineUploadItems((prev) =>
+        prev.map((entry) =>
+          entry.id === item.id
+            ? {
+                ...entry,
+                status: "failed",
+                progress: 0,
+                message: result.failures[0].message,
+                canRetry: true,
+              }
+            : entry,
+        ),
+      );
+    }
+
+    setInlineUploading(false);
+  };
+
+  const removeInlineUpload = (item: UploadItem) => {
+    setInlineUploadItems((prev) =>
+      prev.filter((entry) => entry.id !== item.id),
+    );
+  };
+
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setErrors({});
 
-    const nextErrors = getErrors(text, mediaUrls, inlineImageUrls);
+    const nextErrors = getErrors(
+      entryDate,
+      title,
+      text,
+      mediaUrls,
+      inlineImageUrls,
+    );
     if (Object.keys(nextErrors).length > 0) {
       setErrors(nextErrors);
       return;
@@ -291,6 +718,9 @@ const EditEntryForm = ({
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
+          entryDate,
+          title: title.trim(),
+          coverImageUrl: coverImageUrl ? coverImageUrl : null,
           text: text.trim(),
           mediaUrls,
         }),
@@ -301,7 +731,11 @@ const EditEntryForm = ({
         const message =
           result?.error?.message ?? "Unable to update entry. Please try again.";
         if (result?.error?.code === "VALIDATION_ERROR") {
-          if (message === "Entry text is required.") {
+          if (message === "Entry date is required.") {
+            setErrors({ date: message });
+          } else if (message === "Entry title is required.") {
+            setErrors({ title: message });
+          } else if (message === "Entry text is required.") {
             setErrors({ text: message });
           } else if (
             message === "At least one photo is required." ||
@@ -332,10 +766,26 @@ const EditEntryForm = ({
   return (
     <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
       <label className="block text-sm text-[#2D2A26]">
+        Entry title
+        <input
+          type="text"
+          name="title"
+          value={title}
+          onChange={(event) => updateTitle(event.target.value)}
+          onBlur={handleTitleBlur}
+          className="mt-2 w-full rounded-xl border border-black/10 px-3 py-2 text-sm focus:border-[#1F6F78] focus:outline-none focus:ring-2 focus:ring-[#1F6F78]/20"
+          placeholder="Give the day a headline..."
+        />
+        {errors.title ? (
+          <p className="mt-2 text-xs text-[#B34A3C]">{errors.title}</p>
+        ) : null}
+      </label>
+
+      <label className="block text-sm text-[#2D2A26]">
         Entry text
         <textarea
           name="text"
-          rows={6}
+          rows={20}
           value={text}
           onChange={(event) => updateText(event.target.value)}
           onBlur={handleTextBlur}
@@ -345,6 +795,81 @@ const EditEntryForm = ({
         />
         {errors.text ? (
           <p className="mt-2 text-xs text-[#B34A3C]">{errors.text}</p>
+        ) : null}
+      </label>
+
+      <div className="space-y-2 rounded-xl border border-dashed border-black/10 bg-[#F9F5EF] p-3">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#6B635B]">
+            Story image
+          </p>
+          {coverImageUrl ? (
+            <button
+              type="button"
+              onClick={() => setCoverImageUrl("")}
+              className="rounded-full border border-black/10 px-2 py-1 text-[11px] font-semibold text-[#6B635B] transition hover:bg-black/5"
+            >
+              Clear selection
+            </button>
+          ) : null}
+        </div>
+        <p className="text-xs text-[#6B635B]">
+          Choose one photo to show on the trip overview.
+        </p>
+        {availableStoryImages.length === 0 ? (
+          <p className="text-xs text-[#6B635B]">
+            Add photos to enable story image selection.
+          </p>
+        ) : (
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
+            {availableStoryImages.map((url, index) => (
+              <button
+                key={`${url}-${index}`}
+                type="button"
+                onClick={() => setCoverImageUrl(url)}
+                className={`group relative h-28 overflow-hidden rounded-xl border transition ${
+                  coverImageUrl === url
+                    ? "border-[#1F6F78] ring-2 ring-[#1F6F78]/30"
+                    : "border-black/10 hover:border-[#1F6F78]/40"
+                }`}
+              >
+                <Image
+                  src={url}
+                  alt={`Story image option ${index + 1}`}
+                  fill
+                  sizes="(min-width: 768px) 20vw, 40vw"
+                  className="object-cover"
+                  loading="lazy"
+                  unoptimized={!isOptimizedImage(url)}
+                />
+                <div
+                  className={`absolute inset-0 bg-black/0 transition ${
+                    coverImageUrl === url ? "bg-black/20" : "group-hover:bg-black/10"
+                  }`}
+                />
+                {coverImageUrl === url ? (
+                  <div className="absolute right-2 top-2 rounded-full bg-white/90 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-[#1F6F78] shadow">
+                    Selected
+                  </div>
+                ) : null}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <label className="block text-sm text-[#2D2A26]">
+        Entry date
+        <input
+          type="date"
+          name="entryDate"
+          value={entryDate}
+          onChange={(event) => updateEntryDate(event.target.value)}
+          onBlur={handleDateBlur}
+          className="mt-2 w-full rounded-xl border border-black/10 px-3 py-2 text-sm focus:border-[#1F6F78] focus:outline-none focus:ring-2 focus:ring-[#1F6F78]/20"
+        />
+        {errors.date ? (
+          <p className="mt-2 text-xs text-[#B34A3C]">{errors.date}</p>
         ) : null}
       </label>
 
@@ -364,10 +889,13 @@ const EditEntryForm = ({
           Add more photos inline so they appear between paragraphs.
         </p>
         {inlineUploading ? (
-          <div className="text-xs text-[#6B635B]">
-            Uploading inline photo… {inlineUploadProgress}%
-          </div>
+          <div className="text-xs text-[#6B635B]">Uploading inline photos…</div>
         ) : null}
+        {renderUploadItems(
+          inlineUploadItems,
+          retryInlineUpload,
+          removeInlineUpload,
+        )}
         {inlineImageUrls.length > 0 ? (
           <div className="grid grid-cols-2 gap-2 md:grid-cols-3">
             {inlineImageUrls.map((url, index) => (
@@ -433,9 +961,14 @@ const EditEntryForm = ({
         ) : null}
         {mediaUploading ? (
           <div className="mt-2 text-xs text-[#6B635B]">
-            Uploading… {mediaUploadProgress}%
+            Uploading photos…
           </div>
         ) : null}
+        {renderUploadItems(
+          mediaUploadItems,
+          retryMediaUpload,
+          removeMediaUpload,
+        )}
         {errors.media ? (
           <p className="mt-2 text-xs text-[#B34A3C]">{errors.media}</p>
         ) : null}

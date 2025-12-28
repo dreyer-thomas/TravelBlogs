@@ -17,6 +17,8 @@ const createEntrySchema = z
       .refine((value) => !value || !Number.isNaN(Date.parse(value)), {
         message: "Entry date is required.",
       }),
+    title: z.string().trim().min(1, "Entry title is required."),
+    coverImageUrl: z.string().trim().optional(),
     text: z.string().trim().min(1, "Entry text is required."),
     mediaUrls: z
       .array(z.string().trim().min(1, "Media URL is required."))
@@ -30,6 +32,16 @@ const createEntrySchema = z
         code: z.ZodIssueCode.custom,
         message: "At least one photo is required.",
         path: ["mediaUrls"],
+      });
+    }
+    if (
+      data.coverImageUrl &&
+      ![...data.mediaUrls, ...inlineImages].includes(data.coverImageUrl)
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Story image must be one of the entry photos.",
+        path: ["coverImageUrl"],
       });
     }
   });
@@ -99,6 +111,8 @@ export const POST = async (request: Request) => {
     const entry = await prisma.entry.create({
       data: {
         tripId: parsed.data.tripId,
+        title: parsed.data.title,
+        coverImageUrl: parsed.data.coverImageUrl ?? null,
         text: parsed.data.text,
         createdAt,
         updatedAt: createdAt,
@@ -116,6 +130,8 @@ export const POST = async (request: Request) => {
         data: {
           id: entry.id,
           tripId: entry.tripId,
+          title: entry.title,
+          coverImageUrl: entry.coverImageUrl,
           text: entry.text,
           createdAt: entry.createdAt.toISOString(),
           updatedAt: entry.updatedAt.toISOString(),
@@ -186,6 +202,8 @@ export const GET = async (request: Request) => {
         data: entries.map((entry) => ({
           id: entry.id,
           tripId: entry.tripId,
+          title: entry.title,
+          coverImageUrl: entry.coverImageUrl,
           text: entry.text,
           createdAt: entry.createdAt.toISOString(),
           updatedAt: entry.updatedAt.toISOString(),

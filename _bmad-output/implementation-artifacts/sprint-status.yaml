@@ -56,7 +56,7 @@ development_status:
   epic-2: in-progress
   2-1-add-blog-entry: done
   2-2-edit-blog-entry: done
-  2-3-multi-file-media-upload: ready-for-dev
+  2-3-multi-file-media-upload: done
   2-4-delete-blog-entry: ready-for-dev
   2-5-entry-title: ready-for-dev
   epic-2-retrospective: optional

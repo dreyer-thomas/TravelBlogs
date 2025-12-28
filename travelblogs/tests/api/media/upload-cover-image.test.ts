@@ -33,10 +33,10 @@ const ensureFileConstructor = () => {
   globalThis.File = NodeFile as typeof File;
 };
 
-const buildFile = (size: number, type: string) => {
+const buildFile = (size: number, type: string, name = "cover") => {
   ensureFileConstructor();
   const content = new Uint8Array(size);
-  return new File([content], "cover", { type });
+  return new File([content], name, { type });
 };
 
 describe("POST /api/media/upload", () => {
@@ -163,5 +163,36 @@ describe("POST /api/media/upload", () => {
 
     expect(response.status).toBe(403);
     expect(body.error.code).toBe("FORBIDDEN");
+  });
+
+  it("returns per-file results when multiple files are uploaded", async () => {
+    getToken.mockResolvedValue({ sub: "creator" });
+
+    const formData = new FormData();
+    formData.append("file", buildFile(1024, "image/png", "good.png"));
+    formData.append("file", buildFile(256, "text/plain", "bad.txt"));
+
+    const request = new Request("http://localhost/api/media/upload", {
+      method: "POST",
+      body: formData,
+    });
+
+    const response = await post(request);
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.error).toBeNull();
+    expect(body.data.uploads).toHaveLength(1);
+    expect(body.data.failures).toHaveLength(1);
+    expect(body.data.uploads[0].fileName).toBe("good.png");
+    expect(body.data.uploads[0].url).toMatch(/^\/uploads\/trips\//);
+    expect(body.data.failures[0].fileName).toBe("bad.txt");
+    expect(body.data.failures[0].message).toBe(
+      "Cover image must be a JPG, PNG, or WebP file.",
+    );
+
+    const filename = body.data.uploads[0].url.split("/").pop();
+    const storedPath = path.join(uploadRoot, "trips", filename ?? "");
+    await expect(fs.stat(storedPath)).resolves.toBeDefined();
   });
 });

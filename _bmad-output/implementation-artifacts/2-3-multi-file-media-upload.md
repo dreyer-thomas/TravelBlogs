@@ -1,6 +1,6 @@
 # Story 2.3: Multi-File Media Upload
 
-Status: ready-for-dev
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -23,21 +23,21 @@ so that I can add a full day's photos efficiently.
 
 ## Tasks / Subtasks
 
-- [ ] Define multi-file upload behavior and validation (AC: 1, 2)
-  - [ ] Allow multiple file selection in create/edit entry forms
-  - [ ] Validate file types and size per file; show per-file errors
-- [ ] Implement multi-file upload API handling (AC: 1, 2)
-  - [ ] Ensure `/api/media/upload` supports sequential or parallel uploads
-  - [ ] Capture failed uploads without blocking successful ones
-- [ ] Update entry media utilities for batch uploads (AC: 1, 2)
-  - [ ] Extend `uploadEntryMedia` to accept arrays or add `uploadEntryMediaBatch`
-  - [ ] Return success + failed file results for UI feedback
-- [ ] Enhance UI for progress and failure states (AC: 1, 2)
-  - [ ] Show per-file progress and completion states
-  - [ ] Surface failed files with retry/remove actions
-- [ ] Add tests for multi-file upload behavior (AC: 1, 2)
-  - [ ] Component test for multi-file selection and error display
-  - [ ] Utility tests for batch upload results handling
+- [x] Define multi-file upload behavior and validation (AC: 1, 2)
+  - [x] Allow multiple file selection in create/edit entry forms
+  - [x] Validate file types and size per file; show per-file errors
+- [x] Implement multi-file upload API handling (AC: 1, 2)
+  - [x] Ensure `/api/media/upload` supports sequential or parallel uploads
+  - [x] Capture failed uploads without blocking successful ones
+- [x] Update entry media utilities for batch uploads (AC: 1, 2)
+  - [x] Extend `uploadEntryMedia` to accept arrays or add `uploadEntryMediaBatch`
+  - [x] Return success + failed file results for UI feedback
+- [x] Enhance UI for progress and failure states (AC: 1, 2)
+  - [x] Show per-file progress and completion states
+  - [x] Surface failed files with retry/remove actions
+- [x] Add tests for multi-file upload behavior (AC: 1, 2)
+  - [x] Component test for multi-file selection and error display
+  - [x] Utility tests for batch upload results handling
 
 ## Dev Notes
 
@@ -105,8 +105,13 @@ so that I can add a full day's photos efficiently.
 
 ## Story Completion Status
 
-- Status set to ready-for-dev.
+- Status set to review.
 - Note: Ultimate context engine analysis completed; comprehensive developer guide created.
+
+## Change Log
+
+- 2025-12-28: Completed multi-file upload behavior, API handling, UI status updates, and tests.
+- 2025-12-28: Addressed review fixes for upload previews and form cleanup; updated story file list.
 
 ## Dev Agent Record
 
@@ -122,12 +127,41 @@ GPT-5 (Codex CLI)
 
  - Story context generated from epics, PRD, architecture, UX, and project-context sources.
  - Included previous story and git intelligence to align multi-file upload with existing patterns.
+ - Plan: add per-file validation lists for entry media inputs and block submission when file errors exist.
+ - Implemented per-file validation errors for inline and gallery uploads in create/edit forms.
+ - Tests: updated `travelblogs/tests/components/create-entry-form.test.tsx`, `travelblogs/tests/components/edit-entry-form.test.tsx`; `npm test`.
+ - Implemented multi-file handling in `/api/media/upload` with per-file uploads/failures response.
+ - Tests: updated `travelblogs/tests/api/media/upload-cover-image.test.ts`; `npm test`.
+ - Added `uploadEntryMediaBatch` to return uploads/failures and emit per-file progress.
+ - Tests: added `travelblogs/tests/components/entry-media-utils.test.ts`; `npm test`.
+ - Added per-file upload status lists (progress/success/failure) for entry media and inline uploads with retry/remove.
+ - Tests: updated `travelblogs/tests/components/create-entry-form.test.tsx`, `travelblogs/tests/components/edit-entry-form.test.tsx`; `npm test`.
+ - Tests: added multi-file status coverage in create/edit entry form component tests; updated `travelblogs/tests/components/entry-media-utils.test.ts`; `npm test`.
+ - Review fixes: removed stale progress state calls and removed failed upload previews in create/edit entry forms.
+ - Updated story File List to reflect actual changed files; excluded unrelated local tooling artifacts.
 
 ### File List
 
 - _bmad-output/implementation-artifacts/2-3-multi-file-media-upload.md
-- _bmad-output/epics.md
-- _bmad-output/prd.md
-- _bmad-output/architecture.md
-- _bmad-output/ux-design-specification.md
-- _bmad-output/project-context.md
+- _bmad-output/implementation-artifacts/sprint-status.yaml
+- travelblogs/src/app/api/media/upload/route.ts
+- travelblogs/src/app/api/entries/route.ts
+- travelblogs/src/app/api/entries/[id]/route.ts
+- travelblogs/src/app/trips/page.tsx
+- travelblogs/src/app/trips/[tripId]/entries/new/page.tsx
+- travelblogs/src/app/trips/[tripId]/entries/[entryId]/edit/page.tsx
+- travelblogs/src/components/entries/create-entry-form.tsx
+- travelblogs/src/components/entries/create-entry-form-wrapper.tsx
+- travelblogs/src/components/entries/edit-entry-form.tsx
+- travelblogs/src/components/entries/entry-detail.tsx
+- travelblogs/src/components/trips/trip-detail.tsx
+- travelblogs/src/utils/entry-media.ts
+- travelblogs/prisma/schema.prisma
+- travelblogs/prisma/migrations/20251228140516_add_entry_title/
+- travelblogs/prisma/migrations/20251228142333_add_entry_cover_image/
+- travelblogs/tests/api/entries/create-entry.test.ts
+- travelblogs/tests/api/entries/update-entry.test.ts
+- travelblogs/tests/api/media/upload-cover-image.test.ts
+- travelblogs/tests/components/create-entry-form.test.tsx
+- travelblogs/tests/components/edit-entry-form.test.tsx
+- travelblogs/tests/components/entry-media-utils.test.ts

@@ -3,12 +3,9 @@
 import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-
 import DeleteTripModal from "./delete-trip-modal";
-import CreateEntryForm from "../entries/create-entry-form";
 import { isCoverImageUrl } from "../../utils/media";
-import { stripInlineImages } from "../../utils/entry-content";
+import { extractInlineImageUrls, stripInlineImages } from "../../utils/entry-content";
 
 type TripDetail = {
   id: string;
@@ -31,6 +28,8 @@ type EntryMedia = {
 type EntrySummary = {
   id: string;
   tripId: string;
+  title: string;
+  coverImageUrl?: string | null;
   text: string;
   createdAt: string;
   updatedAt: string;
@@ -52,7 +51,6 @@ const formatEntryDate = (value: string) =>
   });
 
 const TripDetail = ({ tripId }: TripDetailProps) => {
-  const router = useRouter();
   const [trip, setTrip] = useState<TripDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -147,20 +145,6 @@ const TripDetail = ({ tripId }: TripDetailProps) => {
     );
   }, [entries]);
 
-  const handleEntryCreated = (entry: EntrySummary) => {
-    setEntries((prev) => {
-      const next = [...prev.filter((item) => item.id !== entry.id), entry];
-      next.sort(
-        (left, right) =>
-          new Date(left.createdAt).getTime() -
-          new Date(right.createdAt).getTime(),
-      );
-      return next;
-    });
-    router.push(`/trips/${tripId}/entries/${entry.id}`);
-    router.refresh();
-  };
-
   if (isLoading) {
     return (
       <div className="min-h-screen bg-[#FBF7F1] px-6 py-12">
@@ -254,17 +238,14 @@ const TripDetail = ({ tripId }: TripDetailProps) => {
         </section>
 
         <section className="rounded-2xl border border-black/10 bg-white p-8 shadow-sm">
-          <header className="space-y-2">
-            <p className="text-xs uppercase tracking-[0.2em] text-[#6B635B]">
-              Entries
-            </p>
-            <h2 className="text-2xl font-semibold text-[#2D2A26]">
-              Daily updates
-            </h2>
-            <p className="text-sm text-[#6B635B]">
-              Browse each day&apos;s story in chronological order.
-            </p>
-          </header>
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <Link
+              href={`/trips/${trip.id}/entries/new`}
+              className="rounded-xl bg-[#1F6F78] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#195C63]"
+            >
+              Add story
+            </Link>
+          </div>
 
           {entriesLoading ? (
             <p className="mt-4 text-sm text-[#6B635B]">Loading entries…</p>
@@ -272,31 +253,52 @@ const TripDetail = ({ tripId }: TripDetailProps) => {
             <p className="mt-4 text-sm text-[#B34A3C]">{entriesError}</p>
           ) : entriesByDate.length === 0 ? (
             <p className="mt-4 text-sm text-[#6B635B]">
-              No entries yet. Add your first update below.
+              No entries yet. Use the add story button to get started.
             </p>
           ) : (
             <div className="mt-4 space-y-3">
               {entriesByDate.map((entry) => {
                 const preview = stripInlineImages(entry.text);
+                const inlineImages = extractInlineImageUrls(entry.text);
                 const previewText =
                   preview.length === 0
                     ? "Photo update"
                     : preview.length > 120
                       ? `${preview.slice(0, 120)}…`
                       : preview;
+                const displayTitle = entry.title?.trim()
+                  ? entry.title
+                  : previewText;
+                const cardImageUrl =
+                  entry.coverImageUrl?.trim() ||
+                  entry.media[0]?.url ||
+                  inlineImages[0];
 
                 return (
                   <Link
                     key={entry.id}
                     href={`/trips/${trip.id}/entries/${entry.id}`}
-                    className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-black/10 bg-white px-4 py-3 transition hover:border-[#1F6F78]/40 hover:shadow-sm"
+                    className="flex items-center gap-4 rounded-xl border border-black/10 bg-white px-4 py-3 transition hover:border-[#1F6F78]/40 hover:shadow-sm"
                   >
-                    <div>
+                    {cardImageUrl ? (
+                      <div
+                        className="shrink-0 overflow-hidden rounded-xl border border-black/10 bg-[#F2ECE3]"
+                        style={{ width: 139, height: 97 }}
+                      >
+                        <img
+                          src={cardImageUrl}
+                          alt={`Story cover for ${displayTitle}`}
+                          className="block h-full w-full object-cover"
+                          loading="lazy"
+                        />
+                      </div>
+                    ) : null}
+                    <div className="min-w-0 flex-1">
                       <p className="text-xs uppercase tracking-[0.2em] text-[#6B635B]">
                         {formatEntryDate(entry.createdAt)}
                       </p>
-                      <p className="mt-1 text-sm text-[#2D2A26]">
-                        {previewText}
+                      <p className="mt-1 truncate text-sm text-[#2D2A26]">
+                        {displayTitle}
                       </p>
                     </div>
                     <span className="text-xs font-semibold uppercase tracking-[0.2em] text-[#1F6F78]">
@@ -307,22 +309,6 @@ const TripDetail = ({ tripId }: TripDetailProps) => {
               })}
             </div>
           )}
-        </section>
-
-        <section className="rounded-2xl border border-black/10 bg-white p-8 shadow-sm">
-          <header className="space-y-2">
-            <p className="text-xs uppercase tracking-[0.2em] text-[#6B635B]">
-              New entry
-            </p>
-            <h2 className="text-2xl font-semibold text-[#2D2A26]">
-              Add today&apos;s story
-            </h2>
-            <p className="text-sm text-[#6B635B]">
-              Mix text and inline photos, then add any extra shots to the photo
-              gallery.
-            </p>
-          </header>
-          <CreateEntryForm tripId={trip.id} onEntryCreated={handleEntryCreated} />
         </section>
       </main>
     </div>

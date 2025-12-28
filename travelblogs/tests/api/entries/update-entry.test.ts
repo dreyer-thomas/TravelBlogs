@@ -75,6 +75,8 @@ describe("PATCH /api/entries/[id]", () => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
+        title: "Updated title",
+        coverImageUrl: "/uploads/entries/new-1.jpg",
         text: "Updated text",
         mediaUrls: ["/uploads/entries/new-1.jpg", "/uploads/entries/new-2.jpg"],
       }),
@@ -90,10 +92,59 @@ describe("PATCH /api/entries/[id]", () => {
 
     expect(response.status).toBe(200);
     expect(body.error).toBeNull();
+    expect(body.data.title).toBe("Updated title");
+    expect(body.data.coverImageUrl).toBe("/uploads/entries/new-1.jpg");
     expect(body.data.text).toBe("Updated text");
     expect(body.data.media).toHaveLength(2);
     expect(updatedEntry?.text).toBe("Updated text");
     expect(updatedEntry?.media).toHaveLength(2);
+  });
+
+  it("updates the entry date when entryDate is provided", async () => {
+    const trip = await prisma.trip.create({
+      data: {
+        title: "Date update",
+        startDate: new Date("2025-05-01"),
+        endDate: new Date("2025-05-10"),
+        ownerId: "creator",
+      },
+    });
+    const entry = await prisma.entry.create({
+      data: {
+        tripId: trip.id,
+        text: "Old text",
+        media: {
+          create: [{ url: "/uploads/entries/old.jpg" }],
+        },
+      },
+      include: { media: true },
+    });
+
+    const request = new Request(`http://localhost/api/entries/${entry.id}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        entryDate: "2025-05-05",
+        title: "Updated date title",
+        text: "Updated text",
+        mediaUrls: ["/uploads/entries/new.jpg"],
+      }),
+    });
+
+    const response = await patch(request, { params: { id: entry.id } });
+    const body = await response.json();
+
+    const updatedEntry = await prisma.entry.findUnique({
+      where: { id: entry.id },
+      include: { media: true },
+    });
+
+    expect(response.status).toBe(200);
+    expect(body.error).toBeNull();
+    expect(body.data.createdAt).toContain("2025-05-05");
+    expect(updatedEntry?.createdAt.toISOString()).toContain("2025-05-05");
   });
 
   it("updates text without replacing existing media when mediaUrls is omitted", async () => {
@@ -122,6 +173,7 @@ describe("PATCH /api/entries/[id]", () => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
+        title: "Updated text only",
         text: "Updated text only",
       }),
     });
@@ -166,6 +218,7 @@ describe("PATCH /api/entries/[id]", () => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
+        title: "Updated inline",
         text: "Updated ![Photo](/uploads/entries/inline.jpg)",
         mediaUrls: [],
       }),
@@ -188,6 +241,7 @@ describe("PATCH /api/entries/[id]", () => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
+        title: "No access",
         text: "No access.",
         mediaUrls: ["/uploads/entries/photo.jpg"],
       }),

@@ -3,13 +3,13 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/react";
 
 import CreateEntryForm from "../../src/components/entries/create-entry-form";
-import { uploadEntryMedia } from "../../src/utils/entry-media";
+import { uploadEntryMediaBatch } from "../../src/utils/entry-media";
 
 vi.mock("../../src/utils/entry-media", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../../src/utils/entry-media")>();
   return {
     ...actual,
-    uploadEntryMedia: vi.fn(),
+    uploadEntryMediaBatch: vi.fn(),
   };
 });
 
@@ -27,12 +27,17 @@ describe("CreateEntryForm", () => {
     const submitButton = screen.getByRole("button", { name: /add entry/i });
     expect(submitButton).toBeDisabled();
 
+    const titleInput = screen.getByLabelText(/entry title/i);
     const textArea = screen.getByLabelText(/entry text/i);
     const mediaInput = screen.getByLabelText(/photos section/i);
 
+    fireEvent.blur(titleInput);
     fireEvent.blur(textArea);
     fireEvent.blur(mediaInput);
 
+    expect(
+      await screen.findByText("Entry title is required."),
+    ).toBeInTheDocument();
     expect(
       await screen.findByText("Entry text is required."),
     ).toBeInTheDocument();
@@ -48,12 +53,55 @@ describe("CreateEntryForm", () => {
 
     const input = screen.getByLabelText(/photos section/i);
     const badFile = new File(["bad"], "bad.txt", { type: "text/plain" });
+    const worseFile = new File(["worse"], "worse.txt", { type: "text/plain" });
 
-    fireEvent.change(input, { target: { files: [badFile] } });
+    fireEvent.change(input, { target: { files: [badFile, worseFile] } });
 
+    expect(await screen.findByText("bad.txt")).toBeInTheDocument();
+    expect(await screen.findByText("worse.txt")).toBeInTheDocument();
     expect(
-      await screen.findByText("Media files must be a JPG, PNG, or WebP file."),
+      await screen.findAllByText(
+        "Failed: Media files must be a JPG, PNG, or WebP file.",
+      ),
+    ).toHaveLength(2);
+    expect(uploadEntryMediaBatch).not.toHaveBeenCalled();
+  });
+
+  it("shows per-file statuses for multi-file uploads", async () => {
+    const uploadEntryMediaBatchMock = vi.mocked(uploadEntryMediaBatch);
+    uploadEntryMediaBatchMock.mockImplementation(async (files, options) => ({
+      uploads: [
+        {
+          fileId: options?.getFileId?.(files[0]) ?? files[0].name,
+          fileName: files[0].name,
+          url: "/uploads/first.jpg",
+        },
+      ],
+      failures: [
+        {
+          fileId: options?.getFileId?.(files[1]) ?? files[1].name,
+          fileName: files[1].name,
+          message: "Upload failed.",
+        },
+      ],
+    }));
+
+    render(<CreateEntryForm tripId="trip-123" />);
+
+    const input = screen.getByLabelText(/photos section/i);
+    const firstFile = new File(["first"], "first.jpg", { type: "image/jpeg" });
+    const secondFile = new File(["second"], "second.jpg", {
+      type: "image/jpeg",
+    });
+
+    fireEvent.change(input, { target: { files: [firstFile, secondFile] } });
+
+    expect(await screen.findByText("first.jpg")).toBeInTheDocument();
+    expect(await screen.findByText("second.jpg")).toBeInTheDocument();
+    expect(await screen.findByText("Uploaded")).toBeInTheDocument();
+    expect(await screen.findByText("Failed: Upload failed.")).toBeInTheDocument();
+    expect(
+      await screen.findByRole("button", { name: /retry/i }),
     ).toBeInTheDocument();
-    expect(uploadEntryMedia).not.toHaveBeenCalled();
   });
 });

@@ -49,21 +49,17 @@ const EditEntryPage = async ({ params }: EditEntryPageProps) => {
           >
             ← Back to entry
           </Link>
-          <p className="text-xs uppercase tracking-[0.2em] text-[#6B635B]">
-            Entry editor
-          </p>
           <h1 className="text-3xl font-semibold text-[#2D2A26]">
-            Edit today&apos;s story
+            Edit story
           </h1>
-          <p className="text-sm text-[#6B635B]">
-            Update your text, refresh the photo gallery, and keep the story
-            current.
-          </p>
         </header>
 
         <EditEntryForm
           tripId={tripId}
           entryId={entryId}
+          initialEntryDate={entry.createdAt.toISOString()}
+          initialTitle={entry.title}
+          initialCoverImageUrl={entry.coverImageUrl}
           initialText={entry.text}
           initialMediaUrls={entry.media.map((item) => item.url)}
         />

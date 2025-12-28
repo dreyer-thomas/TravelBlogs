@@ -23,6 +23,8 @@ model Trip {
 model Entry {
   id        String      @id @default(cuid())
   tripId    String
+  title     String      @default("")
+  coverImageUrl String?
   text      String
   createdAt DateTime    @default(now())
   updatedAt DateTime    @updatedAt
