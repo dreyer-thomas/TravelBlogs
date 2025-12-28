@@ -63,6 +63,7 @@ describe("GET /api/entries/[id]", () => {
     const entry = await prisma.entry.create({
       data: {
         tripId: trip.id,
+        title: "Detail day",
         text: "Full day recap",
         media: {
           create: [{ url: "/uploads/entries/detail.jpg" }],
@@ -99,6 +100,7 @@ describe("GET /api/entries/[id]", () => {
     const entry = await prisma.entry.create({
       data: {
         tripId: trip.id,
+        title: "Not yours",
         text: "Not yours",
         media: {
           create: [{ url: "/uploads/entries/other.jpg" }],

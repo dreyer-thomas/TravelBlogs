@@ -17,7 +17,11 @@ const createEntrySchema = z
       .refine((value) => !value || !Number.isNaN(Date.parse(value)), {
         message: "Entry date is required.",
       }),
-    title: z.string().trim().min(1, "Entry title is required."),
+    title: z
+      .string()
+      .trim()
+      .min(1, "Entry title is required.")
+      .max(80, "Entry title must be 80 characters or fewer."),
     coverImageUrl: z.string().trim().optional(),
     text: z.string().trim().min(1, "Entry text is required."),
     mediaUrls: z

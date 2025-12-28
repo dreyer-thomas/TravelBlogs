@@ -61,6 +61,7 @@ describe("PATCH /api/entries/[id]", () => {
     const entry = await prisma.entry.create({
       data: {
         tripId: trip.id,
+        title: "Original title",
         text: "Old text",
         media: {
           create: [{ url: "/uploads/entries/old.jpg" }],
@@ -112,6 +113,7 @@ describe("PATCH /api/entries/[id]", () => {
     const entry = await prisma.entry.create({
       data: {
         tripId: trip.id,
+        title: "Original title",
         text: "Old text",
         media: {
           create: [{ url: "/uploads/entries/old.jpg" }],
@@ -159,6 +161,7 @@ describe("PATCH /api/entries/[id]", () => {
     const entry = await prisma.entry.create({
       data: {
         tripId: trip.id,
+        title: "Original title",
         text: "Old text",
         media: {
           create: [{ url: "/uploads/entries/keep.jpg" }],
@@ -204,6 +207,7 @@ describe("PATCH /api/entries/[id]", () => {
     const entry = await prisma.entry.create({
       data: {
         tripId: trip.id,
+        title: "Original title",
         text: "Old text",
         media: {
           create: [{ url: "/uploads/entries/old.jpg" }],
@@ -266,6 +270,7 @@ describe("PATCH /api/entries/[id]", () => {
     const entry = await prisma.entry.create({
       data: {
         tripId: trip.id,
+        title: "Original title",
         text: "Old text",
         media: {
           create: [{ url: "/uploads/entries/old.jpg" }],
@@ -279,6 +284,7 @@ describe("PATCH /api/entries/[id]", () => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
+        title: "Updated title",
         text: "Updated text",
         mediaUrls: ["/uploads/entries/new.jpg"],
       }),
@@ -303,6 +309,7 @@ describe("PATCH /api/entries/[id]", () => {
     const entry = await prisma.entry.create({
       data: {
         tripId: trip.id,
+        title: "Original title",
         text: "Old text",
         media: {
           create: [{ url: "/uploads/entries/old.jpg" }],
@@ -316,6 +323,7 @@ describe("PATCH /api/entries/[id]", () => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
+        title: "Updated title",
         text: "",
         mediaUrls: ["/uploads/entries/new.jpg"],
       }),
@@ -326,6 +334,88 @@ describe("PATCH /api/entries/[id]", () => {
 
     expect(response.status).toBe(400);
     expect(body.error.code).toBe("VALIDATION_ERROR");
+  });
+
+  it("returns validation errors for missing title", async () => {
+    const trip = await prisma.trip.create({
+      data: {
+        title: "Validation",
+        startDate: new Date("2025-05-01"),
+        endDate: new Date("2025-05-10"),
+        ownerId: "creator",
+      },
+    });
+    const entry = await prisma.entry.create({
+      data: {
+        tripId: trip.id,
+        title: "Original title",
+        text: "Old text",
+        media: {
+          create: [{ url: "/uploads/entries/old.jpg" }],
+        },
+      },
+    });
+
+    const request = new Request(`http://localhost/api/entries/${entry.id}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        title: "",
+        text: "Updated text",
+        mediaUrls: ["/uploads/entries/new.jpg"],
+      }),
+    });
+
+    const response = await patch(request, { params: { id: entry.id } });
+    const body = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(body.error.code).toBe("VALIDATION_ERROR");
+    expect(body.error.message).toBe("Entry title is required.");
+  });
+
+  it("returns validation errors for titles over 80 characters", async () => {
+    const trip = await prisma.trip.create({
+      data: {
+        title: "Validation",
+        startDate: new Date("2025-05-01"),
+        endDate: new Date("2025-05-10"),
+        ownerId: "creator",
+      },
+    });
+    const entry = await prisma.entry.create({
+      data: {
+        tripId: trip.id,
+        title: "Original title",
+        text: "Old text",
+        media: {
+          create: [{ url: "/uploads/entries/old.jpg" }],
+        },
+      },
+    });
+
+    const request = new Request(`http://localhost/api/entries/${entry.id}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        title: "a".repeat(81),
+        text: "Updated text",
+        mediaUrls: ["/uploads/entries/new.jpg"],
+      }),
+    });
+
+    const response = await patch(request, { params: { id: entry.id } });
+    const body = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(body.error.code).toBe("VALIDATION_ERROR");
+    expect(body.error.message).toBe(
+      "Entry title must be 80 characters or fewer.",
+    );
   });
 
   it("returns validation errors when no media is present", async () => {
@@ -340,6 +430,7 @@ describe("PATCH /api/entries/[id]", () => {
     const entry = await prisma.entry.create({
       data: {
         tripId: trip.id,
+        title: "Original title",
         text: "Old text",
         media: {
           create: [{ url: "/uploads/entries/old.jpg" }],
@@ -353,6 +444,7 @@ describe("PATCH /api/entries/[id]", () => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
+        title: "Updated title",
         text: "Updated text",
         mediaUrls: [],
       }),
@@ -377,6 +469,7 @@ describe("PATCH /api/entries/[id]", () => {
     const entry = await prisma.entry.create({
       data: {
         tripId: trip.id,
+        title: "Original title",
         text: "Old text",
         media: {
           create: [{ url: "/uploads/entries/old.jpg" }],
@@ -390,6 +483,7 @@ describe("PATCH /api/entries/[id]", () => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
+        title: "Updated title",
         text: "Updated text",
         mediaUrls: [""],
       }),

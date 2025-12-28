@@ -1,6 +1,6 @@
 # Story 2.5: Entry Title
 
-Status: ready-for-dev
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -17,19 +17,19 @@ so that the entry is summarized in one short message.
 
 ## Tasks / Subtasks
 
-- [ ] Add entry title to data model and API (AC: 1, 2)
-  - [ ] Add `title` field to entry model in `prisma/schema.prisma` and run migration
-  - [ ] Update entry create/update validation (Zod) to require `title` and enforce max length 80
-  - [ ] Ensure API responses include `title` in entry payloads
-- [ ] Update entry create/edit UI (AC: 1, 2)
-  - [ ] Add title input to entry create/edit form with 80-char limit hint
-  - [ ] Show validation errors for missing/too-long title
-- [ ] Display title in entry list and entry view header (AC: 1)
-  - [ ] Update entry list item to show title summary
-  - [ ] Update entry reader header to show title
-- [ ] Tests and regression checks (AC: 1, 2)
-  - [ ] Add/extend API tests for required title and max length
-  - [ ] Add/extend component tests for title rendering in list and entry view
+- [x] Add entry title to data model and API (AC: 1, 2)
+  - [x] Add `title` field to entry model in `prisma/schema.prisma` and run migration
+  - [x] Update entry create/update validation (Zod) to require `title` and enforce max length 80
+  - [x] Ensure API responses include `title` in entry payloads
+- [x] Update entry create/edit UI (AC: 1, 2)
+  - [x] Add title input to entry create/edit form with 80-char limit hint
+  - [x] Show validation errors for missing/too-long title
+- [x] Display title in entry list and entry view header (AC: 1)
+  - [x] Update entry list item to show title summary
+  - [x] Update entry reader header to show title
+- [x] Tests and regression checks (AC: 1, 2)
+  - [x] Add/extend API tests for required title and max length
+  - [x] Add/extend component tests for title rendering in list and entry view
 
 ## Dev Notes
 
@@ -101,14 +101,41 @@ GPT-5 (Codex CLI)
 
 ### Debug Log References
 
+- npm test
+
 ### Completion Notes List
 
-- Ultimate context engine analysis completed - comprehensive developer guide created
+- Added required entry titles in Prisma schema and API validation (80 char max) with payload coverage.
+- Updated entry create/edit forms with length hint and client-side validation for required titles.
+- Added component coverage for entry titles in list and entry detail header plus API validation tests.
+- Review fixes: removed client-side title gating, switched entry list thumbnails to Next.js Image, and refreshed documentation.
+- Tests: `npm test`.
 
 ### File List
 
-- TBD during implementation
+- _bmad-output/implementation-artifacts/2-5-entry-title.md
+- _bmad-output/implementation-artifacts/sprint-status.yaml
+- travelblogs/prisma/schema.prisma
+- travelblogs/prisma/migrations/20251228160000_remove_entry_title_default/migration.sql
+- travelblogs/src/app/api/entries/route.ts
+- travelblogs/src/app/api/entries/[id]/route.ts
+- travelblogs/src/components/entries/create-entry-form.tsx
+- travelblogs/src/components/entries/edit-entry-form.tsx
+- travelblogs/src/components/entries/entry-detail.tsx
+- travelblogs/src/components/trips/trip-detail.tsx
+- travelblogs/tests/api/entries/create-entry.test.ts
+- travelblogs/tests/api/entries/update-entry.test.ts
+- travelblogs/tests/api/entries/list-entries.test.ts
+- travelblogs/tests/api/entries/get-entry.test.ts
+- travelblogs/tests/components/entry-detail.test.tsx
+- travelblogs/tests/components/trip-detail.test.tsx
 
 ### Story Completion Status
 
-Status: ready-for-dev
+Status: done
+
+## Change Log
+
+- 2025-12-28: Added required entry titles with 80-char limit across Prisma, API validation, UI, and tests.
+- 2025-12-28: Documented that `20251228140516_add_entry_title` introduced the column; `20251228160000_remove_entry_title_default` only removes the default.
+- 2025-12-28: Removed client-side title gating, switched entry list thumbnails to Next.js Image, and updated file list.

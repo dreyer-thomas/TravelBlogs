@@ -50,6 +50,8 @@ const formatEntryDate = (value: string) =>
     year: "numeric",
   });
 
+const isOptimizedImage = (url: string) => url.startsWith("/");
+
 const TripDetail = ({ tripId }: TripDetailProps) => {
   const [trip, setTrip] = useState<TripDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -282,14 +284,17 @@ const TripDetail = ({ tripId }: TripDetailProps) => {
                   >
                     {cardImageUrl ? (
                       <div
-                        className="shrink-0 overflow-hidden rounded-xl border border-black/10 bg-[#F2ECE3]"
+                        className="relative shrink-0 overflow-hidden rounded-xl border border-black/10 bg-[#F2ECE3]"
                         style={{ width: 139, height: 97 }}
                       >
-                        <img
+                        <Image
                           src={cardImageUrl}
                           alt={`Story cover for ${displayTitle}`}
-                          className="block h-full w-full object-cover"
+                          fill
+                          sizes="140px"
+                          className="object-cover"
                           loading="lazy"
+                          unoptimized={!isOptimizedImage(cardImageUrl)}
                         />
                       </div>
                     ) : null}

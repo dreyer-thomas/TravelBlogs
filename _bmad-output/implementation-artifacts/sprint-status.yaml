@@ -57,8 +57,9 @@ development_status:
   2-1-add-blog-entry: done
   2-2-edit-blog-entry: done
   2-3-multi-file-media-upload: done
-  2-4-delete-blog-entry: ready-for-dev
-  2-5-entry-title: ready-for-dev
+  2-4-delete-blog-entry: done
+  2-5-entry-title: done
+  2-6-unified-entry-image-library: ready-for-dev
   epic-2-retrospective: optional
 
   epic-3: in-progress

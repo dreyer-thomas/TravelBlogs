@@ -17,6 +17,10 @@ const jsonError = (status: number, code: string, message: string) => {
   );
 };
 
+const entryIdSchema = z.object({
+  id: z.string().trim().min(1, "Entry id is required."),
+});
+
 const getUserId = async (request: Request) => {
   try {
     const token = await getToken({ req: request });
@@ -35,7 +39,11 @@ const updateEntrySchema = z
       .refine((value) => !value || !Number.isNaN(Date.parse(value)), {
         message: "Entry date is required.",
       }),
-    title: z.string().trim().min(1, "Entry title is required."),
+    title: z
+      .string()
+      .trim()
+      .min(1, "Entry title is required.")
+      .max(80, "Entry title must be 80 characters or fewer."),
     coverImageUrl: z.string().trim().optional().nullable(),
     text: z.string().trim().min(1, "Entry text is required."),
     mediaUrls: z
@@ -230,5 +238,60 @@ export const PATCH = async (
   } catch (error) {
     console.error("Failed to update entry", error);
     return jsonError(500, "INTERNAL_SERVER_ERROR", "Unable to update entry.");
+  }
+};
+
+export const DELETE = async (
+  request: Request,
+  { params }: { params: Promise<{ id: string }> | { id: string } },
+) => {
+  try {
+    const userId = await getUserId(request);
+    if (!userId) {
+      return jsonError(401, "UNAUTHORIZED", "Authentication required.");
+    }
+    if (userId !== "creator") {
+      return jsonError(403, "FORBIDDEN", "Creator access required.");
+    }
+
+    const { id } = await params;
+    const parsed = entryIdSchema.safeParse({ id });
+    if (!parsed.success) {
+      return jsonError(
+        400,
+        "VALIDATION_ERROR",
+        parsed.error.issues[0]?.message ?? "Entry id is required.",
+      );
+    }
+
+    const entry = await prisma.entry.findUnique({
+      where: { id },
+      include: { trip: true },
+    });
+
+    if (!entry) {
+      return jsonError(404, "NOT_FOUND", "Entry not found.");
+    }
+
+    if (entry.trip.ownerId !== userId) {
+      return jsonError(403, "FORBIDDEN", "Not authorized to delete this entry.");
+    }
+
+    const deletedEntry = await prisma.entry.delete({
+      where: { id },
+    });
+
+    return NextResponse.json(
+      {
+        data: {
+          id: deletedEntry.id,
+        },
+        error: null,
+      },
+      { status: 200 },
+    );
+  } catch (error) {
+    console.error("Failed to delete entry", error);
+    return jsonError(500, "INTERNAL_SERVER_ERROR", "Unable to delete entry.");
   }
 };

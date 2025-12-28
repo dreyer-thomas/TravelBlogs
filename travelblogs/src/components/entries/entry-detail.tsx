@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 
+import DeleteEntryModal from "./delete-entry-modal";
 import {
   extractInlineImageUrls,
   getPhotoTimestamp,
@@ -188,12 +189,19 @@ const EntryDetail = ({ tripId, entryId }: EntryDetailProps) => {
                 Updated {formatDate(entry.updatedAt)}
               </p>
             </div>
-            <Link
-              href={`/trips/${tripId}/entries/${entryId}/edit`}
-              className="rounded-xl bg-[#1F6F78] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#195C63]"
-            >
-              Edit entry
-            </Link>
+            <div className="flex flex-wrap items-center gap-3">
+              <Link
+                href={`/trips/${tripId}/entries/${entryId}/edit`}
+                className="rounded-xl bg-[#1F6F78] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#195C63]"
+              >
+                Edit entry
+              </Link>
+              <DeleteEntryModal
+                tripId={tripId}
+                entryId={entryId}
+                entryTitle={entry.title}
+              />
+            </div>
           </header>
 
           <div className="mt-6 space-y-4">

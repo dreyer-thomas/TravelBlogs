@@ -375,6 +375,32 @@ So that the entry is summarized in one short message.
 **Then** I see a clear validation error  
 **And** the entry is not saved
 
+### Story 2.6: Unified Entry Image Library
+
+As a creator,
+I want all entry images managed in one place,
+So that I can select the story image, insert inline photos, or remove images without re-uploading.
+
+**Acceptance Criteria:**
+
+**Given** I am creating or editing an entry  
+**When** I upload images  
+**Then** they appear in a single entry image library as the first step in the media flow  
+
+**Given** I hover over an image in the library  
+**When** I choose "Set as story image"  
+**Then** that image becomes the story image selection  
+
+**Given** I hover over an image in the library  
+**When** I choose "Insert inline"  
+**Then** an image link in the format `![Entry photo](<url>)` is inserted at the current cursor position in the entry text  
+**And** if the image already has a custom alt in the entry text, it is preserved  
+
+**Given** I hover over an image in the library  
+**When** I choose "Remove"  
+**Then** the image is removed from the entry media and no longer selectable for story or inline use  
+**And** any inline references matching `![...](<url>)` are removed from the entry text
+
 ## Epic 3: Entry Reading & Navigation (MVP)
 
 Viewers and creators can read entries in a fast, media-first, single-page experience with clear navigation.

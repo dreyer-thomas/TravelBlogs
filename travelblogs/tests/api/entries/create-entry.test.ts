@@ -219,6 +219,7 @@ describe("POST /api/entries", () => {
       },
       body: JSON.stringify({
         tripId: "trip-123",
+        title: "No text",
         text: "",
         mediaUrls: ["/uploads/entries/photo.jpg"],
       }),
@@ -231,6 +232,52 @@ describe("POST /api/entries", () => {
     expect(body.error.code).toBe("VALIDATION_ERROR");
   });
 
+  it("returns validation errors for missing title", async () => {
+    const request = new Request("http://localhost/api/entries", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        tripId: "trip-123",
+        title: "",
+        text: "Today was a good day.",
+        mediaUrls: ["/uploads/entries/photo.jpg"],
+      }),
+    });
+
+    const response = await post(request);
+    const body = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(body.error.code).toBe("VALIDATION_ERROR");
+    expect(body.error.message).toBe("Entry title is required.");
+  });
+
+  it("returns validation errors for titles over 80 characters", async () => {
+    const request = new Request("http://localhost/api/entries", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        tripId: "trip-123",
+        title: "a".repeat(81),
+        text: "Today was a good day.",
+        mediaUrls: ["/uploads/entries/photo.jpg"],
+      }),
+    });
+
+    const response = await post(request);
+    const body = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(body.error.code).toBe("VALIDATION_ERROR");
+    expect(body.error.message).toBe(
+      "Entry title must be 80 characters or fewer.",
+    );
+  });
+
   it("returns validation errors for missing media", async () => {
     const request = new Request("http://localhost/api/entries", {
       method: "POST",
@@ -239,6 +286,7 @@ describe("POST /api/entries", () => {
       },
       body: JSON.stringify({
         tripId: "trip-123",
+        title: "No photos",
         text: "Today was a good day.",
         mediaUrls: [],
       }),
@@ -259,6 +307,7 @@ describe("POST /api/entries", () => {
       },
       body: JSON.stringify({
         tripId: "",
+        title: "Missing trip",
         text: "Today was a good day.",
         mediaUrls: ["/uploads/entries/photo.jpg"],
       }),

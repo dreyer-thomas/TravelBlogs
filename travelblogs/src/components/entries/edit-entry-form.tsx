@@ -46,6 +46,8 @@ type EditEntryFormProps = {
 const isValidEntryDate = (value: string) =>
   Boolean(value) && !Number.isNaN(Date.parse(value));
 
+const maxTitleLength = 80;
+
 const toDateInputValue = (value: string) => {
   const parsed = new Date(value);
   return Number.isNaN(parsed.getTime())
@@ -64,10 +66,6 @@ const getErrors = (
 
   if (!isValidEntryDate(entryDate)) {
     nextErrors.date = "Entry date is required.";
-  }
-
-  if (!title.trim()) {
-    nextErrors.title = "Entry title is required.";
   }
 
   if (!text.trim()) {
@@ -163,10 +161,7 @@ const EditEntryForm = ({
 
   const updateTitle = (value: string) => {
     setTitle(value);
-    setErrors((prev) => ({
-      ...prev,
-      title: value.trim() ? undefined : "Entry title is required.",
-    }));
+    setErrors((prev) => ({ ...prev, title: undefined }));
   };
 
   const updateEntryDate = (value: string) => {
@@ -191,15 +186,6 @@ const EditEntryForm = ({
       setErrors((prev) => ({
         ...prev,
         text: "Entry text is required.",
-      }));
-    }
-  };
-
-  const handleTitleBlur = () => {
-    if (!title.trim()) {
-      setErrors((prev) => ({
-        ...prev,
-        title: "Entry title is required.",
       }));
     }
   };
@@ -495,7 +481,6 @@ const EditEntryForm = ({
   );
   const canSubmit = Boolean(
     isValidEntryDate(entryDate) &&
-      title.trim() &&
       text.trim() &&
       (mediaUrls.length > 0 || inlineImageUrls.length > 0) &&
       !hasFieldErrors &&
@@ -735,6 +720,8 @@ const EditEntryForm = ({
             setErrors({ date: message });
           } else if (message === "Entry title is required.") {
             setErrors({ title: message });
+          } else if (message === "Entry title must be 80 characters or fewer.") {
+            setErrors({ title: message });
           } else if (message === "Entry text is required.") {
             setErrors({ text: message });
           } else if (
@@ -772,10 +759,12 @@ const EditEntryForm = ({
           name="title"
           value={title}
           onChange={(event) => updateTitle(event.target.value)}
-          onBlur={handleTitleBlur}
           className="mt-2 w-full rounded-xl border border-black/10 px-3 py-2 text-sm focus:border-[#1F6F78] focus:outline-none focus:ring-2 focus:ring-[#1F6F78]/20"
           placeholder="Give the day a headline..."
         />
+        <p className="mt-2 text-xs text-[#6B635B]">
+          Max {maxTitleLength} characters.
+        </p>
         {errors.title ? (
           <p className="mt-2 text-xs text-[#B34A3C]">{errors.title}</p>
         ) : null}

@@ -1,6 +1,6 @@
 # Story 2.4: Delete Blog Entry
 
-Status: ready-for-dev
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -22,21 +22,21 @@ so that I can remove entries I no longer want to keep.
 
 ## Tasks / Subtasks
 
-- [ ] Define delete entry request and validation (AC: 1, 2)
-  - [ ] Ensure entry id param is validated and errors follow standard response wrapper
-- [ ] Implement delete entry API flow (AC: 1, 2)
-  - [ ] Add DELETE handler in `src/app/api/entries/[id]/route.ts`
-  - [ ] Enforce creator-only auth and trip ownership checks
-  - [ ] Delete entry and associated media in Prisma
-- [ ] Build creator UI for entry deletion (AC: 1, 2)
-  - [ ] Add delete CTA in entry detail view
-  - [ ] Confirmation modal with cancel/confirm paths
-  - [ ] Redirect back to trip entry list after deletion
-- [ ] Update trip entries list after deletion (AC: 1)
-  - [ ] Remove deleted entry from list UI without stale state
-- [ ] Add tests for delete flow (AC: 1, 2)
-  - [ ] API tests for delete success, unauthorized access, and not found
-  - [ ] Component test for delete confirmation behavior
+- [x] Define delete entry request and validation (AC: 1, 2)
+  - [x] Ensure entry id param is validated and errors follow standard response wrapper
+- [x] Implement delete entry API flow (AC: 1, 2)
+  - [x] Add DELETE handler in `src/app/api/entries/[id]/route.ts`
+  - [x] Enforce creator-only auth and trip ownership checks
+  - [x] Delete entry and associated media in Prisma
+- [x] Build creator UI for entry deletion (AC: 1, 2)
+  - [x] Add delete CTA in entry detail view
+  - [x] Confirmation modal with cancel/confirm paths
+  - [x] Redirect back to trip entry list after deletion
+- [x] Update trip entries list after deletion (AC: 1)
+  - [x] Remove deleted entry from list UI without stale state
+- [x] Add tests for delete flow (AC: 1, 2)
+  - [x] API tests for delete success, unauthorized access, and not found
+  - [x] Component test for delete confirmation behavior
 
 ## Dev Notes
 
@@ -108,8 +108,13 @@ so that I can remove entries I no longer want to keep.
 
 ## Story Completion Status
 
-- Status set to ready-for-dev.
+- Status set to review.
 - Note: Ultimate context engine analysis completed; comprehensive developer guide created.
+
+## Change Log
+
+- 2025-12-28: Implemented entry deletion API + UI, added tests, and refreshed entry list navigation.
+- 2025-12-28: Fixed create-entry import path, added delete accessibility tests, and documented operational file changes.
 
 ## Dev Agent Record
 
@@ -125,12 +130,24 @@ GPT-5 (Codex CLI)
 
  - Story context generated from epics, PRD, architecture, UX, and project-context sources.
  - Included previous story and git intelligence to align delete flow with existing patterns.
+ - Implemented DELETE /api/entries/{id} with id validation, owner checks, and cascade delete behavior.
+ - Added delete entry modal to entry detail with confirmation flow and trip list redirect.
+ - Added API and component coverage for delete flow; updated update-entry test payload to satisfy validation.
+ - Code review fixes: corrected create entry import path, added delete access coverage, and documented operational changes.
 
 ### File List
 
+- .codex/history.jsonl
+- .codex/log/codex-tui.log
+- .codex/sessions/2025/12/28/rollout-2025-12-28T15-49-19-019b656f-6ca3-7981-ac4a-987399172cac.jsonl
+- .codex/sessions/2025/12/28/rollout-2025-12-28T16-55-51-019b65ac-5679-79f1-8590-20e1621e840a.jsonl
+- .codex/sessions/2025/12/28/rollout-2025-12-28T17-06-14-019b65b5-d71a-7832-bff9-f2984a2d3d50.jsonl
 - _bmad-output/implementation-artifacts/2-4-delete-blog-entry.md
-- _bmad-output/epics.md
-- _bmad-output/prd.md
-- _bmad-output/architecture.md
-- _bmad-output/ux-design-specification.md
-- _bmad-output/project-context.md
+- _bmad-output/implementation-artifacts/sprint-status.yaml
+- travelblogs/src/app/api/entries/[id]/route.ts
+- travelblogs/src/app/trips/[tripId]/entries/new/page.tsx
+- travelblogs/src/components/entries/delete-entry-modal.tsx
+- travelblogs/src/components/entries/entry-detail.tsx
+- travelblogs/tests/api/entries/delete-entry.test.ts
+- travelblogs/tests/api/entries/update-entry.test.ts
+- travelblogs/tests/components/delete-entry-modal.test.tsx

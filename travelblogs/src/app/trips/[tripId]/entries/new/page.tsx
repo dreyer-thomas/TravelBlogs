@@ -2,8 +2,8 @@ import Link from "next/link";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 
-import CreateEntryFormWrapper from "../../../../components/entries/create-entry-form-wrapper";
-import { authOptions } from "../../../../utils/auth-options";
+import CreateEntryFormWrapper from "@/components/entries/create-entry-form-wrapper";
+import { authOptions } from "@/utils/auth-options";
 
 type NewEntryPageProps = {
   params: {

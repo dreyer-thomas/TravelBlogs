@@ -60,6 +60,7 @@ describe("GET /api/entries", () => {
     const olderEntry = await prisma.entry.create({
       data: {
         tripId: trip.id,
+        title: "Day one",
         text: "First day",
         createdAt: new Date("2025-06-02T10:00:00Z"),
         updatedAt: new Date("2025-06-02T10:00:00Z"),
@@ -75,6 +76,7 @@ describe("GET /api/entries", () => {
     const newerEntry = await prisma.entry.create({
       data: {
         tripId: trip.id,
+        title: "Day two",
         text: "Second day",
         createdAt: new Date("2025-06-03T10:00:00Z"),
         updatedAt: new Date("2025-06-03T10:00:00Z"),

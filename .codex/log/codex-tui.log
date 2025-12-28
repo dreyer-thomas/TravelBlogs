@@ -32332,3 +32332,2660 @@
 2025-12-28T15:55:06.001117Z  INFO ToolCall: shell_command {"command":"git status --porcelain","workdir":"/Users/tommy/Development/TravelBlogs"}
 2025-12-28T15:55:10.095390Z  INFO ToolCall: shell_command {"command":"git add -A","workdir":"/Users/tommy/Development/TravelBlogs"}
 2025-12-28T15:55:14.481190Z  INFO ToolCall: shell_command {"command":"git add -A","workdir":"/Users/tommy/Development/TravelBlogs","sandbox_permissions":"require_escalated","justification":"Need escalated permissions to update the git index for committing all changes."}
+2025-12-28T15:55:20.915074Z  INFO ToolCall: shell_command {"command":"git commit -m \"Story 2.3 Multi File Media Upload\"","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T15:55:24.527349Z  INFO ToolCall: shell_command {"command":"git commit -m \"Story 2.3 Multi File Media Upload\"","workdir":"/Users/tommy/Development/TravelBlogs","sandbox_permissions":"require_escalated","justification":"Need escalated permissions to write the git commit in this repo."}
+2025-12-28T15:55:58.699986Z  INFO spawning ghost snapshot task
+2025-12-28T15:55:58.853863Z  INFO ghost snapshot blocking task finished
+2025-12-28T15:55:58.853881Z  INFO ghost commit captured: 002682522b6d429e7fdeaa6f5b44f00550fe58dd
+2025-12-28T15:55:58.853884Z  INFO ghost snapshot gate marked ready
+2025-12-28T15:56:01.641846Z  INFO ToolCall: shell_command {"command":"ls","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T15:56:03.869038Z  INFO ToolCall: shell_command {"command":"cat /Users/tommy/Development/TravelBlogs/_bmad/bmm/agents/dev.md","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T15:56:06.564815Z  INFO ToolCall: shell_command {"command":"cat /Users/tommy/Development/TravelBlogs/_bmad/bmm/config.yaml","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T15:56:13.085931Z  INFO spawning ghost snapshot task
+2025-12-28T15:56:13.235652Z  INFO ghost snapshot blocking task finished
+2025-12-28T15:56:13.235673Z  INFO ghost commit captured: 80187f271026aeb8d4db121086b27c208413af75
+2025-12-28T15:56:13.235677Z  INFO ghost snapshot gate marked ready
+2025-12-28T15:56:16.310635Z  INFO ToolCall: shell_command {"command":"cat /Users/tommy/Development/TravelBlogs/_bmad/core/tasks/workflow.xml","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T15:56:19.864682Z  INFO ToolCall: shell_command {"command":"cat /Users/tommy/Development/TravelBlogs/_bmad/bmm/workflows/4-implementation/dev-story/workflow.yaml","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T15:56:23.937849Z  INFO ToolCall: shell_command {"command":"cat /Users/tommy/Development/TravelBlogs/_bmad/bmm/workflows/4-implementation/dev-story/instructions.xml","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T15:56:30.033948Z  INFO ToolCall: shell_command {"command":"ls /Users/tommy/Development/TravelBlogs/_bmad-output/implementation-artifacts","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T15:56:32.918672Z  INFO ToolCall: shell_command {"command":"cat /Users/tommy/Development/TravelBlogs/_bmad-output/implementation-artifacts/sprint-status.yaml","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T15:56:38.578785Z  INFO ToolCall: shell_command {"command":"cat /Users/tommy/Development/TravelBlogs/_bmad-output/implementation-artifacts/2-4-delete-blog-entry.md","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T15:56:56.600840Z  INFO spawning ghost snapshot task
+2025-12-28T15:56:56.749570Z  INFO ghost snapshot blocking task finished
+2025-12-28T15:56:56.749588Z  INFO ghost commit captured: f9314e0fab1b6800bb60f699e1883a666346ceb7
+2025-12-28T15:56:56.749592Z  INFO ghost snapshot gate marked ready
+2025-12-28T15:57:01.358837Z  INFO ToolCall: shell_command {"command":"rg --files -g 'project-context.md'","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T15:57:03.494466Z  INFO ToolCall: shell_command {"command":"cat /Users/tommy/Development/TravelBlogs/_bmad-output/project-context.md","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T15:57:07.911044Z  INFO spawning ghost snapshot task
+2025-12-28T15:57:08.055245Z  INFO ghost snapshot blocking task finished
+2025-12-28T15:57:08.055263Z  INFO ghost commit captured: b1b14eafab379f2b47a60d0c7e539b55c7edb494
+2025-12-28T15:57:08.055267Z  INFO ghost snapshot gate marked ready
+2025-12-28T15:57:13.266271Z  INFO spawning ghost snapshot task
+2025-12-28T15:57:13.421855Z  INFO ghost snapshot blocking task finished
+2025-12-28T15:57:13.421875Z  INFO ghost commit captured: 8dc3caaaa0a3d562b134da0a0be050c5b1936f42
+2025-12-28T15:57:13.421878Z  INFO ghost snapshot gate marked ready
+2025-12-28T15:57:16.304196Z  INFO ToolCall: shell_command {"command":"cat /Users/tommy/Development/TravelBlogs/_bmad-output/implementation-artifacts/sprint-status.yaml","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T15:57:19.431412Z  INFO ToolCall: apply_patch *** Begin Patch
+*** Update File: /Users/tommy/Development/TravelBlogs/_bmad-output/implementation-artifacts/sprint-status.yaml
+@@
+-  2-4-delete-blog-entry: ready-for-dev
++  2-4-delete-blog-entry: in-progress
+*** End Patch
+2025-12-28T15:57:32.574459Z  INFO spawning ghost snapshot task
+2025-12-28T15:57:32.728191Z  INFO ghost snapshot blocking task finished
+2025-12-28T15:57:32.728210Z  INFO ghost commit captured: cb684d05249f483c28604fb80735fc7a78508d5e
+2025-12-28T15:57:32.728213Z  INFO ghost snapshot gate marked ready
+2025-12-28T15:57:37.700190Z  INFO ToolCall: shell_command {"command":"rg --files","workdir":"/Users/tommy/Development/TravelBlogs/travelblogs"}
+2025-12-28T15:57:42.177856Z  INFO ToolCall: shell_command {"command":"cat /Users/tommy/Development/TravelBlogs/travelblogs/src/app/api/entries/[id]/route.ts","workdir":"/Users/tommy/Development/TravelBlogs/travelblogs"}
+2025-12-28T15:57:43.130760Z  INFO ToolCall: shell_command {"command":"cat /Users/tommy/Development/TravelBlogs/travelblogs/src/components/entries/entry-detail.tsx","workdir":"/Users/tommy/Development/TravelBlogs/travelblogs"}
+2025-12-28T15:57:44.093917Z  INFO ToolCall: shell_command {"command":"cat /Users/tommy/Development/TravelBlogs/travelblogs/src/components/trips/trip-detail.tsx","workdir":"/Users/tommy/Development/TravelBlogs/travelblogs"}
+2025-12-28T15:57:45.137054Z  INFO ToolCall: shell_command {"command":"cat /Users/tommy/Development/TravelBlogs/travelblogs/tests/api/entries/get-entry.test.ts","workdir":"/Users/tommy/Development/TravelBlogs/travelblogs"}
+2025-12-28T15:57:47.952061Z  INFO ToolCall: shell_command {"command":"cat '/Users/tommy/Development/TravelBlogs/travelblogs/src/app/api/entries/[id]/route.ts'","workdir":"/Users/tommy/Development/TravelBlogs/travelblogs"}
+2025-12-28T15:57:51.996016Z  INFO ToolCall: shell_command {"command":"cat /Users/tommy/Development/TravelBlogs/travelblogs/src/components/trips/delete-trip-modal.tsx","workdir":"/Users/tommy/Development/TravelBlogs/travelblogs"}
+2025-12-28T15:57:52.917543Z  INFO ToolCall: shell_command {"command":"cat /Users/tommy/Development/TravelBlogs/travelblogs/tests/api/trips/delete-trip.test.ts","workdir":"/Users/tommy/Development/TravelBlogs/travelblogs"}
+2025-12-28T15:57:53.914037Z  INFO ToolCall: shell_command {"command":"cat /Users/tommy/Development/TravelBlogs/travelblogs/tests/api/entries/update-entry.test.ts","workdir":"/Users/tommy/Development/TravelBlogs/travelblogs"}
+2025-12-28T15:57:57.569234Z  INFO ToolCall: shell_command {"command":"cat /Users/tommy/Development/TravelBlogs/travelblogs/tests/api/entries/create-entry.test.ts","workdir":"/Users/tommy/Development/TravelBlogs/travelblogs"}
+2025-12-28T15:58:07.886737Z  INFO ToolCall: shell_command {"command":"cat '/Users/tommy/Development/TravelBlogs/travelblogs/src/app/api/trips/[id]/route.ts'","workdir":"/Users/tommy/Development/TravelBlogs/travelblogs"}
+2025-12-28T15:58:16.292670Z  INFO ToolCall: shell_command {"command":"cat /Users/tommy/Development/TravelBlogs/travelblogs/prisma/schema.prisma","workdir":"/Users/tommy/Development/TravelBlogs/travelblogs"}
+2025-12-28T15:58:20.601401Z  INFO ToolCall: shell_command {"command":"cat /Users/tommy/Development/TravelBlogs/travelblogs/tests/components/edit-entry-form.test.tsx","workdir":"/Users/tommy/Development/TravelBlogs/travelblogs"}
+2025-12-28T15:58:24.372828Z  INFO ToolCall: shell_command {"command":"cat /Users/tommy/Development/TravelBlogs/travelblogs/tests/components/cover-image-form.test.tsx","workdir":"/Users/tommy/Development/TravelBlogs/travelblogs"}
+2025-12-28T15:59:45.601198Z  INFO ToolCall: shell_command {"command":"cat /Users/tommy/Development/TravelBlogs/travelblogs/package.json","workdir":"/Users/tommy/Development/TravelBlogs/travelblogs"}
+2025-12-28T16:00:36.546989Z  INFO ToolCall: apply_patch *** Begin Patch
+*** Add File: /Users/tommy/Development/TravelBlogs/travelblogs/tests/api/entries/delete-entry.test.ts
++import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
++import { execSync } from "node:child_process";
++import type { PrismaClient } from "@prisma/client";
++import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
++
++const getToken = vi.hoisted(() => vi.fn());
++
++vi.mock("next-auth/jwt", () => ({
++  getToken,
++}));
++
++const testDatabaseUrl = "file:./prisma/test-delete-entry.db";
++
++describe("DELETE /api/entries/[id]", () => {
++  let del: (
++    request: Request,
++    context: { params: { id: string } },
++  ) => Promise<Response>;
++  let prisma: PrismaClient;
++
++  beforeAll(async () => {
++    process.env.DATABASE_URL = testDatabaseUrl;
++    execSync("npx prisma migrate deploy", {
++      stdio: "ignore",
++      env: {
++        ...process.env,
++        DATABASE_URL: testDatabaseUrl,
++      },
++    });
++
++    const prismaModule = await import("@prisma/client");
++    const adapter = new PrismaBetterSqlite3({
++      url: testDatabaseUrl.replace(/^file:/, ""),
++    });
++    prisma = new prismaModule.PrismaClient({ adapter });
++
++    const routeModule = await import("../../../src/app/api/entries/[id]/route");
++    del = routeModule.DELETE;
++  });
++
++  beforeEach(async () => {
++    getToken.mockReset();
++    getToken.mockResolvedValue({ sub: "creator" });
++    await prisma.entryMedia.deleteMany();
++    await prisma.entry.deleteMany();
++    await prisma.trip.deleteMany();
++  });
++
++  afterAll(async () => {
++    await prisma.$disconnect();
++  });
++
++  it("returns validation errors for empty entry id", async () => {
++    const request = new Request("http://localhost/api/entries/", {
++      method: "DELETE",
++    });
++
++    const response = await del(request, { params: { id: "" } });
++    const body = await response.json();
++
++    expect(response.status).toBe(400);
++    expect(body.error.code).toBe("VALIDATION_ERROR");
++  });
++
++  it("deletes an entry for an owned trip", async () => {
++    const trip = await prisma.trip.create({
++      data: {
++        title: "Delete Entry",
++        startDate: new Date("2025-05-01"),
++        endDate: new Date("2025-05-10"),
++        ownerId: "creator",
++      },
++    });
++
++    const entry = await prisma.entry.create({
++      data: {
++        tripId: trip.id,
++        text: "Entry to delete.",
++        media: {
++          create: [{ url: "/uploads/entries/delete-1.jpg" }],
++        },
++      },
++      include: { media: true },
++    });
++
++    const request = new Request(`http://localhost/api/entries/${entry.id}`, {
++      method: "DELETE",
++    });
++
++    const response = await del(request, { params: { id: entry.id } });
++    const body = await response.json();
++
++    const remainingEntry = await prisma.entry.findUnique({
++      where: { id: entry.id },
++    });
++    const remainingMedia = await prisma.entryMedia.findMany({
++      where: { entryId: entry.id },
++    });
++
++    expect(response.status).toBe(200);
++    expect(body.error).toBeNull();
++    expect(body.data.id).toBe(entry.id);
++    expect(remainingEntry).toBeNull();
++    expect(remainingMedia).toHaveLength(0);
++  });
++
++  it("rejects unauthenticated requests", async () => {
++    getToken.mockResolvedValue(null);
++
++    const request = new Request("http://localhost/api/entries/any", {
++      method: "DELETE",
++    });
++
++    const response = await del(request, { params: { id: "any" } });
++    const body = await response.json();
++
++    expect(response.status).toBe(401);
++    expect(body.error.code).toBe("UNAUTHORIZED");
++  });
++
++  it("rejects deleting entries not owned by the creator", async () => {
++    const trip = await prisma.trip.create({
++      data: {
++        title: "Not Yours",
++        startDate: new Date("2025-05-01"),
++        endDate: new Date("2025-05-02"),
++        ownerId: "someone-else",
++      },
++    });
++
++    const entry = await prisma.entry.create({
++      data: {
++        tripId: trip.id,
++        text: "Not yours.",
++        media: {
++          create: [{ url: "/uploads/entries/other.jpg" }],
++        },
++      },
++    });
++
++    const request = new Request(`http://localhost/api/entries/${entry.id}`, {
++      method: "DELETE",
++    });
++
++    const response = await del(request, { params: { id: entry.id } });
++    const body = await response.json();
++
++    expect(response.status).toBe(403);
++    expect(body.error.code).toBe("FORBIDDEN");
++  });
++
++  it("returns not found when the entry does not exist", async () => {
++    const request = new Request("http://localhost/api/entries/missing", {
++      method: "DELETE",
++    });
++
++    const response = await del(request, { params: { id: "missing" } });
++    const body = await response.json();
++
++    expect(response.status).toBe(404);
++    expect(body.error.code).toBe("NOT_FOUND");
++  });
++});
+*** End Patch
+2025-12-28T16:00:41.473530Z  INFO ToolCall: shell_command {"command":"npx vitest run tests/api/entries/delete-entry.test.ts","workdir":"/Users/tommy/Development/TravelBlogs/travelblogs"}
+2025-12-28T16:00:57.531660Z  INFO ToolCall: apply_patch *** Begin Patch
+*** Update File: /Users/tommy/Development/TravelBlogs/travelblogs/src/app/api/entries/[id]/route.ts
+@@
+ const jsonError = (status: number, code: string, message: string) => {
+   return NextResponse.json(
+     {
+       data: null,
+       error: { code, message },
+     },
+     { status },
+   );
+ };
+ 
++const entryIdSchema = z.object({
++  id: z.string().trim().min(1, "Entry id is required."),
++});
++
+ const getUserId = async (request: Request) => {
+   try {
+     const token = await getToken({ req: request });
+     return token?.sub ?? null;
+   } catch {
+@@
+ export const PATCH = async (
+   request: Request,
+   { params }: { params: Promise<{ id: string }> | { id: string } },
+ ) => {
+@@
+   }
+ };
++
++export const DELETE = async (
++  request: Request,
++  { params }: { params: Promise<{ id: string }> | { id: string } },
++) => {
++  try {
++    const userId = await getUserId(request);
++    if (!userId) {
++      return jsonError(401, "UNAUTHORIZED", "Authentication required.");
++    }
++    if (userId !== "creator") {
++      return jsonError(403, "FORBIDDEN", "Creator access required.");
++    }
++
++    const { id } = await params;
++    const parsed = entryIdSchema.safeParse({ id });
++    if (!parsed.success) {
++      return jsonError(
++        400,
++        "VALIDATION_ERROR",
++        parsed.error.issues[0]?.message ?? "Entry id is required.",
++      );
++    }
++
++    const entry = await prisma.entry.findUnique({
++      where: { id },
++      include: { trip: true },
++    });
++
++    if (!entry) {
++      return jsonError(404, "NOT_FOUND", "Entry not found.");
++    }
++
++    if (entry.trip.ownerId !== userId) {
++      return jsonError(403, "FORBIDDEN", "Not authorized to delete this entry.");
++    }
++
++    const deletedEntry = await prisma.entry.delete({
++      where: { id },
++    });
++
++    return NextResponse.json(
++      {
++        data: {
++          id: deletedEntry.id,
++        },
++        error: null,
++      },
++      { status: 200 },
++    );
++  } catch (error) {
++    console.error("Failed to delete entry", error);
++    return jsonError(500, "INTERNAL_SERVER_ERROR", "Unable to delete entry.");
++  }
++};
+*** End Patch
+2025-12-28T16:01:02.205502Z  INFO ToolCall: shell_command {"command":"npx vitest run tests/api/entries/delete-entry.test.ts","workdir":"/Users/tommy/Development/TravelBlogs/travelblogs"}
+2025-12-28T16:01:07.761366Z  INFO ToolCall: shell_command {"command":"npm test","workdir":"/Users/tommy/Development/TravelBlogs/travelblogs","timeout_ms":120000}
+2025-12-28T16:01:50.576967Z  INFO ToolCall: shell_command {"command":"rg -n \"rejects updates for entries not owned\" -n /Users/tommy/Development/TravelBlogs/travelblogs/tests/api/entries/update-entry.test.ts","workdir":"/Users/tommy/Development/TravelBlogs/travelblogs"}
+2025-12-28T16:01:55.100604Z  INFO ToolCall: shell_command {"command":"sed -n '257,315p' /Users/tommy/Development/TravelBlogs/travelblogs/tests/api/entries/update-entry.test.ts","workdir":"/Users/tommy/Development/TravelBlogs/travelblogs"}
+2025-12-28T16:01:59.660025Z  INFO ToolCall: apply_patch *** Begin Patch
+*** Update File: /Users/tommy/Development/TravelBlogs/travelblogs/tests/api/entries/update-entry.test.ts
+@@
+       headers: {
+         "Content-Type": "application/json",
+       },
+       body: JSON.stringify({
++        title: "Updated title",
+         text: "Updated text",
+         mediaUrls: ["/uploads/entries/new.jpg"],
+       }),
+     });
+*** End Patch
+2025-12-28T16:02:03.343041Z  INFO ToolCall: shell_command {"command":"npm test","workdir":"/Users/tommy/Development/TravelBlogs/travelblogs","timeout_ms":120000}
+2025-12-28T16:02:27.129218Z  INFO ToolCall: apply_patch *** Begin Patch
+*** Add File: /Users/tommy/Development/TravelBlogs/travelblogs/tests/components/delete-entry-modal.test.tsx
++// @vitest-environment jsdom
++import { beforeEach, describe, expect, it, vi, afterEach } from "vitest";
++import { fireEvent, render, screen, waitFor } from "@testing-library/react";
++
++import DeleteEntryModal from "../../src/components/entries/delete-entry-modal";
++
++const replace = vi.fn();
++const refresh = vi.fn();
++
++vi.mock("next/navigation", () => ({
++  useRouter: () => ({
++    replace,
++    refresh,
++  }),
++}));
++
++describe("DeleteEntryModal", () => {
++  beforeEach(() => {
++    vi.clearAllMocks();
++  });
++
++  afterEach(() => {
++    vi.unstubAllGlobals();
++  });
++
++  it("opens and closes the confirmation dialog", () => {
++    render(
++      <DeleteEntryModal
++        tripId="trip-123"
++        entryId="entry-123"
++        entryTitle="Summer sunset"
++      />,
++    );
++
++    fireEvent.click(
++      screen.getByRole("button", { name: /delete entry/i }),
++    );
++
++    expect(screen.getByRole("dialog")).toBeInTheDocument();
++
++    fireEvent.click(
++      screen.getByRole("button", { name: /keep entry/i }),
++    );
++
++    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
++  });
++
++  it("deletes the entry and returns to the trip view", async () => {
++    const fetchMock = vi.fn().mockResolvedValue({
++      ok: true,
++      json: async () => ({ data: { id: "entry-123" }, error: null }),
++    });
++    vi.stubGlobal("fetch", fetchMock);
++
++    render(
++      <DeleteEntryModal
++        tripId="trip-123"
++        entryId="entry-123"
++        entryTitle="Summer sunset"
++      />,
++    );
++
++    fireEvent.click(
++      screen.getByRole("button", { name: /delete entry/i }),
++    );
++    fireEvent.click(
++      screen.getByRole("button", { name: /yes, delete/i }),
++    );
++
++    await waitFor(() => {
++      expect(fetchMock).toHaveBeenCalledWith(
++        "/api/entries/entry-123",
++        expect.objectContaining({
++          method: "DELETE",
++          credentials: "include",
++        }),
++      );
++    });
++
++    expect(replace).toHaveBeenCalledWith("/trips/trip-123");
++    expect(refresh).toHaveBeenCalled();
++  });
++});
+*** End Patch
+2025-12-28T16:02:32.052959Z  INFO ToolCall: shell_command {"command":"npx vitest run tests/components/delete-entry-modal.test.tsx","workdir":"/Users/tommy/Development/TravelBlogs/travelblogs"}
+2025-12-28T16:02:56.900774Z  INFO ToolCall: apply_patch *** Begin Patch
+*** Add File: /Users/tommy/Development/TravelBlogs/travelblogs/src/components/entries/delete-entry-modal.tsx
++"use client";
++
++import { useRouter } from "next/navigation";
++import { useState } from "react";
++
++type DeleteEntryModalProps = {
++  tripId: string;
++  entryId: string;
++  entryTitle?: string | null;
++};
++
++const DeleteEntryModal = ({
++  tripId,
++  entryId,
++  entryTitle,
++}: DeleteEntryModalProps) => {
++  const router = useRouter();
++  const [isOpen, setIsOpen] = useState(false);
++  const [isDeleting, setIsDeleting] = useState(false);
++  const [errorMessage, setErrorMessage] = useState<string | null>(null);
++
++  const displayTitle = entryTitle?.trim() ? entryTitle : "this entry";
++
++  const handleOpen = () => {
++    setIsOpen(true);
++    setIsDeleting(false);
++    setErrorMessage(null);
++  };
++
++  const handleClose = () => {
++    setIsOpen(false);
++    setIsDeleting(false);
++    setErrorMessage(null);
++  };
++
++  const handleDelete = async () => {
++    setIsDeleting(true);
++    setErrorMessage(null);
++
++    try {
++      const response = await fetch(`/api/entries/${entryId}`, {
++        method: "DELETE",
++        credentials: "include",
++      });
++      const body = await response.json().catch(() => null);
++
++      if (!response.ok || body?.error) {
++        setErrorMessage(body?.error?.message ?? "Unable to delete the entry.");
++        setIsDeleting(false);
++        return;
++      }
++
++      router.replace(`/trips/${tripId}`);
++      router.refresh();
++    } catch {
++      setErrorMessage("Unable to delete the entry.");
++      setIsDeleting(false);
++    }
++  };
++
++  return (
++    <>
++      <button
++        type="button"
++        onClick={handleOpen}
++        className="min-h-[44px] rounded-xl border border-[#B64A3A] px-4 py-2 text-sm font-semibold text-[#B64A3A] transition hover:bg-[#B64A3A]/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#B64A3A]"
++      >
++        Delete entry
++      </button>
++
++      {isOpen ? (
++        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
++          <div
++            role="dialog"
++            aria-modal="true"
++            aria-labelledby="delete-entry-title"
++            aria-describedby="delete-entry-description"
++            className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl"
++          >
++            <h2
++              id="delete-entry-title"
++              className="text-lg font-semibold text-[#2D2A26]"
++            >
++              Delete this entry?
++            </h2>
++            <p
++              id="delete-entry-description"
++              className="mt-2 text-sm text-[#6B635B]"
++            >
++              This will permanently remove{" "}
++              <span className="font-semibold text-[#2D2A26]">
++                {displayTitle}
++              </span>{" "}
++              from this trip.
++            </p>
++
++            {errorMessage ? (
++              <p className="mt-3 text-sm text-[#B64A3A]">{errorMessage}</p>
++            ) : null}
++
++            <div className="mt-6 flex flex-wrap gap-3">
++              <button
++                type="button"
++                onClick={handleClose}
++                className="min-h-[44px] rounded-xl border border-[#D5CDC4] px-4 py-2 text-sm font-semibold text-[#2D2A26] transition hover:bg-[#F6F1EB] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2D2A26]"
++              >
++                Keep entry
++              </button>
++              <button
++                type="button"
++                onClick={handleDelete}
++                disabled={isDeleting}
++                className="min-h-[44px] rounded-xl bg-[#B64A3A] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#9E3F31] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#B64A3A] disabled:cursor-not-allowed disabled:opacity-60"
++              >
++                {isDeleting ? "Deleting..." : "Yes, delete"}
++              </button>
++            </div>
++          </div>
++        </div>
++      ) : null}
++    </>
++  );
++};
++
++export default DeleteEntryModal;
+*** End Patch
+2025-12-28T16:03:09.214986Z  INFO ToolCall: apply_patch *** Begin Patch
+*** Update File: /Users/tommy/Development/TravelBlogs/travelblogs/src/components/entries/entry-detail.tsx
+@@
+ import Link from "next/link";
+ 
++import DeleteEntryModal from "./delete-entry-modal";
+ import {
+   extractInlineImageUrls,
+   getPhotoTimestamp,
+   parseEntryContent,
+ } from "../../utils/entry-content";
+@@
+           <header className="flex flex-wrap items-start justify-between gap-4">
+             <div className="space-y-2">
+               <p className="text-xs uppercase tracking-[0.2em] text-[#6B635B]">
+                 {formatDate(entry.createdAt)}
+@@
+               <p className="text-sm text-[#6B635B]">
+                 Updated {formatDate(entry.updatedAt)}
+               </p>
+             </div>
+-            <Link
+-              href={`/trips/${tripId}/entries/${entryId}/edit`}
+-              className="rounded-xl bg-[#1F6F78] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#195C63]"
+-            >
+-              Edit entry
+-            </Link>
++            <div className="flex flex-wrap items-center gap-3">
++              <Link
++                href={`/trips/${tripId}/entries/${entryId}/edit`}
++                className="rounded-xl bg-[#1F6F78] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#195C63]"
++              >
++                Edit entry
++              </Link>
++              <DeleteEntryModal
++                tripId={tripId}
++                entryId={entryId}
++                entryTitle={entry.title}
++              />
++            </div>
+           </header>
+*** End Patch
+2025-12-28T16:03:13.780729Z  INFO ToolCall: shell_command {"command":"npx vitest run tests/components/delete-entry-modal.test.tsx","workdir":"/Users/tommy/Development/TravelBlogs/travelblogs"}
+2025-12-28T16:03:20.326409Z  INFO ToolCall: shell_command {"command":"npm test","workdir":"/Users/tommy/Development/TravelBlogs/travelblogs","timeout_ms":120000}
+2025-12-28T16:03:32.104423Z  INFO ToolCall: shell_command {"command":"tail -n 80 /Users/tommy/Development/TravelBlogs/_bmad-output/implementation-artifacts/2-4-delete-blog-entry.md","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:03:39.940041Z  INFO ToolCall: shell_command {"command":"rg -n \"Change Log|Status\" /Users/tommy/Development/TravelBlogs/_bmad-output/implementation-artifacts/2-4-delete-blog-entry.md","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:03:51.558310Z  INFO ToolCall: shell_command {"command":"sed -n '24,80p' /Users/tommy/Development/TravelBlogs/_bmad-output/implementation-artifacts/2-4-delete-blog-entry.md","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:04:04.018897Z  INFO ToolCall: apply_patch *** Begin Patch
+*** Update File: /Users/tommy/Development/TravelBlogs/_bmad-output/implementation-artifacts/2-4-delete-blog-entry.md
+@@
+-- [ ] Define delete entry request and validation (AC: 1, 2)
+-  - [ ] Ensure entry id param is validated and errors follow standard response wrapper
+-- [ ] Implement delete entry API flow (AC: 1, 2)
+-  - [ ] Add DELETE handler in `src/app/api/entries/[id]/route.ts`
+-  - [ ] Enforce creator-only auth and trip ownership checks
+-  - [ ] Delete entry and associated media in Prisma
+-- [ ] Build creator UI for entry deletion (AC: 1, 2)
+-  - [ ] Add delete CTA in entry detail view
+-  - [ ] Confirmation modal with cancel/confirm paths
+-  - [ ] Redirect back to trip entry list after deletion
+-- [ ] Update trip entries list after deletion (AC: 1)
+-  - [ ] Remove deleted entry from list UI without stale state
+-- [ ] Add tests for delete flow (AC: 1, 2)
+-  - [ ] API tests for delete success, unauthorized access, and not found
+-  - [ ] Component test for delete confirmation behavior
++- [x] Define delete entry request and validation (AC: 1, 2)
++  - [x] Ensure entry id param is validated and errors follow standard response wrapper
++- [x] Implement delete entry API flow (AC: 1, 2)
++  - [x] Add DELETE handler in `src/app/api/entries/[id]/route.ts`
++  - [x] Enforce creator-only auth and trip ownership checks
++  - [x] Delete entry and associated media in Prisma
++- [x] Build creator UI for entry deletion (AC: 1, 2)
++  - [x] Add delete CTA in entry detail view
++  - [x] Confirmation modal with cancel/confirm paths
++  - [x] Redirect back to trip entry list after deletion
++- [x] Update trip entries list after deletion (AC: 1)
++  - [x] Remove deleted entry from list UI without stale state
++- [x] Add tests for delete flow (AC: 1, 2)
++  - [x] API tests for delete success, unauthorized access, and not found
++  - [x] Component test for delete confirmation behavior
+*** End Patch
+2025-12-28T16:04:13.134661Z  INFO ToolCall: shell_command {"command":"date +%Y-%m-%d","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:04:24.997359Z  INFO ToolCall: apply_patch *** Begin Patch
+*** Update File: /Users/tommy/Development/TravelBlogs/_bmad-output/implementation-artifacts/2-4-delete-blog-entry.md
+@@
+-Status: ready-for-dev
++Status: review
+@@
+ ## Story Completion Status
+ 
+-- Status set to ready-for-dev.
++- Status set to review.
+ - Note: Ultimate context engine analysis completed; comprehensive developer guide created.
++
++## Change Log
++
++- 2025-12-28: Implemented entry deletion API + UI, added tests, and refreshed entry list navigation.
+@@
+ ### Completion Notes List
+ 
+  - Story context generated from epics, PRD, architecture, UX, and project-context sources.
+  - Included previous story and git intelligence to align delete flow with existing patterns.
++ - Implemented DELETE /api/entries/{id} with id validation, owner checks, and cascade delete behavior.
++ - Added delete entry modal to entry detail with confirmation flow and trip list redirect.
++ - Added API and component coverage for delete flow; updated update-entry test payload to satisfy validation.
+@@
+ ### File List
+ 
+-- _bmad-output/implementation-artifacts/2-4-delete-blog-entry.md
+-- _bmad-output/epics.md
+-- _bmad-output/prd.md
+-- _bmad-output/architecture.md
+-- _bmad-output/ux-design-specification.md
+-- _bmad-output/project-context.md
++- _bmad-output/implementation-artifacts/2-4-delete-blog-entry.md
++- _bmad-output/implementation-artifacts/sprint-status.yaml
++- travelblogs/src/app/api/entries/[id]/route.ts
++- travelblogs/src/components/entries/delete-entry-modal.tsx
++- travelblogs/src/components/entries/entry-detail.tsx
++- travelblogs/tests/api/entries/delete-entry.test.ts
++- travelblogs/tests/api/entries/update-entry.test.ts
++- travelblogs/tests/components/delete-entry-modal.test.tsx
+*** End Patch
+2025-12-28T16:04:28.255961Z  INFO ToolCall: apply_patch *** Begin Patch
+*** Update File: /Users/tommy/Development/TravelBlogs/_bmad-output/implementation-artifacts/sprint-status.yaml
+@@
+-  2-4-delete-blog-entry: in-progress
++  2-4-delete-blog-entry: review
+*** End Patch
+2025-12-28T16:04:36.750149Z  INFO ToolCall: shell_command {"command":"npm test","workdir":"/Users/tommy/Development/TravelBlogs/travelblogs","timeout_ms":120000}
+2025-12-28T16:06:21.364082Z  INFO spawning ghost snapshot task
+2025-12-28T16:06:21.544090Z  INFO ghost snapshot blocking task finished
+2025-12-28T16:06:21.544112Z  INFO ghost commit captured: 097df1401817fdd1aaa7abb56e5e5fb7cd50fa02
+2025-12-28T16:06:21.544116Z  INFO ghost snapshot gate marked ready
+2025-12-28T16:06:24.276664Z  INFO ToolCall: shell_command {"command":"cat /Users/tommy/Development/TravelBlogs/_bmad/bmm/agents/dev.md","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:06:27.678652Z  INFO ToolCall: shell_command {"command":"cat /Users/tommy/Development/TravelBlogs/_bmad/bmm/config.yaml","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:06:34.370988Z  INFO spawning ghost snapshot task
+2025-12-28T16:06:34.520921Z  INFO ghost snapshot blocking task finished
+2025-12-28T16:06:34.520942Z  INFO ghost commit captured: 3498ae4ef4e90e28544d6b2d1a0a4782a42a695c
+2025-12-28T16:06:34.520945Z  INFO ghost snapshot gate marked ready
+2025-12-28T16:06:37.109739Z  INFO ToolCall: shell_command {"command":"cat /Users/tommy/Development/TravelBlogs/_bmad/core/tasks/workflow.xml","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:06:40.467743Z  INFO ToolCall: shell_command {"command":"cat /Users/tommy/Development/TravelBlogs/_bmad/bmm/workflows/4-implementation/code-review/workflow.yaml","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:06:42.810761Z  INFO ToolCall: shell_command {"command":"cat /Users/tommy/Development/TravelBlogs/_bmad/bmm/workflows/4-implementation/code-review/instructions.xml","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:07:58.114496Z  INFO spawning ghost snapshot task
+2025-12-28T16:07:58.264159Z  INFO ghost snapshot blocking task finished
+2025-12-28T16:07:58.264179Z  INFO ghost commit captured: 70ace992ab7895662f1ea7d32083cff2a6dd7079
+2025-12-28T16:07:58.264183Z  INFO ghost snapshot gate marked ready
+2025-12-28T16:08:18.471560Z  INFO spawning ghost snapshot task
+2025-12-28T16:08:18.623071Z  INFO ghost snapshot blocking task finished
+2025-12-28T16:08:18.623089Z  INFO ghost commit captured: 64c7dfb8ea07d4dcab9c1263b540a917d6d81a4e
+2025-12-28T16:08:18.623095Z  INFO ghost snapshot gate marked ready
+2025-12-28T16:08:30.198438Z  INFO ToolCall: shell_command {"command":"cat /Users/tommy/Development/TravelBlogs/_bmad-output/implementation-artifacts/2-4-delete-blog-entry.md","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:08:32.602039Z  INFO ToolCall: shell_command {"command":"git status --porcelain","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:08:34.764733Z  INFO ToolCall: shell_command {"command":"git diff --name-only","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:08:37.693156Z  INFO ToolCall: shell_command {"command":"git diff --cached --name-only","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:08:45.434904Z  INFO ToolCall: shell_command {"command":"rg --files -g '*architecture*.md' /Users/tommy/Development/TravelBlogs/_bmad-output","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:08:47.969161Z  INFO ToolCall: shell_command {"command":"rg --files -g '*ux*.md' /Users/tommy/Development/TravelBlogs/_bmad-output","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:08:51.170972Z  INFO ToolCall: shell_command {"command":"rg --files -g '*epic*.md' /Users/tommy/Development/TravelBlogs/_bmad-output","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:08:55.572529Z  INFO ToolCall: shell_command {"command":"rg --files -g 'index.md' /Users/tommy/Development/TravelBlogs/_bmad-output","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:08:58.185153Z  INFO ToolCall: shell_command {"command":"rg --files -g 'project-context.md' /Users/tommy/Development/TravelBlogs","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:09:00.980058Z  INFO ToolCall: shell_command {"command":"cat /Users/tommy/Development/TravelBlogs/_bmad-output/architecture.md","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:09:03.491453Z  INFO ToolCall: shell_command {"command":"cat /Users/tommy/Development/TravelBlogs/_bmad-output/ux-design-specification.md","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:09:06.678905Z  INFO ToolCall: shell_command {"command":"cat /Users/tommy/Development/TravelBlogs/_bmad-output/epics.md","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:09:09.986623Z  INFO ToolCall: shell_command {"command":"cat /Users/tommy/Development/TravelBlogs/_bmad-output/project-context.md","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:09:20.070350Z  INFO ToolCall: shell_command {"command":"cat /Users/tommy/Development/TravelBlogs/travelblogs/src/app/api/entries/[id]/route.ts","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:09:23.654632Z  INFO ToolCall: shell_command {"command":"cat '/Users/tommy/Development/TravelBlogs/travelblogs/src/app/api/entries/[id]/route.ts'","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:09:26.576005Z  INFO ToolCall: shell_command {"command":"cat /Users/tommy/Development/TravelBlogs/travelblogs/src/components/entries/delete-entry-modal.tsx","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:09:29.116264Z  INFO ToolCall: shell_command {"command":"cat /Users/tommy/Development/TravelBlogs/travelblogs/src/components/entries/entry-detail.tsx","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:09:32.323147Z  INFO ToolCall: shell_command {"command":"cat /Users/tommy/Development/TravelBlogs/travelblogs/tests/api/entries/delete-entry.test.ts","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:09:34.944330Z  INFO ToolCall: shell_command {"command":"cat /Users/tommy/Development/TravelBlogs/travelblogs/tests/api/entries/update-entry.test.ts","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:09:38.594606Z  INFO ToolCall: shell_command {"command":"cat /Users/tommy/Development/TravelBlogs/travelblogs/tests/components/delete-entry-modal.test.tsx","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:09:41.366533Z  INFO ToolCall: shell_command {"command":"cat /Users/tommy/Development/TravelBlogs/_bmad-output/implementation-artifacts/sprint-status.yaml","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:09:48.614083Z  INFO ToolCall: shell_command {"command":"rg --files -g 'create-entry-form-wrapper*' /Users/tommy/Development/TravelBlogs/travelblogs","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:09:53.142175Z  INFO ToolCall: shell_command {"command":"cat '/Users/tommy/Development/TravelBlogs/travelblogs/src/app/trips/[tripId]/entries/new/page.tsx'","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:10:13.640428Z  INFO ToolCall: shell_command {"command":"rg -n \"model Entry\" /Users/tommy/Development/TravelBlogs/travelblogs/prisma/schema.prisma","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:10:19.491629Z  INFO ToolCall: shell_command {"command":"sed -n '1,80p' /Users/tommy/Development/TravelBlogs/travelblogs/prisma/schema.prisma","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:10:28.760129Z  INFO ToolCall: shell_command {"command":"rg -n \"Entry\" /Users/tommy/Development/TravelBlogs/travelblogs/src/app/trips","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:10:33.788300Z  INFO ToolCall: shell_command {"command":"cat /Users/tommy/Development/TravelBlogs/travelblogs/src/app/trips/[tripId]/page.tsx","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:10:39.901462Z  INFO ToolCall: shell_command {"command":"cat '/Users/tommy/Development/TravelBlogs/travelblogs/src/app/trips/[tripId]/page.tsx'","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:10:44.218925Z  INFO ToolCall: shell_command {"command":"cat /Users/tommy/Development/TravelBlogs/travelblogs/src/components/trips/trip-detail.tsx","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:12:27.801434Z  INFO ToolCall: shell_command {"command":"nl -ba '/Users/tommy/Development/TravelBlogs/travelblogs/src/app/trips/[tripId]/entries/new/page.tsx' | sed -n '1,20p'","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:12:32.882775Z  INFO ToolCall: shell_command {"command":"nl -ba /Users/tommy/Development/TravelBlogs/travelblogs/tests/components/delete-entry-modal.test.tsx","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:12:43.673772Z  INFO ToolCall: shell_command {"command":"cat /Users/tommy/Development/TravelBlogs/travelblogs/src/utils/auth-options.ts","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:12:46.952581Z  INFO ToolCall: shell_command {"command":"cat /Users/tommy/Development/TravelBlogs/travelblogs/src/utils/auth.ts","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:13:03.445752Z  INFO ToolCall: shell_command {"command":"cat /Users/tommy/Development/TravelBlogs/travelblogs/tsconfig.json","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:13:22.982147Z  INFO ToolCall: shell_command {"command":"nl -ba /Users/tommy/Development/TravelBlogs/_bmad-output/implementation-artifacts/2-4-delete-blog-entry.md | sed -n '120,190p'","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:13:47.848110Z  INFO spawning ghost snapshot task
+2025-12-28T16:13:48.036745Z  INFO ghost snapshot blocking task finished
+2025-12-28T16:13:48.036766Z  INFO ghost commit captured: 6f84dc43b47affdc4ef17a4f28bb1cc48a661317
+2025-12-28T16:13:48.036770Z  INFO ghost snapshot gate marked ready
+2025-12-28T16:14:19.263646Z  INFO ToolCall: apply_patch *** Begin Patch
+*** Update File: /Users/tommy/Development/TravelBlogs/travelblogs/src/app/trips/[tripId]/entries/new/page.tsx
+@@
+-import CreateEntryFormWrapper from "../../../../components/entries/create-entry-form-wrapper";
+-import { authOptions } from "../../../../utils/auth-options";
++import CreateEntryFormWrapper from "@/components/entries/create-entry-form-wrapper";
++import { authOptions } from "@/utils/auth-options";
+*** End Patch
+2025-12-28T16:14:32.707034Z  INFO ToolCall: apply_patch *** Begin Patch
+*** Update File: /Users/tommy/Development/TravelBlogs/travelblogs/tests/api/entries/delete-entry.test.ts
+@@
+   let del: (
+     request: Request,
+     context: { params: { id: string } },
+   ) => Promise<Response>;
++  let get: (
++    request: Request,
++    context: { params: { id: string } },
++  ) => Promise<Response>;
+   let prisma: PrismaClient;
+@@
+     const prismaModule = await import("@prisma/client");
+     const adapter = new PrismaBetterSqlite3({
+       url: testDatabaseUrl.replace(/^file:/, ""),
+     });
+     prisma = new prismaModule.PrismaClient({ adapter });
+ 
+     const routeModule = await import("../../../src/app/api/entries/[id]/route");
+     del = routeModule.DELETE;
++    get = routeModule.GET;
+   });
+@@
+   it("deletes an entry for an owned trip", async () => {
+@@
+     const response = await del(request, { params: { id: entry.id } });
+     const body = await response.json();
+ 
++    const getResponse = await get(
++      new Request(`http://localhost/api/entries/${entry.id}`, {
++        method: "GET",
++      }),
++      { params: { id: entry.id } },
++    );
++    const getBody = await getResponse.json();
++
+     const remainingEntry = await prisma.entry.findUnique({
+       where: { id: entry.id },
+     });
+     const remainingMedia = await prisma.entryMedia.findMany({
+       where: { entryId: entry.id },
+     });
+ 
+     expect(response.status).toBe(200);
+     expect(body.error).toBeNull();
+     expect(body.data.id).toBe(entry.id);
++    expect(getResponse.status).toBe(404);
++    expect(getBody.error.code).toBe("NOT_FOUND");
+     expect(remainingEntry).toBeNull();
+     expect(remainingMedia).toHaveLength(0);
+   });
+*** End Patch
+2025-12-28T16:14:40.784310Z  INFO ToolCall: apply_patch *** Begin Patch
+*** Update File: /Users/tommy/Development/TravelBlogs/travelblogs/tests/components/delete-entry-modal.test.tsx
+@@
+   it("deletes the entry and returns to the trip view", async () => {
+@@
+     expect(replace).toHaveBeenCalledWith("/trips/trip-123");
+     expect(refresh).toHaveBeenCalled();
+   });
++
++  it("keeps the entry when cancellation is chosen", () => {
++    const fetchMock = vi.fn();
++    vi.stubGlobal("fetch", fetchMock);
++
++    render(
++      <DeleteEntryModal
++        tripId="trip-123"
++        entryId="entry-123"
++        entryTitle="Summer sunset"
++      />,
++    );
++
++    fireEvent.click(
++      screen.getByRole("button", { name: /delete entry/i }),
++    );
++    fireEvent.click(
++      screen.getByRole("button", { name: /keep entry/i }),
++    );
++
++    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
++    expect(fetchMock).not.toHaveBeenCalled();
++  });
+ });
+*** End Patch
+2025-12-28T16:15:10.215363Z  INFO ToolCall: apply_patch *** Begin Patch
+*** Update File: /Users/tommy/Development/TravelBlogs/_bmad-output/implementation-artifacts/2-4-delete-blog-entry.md
+@@
+-Status: review
++Status: done
+@@
+ ## Change Log
+ 
+ - 2025-12-28: Implemented entry deletion API + UI, added tests, and refreshed entry list navigation.
++- 2025-12-28: Fixed create-entry import path, added delete accessibility tests, and documented operational file changes.
+@@
+ ### Completion Notes List
+ 
+  - Story context generated from epics, PRD, architecture, UX, and project-context sources.
+  - Included previous story and git intelligence to align delete flow with existing patterns.
+  - Implemented DELETE /api/entries/{id} with id validation, owner checks, and cascade delete behavior.
+  - Added delete entry modal to entry detail with confirmation flow and trip list redirect.
+  - Added API and component coverage for delete flow; updated update-entry test payload to satisfy validation.
++ - Code review fixes: corrected create entry import path, added delete access coverage, and documented operational changes.
+@@
+ ### File List
+ 
++- .codex/history.jsonl
++- .codex/log/codex-tui.log
++- .codex/sessions/2025/12/28/rollout-2025-12-28T15-49-19-019b656f-6ca3-7981-ac4a-987399172cac.jsonl
++- .codex/sessions/2025/12/28/rollout-2025-12-28T16-55-51-019b65ac-5679-79f1-8590-20e1621e840a.jsonl
++- .codex/sessions/2025/12/28/rollout-2025-12-28T17-06-14-019b65b5-d71a-7832-bff9-f2984a2d3d50.jsonl
+ - _bmad-output/implementation-artifacts/2-4-delete-blog-entry.md
+ - _bmad-output/implementation-artifacts/sprint-status.yaml
+ - travelblogs/src/app/api/entries/[id]/route.ts
++- travelblogs/src/app/trips/[tripId]/entries/new/page.tsx
+ - travelblogs/src/components/entries/delete-entry-modal.tsx
+ - travelblogs/src/components/entries/entry-detail.tsx
+ - travelblogs/tests/api/entries/delete-entry.test.ts
+ - travelblogs/tests/api/entries/update-entry.test.ts
+ - travelblogs/tests/components/delete-entry-modal.test.tsx
+*** End Patch
+2025-12-28T16:15:16.408176Z  INFO ToolCall: apply_patch *** Begin Patch
+*** Update File: /Users/tommy/Development/TravelBlogs/_bmad-output/implementation-artifacts/sprint-status.yaml
+@@
+   epic-2: in-progress
+   2-1-add-blog-entry: done
+   2-2-edit-blog-entry: done
+   2-3-multi-file-media-upload: done
+-  2-4-delete-blog-entry: review
++  2-4-delete-blog-entry: done
+   2-5-entry-title: ready-for-dev
+   epic-2-retrospective: optional
+*** End Patch
+2025-12-28T16:19:58.940101Z  INFO spawning ghost snapshot task
+2025-12-28T16:19:59.240073Z  INFO ghost snapshot blocking task finished
+2025-12-28T16:19:59.240101Z  INFO ghost commit captured: 8c3c7249cb299dda68ff4b078fcc74116e076d4c
+2025-12-28T16:19:59.240105Z  INFO ghost snapshot gate marked ready
+2025-12-28T16:20:04.976315Z  INFO ToolCall: shell_command {"command":"cat /Users/tommy/Development/TravelBlogs/travelblogs/package.json","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:20:09.409775Z  INFO ToolCall: shell_command {"command":"npm test -- tests/api/entries/delete-entry.test.ts tests/components/delete-entry-modal.test.tsx","workdir":"/Users/tommy/Development/TravelBlogs/travelblogs"}
+2025-12-28T16:21:13.432085Z  INFO spawning ghost snapshot task
+2025-12-28T16:21:13.641530Z  INFO ghost snapshot blocking task finished
+2025-12-28T16:21:13.641551Z  INFO ghost commit captured: 83f70b5c17ac38b7d47bc7131fbfc2ea3790103b
+2025-12-28T16:21:13.641555Z  INFO ghost snapshot gate marked ready
+2025-12-28T16:21:26.646033Z  INFO spawning ghost snapshot task
+2025-12-28T16:21:26.817161Z  INFO ghost snapshot blocking task finished
+2025-12-28T16:21:26.817182Z  INFO ghost commit captured: 4b2e13268c7500bb10b8ec417a2463722c4a6cb6
+2025-12-28T16:21:26.817186Z  INFO ghost snapshot gate marked ready
+2025-12-28T16:21:34.267677Z  INFO spawning ghost snapshot task
+2025-12-28T16:21:34.440447Z  INFO ghost snapshot blocking task finished
+2025-12-28T16:21:34.440468Z  INFO ghost commit captured: 1cf5995275b90a82277c4e189bc029da9da49ed1
+2025-12-28T16:21:34.440473Z  INFO ghost snapshot gate marked ready
+2025-12-28T16:21:39.995769Z  INFO ToolCall: shell_command {"command":"cat /Users/tommy/Development/TravelBlogs/travelblogs/src/app/page.tsx","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:21:57.808430Z  INFO ToolCall: apply_patch *** Begin Patch
+*** Update File: /Users/tommy/Development/TravelBlogs/travelblogs/src/app/page.tsx
+@@
+-import Image from "next/image";
++import { redirect } from "next/navigation";
+ 
+ export default function Home() {
+-  return (
+-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
+-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
+-        <Image
+-          className="dark:invert"
+-          src="/next.svg"
+-          alt="Next.js logo"
+-          width={100}
+-          height={20}
+-          priority
+-        />
+-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
+-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
+-            To get started, edit the page.tsx file.
+-          </h1>
+-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
+-            Looking for a starting point or more instructions? Head over to{" "}
+-            <a
+-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
+-              className="font-medium text-zinc-950 dark:text-zinc-50"
+-            >
+-              Templates
+-            </a>{" "}
+-            or the{" "}
+-            <a
+-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
+-              className="font-medium text-zinc-950 dark:text-zinc-50"
+-            >
+-              Learning
+-            </a>{" "}
+-            center.
+-          </p>
+-        </div>
+-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
+-          <a
+-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
+-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
+-            target="_blank"
+-            rel="noopener noreferrer"
+-          >
+-            <Image
+-              className="dark:invert"
+-              src="/vercel.svg"
+-              alt="Vercel logomark"
+-              width={16}
+-              height={16}
+-            />
+-            Deploy Now
+-          </a>
+-          <a
+-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
+-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
+-            target="_blank"
+-            rel="noopener noreferrer"
+-          >
+-            Documentation
+-          </a>
+-        </div>
+-      </main>
+-    </div>
+-  );
++  redirect("/sign-in");
+ }
+*** End Patch
+2025-12-28T16:23:12.158917Z  INFO spawning ghost snapshot task
+2025-12-28T16:23:12.331729Z  INFO ghost snapshot blocking task finished
+2025-12-28T16:23:12.331754Z  INFO ghost commit captured: 35eee8df54941ea2c9e11db8e9f179188c0b46fa
+2025-12-28T16:23:12.331759Z  INFO ghost snapshot gate marked ready
+2025-12-28T16:23:16.388651Z  INFO ToolCall: shell_command {"command":"ls","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:23:19.245239Z  INFO ToolCall: shell_command {"command":"cat /Users/tommy/Development/TravelBlogs/_bmad/bmm/agents/dev.md","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:23:22.229067Z  INFO ToolCall: shell_command {"command":"cat /Users/tommy/Development/TravelBlogs/_bmad/bmm/config.yaml","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:23:30.369702Z  INFO spawning ghost snapshot task
+2025-12-28T16:23:30.534275Z  INFO ghost snapshot blocking task finished
+2025-12-28T16:23:30.534299Z  INFO ghost commit captured: f03c8b9423a9843451022e63955967e264d351a8
+2025-12-28T16:23:30.534303Z  INFO ghost snapshot gate marked ready
+2025-12-28T16:23:34.213534Z  INFO ToolCall: shell_command {"command":"cat /Users/tommy/Development/TravelBlogs/_bmad/core/tasks/workflow.xml","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:23:37.594874Z  INFO ToolCall: shell_command {"command":"cat /Users/tommy/Development/TravelBlogs/_bmad/bmm/workflows/4-implementation/dev-story/workflow.yaml","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:23:40.488324Z  INFO ToolCall: shell_command {"command":"cat /Users/tommy/Development/TravelBlogs/_bmad/bmm/workflows/4-implementation/dev-story/instructions.xml","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:23:44.484434Z  INFO ToolCall: shell_command {"command":"ls /Users/tommy/Development/TravelBlogs/_bmad-output/implementation-artifacts","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:23:47.506800Z  INFO ToolCall: shell_command {"command":"cat /Users/tommy/Development/TravelBlogs/_bmad-output/implementation-artifacts/sprint-status.yaml","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:23:51.576878Z  INFO ToolCall: shell_command {"command":"cat /Users/tommy/Development/TravelBlogs/_bmad-output/implementation-artifacts/2-5-entry-title.md","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:23:54.383973Z  INFO ToolCall: shell_command {"command":"rg --files -g \"project-context.md\"","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:23:57.119084Z  INFO ToolCall: shell_command {"command":"cat /Users/tommy/Development/TravelBlogs/_bmad-output/project-context.md","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:24:10.373801Z  INFO spawning ghost snapshot task
+2025-12-28T16:24:10.514494Z  INFO ghost snapshot blocking task finished
+2025-12-28T16:24:10.514518Z  INFO ghost commit captured: aea891a29d3f5a5527997fdf444499f90fa53a5d
+2025-12-28T16:24:10.514522Z  INFO ghost snapshot gate marked ready
+2025-12-28T16:24:19.374705Z  INFO spawning ghost snapshot task
+2025-12-28T16:24:19.541276Z  INFO ghost snapshot blocking task finished
+2025-12-28T16:24:19.541300Z  INFO ghost commit captured: 2218d850190697d565a9b8b1e10fe5a4602322b4
+2025-12-28T16:24:19.541305Z  INFO ghost snapshot gate marked ready
+2025-12-28T16:24:22.004815Z  INFO ToolCall: shell_command {"command":"cat /Users/tommy/Development/TravelBlogs/_bmad-output/implementation-artifacts/sprint-status.yaml","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:24:26.926998Z  INFO ToolCall: apply_patch *** Begin Patch
+*** Update File: /Users/tommy/Development/TravelBlogs/_bmad-output/implementation-artifacts/sprint-status.yaml
+@@
+-  2-5-entry-title: ready-for-dev
++  2-5-entry-title: in-progress
+*** End Patch
+2025-12-28T16:24:31.524808Z  INFO spawning ghost snapshot task
+2025-12-28T16:24:31.691430Z  INFO ghost snapshot blocking task finished
+2025-12-28T16:24:31.691451Z  INFO ghost commit captured: 51125fc28e762d2e71cd240d207bd5d00230bd8c
+2025-12-28T16:24:31.691456Z  INFO ghost snapshot gate marked ready
+2025-12-28T16:24:34.686334Z  INFO ToolCall: shell_command {"command":"rg --files","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:24:39.197167Z  INFO ToolCall: shell_command {"command":"cat /Users/tommy/Development/TravelBlogs/travelblogs/prisma/schema.prisma","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:24:42.474170Z  INFO ToolCall: shell_command {"command":"cat /Users/tommy/Development/TravelBlogs/travelblogs/prisma/migrations/20251228140516_add_entry_title/migration.sql","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:24:51.593045Z  INFO ToolCall: shell_command {"command":"cat /Users/tommy/Development/TravelBlogs/travelblogs/src/app/api/entries/route.ts","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:24:52.497975Z  INFO ToolCall: shell_command {"command":"cat /Users/tommy/Development/TravelBlogs/travelblogs/src/app/api/entries/[id]/route.ts","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:24:53.396577Z  INFO ToolCall: shell_command {"command":"cat /Users/tommy/Development/TravelBlogs/travelblogs/src/components/entries/create-entry-form.tsx","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:24:54.679979Z  INFO ToolCall: shell_command {"command":"cat /Users/tommy/Development/TravelBlogs/travelblogs/src/components/entries/edit-entry-form.tsx","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:24:59.138108Z  INFO ToolCall: shell_command {"command":"cat /Users/tommy/Development/TravelBlogs/travelblogs/src/components/entries/entry-detail.tsx","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:25:00.064201Z  INFO ToolCall: shell_command {"command":"cat /Users/tommy/Development/TravelBlogs/travelblogs/src/app/trips/[tripId]/page.tsx","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:25:01.184887Z  INFO ToolCall: shell_command {"command":"cat /Users/tommy/Development/TravelBlogs/travelblogs/src/app/trips/[tripId]/entries/[entryId]/page.tsx","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:25:06.325111Z  INFO ToolCall: shell_command {"command":"cat '/Users/tommy/Development/TravelBlogs/travelblogs/src/app/trips/[tripId]/page.tsx'","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:25:07.398302Z  INFO ToolCall: shell_command {"command":"cat '/Users/tommy/Development/TravelBlogs/travelblogs/src/app/trips/[tripId]/entries/[entryId]/page.tsx'","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:25:12.134128Z  INFO ToolCall: shell_command {"command":"cat /Users/tommy/Development/TravelBlogs/travelblogs/src/components/trips/trip-detail.tsx","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:25:16.176481Z  INFO ToolCall: shell_command {"command":"cat '/Users/tommy/Development/TravelBlogs/travelblogs/src/app/api/entries/[id]/route.ts'","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:25:23.543280Z  INFO ToolCall: shell_command {"command":"cat /Users/tommy/Development/TravelBlogs/travelblogs/tests/api/entries/create-entry.test.ts","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:25:24.430662Z  INFO ToolCall: shell_command {"command":"cat /Users/tommy/Development/TravelBlogs/travelblogs/tests/api/entries/update-entry.test.ts","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:25:25.303585Z  INFO ToolCall: shell_command {"command":"cat /Users/tommy/Development/TravelBlogs/travelblogs/tests/api/entries/list-entries.test.ts","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:25:26.271984Z  INFO ToolCall: shell_command {"command":"cat /Users/tommy/Development/TravelBlogs/travelblogs/tests/api/entries/get-entry.test.ts","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:25:32.788361Z  INFO ToolCall: shell_command {"command":"cat /Users/tommy/Development/TravelBlogs/travelblogs/tests/components/create-entry-form.test.tsx","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:25:33.661877Z  INFO ToolCall: shell_command {"command":"cat /Users/tommy/Development/TravelBlogs/travelblogs/tests/components/edit-entry-form.test.tsx","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:25:34.793120Z  INFO ToolCall: shell_command {"command":"cat /Users/tommy/Development/TravelBlogs/travelblogs/tests/components/entry-media-utils.test.ts","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:25:38.843849Z  INFO ToolCall: shell_command {"command":"cat /Users/tommy/Development/TravelBlogs/travelblogs/tests/setup.ts","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:25:43.378230Z  INFO ToolCall: shell_command {"command":"cat /Users/tommy/Development/TravelBlogs/travelblogs/vitest.config.ts","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:26:02.874815Z  INFO ToolCall: shell_command {"command":"cat /Users/tommy/Development/TravelBlogs/travelblogs/prisma/migrations/20251228142333_add_entry_cover_image/migration.sql","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:26:52.776075Z  INFO ToolCall: apply_patch *** Begin Patch
+*** Update File: /Users/tommy/Development/TravelBlogs/travelblogs/tests/api/entries/create-entry.test.ts
+@@
+   it("returns validation errors for missing text", async () => {
+@@
+     expect(response.status).toBe(400);
+     expect(body.error.code).toBe("VALIDATION_ERROR");
+   });
+ 
++  it("returns validation errors for missing title", async () => {
++    const request = new Request("http://localhost/api/entries", {
++      method: "POST",
++      headers: {
++        "Content-Type": "application/json",
++      },
++      body: JSON.stringify({
++        tripId: "trip-123",
++        title: "",
++        text: "Today was a good day.",
++        mediaUrls: ["/uploads/entries/photo.jpg"],
++      }),
++    });
++
++    const response = await post(request);
++    const body = await response.json();
++
++    expect(response.status).toBe(400);
++    expect(body.error.code).toBe("VALIDATION_ERROR");
++    expect(body.error.message).toBe("Entry title is required.");
++  });
++
++  it("returns validation errors for titles over 80 characters", async () => {
++    const request = new Request("http://localhost/api/entries", {
++      method: "POST",
++      headers: {
++        "Content-Type": "application/json",
++      },
++      body: JSON.stringify({
++        tripId: "trip-123",
++        title: "a".repeat(81),
++        text: "Today was a good day.",
++        mediaUrls: ["/uploads/entries/photo.jpg"],
++      }),
++    });
++
++    const response = await post(request);
++    const body = await response.json();
++
++    expect(response.status).toBe(400);
++    expect(body.error.code).toBe("VALIDATION_ERROR");
++    expect(body.error.message).toBe(
++      "Entry title must be 80 characters or fewer.",
++    );
++  });
++
+   it("returns validation errors for missing media", async () => {
+*** End Patch
+2025-12-28T16:27:17.898811Z  INFO ToolCall: apply_patch *** Begin Patch
+*** Update File: /Users/tommy/Development/TravelBlogs/travelblogs/tests/api/entries/update-entry.test.ts
+@@
+     const entry = await prisma.entry.create({
+       data: {
+         tripId: trip.id,
++        title: "Original title",
+         text: "Old text",
+         media: {
+           create: [{ url: "/uploads/entries/old.jpg" }],
+         },
+       },
+@@
+     const entry = await prisma.entry.create({
+       data: {
+         tripId: trip.id,
++        title: "Original title",
+         text: "Old text",
+         media: {
+           create: [{ url: "/uploads/entries/old.jpg" }],
+         },
+       },
+@@
+     const entry = await prisma.entry.create({
+       data: {
+         tripId: trip.id,
++        title: "Original title",
+         text: "Old text",
+         media: {
+           create: [{ url: "/uploads/entries/keep.jpg" }],
+         },
+       },
+@@
+     const entry = await prisma.entry.create({
+       data: {
+         tripId: trip.id,
++        title: "Original title",
+         text: "Old text",
+         media: {
+           create: [{ url: "/uploads/entries/old.jpg" }],
+         },
+       },
+@@
+     const entry = await prisma.entry.create({
+       data: {
+         tripId: trip.id,
++        title: "Original title",
+         text: "Old text",
+         media: {
+           create: [{ url: "/uploads/entries/old.jpg" }],
+         },
+       },
+@@
+     const entry = await prisma.entry.create({
+       data: {
+         tripId: trip.id,
++        title: "Original title",
+         text: "Old text",
+         media: {
+           create: [{ url: "/uploads/entries/old.jpg" }],
+         },
+       },
+@@
+     const entry = await prisma.entry.create({
+       data: {
+         tripId: trip.id,
++        title: "Original title",
+         text: "Old text",
+         media: {
+           create: [{ url: "/uploads/entries/old.jpg" }],
+         },
+       },
+     });
+@@
+     const request = new Request(`http://localhost/api/entries/${entry.id}`, {
+       method: "PATCH",
+       headers: {
+         "Content-Type": "application/json",
+       },
+       body: JSON.stringify({
++        title: "",
+         text: "",
+         mediaUrls: ["/uploads/entries/new.jpg"],
+       }),
+     });
+@@
+     expect(response.status).toBe(400);
+     expect(body.error.code).toBe("VALIDATION_ERROR");
+   });
+ 
++  it("returns validation errors for missing title", async () => {
++    const trip = await prisma.trip.create({
++      data: {
++        title: "Validation",
++        startDate: new Date("2025-05-01"),
++        endDate: new Date("2025-05-10"),
++        ownerId: "creator",
++      },
++    });
++    const entry = await prisma.entry.create({
++      data: {
++        tripId: trip.id,
++        title: "Original title",
++        text: "Old text",
++        media: {
++          create: [{ url: "/uploads/entries/old.jpg" }],
++        },
++      },
++    });
++
++    const request = new Request(`http://localhost/api/entries/${entry.id}`, {
++      method: "PATCH",
++      headers: {
++        "Content-Type": "application/json",
++      },
++      body: JSON.stringify({
++        title: "",
++        text: "Updated text",
++        mediaUrls: ["/uploads/entries/new.jpg"],
++      }),
++    });
++
++    const response = await patch(request, { params: { id: entry.id } });
++    const body = await response.json();
++
++    expect(response.status).toBe(400);
++    expect(body.error.code).toBe("VALIDATION_ERROR");
++    expect(body.error.message).toBe("Entry title is required.");
++  });
++
++  it("returns validation errors for titles over 80 characters", async () => {
++    const trip = await prisma.trip.create({
++      data: {
++        title: "Validation",
++        startDate: new Date("2025-05-01"),
++        endDate: new Date("2025-05-10"),
++        ownerId: "creator",
++      },
++    });
++    const entry = await prisma.entry.create({
++      data: {
++        tripId: trip.id,
++        title: "Original title",
++        text: "Old text",
++        media: {
++          create: [{ url: "/uploads/entries/old.jpg" }],
++        },
++      },
++    });
++
++    const request = new Request(`http://localhost/api/entries/${entry.id}`, {
++      method: "PATCH",
++      headers: {
++        "Content-Type": "application/json",
++      },
++      body: JSON.stringify({
++        title: "a".repeat(81),
++        text: "Updated text",
++        mediaUrls: ["/uploads/entries/new.jpg"],
++      }),
++    });
++
++    const response = await patch(request, { params: { id: entry.id } });
++    const body = await response.json();
++
++    expect(response.status).toBe(400);
++    expect(body.error.code).toBe("VALIDATION_ERROR");
++    expect(body.error.message).toBe(
++      "Entry title must be 80 characters or fewer.",
++    );
++  });
++
+   it("returns validation errors when no media is present", async () => {
+*** End Patch
+2025-12-28T16:27:22.243275Z  INFO ToolCall: shell_command {"command":"rg -n \"missing text|validation\" /Users/tommy/Development/TravelBlogs/travelblogs/tests/api/entries/update-entry.test.ts","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:27:27.987740Z  INFO ToolCall: shell_command {"command":"sed -n '1,220p' /Users/tommy/Development/TravelBlogs/travelblogs/tests/api/entries/update-entry.test.ts","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:27:31.409417Z  INFO ToolCall: shell_command {"command":"sed -n '220,520p' /Users/tommy/Development/TravelBlogs/travelblogs/tests/api/entries/update-entry.test.ts","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:27:43.424235Z  INFO ToolCall: apply_patch *** Begin Patch
+*** Update File: /Users/tommy/Development/TravelBlogs/travelblogs/tests/api/entries/update-entry.test.ts
+@@
+     const entry = await prisma.entry.create({
+       data: {
+         tripId: trip.id,
++        title: "Original title",
+         text: "Old text",
+         media: {
+           create: [{ url: "/uploads/entries/old.jpg" }],
+         },
+       },
+@@
+     const entry = await prisma.entry.create({
+       data: {
+         tripId: trip.id,
++        title: "Original title",
+         text: "Old text",
+         media: {
+           create: [{ url: "/uploads/entries/old.jpg" }],
+         },
+       },
+@@
+     const entry = await prisma.entry.create({
+       data: {
+         tripId: trip.id,
++        title: "Original title",
+         text: "Old text",
+         media: {
+           create: [{ url: "/uploads/entries/keep.jpg" }],
+         },
+       },
+@@
+     const entry = await prisma.entry.create({
+       data: {
+         tripId: trip.id,
++        title: "Original title",
+         text: "Old text",
+         media: {
+           create: [{ url: "/uploads/entries/old.jpg" }],
+         },
+       },
+@@
+     const entry = await prisma.entry.create({
+       data: {
+         tripId: trip.id,
++        title: "Original title",
+         text: "Old text",
+         media: {
+           create: [{ url: "/uploads/entries/old.jpg" }],
+         },
+       },
+@@
+     const entry = await prisma.entry.create({
+       data: {
+         tripId: trip.id,
++        title: "Original title",
+         text: "Old text",
+         media: {
+           create: [{ url: "/uploads/entries/old.jpg" }],
+         },
+       },
+@@
+     const entry = await prisma.entry.create({
+       data: {
+         tripId: trip.id,
++        title: "Original title",
+         text: "Old text",
+         media: {
+           create: [{ url: "/uploads/entries/old.jpg" }],
+         },
+       },
+*** End Patch
+2025-12-28T16:28:00.199036Z  INFO ToolCall: apply_patch *** Begin Patch
+*** Update File: /Users/tommy/Development/TravelBlogs/travelblogs/tests/api/entries/update-entry.test.ts
+@@
+     const entry = await prisma.entry.create({
+       data: {
+         tripId: trip.id,
++        title: "Original title",
+         text: "Old text",
+         media: {
+           create: [{ url: "/uploads/entries/old.jpg" }],
+         },
+       },
+@@
+     const request = new Request(`http://localhost/api/entries/${entry.id}`, {
+       method: "PATCH",
+       headers: {
+         "Content-Type": "application/json",
+       },
+       body: JSON.stringify({
++        title: "Updated title",
+         text: "",
+         mediaUrls: ["/uploads/entries/new.jpg"],
+       }),
+     });
+@@
+     const entry = await prisma.entry.create({
+       data: {
+         tripId: trip.id,
++        title: "Original title",
+         text: "Old text",
+         media: {
+           create: [{ url: "/uploads/entries/old.jpg" }],
+         },
+       },
+     });
+@@
+     const request = new Request(`http://localhost/api/entries/${entry.id}`, {
+       method: "PATCH",
+       headers: {
+         "Content-Type": "application/json",
+       },
+       body: JSON.stringify({
++        title: "Updated title",
+         text: "Updated text",
+         mediaUrls: [],
+       }),
+     });
+@@
+     const entry = await prisma.entry.create({
+       data: {
+         tripId: trip.id,
++        title: "Original title",
+         text: "Old text",
+         media: {
+           create: [{ url: "/uploads/entries/old.jpg" }],
+         },
+       },
+     });
+@@
+     const request = new Request(`http://localhost/api/entries/${entry.id}`, {
+       method: "PATCH",
+       headers: {
+         "Content-Type": "application/json",
+       },
+       body: JSON.stringify({
++        title: "Updated title",
+         text: "Updated text",
+         mediaUrls: [""],
+       }),
+     });
+*** End Patch
+2025-12-28T16:28:05.468491Z  INFO ToolCall: shell_command {"command":"sed -n '260,360p' /Users/tommy/Development/TravelBlogs/travelblogs/tests/api/entries/update-entry.test.ts","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:28:08.233957Z  INFO ToolCall: shell_command {"command":"sed -n '360,460p' /Users/tommy/Development/TravelBlogs/travelblogs/tests/api/entries/update-entry.test.ts","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:28:14.946206Z  INFO ToolCall: apply_patch *** Begin Patch
+*** Update File: /Users/tommy/Development/TravelBlogs/travelblogs/tests/api/entries/update-entry.test.ts
+@@
+       body: JSON.stringify({
++        title: "Updated title",
+         text: "",
+         mediaUrls: ["/uploads/entries/new.jpg"],
+       }),
+     });
+@@
+       body: JSON.stringify({
++        title: "Updated title",
+         text: "Updated text",
+         mediaUrls: [],
+       }),
+     });
+@@
+     const entry = await prisma.entry.create({
+       data: {
+         tripId: trip.id,
++        title: "Original title",
+         text: "Old text",
+         media: {
+           create: [{ url: "/uploads/entries/old.jpg" }],
+         },
+@@
+       body: JSON.stringify({
++        title: "Updated title",
+         text: "Updated text",
+         mediaUrls: [""],
+       }),
+     });
+*** End Patch
+2025-12-28T16:28:32.765612Z  INFO ToolCall: apply_patch *** Begin Patch
+*** Update File: /Users/tommy/Development/TravelBlogs/travelblogs/tests/api/entries/update-entry.test.ts
+@@
+   it("returns validation errors for missing text", async () => {
+@@
+     expect(response.status).toBe(400);
+     expect(body.error.code).toBe("VALIDATION_ERROR");
+   });
+ 
++  it("returns validation errors for missing title", async () => {
++    const trip = await prisma.trip.create({
++      data: {
++        title: "Validation",
++        startDate: new Date("2025-05-01"),
++        endDate: new Date("2025-05-10"),
++        ownerId: "creator",
++      },
++    });
++    const entry = await prisma.entry.create({
++      data: {
++        tripId: trip.id,
++        title: "Original title",
++        text: "Old text",
++        media: {
++          create: [{ url: "/uploads/entries/old.jpg" }],
++        },
++      },
++    });
++
++    const request = new Request(`http://localhost/api/entries/${entry.id}`, {
++      method: "PATCH",
++      headers: {
++        "Content-Type": "application/json",
++      },
++      body: JSON.stringify({
++        title: "",
++        text: "Updated text",
++        mediaUrls: ["/uploads/entries/new.jpg"],
++      }),
++    });
++
++    const response = await patch(request, { params: { id: entry.id } });
++    const body = await response.json();
++
++    expect(response.status).toBe(400);
++    expect(body.error.code).toBe("VALIDATION_ERROR");
++    expect(body.error.message).toBe("Entry title is required.");
++  });
++
++  it("returns validation errors for titles over 80 characters", async () => {
++    const trip = await prisma.trip.create({
++      data: {
++        title: "Validation",
++        startDate: new Date("2025-05-01"),
++        endDate: new Date("2025-05-10"),
++        ownerId: "creator",
++      },
++    });
++    const entry = await prisma.entry.create({
++      data: {
++        tripId: trip.id,
++        title: "Original title",
++        text: "Old text",
++        media: {
++          create: [{ url: "/uploads/entries/old.jpg" }],
++        },
++      },
++    });
++
++    const request = new Request(`http://localhost/api/entries/${entry.id}`, {
++      method: "PATCH",
++      headers: {
++        "Content-Type": "application/json",
++      },
++      body: JSON.stringify({
++        title: "a".repeat(81),
++        text: "Updated text",
++        mediaUrls: ["/uploads/entries/new.jpg"],
++      }),
++    });
++
++    const response = await patch(request, { params: { id: entry.id } });
++    const body = await response.json();
++
++    expect(response.status).toBe(400);
++    expect(body.error.code).toBe("VALIDATION_ERROR");
++    expect(body.error.message).toBe(
++      "Entry title must be 80 characters or fewer.",
++    );
++  });
++
+   it("returns validation errors when no media is present", async () => {
+*** End Patch
+2025-12-28T16:28:39.278021Z  INFO ToolCall: apply_patch *** Begin Patch
+*** Update File: /Users/tommy/Development/TravelBlogs/travelblogs/tests/api/entries/list-entries.test.ts
+@@
+     const olderEntry = await prisma.entry.create({
+       data: {
+         tripId: trip.id,
++        title: "Day one",
+         text: "First day",
+         createdAt: new Date("2025-06-02T10:00:00Z"),
+         updatedAt: new Date("2025-06-02T10:00:00Z"),
+@@
+     const newerEntry = await prisma.entry.create({
+       data: {
+         tripId: trip.id,
++        title: "Day two",
+         text: "Second day",
+         createdAt: new Date("2025-06-03T10:00:00Z"),
+         updatedAt: new Date("2025-06-03T10:00:00Z"),
+*** End Patch
+2025-12-28T16:28:45.032992Z  INFO ToolCall: apply_patch *** Begin Patch
+*** Update File: /Users/tommy/Development/TravelBlogs/travelblogs/tests/api/entries/get-entry.test.ts
+@@
+     const entry = await prisma.entry.create({
+       data: {
+         tripId: trip.id,
++        title: "Detail day",
+         text: "Full day recap",
+         media: {
+           create: [{ url: "/uploads/entries/detail.jpg" }],
+         },
+@@
+     const entry = await prisma.entry.create({
+       data: {
+         tripId: trip.id,
++        title: "Not yours",
+         text: "Not yours",
+         media: {
+           create: [{ url: "/uploads/entries/other.jpg" }],
+         },
+*** End Patch
+2025-12-28T16:29:03.533321Z  INFO ToolCall: apply_patch *** Begin Patch
+*** Update File: /Users/tommy/Development/TravelBlogs/travelblogs/prisma/schema.prisma
+@@
+ model Entry {
+   id        String      @id @default(cuid())
+   tripId    String
+-  title     String      @default("")
++  title     String
+   coverImageUrl String?
+   text      String
+   createdAt DateTime    @default(now())
+   updatedAt DateTime    @updatedAt
+*** End Patch
+2025-12-28T16:29:14.063643Z  INFO ToolCall: apply_patch *** Begin Patch
+*** Add File: /Users/tommy/Development/TravelBlogs/travelblogs/prisma/migrations/20251228160000_remove_entry_title_default/migration.sql
++-- RedefineTables
++PRAGMA defer_foreign_keys=ON;
++PRAGMA foreign_keys=OFF;
++CREATE TABLE "new_Entry" (
++    "id" TEXT NOT NULL PRIMARY KEY,
++    "tripId" TEXT NOT NULL,
++    "title" TEXT NOT NULL,
++    "coverImageUrl" TEXT,
++    "text" TEXT NOT NULL,
++    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
++    "updatedAt" DATETIME NOT NULL,
++    CONSTRAINT "Entry_tripId_fkey" FOREIGN KEY ("tripId") REFERENCES "Trip" ("id") ON DELETE CASCADE ON UPDATE CASCADE
++);
++INSERT INTO "new_Entry" ("coverImageUrl", "createdAt", "id", "text", "title", "tripId", "updatedAt") SELECT "coverImageUrl", "createdAt", "id", "text", "title", "tripId", "updatedAt" FROM "Entry";
++DROP TABLE "Entry";
++ALTER TABLE "new_Entry" RENAME TO "Entry";
++PRAGMA foreign_keys=ON;
++PRAGMA defer_foreign_keys=OFF;
+*** End Patch
+2025-12-28T16:29:19.938708Z  INFO ToolCall: apply_patch *** Begin Patch
+*** Update File: /Users/tommy/Development/TravelBlogs/travelblogs/src/app/api/entries/route.ts
+@@
+-    title: z.string().trim().min(1, "Entry title is required."),
++    title: z
++      .string()
++      .trim()
++      .min(1, "Entry title is required.")
++      .max(80, "Entry title must be 80 characters or fewer."),
+*** End Patch
+2025-12-28T16:29:24.928814Z  INFO ToolCall: apply_patch *** Begin Patch
+*** Update File: /Users/tommy/Development/TravelBlogs/travelblogs/src/app/api/entries/[id]/route.ts
+@@
+-    title: z.string().trim().min(1, "Entry title is required."),
++    title: z
++      .string()
++      .trim()
++      .min(1, "Entry title is required.")
++      .max(80, "Entry title must be 80 characters or fewer."),
+*** End Patch
+2025-12-28T16:29:51.132954Z  INFO ToolCall: apply_patch *** Begin Patch
+*** Update File: /Users/tommy/Development/TravelBlogs/travelblogs/src/components/entries/create-entry-form.tsx
+@@
+ const isValidEntryDate = (value: string) =>
+   Boolean(value) && !Number.isNaN(Date.parse(value));
+ 
++const maxTitleLength = 80;
++
+ const getErrors = (
+   entryDate: string,
+   title: string,
+   text: string,
+@@
+   }
+ 
+-  if (!title.trim()) {
++  if (!title.trim()) {
+     nextErrors.title = "Entry title is required.";
++  } else if (title.trim().length > maxTitleLength) {
++    nextErrors.title = "Entry title must be 80 characters or fewer.";
+   }
+@@
+   const updateTitle = (value: string) => {
+     setTitle(value);
++    const trimmed = value.trim();
+     setErrors((prev) => ({
+       ...prev,
+-      title: value.trim() ? undefined : "Entry title is required.",
++      title: !trimmed
++        ? "Entry title is required."
++        : trimmed.length > maxTitleLength
++          ? "Entry title must be 80 characters or fewer."
++          : undefined,
+     }));
+   };
+@@
+   const handleTitleBlur = () => {
+-    if (!title.trim()) {
++    const trimmed = title.trim();
++    if (!trimmed) {
+       setErrors((prev) => ({
+         ...prev,
+         title: "Entry title is required.",
+       }));
++    } else if (trimmed.length > maxTitleLength) {
++      setErrors((prev) => ({
++        ...prev,
++        title: "Entry title must be 80 characters or fewer.",
++      }));
+     }
+   };
+@@
+   const canSubmit = Boolean(
+     isValidEntryDate(entryDate) &&
+-      title.trim() &&
++      title.trim() &&
++      title.trim().length <= maxTitleLength &&
+       text.trim() &&
+       (mediaUrls.length > 0 || inlineImageUrls.length > 0) &&
+       !hasFieldErrors &&
+@@
+       const result = await response.json().catch(() => null);
+       if (!response.ok || result?.error) {
+-        setErrors({
+-          form:
+-            result?.error?.message ??
+-            "Unable to create entry. Please try again.",
+-        });
++        const message =
++          result?.error?.message ?? "Unable to create entry. Please try again.";
++        if (result?.error?.code === "VALIDATION_ERROR") {
++          if (message === "Entry title is required.") {
++            setErrors({ title: message });
++          } else if (message === "Entry title must be 80 characters or fewer.") {
++            setErrors({ title: message });
++          } else if (message === "Entry text is required.") {
++            setErrors({ text: message });
++          } else if (
++            message === "At least one photo is required." ||
++            message === "Media URL is required."
++          ) {
++            setErrors({ media: message });
++          } else {
++            setErrors({ form: message });
++          }
++        } else {
++          setErrors({ form: message });
++        }
+         setSubmitting(false);
+         return;
+       }
+@@
+         <input
+           type="text"
+           name="title"
+           value={title}
+           onChange={(event) => updateTitle(event.target.value)}
+           onBlur={handleTitleBlur}
++          maxLength={maxTitleLength}
+           className="mt-2 w-full rounded-xl border border-black/10 px-3 py-2 text-sm focus:border-[#1F6F78] focus:outline-none focus:ring-2 focus:ring-[#1F6F78]/20"
+           placeholder="Give the day a headline..."
+         />
++        <p className="mt-2 text-xs text-[#6B635B]">
++          Max 80 characters.
++        </p>
+         {errors.title ? (
+           <p className="mt-2 text-xs text-[#B34A3C]">{errors.title}</p>
+         ) : null}
+*** End Patch
+2025-12-28T16:30:07.856751Z  INFO ToolCall: apply_patch *** Begin Patch
+*** Update File: /Users/tommy/Development/TravelBlogs/travelblogs/src/components/entries/edit-entry-form.tsx
+@@
+ const isValidEntryDate = (value: string) =>
+   Boolean(value) && !Number.isNaN(Date.parse(value));
+ 
++const maxTitleLength = 80;
++
+ const toDateInputValue = (value: string) => {
+   const parsed = new Date(value);
+   return Number.isNaN(parsed.getTime())
+@@
+-  if (!title.trim()) {
++  if (!title.trim()) {
+     nextErrors.title = "Entry title is required.";
++  } else if (title.trim().length > maxTitleLength) {
++    nextErrors.title = "Entry title must be 80 characters or fewer.";
+   }
+@@
+   const updateTitle = (value: string) => {
+     setTitle(value);
++    const trimmed = value.trim();
+     setErrors((prev) => ({
+       ...prev,
+-      title: value.trim() ? undefined : "Entry title is required.",
++      title: !trimmed
++        ? "Entry title is required."
++        : trimmed.length > maxTitleLength
++          ? "Entry title must be 80 characters or fewer."
++          : undefined,
+     }));
+   };
+@@
+   const handleTitleBlur = () => {
+-    if (!title.trim()) {
++    const trimmed = title.trim();
++    if (!trimmed) {
+       setErrors((prev) => ({
+         ...prev,
+         title: "Entry title is required.",
+       }));
++    } else if (trimmed.length > maxTitleLength) {
++      setErrors((prev) => ({
++        ...prev,
++        title: "Entry title must be 80 characters or fewer.",
++      }));
+     }
+   };
+@@
+   const canSubmit = Boolean(
+     isValidEntryDate(entryDate) &&
+-      title.trim() &&
++      title.trim() &&
++      title.trim().length <= maxTitleLength &&
+       text.trim() &&
+       (mediaUrls.length > 0 || inlineImageUrls.length > 0) &&
+       !hasFieldErrors &&
+@@
+         if (result?.error?.code === "VALIDATION_ERROR") {
+           if (message === "Entry date is required.") {
+             setErrors({ date: message });
+           } else if (message === "Entry title is required.") {
+             setErrors({ title: message });
++          } else if (message === "Entry title must be 80 characters or fewer.") {
++            setErrors({ title: message });
+           } else if (message === "Entry text is required.") {
+             setErrors({ text: message });
+           } else if (
+             message === "At least one photo is required." ||
+@@
+         <input
+           type="text"
+           name="title"
+           value={title}
+           onChange={(event) => updateTitle(event.target.value)}
+           onBlur={handleTitleBlur}
++          maxLength={maxTitleLength}
+           className="mt-2 w-full rounded-xl border border-black/10 px-3 py-2 text-sm focus:border-[#1F6F78] focus:outline-none focus:ring-2 focus:ring-[#1F6F78]/20"
+           placeholder="Give the day a headline..."
+         />
++        <p className="mt-2 text-xs text-[#6B635B]">
++          Max 80 characters.
++        </p>
+         {errors.title ? (
+           <p className="mt-2 text-xs text-[#B34A3C]">{errors.title}</p>
+         ) : null}
+*** End Patch
+2025-12-28T16:30:34.283952Z  INFO ToolCall: apply_patch *** Begin Patch
+*** Add File: /Users/tommy/Development/TravelBlogs/travelblogs/tests/components/trip-detail.test.tsx
++// @vitest-environment jsdom
++import type { ReactNode } from "react";
++import { afterEach, describe, expect, it, vi } from "vitest";
++import { render, screen } from "@testing-library/react";
++
++import TripDetail from "../../src/components/trips/trip-detail";
++
++vi.mock("next/image", () => ({
++  default: (props: React.ImgHTMLAttributes<HTMLImageElement>) => (
++    <img {...props} />
++  ),
++}));
++
++vi.mock("next/link", () => ({
++  default: ({ href, children }: { href: string; children: ReactNode }) => (
++    <a href={href}>{children}</a>
++  ),
++}));
++
++describe("TripDetail", () => {
++  afterEach(() => {
++    vi.unstubAllGlobals();
++  });
++
++  it("renders entry titles in the list", async () => {
++    const fetchMock = vi
++      .fn()
++      .mockResolvedValueOnce(
++        new Response(
++          JSON.stringify({
++            data: {
++              id: "trip-1",
++              title: "Italy Highlights",
++              startDate: "2025-05-01T00:00:00.000Z",
++              endDate: "2025-05-10T00:00:00.000Z",
++              coverImageUrl: null,
++            },
++            error: null,
++          }),
++          { status: 200 },
++        ),
++      )
++      .mockResolvedValueOnce(
++        new Response(
++          JSON.stringify({
++            data: [
++              {
++                id: "entry-1",
++                tripId: "trip-1",
++                title: "Roman morning",
++                coverImageUrl: null,
++                text: "Great day in Rome.",
++                createdAt: "2025-05-02T00:00:00.000Z",
++                updatedAt: "2025-05-02T00:00:00.000Z",
++                media: [],
++              },
++            ],
++            error: null,
++          }),
++          { status: 200 },
++        ),
++      );
++
++    vi.stubGlobal("fetch", fetchMock);
++
++    render(<TripDetail tripId="trip-1" />);
++
++    expect(await screen.findByText("Roman morning")).toBeInTheDocument();
++  });
++});
+*** End Patch
+2025-12-28T16:30:40.850419Z  INFO ToolCall: apply_patch *** Begin Patch
+*** Update File: /Users/tommy/Development/TravelBlogs/travelblogs/tests/components/trip-detail.test.tsx
+@@
+-import type { ReactNode } from "react";
++import type { ImgHTMLAttributes, ReactNode } from "react";
+@@
+ vi.mock("next/image", () => ({
+-  default: (props: React.ImgHTMLAttributes<HTMLImageElement>) => (
+-    <img {...props} />
+-  ),
++  default: (props: ImgHTMLAttributes<HTMLImageElement>) => <img {...props} />,
+ }));
+*** End Patch
+2025-12-28T16:30:56.689658Z  INFO ToolCall: apply_patch *** Begin Patch
+*** Add File: /Users/tommy/Development/TravelBlogs/travelblogs/tests/components/entry-detail.test.tsx
++// @vitest-environment jsdom
++import type { ImgHTMLAttributes, ReactNode } from "react";
++import { afterEach, describe, expect, it, vi } from "vitest";
++import { render, screen } from "@testing-library/react";
++
++import EntryDetail from "../../src/components/entries/entry-detail";
++
++vi.mock("next/image", () => ({
++  default: (props: ImgHTMLAttributes<HTMLImageElement>) => <img {...props} />,
++}));
++
++vi.mock("next/link", () => ({
++  default: ({ href, children }: { href: string; children: ReactNode }) => (
++    <a href={href}>{children}</a>
++  ),
++}));
++
++describe("EntryDetail", () => {
++  afterEach(() => {
++    vi.unstubAllGlobals();
++  });
++
++  it("renders the entry title in the header", async () => {
++    const fetchMock = vi.fn().mockResolvedValue(
++      new Response(
++        JSON.stringify({
++          data: {
++            id: "entry-1",
++            tripId: "trip-1",
++            title: "Sunset in Positano",
++            coverImageUrl: null,
++            text: "Golden hour on the cliffs.",
++            createdAt: "2025-05-03T00:00:00.000Z",
++            updatedAt: "2025-05-03T00:00:00.000Z",
++            media: [],
++          },
++          error: null,
++        }),
++        { status: 200 },
++      ),
++    );
++
++    vi.stubGlobal("fetch", fetchMock);
++
++    render(<EntryDetail tripId="trip-1" entryId="entry-1" />);
++
++    expect(
++      await screen.findByRole("heading", { name: "Sunset in Positano" }),
++    ).toBeInTheDocument();
++  });
++});
+*** End Patch
+2025-12-28T16:31:06.650639Z  INFO ToolCall: apply_patch *** Begin Patch
+*** Update File: /Users/tommy/Development/TravelBlogs/travelblogs/tests/api/entries/create-entry.test.ts
+@@
+       body: JSON.stringify({
+         tripId: "trip-123",
++        title: "No text",
+         text: "",
+         mediaUrls: ["/uploads/entries/photo.jpg"],
+       }),
+     });
+@@
+       body: JSON.stringify({
+         tripId: "trip-123",
++        title: "No photos",
+         text: "Today was a good day.",
+         mediaUrls: [],
+       }),
+     });
+@@
+       body: JSON.stringify({
+         tripId: "",
++        title: "Missing trip",
+         text: "Today was a good day.",
+         mediaUrls: ["/uploads/entries/photo.jpg"],
+       }),
+     });
+*** End Patch
+2025-12-28T16:31:12.328557Z  INFO ToolCall: shell_command {"command":"rg -n \"entry\\.create\\(\" /Users/tommy/Development/TravelBlogs/travelblogs/tests/api/entries/update-entry.test.ts","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:31:16.972098Z  INFO ToolCall: shell_command {"command":"sed -n '420,500p' /Users/tommy/Development/TravelBlogs/travelblogs/tests/api/entries/update-entry.test.ts","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:31:23.589012Z  INFO ToolCall: shell_command {"command":"rg -n \"entry\\.create\\(\" /Users/tommy/Development/TravelBlogs/travelblogs/src","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:31:37.790603Z  INFO ToolCall: shell_command {"command":"cat /Users/tommy/Development/TravelBlogs/travelblogs/package.json","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:31:45.357110Z  INFO ToolCall: shell_command {"command":"npm test","workdir":"/Users/tommy/Development/TravelBlogs/travelblogs","timeout_ms":120000}
+2025-12-28T16:31:57.055441Z  INFO ToolCall: apply_patch *** Begin Patch
+*** Update File: /Users/tommy/Development/TravelBlogs/travelblogs/tests/components/trip-detail.test.tsx
+@@
+ vi.mock("next/link", () => ({
+   default: ({ href, children }: { href: string; children: ReactNode }) => (
+     <a href={href}>{children}</a>
+   ),
+ }));
+ 
++vi.mock("next/navigation", () => ({
++  useRouter: () => ({
++    push: vi.fn(),
++    refresh: vi.fn(),
++  }),
++}));
++
+ describe("TripDetail", () => {
+*** End Patch
+2025-12-28T16:32:02.302806Z  INFO ToolCall: apply_patch *** Begin Patch
+*** Update File: /Users/tommy/Development/TravelBlogs/travelblogs/tests/components/entry-detail.test.tsx
+@@
+ vi.mock("next/link", () => ({
+   default: ({ href, children }: { href: string; children: ReactNode }) => (
+     <a href={href}>{children}</a>
+   ),
+ }));
+ 
++vi.mock("next/navigation", () => ({
++  useRouter: () => ({
++    push: vi.fn(),
++    refresh: vi.fn(),
++  }),
++}));
++
+ describe("EntryDetail", () => {
+*** End Patch
+2025-12-28T16:32:05.364313Z  INFO ToolCall: shell_command {"command":"npm test","workdir":"/Users/tommy/Development/TravelBlogs/travelblogs","timeout_ms":120000}
+2025-12-28T16:32:17.539546Z  INFO ToolCall: shell_command {"command":"cat /Users/tommy/Development/TravelBlogs/_bmad-output/implementation-artifacts/2-5-entry-title.md","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:32:23.350935Z  INFO ToolCall: shell_command {"command":"cat /Users/tommy/Development/TravelBlogs/_bmad-output/implementation-artifacts/2-4-delete-blog-entry.md","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:32:35.663522Z  INFO ToolCall: shell_command {"command":"git status -s","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:32:55.394913Z  INFO ToolCall: shell_command {"command":"rg -n \"Change Log\" /Users/tommy/Development/TravelBlogs/_bmad-output/implementation-artifacts/2-1-add-blog-entry.md","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:32:59.663614Z  INFO ToolCall: shell_command {"command":"sed -n '90,140p' /Users/tommy/Development/TravelBlogs/_bmad-output/implementation-artifacts/2-1-add-blog-entry.md","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:33:34.337458Z  INFO ToolCall: apply_patch *** Begin Patch
+*** Update File: /Users/tommy/Development/TravelBlogs/_bmad-output/implementation-artifacts/2-5-entry-title.md
+@@
+-Status: ready-for-dev
++Status: review
+@@
+-- [ ] Add entry title to data model and API (AC: 1, 2)
+-  - [ ] Add `title` field to entry model in `prisma/schema.prisma` and run migration
+-  - [ ] Update entry create/update validation (Zod) to require `title` and enforce max length 80
+-  - [ ] Ensure API responses include `title` in entry payloads
+-- [ ] Update entry create/edit UI (AC: 1, 2)
+-  - [ ] Add title input to entry create/edit form with 80-char limit hint
+-  - [ ] Show validation errors for missing/too-long title
+-- [ ] Display title in entry list and entry view header (AC: 1)
+-  - [ ] Update entry list item to show title summary
+-  - [ ] Update entry reader header to show title
+-- [ ] Tests and regression checks (AC: 1, 2)
+-  - [ ] Add/extend API tests for required title and max length
+-  - [ ] Add/extend component tests for title rendering in list and entry view
++- [x] Add entry title to data model and API (AC: 1, 2)
++  - [x] Add `title` field to entry model in `prisma/schema.prisma` and run migration
++  - [x] Update entry create/update validation (Zod) to require `title` and enforce max length 80
++  - [x] Ensure API responses include `title` in entry payloads
++- [x] Update entry create/edit UI (AC: 1, 2)
++  - [x] Add title input to entry create/edit form with 80-char limit hint
++  - [x] Show validation errors for missing/too-long title
++- [x] Display title in entry list and entry view header (AC: 1)
++  - [x] Update entry list item to show title summary
++  - [x] Update entry reader header to show title
++- [x] Tests and regression checks (AC: 1, 2)
++  - [x] Add/extend API tests for required title and max length
++  - [x] Add/extend component tests for title rendering in list and entry view
+@@
+ ### Debug Log References
+ 
++- npm test
++
+ ### Completion Notes List
+ 
+-- Ultimate context engine analysis completed - comprehensive developer guide created
++- Added required entry titles in Prisma schema and API validation (80 char max) with payload coverage.
++- Updated entry create/edit forms with length hint and client-side validation for required titles.
++- Added component coverage for entry titles in list and entry detail header plus API validation tests.
++- Tests: `npm test`.
+@@
+ ### File List
+ 
+-- TBD during implementation
++- _bmad-output/implementation-artifacts/2-5-entry-title.md
++- _bmad-output/implementation-artifacts/sprint-status.yaml
++- travelblogs/prisma/schema.prisma
++- travelblogs/prisma/migrations/20251228160000_remove_entry_title_default/migration.sql
++- travelblogs/src/app/api/entries/route.ts
++- travelblogs/src/app/api/entries/[id]/route.ts
++- travelblogs/src/components/entries/create-entry-form.tsx
++- travelblogs/src/components/entries/edit-entry-form.tsx
++- travelblogs/tests/api/entries/create-entry.test.ts
++- travelblogs/tests/api/entries/update-entry.test.ts
++- travelblogs/tests/api/entries/list-entries.test.ts
++- travelblogs/tests/api/entries/get-entry.test.ts
++- travelblogs/tests/components/entry-detail.test.tsx
++- travelblogs/tests/components/trip-detail.test.tsx
+@@
+ ### Story Completion Status
+ 
+-Status: ready-for-dev
++Status: review
++
++## Change Log
++
++- 2025-12-28: Added required entry titles with 80-char limit across Prisma, API validation, UI, and tests.
+*** End Patch
+2025-12-28T16:33:40.630459Z  INFO ToolCall: apply_patch *** Begin Patch
+*** Update File: /Users/tommy/Development/TravelBlogs/_bmad-output/implementation-artifacts/sprint-status.yaml
+@@
+-  2-5-entry-title: in-progress
++  2-5-entry-title: review
+*** End Patch
+2025-12-28T16:34:24.763878Z  INFO spawning ghost snapshot task
+2025-12-28T16:34:24.973195Z  INFO ghost snapshot blocking task finished
+2025-12-28T16:34:24.973225Z  INFO ghost commit captured: 7fb51dda66c5028bb57c771707a209bcfa6f0b24
+2025-12-28T16:34:24.973230Z  INFO ghost snapshot gate marked ready
+2025-12-28T16:34:27.704049Z  INFO ToolCall: shell_command {"command":"ls","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:34:29.522488Z  INFO ToolCall: shell_command {"command":"ls _bmad/bmm/agents","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:34:31.340610Z  INFO ToolCall: shell_command {"command":"cat _bmad/bmm/agents/sm.md","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:34:33.787736Z  INFO ToolCall: shell_command {"command":"cat _bmad/bmm/config.yaml","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:34:38.094828Z  INFO ToolCall: shell_command {"command":"rg --files -g 'project-context.md'","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:34:45.926010Z  INFO spawning ghost snapshot task
+2025-12-28T16:34:46.091726Z  INFO ghost snapshot blocking task finished
+2025-12-28T16:34:46.091748Z  INFO ghost commit captured: c902298c2854d9e13ceb0cdc85b07974d3510f0c
+2025-12-28T16:34:46.091753Z  INFO ghost snapshot gate marked ready
+2025-12-28T16:37:23.084385Z  INFO spawning ghost snapshot task
+2025-12-28T16:37:23.252604Z  INFO ghost snapshot blocking task finished
+2025-12-28T16:37:23.252627Z  INFO ghost commit captured: bae871f4bc800b12663cd578a4ae632fba06f28c
+2025-12-28T16:37:23.252631Z  INFO ghost snapshot gate marked ready
+2025-12-28T16:37:29.291790Z  INFO ToolCall: shell_command {"command":"rg --files","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:37:32.661663Z  INFO ToolCall: shell_command {"command":"cat _bmad-output/epics.md","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:37:36.578295Z  INFO ToolCall: shell_command {"command":"cat _bmad-output/implementation-artifacts/2-3-multi-file-media-upload.md","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:37:40.564360Z  INFO ToolCall: shell_command {"command":"cat _bmad-output/implementation-artifacts/2-5-entry-title.md","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:37:45.318938Z  INFO ToolCall: shell_command {"command":"cat _bmad-output/implementation-artifacts/sprint-status.yaml","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:37:51.171538Z  INFO ToolCall: shell_command {"command":"rg -n \"story image|inline|media\" travelblogs/src/components/entries -S","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:37:55.746580Z  INFO ToolCall: shell_command {"command":"cat _bmad/bmm/workflows/4-implementation/create-story/template.md","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:38:11.054528Z  INFO ToolCall: apply_patch *** Begin Patch
+*** Update File: _bmad-output/epics.md
+@@
+ ### Story 2.5: Entry Title
+ 
+ As a creator,
+ I want to add a short title for each blog entry,
+ So that the entry is summarized in one short message.
+@@
+ **Given** I submit an entry without a title or with a title over 80 characters  
+ **When** I attempt to save  
+ **Then** I see a clear validation error  
+ **And** the entry is not saved
++
++### Story 2.6: Unified Entry Image Library
++
++As a creator,
++I want all entry images managed in one place,
++So that I can select the story image, insert inline photos, or remove images without re-uploading.
++
++**Acceptance Criteria:**
++
++**Given** I am creating or editing an entry  
++**When** I upload images  
++**Then** they appear in a single entry image library as the first step in the media flow  
++
++**Given** I hover over an image in the library  
++**When** I choose "Set as story image"  
++**Then** that image becomes the story image selection  
++
++**Given** I hover over an image in the library  
++**When** I choose "Insert inline"  
++**Then** an image link is inserted at the current cursor position in the entry text  
++
++**Given** I hover over an image in the library  
++**When** I choose "Remove"  
++**Then** the image is removed from the entry media and no longer selectable for story or inline use
+*** End Patch
+2025-12-28T16:38:34.368884Z  INFO ToolCall: apply_patch *** Begin Patch
+*** Add File: _bmad-output/implementation-artifacts/2-6-unified-entry-image-library.md
++# Story 2.6: Unified Entry Image Library
++
++Status: ready-for-dev
++
++<!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
++
++## Story
++
++As a creator,
++I want all entry images managed in one place,
++so that I can select the story image, insert inline photos, or remove images without re-uploading.
++
++## Acceptance Criteria
++
++1. **Given** I am creating or editing an entry  
++   **When** I upload images  
++   **Then** they appear in a single entry image library as the first step in the media flow
++2. **Given** I hover over an image in the library  
++   **When** I choose "Set as story image"  
++   **Then** that image becomes the story image selection
++3. **Given** I hover over an image in the library  
++   **When** I choose "Insert inline"  
++   **Then** an image link is inserted at the current cursor position in the entry text
++4. **Given** I hover over an image in the library  
++   **When** I choose "Remove"  
++   **Then** the image is removed from the entry media and no longer selectable for story or inline use
++
++## Tasks / Subtasks
++
++- [ ] Consolidate entry image upload into a single library UI (AC: 1)
++  - [ ] Replace separate "Story image", "Inline photos", and "Media files" upload inputs with one upload input
++  - [ ] Display all uploaded images in a unified gallery/grid with hover actions
++- [ ] Add story image selection from library (AC: 2)
++  - [ ] Store the selected story image URL and show the current selection state in the library
++  - [ ] Ensure the selected image is saved with the entry as the story image
++- [ ] Add inline insert action at cursor (AC: 3)
++  - [ ] Track current cursor position in the entry text field
++  - [ ] Insert the selected image URL into the text at the cursor using the existing inline image format
++- [ ] Add remove action and cleanup behavior (AC: 4)
++  - [ ] Remove the image from the entry media list and library view
++  - [ ] If the image is the current story image, clear the selection
++  - [ ] If the image appears inline in the text, remove the inline reference
++- [ ] Update validations and UX copy (AC: 1-4)
++  - [ ] Ensure at least one image exists between the library and inline text if required
++  - [ ] Replace helper text to reflect the unified image library flow
++- [ ] Add/adjust tests (AC: 1-4)
++  - [ ] Component tests for library actions (set story image, insert inline, remove)
++  - [ ] Utility tests for inline insertion and removal behavior
++
++## Dev Notes
++
++- Use the existing entry media upload and inline image utilities; unify the UI without changing the media upload API contract. [Source: _bmad-output/architecture.md#API & Communication Patterns]
++- Maintain `{ data, error }` response wrapper for API interactions. [Source: _bmad-output/architecture.md#API & Communication Patterns]
++- Entry forms live in `src/components/entries/` and should remain the single source of truth for entry media selection. [Source: _bmad-output/architecture.md#Project Structure & Boundaries]
++- Tests live under `tests/` only (no co-located tests). [Source: _bmad-output/project-context.md#Testing Rules]
++
++### Project Structure Notes
++
++- Update `src/components/entries/create-entry-form.tsx` and `src/components/entries/edit-entry-form.tsx` for the unified library UI.
++- Inline image extraction and insertion helpers live in `src/utils/entry-content.ts`.
++- Media upload helpers live in `src/utils/entry-media.ts`.
++
++### References
++
++- _bmad-output/epics.md#Story 2.6
++- _bmad-output/architecture.md#Project Structure & Boundaries
++- _bmad-output/architecture.md#API & Communication Patterns
++- _bmad-output/project-context.md#Critical Implementation Rules
++
++## Dev Agent Record
++
++### Agent Model Used
++
++GPT-5 (Codex CLI)
++
++### Debug Log References
++
++### Completion Notes List
++
++### File List
+*** End Patch
+2025-12-28T16:38:39.288373Z  INFO ToolCall: apply_patch *** Begin Patch
+*** Update File: _bmad-output/implementation-artifacts/sprint-status.yaml
+@@
+   2-2-edit-blog-entry: done
+   2-3-multi-file-media-upload: done
+   2-4-delete-blog-entry: done
+   2-5-entry-title: review
++  2-6-unified-entry-image-library: ready-for-dev
+   epic-2-retrospective: optional
+*** End Patch
+2025-12-28T16:39:03.063240Z  INFO spawning ghost snapshot task
+2025-12-28T16:39:03.232715Z  INFO ghost snapshot blocking task finished
+2025-12-28T16:39:03.232737Z  INFO ghost commit captured: c27a9c114737def5b2ed4d657f11ea9067c34c7f
+2025-12-28T16:39:03.232741Z  INFO ghost snapshot gate marked ready
+2025-12-28T16:39:06.873914Z  INFO ToolCall: shell_command {"command":"cat travelblogs/src/utils/entry-content.ts","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:39:13.081282Z  INFO ToolCall: apply_patch *** Begin Patch
+*** Update File: _bmad-output/epics.md
+@@
+ **Given** I hover over an image in the library  
+ **When** I choose "Insert inline"  
+-**Then** an image link is inserted at the current cursor position in the entry text  
++**Then** an image link in the format `![Entry photo](<url>)` is inserted at the current cursor position in the entry text  
+@@
+ **Given** I hover over an image in the library  
+ **When** I choose "Remove"  
+-**Then** the image is removed from the entry media and no longer selectable for story or inline use
++**Then** the image is removed from the entry media and no longer selectable for story or inline use  
++**And** any inline references matching `![...](<url>)` are removed from the entry text
+*** End Patch
+2025-12-28T16:39:18.469155Z  INFO ToolCall: apply_patch *** Begin Patch
+*** Update File: _bmad-output/implementation-artifacts/2-6-unified-entry-image-library.md
+@@
+ 3. **Given** I hover over an image in the library  
+    **When** I choose "Insert inline"  
+-   **Then** an image link is inserted at the current cursor position in the entry text
++   **Then** an image link in the format `![Entry photo](<url>)` is inserted at the current cursor position in the entry text
+ 4. **Given** I hover over an image in the library  
+    **When** I choose "Remove"  
+-   **Then** the image is removed from the entry media and no longer selectable for story or inline use
++   **Then** the image is removed from the entry media and no longer selectable for story or inline use  
++   **And** any inline references matching `![...](<url>)` are removed from the entry text
+*** End Patch
+2025-12-28T16:39:43.653879Z  INFO spawning ghost snapshot task
+2025-12-28T16:39:43.819247Z  INFO ghost snapshot blocking task finished
+2025-12-28T16:39:43.819272Z  INFO ghost commit captured: 846819f3dcfd310452fc543fa533986c128308be
+2025-12-28T16:39:43.819277Z  INFO ghost snapshot gate marked ready
+2025-12-28T16:39:52.034785Z  INFO ToolCall: apply_patch *** Begin Patch
+*** Update File: _bmad-output/implementation-artifacts/2-6-unified-entry-image-library.md
+@@
+ ## Dev Notes
+ 
+ - Use the existing entry media upload and inline image utilities; unify the UI without changing the media upload API contract. [Source: _bmad-output/architecture.md#API & Communication Patterns]
++- Inline insert should use `![Entry photo](<url>)` by default; if an image already has a custom alt in the text, preserve it. [Source: travelblogs/src/utils/entry-content.ts]
+ - Maintain `{ data, error }` response wrapper for API interactions. [Source: _bmad-output/architecture.md#API & Communication Patterns]
+ - Entry forms live in `src/components/entries/` and should remain the single source of truth for entry media selection. [Source: _bmad-output/architecture.md#Project Structure & Boundaries]
+ - Tests live under `tests/` only (no co-located tests). [Source: _bmad-output/project-context.md#Testing Rules]
+*** End Patch
+2025-12-28T16:40:02.195483Z  INFO spawning ghost snapshot task
+2025-12-28T16:40:02.367810Z  INFO ghost snapshot blocking task finished
+2025-12-28T16:40:02.367836Z  INFO ghost commit captured: bcd8d053d6edf0b81b949cb76e386b5fce600429
+2025-12-28T16:40:02.367842Z  INFO ghost snapshot gate marked ready
+2025-12-28T16:40:06.552141Z  INFO ToolCall: apply_patch *** Begin Patch
+*** Update File: _bmad-output/epics.md
+@@
+ **Given** I hover over an image in the library  
+ **When** I choose "Insert inline"  
+-**Then** an image link in the format `![Entry photo](<url>)` is inserted at the current cursor position in the entry text  
++**Then** an image link in the format `![Entry photo](<url>)` is inserted at the current cursor position in the entry text  
++**And** if the image already has a custom alt in the entry text, it is preserved  
+*** End Patch
+2025-12-28T16:40:10.917354Z  INFO ToolCall: apply_patch *** Begin Patch
+*** Update File: _bmad-output/implementation-artifacts/2-6-unified-entry-image-library.md
+@@
+ 3. **Given** I hover over an image in the library  
+    **When** I choose "Insert inline"  
+-   **Then** an image link in the format `![Entry photo](<url>)` is inserted at the current cursor position in the entry text
++   **Then** an image link in the format `![Entry photo](<url>)` is inserted at the current cursor position in the entry text  
++   **And** if the image already has a custom alt in the entry text, it is preserved
+*** End Patch
+2025-12-28T16:40:33.080355Z  INFO spawning ghost snapshot task
+2025-12-28T16:40:33.245238Z  INFO ghost snapshot blocking task finished
+2025-12-28T16:40:33.245268Z  INFO ghost commit captured: b77df081cf303bc7c9abea33d5917c2f47b954fd
+2025-12-28T16:40:33.245273Z  INFO ghost snapshot gate marked ready
+2025-12-28T16:40:37.132919Z  INFO ToolCall: apply_patch *** Begin Patch
+*** Update File: _bmad-output/implementation-artifacts/2-6-unified-entry-image-library.md
+@@
+ - [ ] Add inline insert action at cursor (AC: 3)
+   - [ ] Track current cursor position in the entry text field
+   - [ ] Insert the selected image URL into the text at the cursor using the existing inline image format
++  - [ ] Preserve existing custom alt text when reinserting or updating inline images
+*** End Patch
+2025-12-28T16:40:47.015173Z  INFO spawning ghost snapshot task
+2025-12-28T16:40:47.186873Z  INFO ghost snapshot blocking task finished
+2025-12-28T16:40:47.186900Z  INFO ghost commit captured: 70612fb97f86a556ea280ee83a5cfbf2a5359c50
+2025-12-28T16:40:47.186905Z  INFO ghost snapshot gate marked ready
+2025-12-28T16:41:07.145689Z  INFO spawning ghost snapshot task
+2025-12-28T16:41:07.317909Z  INFO ghost snapshot blocking task finished
+2025-12-28T16:41:07.317937Z  INFO ghost commit captured: bd3fc686920705269819e82bbe82628424511f65
+2025-12-28T16:41:07.317941Z  INFO ghost snapshot gate marked ready
+2025-12-28T16:41:10.211697Z  INFO ToolCall: shell_command {"command":"ls","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:41:12.780342Z  INFO ToolCall: shell_command {"command":"cat /Users/tommy/Development/TravelBlogs/_bmad/bmm/agents/dev.md","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:41:15.075255Z  INFO ToolCall: shell_command {"command":"cat /Users/tommy/Development/TravelBlogs/_bmad/bmm/config.yaml","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:41:21.501433Z  INFO spawning ghost snapshot task
+2025-12-28T16:41:21.666063Z  INFO ghost snapshot blocking task finished
+2025-12-28T16:41:21.666085Z  INFO ghost commit captured: cf1ace9720d6659e0fe3b1196f44b882a1166010
+2025-12-28T16:41:21.666088Z  INFO ghost snapshot gate marked ready
+2025-12-28T16:41:24.699924Z  INFO ToolCall: shell_command {"command":"cat /Users/tommy/Development/TravelBlogs/_bmad/core/tasks/workflow.xml","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:41:28.341086Z  INFO ToolCall: shell_command {"command":"cat /Users/tommy/Development/TravelBlogs/_bmad/bmm/workflows/4-implementation/code-review/workflow.yaml","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:41:32.486670Z  INFO ToolCall: shell_command {"command":"cat /Users/tommy/Development/TravelBlogs/_bmad/bmm/workflows/4-implementation/code-review/instructions.xml","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:42:07.569986Z  INFO spawning ghost snapshot task
+2025-12-28T16:42:07.735935Z  INFO ghost snapshot blocking task finished
+2025-12-28T16:42:07.735959Z  INFO ghost commit captured: 56e3ff07ded425245b61062d2a971f0953aeb2bd
+2025-12-28T16:42:07.735964Z  INFO ghost snapshot gate marked ready
+2025-12-28T16:42:14.905132Z  INFO ToolCall: shell_command {"command":"cat /Users/tommy/Development/TravelBlogs/_bmad-output/implementation-artifacts/2-5-entry-title.md","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:42:19.160037Z  INFO ToolCall: shell_command {"command":"git rev-parse --is-inside-work-tree","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:42:22.204092Z  INFO ToolCall: shell_command {"command":"git status --porcelain","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:42:24.368034Z  INFO ToolCall: shell_command {"command":"git diff --name-only","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:42:27.245903Z  INFO ToolCall: shell_command {"command":"git diff --cached --name-only","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:42:35.227246Z  INFO ToolCall: shell_command {"command":"ls /Users/tommy/Development/TravelBlogs/_bmad-output","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:42:42.233038Z  INFO ToolCall: shell_command {"command":"cat /Users/tommy/Development/TravelBlogs/_bmad-output/architecture.md","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:42:45.828110Z  INFO ToolCall: shell_command {"command":"cat /Users/tommy/Development/TravelBlogs/_bmad-output/ux-design-specification.md","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:42:49.042485Z  INFO ToolCall: shell_command {"command":"cat /Users/tommy/Development/TravelBlogs/_bmad-output/epics.md","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:42:51.475367Z  INFO ToolCall: shell_command {"command":"cat /Users/tommy/Development/TravelBlogs/_bmad-output/project-context.md","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:43:38.995179Z  INFO spawning ghost snapshot task
+2025-12-28T16:43:39.163570Z  INFO ghost snapshot blocking task finished
+2025-12-28T16:43:39.163592Z  INFO ghost commit captured: 3ef3f1606486c7af6a9464bf512481f90d43edf6
+2025-12-28T16:43:39.163596Z  INFO ghost snapshot gate marked ready
+2025-12-28T16:43:46.673664Z  INFO spawning ghost snapshot task
+2025-12-28T16:43:46.844301Z  INFO ghost snapshot blocking task finished
+2025-12-28T16:43:46.844325Z  INFO ghost commit captured: df9fa5170acc6bb232096d631ad63315d82bfd6b
+2025-12-28T16:43:46.844329Z  INFO ghost snapshot gate marked ready
+2025-12-28T16:43:57.973483Z  INFO ToolCall: shell_command {"command":"ls /Users/tommy/Development/TravelBlogs/travelblogs/src/components/entries","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:44:01.533549Z  INFO ToolCall: shell_command {"command":"cat /Users/tommy/Development/TravelBlogs/travelblogs/prisma/schema.prisma","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:44:05.504503Z  INFO ToolCall: shell_command {"command":"cat /Users/tommy/Development/TravelBlogs/travelblogs/prisma/migrations/20251228160000_remove_entry_title_default/migration.sql","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:44:11.418463Z  INFO ToolCall: shell_command {"command":"cat /Users/tommy/Development/TravelBlogs/travelblogs/src/app/api/entries/route.ts","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:44:14.399677Z  INFO ToolCall: shell_command {"command":"cat /Users/tommy/Development/TravelBlogs/travelblogs/src/app/api/entries/[id]/route.ts","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:44:18.628247Z  INFO ToolCall: shell_command {"command":"cat '/Users/tommy/Development/TravelBlogs/travelblogs/src/app/api/entries/[id]/route.ts'","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:44:21.209618Z  INFO ToolCall: shell_command {"command":"cat /Users/tommy/Development/TravelBlogs/travelblogs/src/components/entries/create-entry-form.tsx","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:44:25.414512Z  INFO ToolCall: shell_command {"command":"cat /Users/tommy/Development/TravelBlogs/travelblogs/src/components/entries/edit-entry-form.tsx","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:44:29.286285Z  INFO ToolCall: shell_command {"command":"cat /Users/tommy/Development/TravelBlogs/travelblogs/src/components/entries/entry-detail.tsx","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:44:34.938505Z  INFO ToolCall: shell_command {"command":"rg -n \"entry.title|title\" /Users/tommy/Development/TravelBlogs/travelblogs/src/app/trips /Users/tommy/Development/TravelBlogs/travelblogs/src/components/trips /Users/tommy/Development/TravelBlogs/travelblogs/src/app/page.tsx","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:44:38.355963Z  INFO ToolCall: shell_command {"command":"cat /Users/tommy/Development/TravelBlogs/travelblogs/src/components/trips/trip-detail.tsx","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:44:41.391966Z  INFO ToolCall: shell_command {"command":"cat /Users/tommy/Development/TravelBlogs/travelblogs/tests/api/entries/create-entry.test.ts","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:44:44.121391Z  INFO ToolCall: shell_command {"command":"cat /Users/tommy/Development/TravelBlogs/travelblogs/tests/api/entries/update-entry.test.ts","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:44:47.729257Z  INFO ToolCall: shell_command {"command":"cat /Users/tommy/Development/TravelBlogs/travelblogs/tests/api/entries/list-entries.test.ts","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:44:51.520562Z  INFO ToolCall: shell_command {"command":"cat /Users/tommy/Development/TravelBlogs/travelblogs/tests/api/entries/get-entry.test.ts","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:44:55.578257Z  INFO ToolCall: shell_command {"command":"cat /Users/tommy/Development/TravelBlogs/travelblogs/tests/components/entry-detail.test.tsx","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:44:59.803151Z  INFO ToolCall: shell_command {"command":"cat /Users/tommy/Development/TravelBlogs/travelblogs/tests/components/trip-detail.test.tsx","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:46:03.072153Z  INFO ToolCall: shell_command {"command":"cat /Users/tommy/Development/TravelBlogs/travelblogs/src/app/page.tsx","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:46:06.807492Z  INFO ToolCall: shell_command {"command":"cat /Users/tommy/Development/TravelBlogs/travelblogs/src/app/trips/[tripId]/entries/new/page.tsx","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:46:11.079494Z  INFO ToolCall: shell_command {"command":"cat '/Users/tommy/Development/TravelBlogs/travelblogs/src/app/trips/[tripId]/entries/new/page.tsx'","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:46:45.515472Z  INFO ToolCall: shell_command {"command":"nl -ba /Users/tommy/Development/TravelBlogs/travelblogs/prisma/migrations/20251228160000_remove_entry_title_default/migration.sql","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:46:49.566232Z  INFO ToolCall: shell_command {"command":"nl -ba /Users/tommy/Development/TravelBlogs/travelblogs/src/components/trips/trip-detail.tsx | sed -n '250,330p'","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:46:54.202691Z  INFO ToolCall: shell_command {"command":"nl -ba /Users/tommy/Development/TravelBlogs/travelblogs/src/components/entries/create-entry-form.tsx | sed -n '40,140p'","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:46:57.444061Z  INFO ToolCall: shell_command {"command":"nl -ba /Users/tommy/Development/TravelBlogs/travelblogs/src/components/entries/create-entry-form.tsx | sed -n '330,420p'","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:47:00.399703Z  INFO ToolCall: shell_command {"command":"rg -n \"canSubmit\" /Users/tommy/Development/TravelBlogs/travelblogs/src/components/entries/create-entry-form.tsx","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:47:04.151794Z  INFO ToolCall: shell_command {"command":"nl -ba /Users/tommy/Development/TravelBlogs/travelblogs/src/components/entries/create-entry-form.tsx | sed -n '470,510p'","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:47:07.811202Z  INFO ToolCall: shell_command {"command":"nl -ba /Users/tommy/Development/TravelBlogs/travelblogs/src/components/entries/edit-entry-form.tsx | sed -n '40,140p'","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:47:10.728682Z  INFO ToolCall: shell_command {"command":"rg -n \"canSubmit\" /Users/tommy/Development/TravelBlogs/travelblogs/src/components/entries/edit-entry-form.tsx","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:47:14.423427Z  INFO ToolCall: shell_command {"command":"nl -ba /Users/tommy/Development/TravelBlogs/travelblogs/src/components/entries/edit-entry-form.tsx | sed -n '500,530p'","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:47:18.145732Z  INFO ToolCall: shell_command {"command":"nl -ba /Users/tommy/Development/TravelBlogs/_bmad-output/implementation-artifacts/2-5-entry-title.md | sed -n '90,190p'","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:48:02.969256Z  INFO spawning ghost snapshot task
+2025-12-28T16:48:03.138319Z  INFO ghost snapshot blocking task finished
+2025-12-28T16:48:03.138345Z  INFO ghost commit captured: 406d5fa934e6fc3b5b5fe01f5d0812ca93c9a2c2
+2025-12-28T16:48:03.138350Z  INFO ghost snapshot gate marked ready
+2025-12-28T16:48:15.913943Z  INFO ToolCall: shell_command {"command":"ls /Users/tommy/Development/TravelBlogs/travelblogs/prisma/migrations","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:48:20.465614Z  INFO ToolCall: shell_command {"command":"cat /Users/tommy/Development/TravelBlogs/travelblogs/prisma/migrations/20251228140516_add_entry_title/migration.sql","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:50:04.026117Z  INFO ToolCall: apply_patch *** Begin Patch
+*** Update File: /Users/tommy/Development/TravelBlogs/travelblogs/src/components/entries/create-entry-form.tsx
+@@
+-  if (!title.trim()) {
+-    nextErrors.title = "Entry title is required.";
+-  } else if (title.trim().length > maxTitleLength) {
+-    nextErrors.title = "Entry title must be 80 characters or fewer.";
+-  }
+-
+   if (!text.trim()) {
+     nextErrors.text = "Entry text is required.";
+   }
+@@
+-  const updateTitle = (value: string) => {
+-    setTitle(value);
+-    const trimmed = value.trim();
+-    setErrors((prev) => ({
+-      ...prev,
+-      title: !trimmed
+-        ? "Entry title is required."
+-        : trimmed.length > maxTitleLength
+-          ? "Entry title must be 80 characters or fewer."
+-          : undefined,
+-    }));
+-  };
++  const updateTitle = (value: string) => {
++    setTitle(value);
++    setErrors((prev) => ({ ...prev, title: undefined }));
++  };
+@@
+-  const handleTitleBlur = () => {
+-    const trimmed = title.trim();
+-    if (!trimmed) {
+-      setErrors((prev) => ({
+-        ...prev,
+-        title: "Entry title is required.",
+-      }));
+-    } else if (trimmed.length > maxTitleLength) {
+-      setErrors((prev) => ({
+-        ...prev,
+-        title: "Entry title must be 80 characters or fewer.",
+-      }));
+-    }
+-  };
+-
+@@
+   const canSubmit = Boolean(
+     isValidEntryDate(entryDate) &&
+-      title.trim() &&
+-      title.trim().length <= maxTitleLength &&
+       text.trim() &&
+       (mediaUrls.length > 0 || inlineImageUrls.length > 0) &&
+       !hasFieldErrors &&
+@@
+           name="title"
+           value={title}
+           onChange={(event) => updateTitle(event.target.value)}
+-          onBlur={handleTitleBlur}
+-          maxLength={maxTitleLength}
+           className="mt-2 w-full rounded-xl border border-black/10 px-3 py-2 text-sm focus:border-[#1F6F78] focus:outline-none focus:ring-2 focus:ring-[#1F6F78]/20"
+           placeholder="Give the day a headline..."
+         />
+         <p className="mt-2 text-xs text-[#6B635B]">
+-          Max 80 characters.
++          Max {maxTitleLength} characters.
+         </p>
+*** End Patch
+2025-12-28T16:50:17.950202Z  INFO ToolCall: apply_patch *** Begin Patch
+*** Update File: /Users/tommy/Development/TravelBlogs/travelblogs/src/components/entries/edit-entry-form.tsx
+@@
+-  if (!title.trim()) {
+-    nextErrors.title = "Entry title is required.";
+-  } else if (title.trim().length > maxTitleLength) {
+-    nextErrors.title = "Entry title must be 80 characters or fewer.";
+-  }
+-
+   if (!text.trim()) {
+     nextErrors.text = "Entry text is required.";
+   }
+@@
+-  const updateTitle = (value: string) => {
+-    setTitle(value);
+-    const trimmed = value.trim();
+-    setErrors((prev) => ({
+-      ...prev,
+-      title: !trimmed
+-        ? "Entry title is required."
+-        : trimmed.length > maxTitleLength
+-          ? "Entry title must be 80 characters or fewer."
+-          : undefined,
+-    }));
+-  };
++  const updateTitle = (value: string) => {
++    setTitle(value);
++    setErrors((prev) => ({ ...prev, title: undefined }));
++  };
+@@
+-  const handleTitleBlur = () => {
+-    const trimmed = title.trim();
+-    if (!trimmed) {
+-      setErrors((prev) => ({
+-        ...prev,
+-        title: "Entry title is required.",
+-      }));
+-    } else if (trimmed.length > maxTitleLength) {
+-      setErrors((prev) => ({
+-        ...prev,
+-        title: "Entry title must be 80 characters or fewer.",
+-      }));
+-    }
+-  };
+-
+@@
+   const canSubmit = Boolean(
+     isValidEntryDate(entryDate) &&
+-      title.trim() &&
+-      title.trim().length <= maxTitleLength &&
+       text.trim() &&
+       (mediaUrls.length > 0 || inlineImageUrls.length > 0) &&
+       !hasFieldErrors &&
+@@
+           name="title"
+           value={title}
+           onChange={(event) => updateTitle(event.target.value)}
+-          onBlur={handleTitleBlur}
+-          maxLength={maxTitleLength}
+           className="mt-2 w-full rounded-xl border border-black/10 px-3 py-2 text-sm focus:border-[#1F6F78] focus:outline-none focus:ring-2 focus:ring-[#1F6F78]/20"
+           placeholder="Give the day a headline..."
+         />
+         <p className="mt-2 text-xs text-[#6B635B]">
+-          Max 80 characters.
++          Max {maxTitleLength} characters.
+         </p>
+*** End Patch
+2025-12-28T16:50:27.433858Z  INFO ToolCall: apply_patch *** Begin Patch
+*** Update File: /Users/tommy/Development/TravelBlogs/travelblogs/src/components/trips/trip-detail.tsx
+@@
+ const formatEntryDate = (value: string) =>
+   new Date(value).toLocaleDateString("en-US", {
+     month: "short",
+     day: "numeric",
+     year: "numeric",
+   });
+ 
++const isOptimizedImage = (url: string) => url.startsWith("/");
++
+@@
+                     {cardImageUrl ? (
+                       <div
+-                        className="shrink-0 overflow-hidden rounded-xl border border-black/10 bg-[#F2ECE3]"
++                        className="relative shrink-0 overflow-hidden rounded-xl border border-black/10 bg-[#F2ECE3]"
+                         style={{ width: 139, height: 97 }}
+                       >
+-                        <img
++                        <Image
+                           src={cardImageUrl}
+                           alt={`Story cover for ${displayTitle}`}
+-                          className="block h-full w-full object-cover"
++                          fill
++                          sizes="140px"
++                          className="object-cover"
+                           loading="lazy"
++                          unoptimized={!isOptimizedImage(cardImageUrl)}
+                         />
+                       </div>
+                     ) : null}
+*** End Patch
+2025-12-28T16:50:37.124373Z  INFO ToolCall: apply_patch *** Begin Patch
+*** Update File: /Users/tommy/Development/TravelBlogs/_bmad-output/implementation-artifacts/2-5-entry-title.md
+@@
+ - travelblogs/src/components/entries/create-entry-form.tsx
+ - travelblogs/src/components/entries/edit-entry-form.tsx
++- travelblogs/src/components/trips/trip-detail.tsx
+@@
+ ## Change Log
+ 
+ - 2025-12-28: Added required entry titles with 80-char limit across Prisma, API validation, UI, and tests.
++- 2025-12-28: Removed client-side title gating, switched entry list thumbnails to Next.js Image, and updated file list.
+*** End Patch
+2025-12-28T16:50:49.741668Z  INFO ToolCall: apply_patch *** Begin Patch
+*** Update File: /Users/tommy/Development/TravelBlogs/_bmad-output/implementation-artifacts/2-5-entry-title.md
+@@
+ - travelblogs/src/app/api/entries/route.ts
+ - travelblogs/src/app/api/entries/[id]/route.ts
+ - travelblogs/src/components/entries/create-entry-form.tsx
+ - travelblogs/src/components/entries/edit-entry-form.tsx
++- travelblogs/src/components/entries/entry-detail.tsx
+ - travelblogs/src/components/trips/trip-detail.tsx
+*** End Patch
+2025-12-28T16:51:10.195492Z  INFO ToolCall: apply_patch *** Begin Patch
+*** Update File: /Users/tommy/Development/TravelBlogs/_bmad-output/implementation-artifacts/2-5-entry-title.md
+@@
+ - 2025-12-28: Added required entry titles with 80-char limit across Prisma, API validation, UI, and tests.
++- 2025-12-28: Documented that `20251228140516_add_entry_title` introduced the column; `20251228160000_remove_entry_title_default` only removes the default.
+ - 2025-12-28: Removed client-side title gating, switched entry list thumbnails to Next.js Image, and updated file list.
+*** End Patch
+2025-12-28T16:51:17.193678Z  INFO ToolCall: shell_command {"command":"cat /Users/tommy/Development/TravelBlogs/_bmad-output/implementation-artifacts/sprint-status.yaml","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:51:22.870356Z  INFO ToolCall: apply_patch *** Begin Patch
+*** Update File: /Users/tommy/Development/TravelBlogs/_bmad-output/implementation-artifacts/2-5-entry-title.md
+@@
+-Status: review
++Status: done
+@@
+-Status: review
++Status: done
+*** End Patch
+2025-12-28T16:51:28.804938Z  INFO ToolCall: apply_patch *** Begin Patch
+*** Update File: /Users/tommy/Development/TravelBlogs/_bmad-output/implementation-artifacts/sprint-status.yaml
+@@
+-  2-5-entry-title: review
++  2-5-entry-title: done
+*** End Patch
+2025-12-28T16:51:37.976364Z  INFO ToolCall: apply_patch *** Begin Patch
+*** Update File: /Users/tommy/Development/TravelBlogs/_bmad-output/implementation-artifacts/2-5-entry-title.md
+@@
+ - Added required entry titles in Prisma schema and API validation (80 char max) with payload coverage.
+ - Updated entry create/edit forms with length hint and client-side validation for required titles.
+ - Added component coverage for entry titles in list and entry detail header plus API validation tests.
++- Review fixes: removed client-side title gating, switched entry list thumbnails to Next.js Image, and refreshed documentation.
+ - Tests: `npm test`.
+*** End Patch
+2025-12-28T16:54:35.887782Z  INFO spawning ghost snapshot task
+2025-12-28T16:54:36.038902Z  INFO ghost snapshot blocking task finished
+2025-12-28T16:54:36.038928Z  INFO ghost commit captured: 90059250a55433d3b792b2483e3a1b1fdb2bb83c
+2025-12-28T16:54:36.038932Z  INFO ghost snapshot gate marked ready
+2025-12-28T16:54:41.576522Z  INFO ToolCall: shell_command {"command":"git add -A","workdir":"/Users/tommy/Development/TravelBlogs"}
+2025-12-28T16:54:45.692508Z  INFO ToolCall: shell_command {"command":"git add -A","workdir":"/Users/tommy/Development/TravelBlogs","sandbox_permissions":"require_escalated","justification":"Need to stage changes for the requested commit, which requires writing .git/index.lock."}

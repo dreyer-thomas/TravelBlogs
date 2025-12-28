@@ -57,6 +57,8 @@ type CreateEntryFormProps = {
 const isValidEntryDate = (value: string) =>
   Boolean(value) && !Number.isNaN(Date.parse(value));
 
+const maxTitleLength = 80;
+
 const getErrors = (
   entryDate: string,
   title: string,
@@ -68,10 +70,6 @@ const getErrors = (
 
   if (!isValidEntryDate(entryDate)) {
     nextErrors.date = "Entry date is required.";
-  }
-
-  if (!title.trim()) {
-    nextErrors.title = "Entry title is required.";
   }
 
   if (!text.trim()) {
@@ -156,10 +154,7 @@ const CreateEntryForm = ({ tripId, onEntryCreated }: CreateEntryFormProps) => {
 
   const updateTitle = (value: string) => {
     setTitle(value);
-    setErrors((prev) => ({
-      ...prev,
-      title: value.trim() ? undefined : "Entry title is required.",
-    }));
+    setErrors((prev) => ({ ...prev, title: undefined }));
   };
 
   const updateEntryDate = (value: string) => {
@@ -184,15 +179,6 @@ const CreateEntryForm = ({ tripId, onEntryCreated }: CreateEntryFormProps) => {
       setErrors((prev) => ({
         ...prev,
         text: "Entry text is required.",
-      }));
-    }
-  };
-
-  const handleTitleBlur = () => {
-    if (!title.trim()) {
-      setErrors((prev) => ({
-        ...prev,
-        title: "Entry title is required.",
       }));
     }
   };
@@ -469,7 +455,6 @@ const CreateEntryForm = ({ tripId, onEntryCreated }: CreateEntryFormProps) => {
   );
   const canSubmit = Boolean(
     isValidEntryDate(entryDate) &&
-      title.trim() &&
       text.trim() &&
       (mediaUrls.length > 0 || inlineImageUrls.length > 0) &&
       !hasFieldErrors &&
@@ -705,11 +690,26 @@ const CreateEntryForm = ({ tripId, onEntryCreated }: CreateEntryFormProps) => {
 
       const result = await response.json().catch(() => null);
       if (!response.ok || result?.error) {
-        setErrors({
-          form:
-            result?.error?.message ??
-            "Unable to create entry. Please try again.",
-        });
+        const message =
+          result?.error?.message ?? "Unable to create entry. Please try again.";
+        if (result?.error?.code === "VALIDATION_ERROR") {
+          if (message === "Entry title is required.") {
+            setErrors({ title: message });
+          } else if (message === "Entry title must be 80 characters or fewer.") {
+            setErrors({ title: message });
+          } else if (message === "Entry text is required.") {
+            setErrors({ text: message });
+          } else if (
+            message === "At least one photo is required." ||
+            message === "Media URL is required."
+          ) {
+            setErrors({ media: message });
+          } else {
+            setErrors({ form: message });
+          }
+        } else {
+          setErrors({ form: message });
+        }
         setSubmitting(false);
         return;
       }
@@ -754,10 +754,12 @@ const CreateEntryForm = ({ tripId, onEntryCreated }: CreateEntryFormProps) => {
           name="title"
           value={title}
           onChange={(event) => updateTitle(event.target.value)}
-          onBlur={handleTitleBlur}
           className="mt-2 w-full rounded-xl border border-black/10 px-3 py-2 text-sm focus:border-[#1F6F78] focus:outline-none focus:ring-2 focus:ring-[#1F6F78]/20"
           placeholder="Give the day a headline..."
         />
+        <p className="mt-2 text-xs text-[#6B635B]">
+          Max {maxTitleLength} characters.
+        </p>
         {errors.title ? (
           <p className="mt-2 text-xs text-[#B34A3C]">{errors.title}</p>
         ) : null}
