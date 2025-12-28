@@ -1,6 +1,6 @@
 # Story 2.1: Add Blog Entry
 
-Status: ready-for-dev
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -23,17 +23,17 @@ so that I can capture the day's story in one place.
 
 ## Tasks / Subtasks
 
-- [ ] Define entry create payload and validation (AC: 1, 2)
-  - [ ] Zod schema requiring text + at least one media file reference
-  - [ ] Ensure API error format `{ data, error }` with `{ error: { code, message } }`
-- [ ] Implement create entry API flow (AC: 1, 2)
-  - [ ] Create entry + media records via Prisma in `src/app/api/entries/route.ts`
-  - [ ] Associate entry with trip using existing trip ownership/ACL checks
-- [ ] Build creator UI for entry creation (AC: 1, 2)
-  - [ ] Entry form with text field and media selector/uploader
-  - [ ] Inline validation errors and disabled submit when invalid
-- [ ] Update trip entry list and entry view routing (AC: 1)
-  - [ ] Insert new entry in chronological order and open it immediately
+- [x] Define entry create payload and validation (AC: 1, 2)
+  - [x] Zod schema requiring text + at least one media file reference
+  - [x] Ensure API error format `{ data, error }` with `{ error: { code, message } }`
+- [x] Implement create entry API flow (AC: 1, 2)
+  - [x] Create entry + media records via Prisma in `src/app/api/entries/route.ts`
+  - [x] Associate entry with trip using existing trip ownership/ACL checks
+- [x] Build creator UI for entry creation (AC: 1, 2)
+  - [x] Entry form with text field and media selector/uploader
+  - [x] Inline validation errors and disabled submit when invalid
+- [x] Update trip entry list and entry view routing (AC: 1)
+  - [x] Insert new entry in chronological order and open it immediately
 
 ## Dev Notes
 
@@ -105,8 +105,14 @@ so that I can capture the day's story in one place.
 
 ## Story Completion Status
 
-- Status set to ready-for-dev.
+- Status set to review.
 - Note: Ultimate context engine analysis completed; comprehensive developer guide created.
+
+## Change Log
+
+- 2025-12-28: Implemented entry creation flow (API, UI, routing) with tests and entry detail view.
+- 2025-12-28: Aligned trip route param naming to fix Next.js dynamic route conflict.
+- 2025-12-28: Code review fixes for entry validation and media rendering.
 
 ## Dev Agent Record
 
@@ -118,12 +124,49 @@ GPT-5 (Codex CLI)
 
 - npm view prisma/next/next-auth/@reduxjs/toolkit/zod (version verification)
 
+### Implementation Plan
+
+- Add entries POST payload schema with required tripId, text, and mediaUrls, and return validation errors with the standard response wrapper before wiring persistence.
+
 ### Completion Notes List
 
 - Story context generated from epics, PRD, architecture, UX, and project-context sources.
 - Epic 2 marked in-progress in sprint status on story creation.
+- Added entries create validation schema and error wrapper; added API validation tests.
+- Implemented entry creation API with Prisma entry/media persistence and trip ownership checks.
+- Tests: `npm test`.
+- Built entry creation form with media uploads, inline validation, and trip detail integration.
+- Tests: `npm test`.
+- Added entries list + entry detail APIs and UI routing to open new entries immediately.
+- Tests: `npm test`.
+- Review fixes: enforced media requirement in schema, clarified validation messaging, migrated inline/previews to Next Image, updated file list.
+- All tasks complete; story ready for review.
+- Tests: `npm test`.
 
 ### File List
 
 - _bmad-output/implementation-artifacts/2-1-add-blog-entry.md
 - _bmad-output/implementation-artifacts/sprint-status.yaml
+- travelblogs/package-lock.json
+- travelblogs/package.json
+- travelblogs/prisma/migrations/20251228110150_add_entry_models/migration.sql
+- travelblogs/prisma/schema.prisma
+- travelblogs/src/app/api/entries/[id]/route.ts
+- travelblogs/src/components/entries/create-entry-form.tsx
+- travelblogs/src/components/entries/entry-detail.tsx
+- travelblogs/src/components/trips/trip-detail.tsx
+- travelblogs/src/app/api/entries/route.ts
+- travelblogs/src/app/trips/[tripId]/entries/[entryId]/page.tsx
+- travelblogs/src/app/trips/[tripId]/edit/page.tsx
+- travelblogs/src/app/trips/[tripId]/page.tsx
+- travelblogs/src/app/trips/[id]/edit/page.tsx
+- travelblogs/src/app/trips/[id]/page.tsx
+- travelblogs/src/utils/entry-content.ts
+- travelblogs/src/utils/entry-media.ts
+- travelblogs/tests/api/entries/create-entry.test.ts
+- travelblogs/tests/api/entries/get-entry.test.ts
+- travelblogs/tests/api/entries/list-entries.test.ts
+- travelblogs/tests/api/trips/trip-model.test.ts
+- travelblogs/tests/components/create-entry-form.test.tsx
+- travelblogs/tests/setup.ts
+- travelblogs/vitest.config.ts
