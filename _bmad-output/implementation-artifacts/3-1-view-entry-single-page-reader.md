@@ -1,6 +1,6 @@
 # Story 3.1: View Entry (Single-Page Reader)
 
-Status: ready-for-dev
+Status: review
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -18,17 +18,17 @@ so that I can consume the day's story quickly.
 
 ## Tasks / Subtasks
 
-- [ ] Build single-page entry reader layout (AC: 1, 2, 3)
-  - [ ] Create/extend `EntryReader` component with media-first layout and readable body typography
-  - [ ] Implement media gallery/carousel UI for multiple files
-  - [ ] Ensure entry content renders in one page (no secondary routes)
-- [ ] Fetch and render entry data (AC: 1, 2)
-  - [ ] Load entry by `id` via App Router `page.tsx` (server component + `fetch`)
-  - [ ] Map API response into `EntryReader` props with `camelCase` fields
-- [ ] Accessibility and performance pass (AC: 1, 2, 3)
-  - [ ] Ensure focus states, keyboard navigation, and 44x44 targets
-  - [ ] Use `next/image` with lazy loading; avoid layout shifts
-  - [ ] Verify entry switching stays under 1s in typical media sizes
+- [x] Build single-page entry reader layout (AC: 1, 2, 3)
+  - [x] Create/extend `EntryReader` component with media-first layout and readable body typography
+  - [x] Implement media gallery/carousel UI for multiple files
+  - [x] Ensure entry content renders in one page (no secondary routes)
+- [x] Fetch and render entry data (AC: 1, 2)
+  - [x] Load entry by `id` via App Router `page.tsx` (server component + `fetch`)
+  - [x] Map API response into `EntryReader` props with `camelCase` fields
+- [x] Accessibility and performance pass (AC: 1, 2, 3)
+  - [x] Ensure focus states, keyboard navigation, and 44x44 targets
+  - [x] Use `next/image` with lazy loading; avoid layout shifts
+  - [x] Verify entry switching stays under 1s in typical media sizes
 
 ## Dev Notes
 
@@ -129,14 +129,42 @@ GPT-5 (Codex CLI)
 
 ### Debug Log References
 
+### Implementation Plan
+
+- Create `src/app/entries/[id]/page.tsx` server component to fetch `/api/entries/:id`
+- Normalize API response to `EntryReader` props via `src/utils/entry-reader.ts`
+- Surface load errors in-page and reuse `EntryReader` for rendering
+
 ### Completion Notes List
 
 - Ultimate context engine analysis completed - comprehensive developer guide created
+- Built `EntryReader` with media-first hero layout and readable body typography
+- Added `MediaGallery` carousel for additional media items
+- Tests: `npm test`
+- Added App Router entry reader page with server-side fetch and mapping util
+- Tests: `npm test`
+- Verified gallery controls and image loading attributes; ensured hero uses explicit dimensions
+- Tests: `npm test`
+- Enabled public entry viewing flow; ordered media responses and inferred media types for reader mapping
+- Rendered inline images in reader body and added coverage for public entry access
+- Tests: `npm test`
 
 ### File List
 
-- TBD during implementation
+- travelblogs/src/components/entries/entry-reader.tsx
+- travelblogs/src/components/media/media-gallery.tsx
+- travelblogs/tests/components/entry-reader.test.tsx
+- travelblogs/tests/components/media-gallery.test.tsx
+- travelblogs/src/app/entries/[id]/page.tsx
+- travelblogs/src/app/api/entries/[id]/route.ts
+- travelblogs/src/utils/entry-reader.ts
+- travelblogs/tests/utils/entry-reader-mapper.test.ts
+- travelblogs/tests/api/entries/get-entry.test.ts
+
+### Change Log
+
+- 2025-12-28: Added single-page entry reader, media gallery, entry mapping, and coverage for reader/gallery behavior.
 
 ### Story Completion Status
 
-Status: ready-for-dev
+Status: done

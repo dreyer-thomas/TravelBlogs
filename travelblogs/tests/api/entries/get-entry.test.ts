@@ -87,6 +87,43 @@ describe("GET /api/entries/[id]", () => {
     expect(body.data.media).toHaveLength(1);
   });
 
+  it("allows unauthenticated viewers to read entry details", async () => {
+    getToken.mockResolvedValue(null);
+    const trip = await prisma.trip.create({
+      data: {
+        title: "Public view",
+        startDate: new Date("2025-06-01"),
+        endDate: new Date("2025-06-10"),
+        ownerId: "creator",
+      },
+    });
+
+    const entry = await prisma.entry.create({
+      data: {
+        tripId: trip.id,
+        title: "Shared day",
+        text: "Shared entry",
+        media: {
+          create: [{ url: "/uploads/entries/shared.jpg" }],
+        },
+      },
+      include: {
+        media: true,
+      },
+    });
+
+    const request = new Request(`http://localhost/api/entries/${entry.id}`, {
+      method: "GET",
+    });
+
+    const response = await get(request, { params: { id: entry.id } });
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.error).toBeNull();
+    expect(body.data.id).toBe(entry.id);
+  });
+
   it("rejects entry access for trips not owned by the creator", async () => {
     const trip = await prisma.trip.create({
       data: {

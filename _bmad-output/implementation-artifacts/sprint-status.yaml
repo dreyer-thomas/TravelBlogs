@@ -65,8 +65,8 @@ development_status:
   epic-2-retrospective: optional
 
   epic-3: in-progress
-  3-1-view-entry-single-page-reader: ready-for-dev
-  3-2-entry-navigation: backlog
+  3-1-view-entry-single-page-reader: done
+  3-2-entry-navigation: ready-for-dev
   3-3-trip-overview-with-latest-entries: backlog
   epic-3-retrospective: optional
 

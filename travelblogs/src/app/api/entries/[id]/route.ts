@@ -71,10 +71,7 @@ export const GET = async (
 ) => {
   try {
     const userId = await getUserId(request);
-    if (!userId) {
-      return jsonError(401, "UNAUTHORIZED", "Authentication required.");
-    }
-    if (userId !== "creator") {
+    if (userId && userId !== "creator") {
       return jsonError(403, "FORBIDDEN", "Creator access required.");
     }
 
@@ -85,7 +82,11 @@ export const GET = async (
         id,
       },
       include: {
-        media: true,
+        media: {
+          orderBy: {
+            createdAt: "asc",
+          },
+        },
         trip: true,
       },
     });
@@ -94,7 +95,7 @@ export const GET = async (
       return jsonError(404, "NOT_FOUND", "Entry not found.");
     }
 
-    if (entry.trip.ownerId !== userId) {
+    if (userId && entry.trip.ownerId !== userId) {
       return jsonError(403, "FORBIDDEN", "Not authorized to view this entry.");
     }
 
