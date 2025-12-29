@@ -11,12 +11,11 @@ const SignInPage = () => {
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl") ?? "/trips";
   const authError = searchParams.get("error");
-  const authErrorMessage =
-    authError && authError !== "CredentialsSignin"
-      ? authError
-      : authError
-        ? "Invalid email or password."
-        : null;
+  const authErrorMessage = authError
+    ? authError === "CredentialsSignin"
+      ? "Invalid email or password."
+      : "Unable to sign in. Please try again."
+    : null;
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -50,7 +49,7 @@ const SignInPage = () => {
       setError(
         result.error === "CredentialsSignin"
           ? "Invalid email or password."
-          : result.error,
+          : "Unable to sign in. Please try again.",
       );
       setSubmitting(false);
       return;
@@ -64,11 +63,11 @@ const SignInPage = () => {
       <main className="w-full max-w-md rounded-2xl border border-black/10 bg-white p-8 shadow-sm">
         <header className="space-y-2 text-center">
           <p className="text-xs uppercase tracking-[0.2em] text-[#6B635B]">
-            Creator Access
+            Account Access
           </p>
           <h1 className="text-3xl font-semibold text-[#2D2A26]">Sign in</h1>
           <p className="text-sm text-[#6B635B]">
-            Use your creator credentials to manage trips and entries.
+            Use your account to access the trips you have permission to view.
           </p>
         </header>
 
@@ -80,7 +79,7 @@ const SignInPage = () => {
               type="email"
               autoComplete="email"
               className="mt-2 w-full rounded-xl border border-black/10 px-3 py-2 text-sm focus:border-[#1F6F78] focus:outline-none focus:ring-2 focus:ring-[#1F6F78]/20"
-              placeholder="creator@example.com"
+              placeholder="you@example.com"
             />
           </label>
 

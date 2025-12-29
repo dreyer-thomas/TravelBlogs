@@ -16,7 +16,10 @@ export const authOptions: NextAuthOptions = {
           throw new Error("Email and password are required.");
         }
 
-        const user = validateCredentials(credentials.email, credentials.password);
+        const user = await validateCredentials(
+          credentials.email,
+          credentials.password,
+        );
         if (!user) {
           throw new Error("Invalid email or password.");
         }
@@ -29,9 +32,25 @@ export const authOptions: NextAuthOptions = {
     strategy: "jwt",
   },
   callbacks: {
+    async jwt({ token, user }) {
+      if (user) {
+        token.sub = user.id;
+        token.email = user.email;
+        token.role = user.role;
+      }
+      return token;
+    },
     async session({ session, token }) {
-      if (session.user && token.sub) {
-        session.user.id = token.sub;
+      if (session.user) {
+        if (token.sub) {
+          session.user.id = token.sub;
+        }
+        if (token.email) {
+          session.user.email = token.email;
+        }
+        if (token.role) {
+          session.user.role = token.role;
+        }
       }
       return session;
     },

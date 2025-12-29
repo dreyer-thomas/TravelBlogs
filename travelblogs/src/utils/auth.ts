@@ -1,13 +1,20 @@
-type CreatorUser = {
+import type { UserRole } from "@prisma/client";
+import { compare } from "bcryptjs";
+
+import { prisma } from "./db";
+
+type AuthUser = {
   id: string;
   name: string;
   email: string;
+  role: UserRole;
 };
 
-const creatorUser: CreatorUser = {
+const creatorUser: AuthUser = {
   id: "creator",
   name: "Creator",
   email: "",
+  role: "creator",
 };
 
 const readCreatorConfig = () => {
@@ -17,19 +24,43 @@ const readCreatorConfig = () => {
   return { email, password };
 };
 
-export const validateCredentials = (
+const normalizeEmail = (email: string) => email.trim().toLowerCase();
+
+export const validateCredentials = async (
   email: string,
   password: string,
-): CreatorUser | null => {
+): Promise<AuthUser | null> => {
+  const normalizedEmail = normalizeEmail(email);
   const config = readCreatorConfig();
+  const configEmail = normalizeEmail(config.email);
 
-  if (!config.email || !config.password) {
+  if (configEmail && config.password) {
+    if (normalizedEmail === configEmail && password === config.password) {
+      return { ...creatorUser, email: configEmail };
+    }
+  }
+
+  if (!normalizedEmail) {
     return null;
   }
 
-  if (email !== config.email || password !== config.password) {
+  const user = await prisma.user.findUnique({
+    where: { email: normalizedEmail },
+  });
+
+  if (!user || !user.isActive) {
     return null;
   }
 
-  return { ...creatorUser, email: config.email };
+  const isValid = await compare(password, user.passwordHash);
+  if (!isValid) {
+    return null;
+  }
+
+  return {
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    role: user.role,
+  };
 };
