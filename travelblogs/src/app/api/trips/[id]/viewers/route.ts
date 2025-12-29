@@ -1,0 +1,242 @@
+import { NextResponse } from "next/server";
+import { getToken } from "next-auth/jwt";
+import { z } from "zod";
+
+import { prisma } from "../../../../../utils/db";
+
+export const runtime = "nodejs";
+
+const jsonError = (status: number, code: string, message: string) => {
+  return NextResponse.json(
+    {
+      data: null,
+      error: { code, message },
+    },
+    { status },
+  );
+};
+
+const getUserId = async (request: Request) => {
+  try {
+    const token = await getToken({ req: request });
+    return token?.sub ?? null;
+  } catch {
+    return null;
+  }
+};
+
+const tripIdSchema = z.object({
+  id: z.string().trim().min(1, "Trip id is required."),
+});
+
+const inviteSchema = z.object({
+  email: z
+    .string()
+    .trim()
+    .min(1, "Email is required.")
+    .email("Email must be valid.")
+    .transform((value) => value.toLowerCase()),
+});
+
+const requireCreatorTrip = async (
+  request: Request,
+  params: Promise<{ id: string }> | { id: string },
+) => {
+  const userId = await getUserId(request);
+  if (!userId) {
+    return { error: jsonError(401, "UNAUTHORIZED", "Authentication required.") };
+  }
+  if (userId !== "creator") {
+    return { error: jsonError(403, "FORBIDDEN", "Creator access required.") };
+  }
+
+  const { id } = await params;
+  const parsed = tripIdSchema.safeParse({ id });
+  if (!parsed.success) {
+    return {
+      error: jsonError(
+        400,
+        "VALIDATION_ERROR",
+        parsed.error.issues[0]?.message ?? "Trip id is required.",
+      ),
+    };
+  }
+
+  const trip = await prisma.trip.findUnique({
+    where: { id },
+    select: {
+      id: true,
+      ownerId: true,
+    },
+  });
+
+  if (!trip) {
+    return { error: jsonError(404, "NOT_FOUND", "Trip not found.") };
+  }
+
+  if (trip.ownerId !== userId) {
+    return {
+      error: jsonError(403, "FORBIDDEN", "Not authorized to view this trip."),
+    };
+  }
+
+  return { trip };
+};
+
+const formatAccess = (access: {
+  id: string;
+  tripId: string;
+  userId: string;
+  canContribute: boolean;
+  createdAt: Date;
+  user: { id: string; name: string; email: string };
+}) => ({
+  id: access.id,
+  tripId: access.tripId,
+  userId: access.userId,
+  canContribute: access.canContribute,
+  createdAt: access.createdAt.toISOString(),
+  user: {
+    id: access.user.id,
+    name: access.user.name,
+    email: access.user.email,
+  },
+});
+
+export const GET = async (
+  request: Request,
+  { params }: { params: Promise<{ id: string }> | { id: string } },
+) => {
+  try {
+    const access = await requireCreatorTrip(request, params);
+    if (access.error) {
+      return access.error;
+    }
+
+    const viewers = await prisma.tripAccess.findMany({
+      where: { tripId: access.trip.id },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: "asc",
+      },
+    });
+
+    return NextResponse.json(
+      {
+        data: viewers.map((viewer) => formatAccess(viewer)),
+        error: null,
+      },
+      { status: 200 },
+    );
+  } catch (error) {
+    console.error("Failed to load trip viewers", error);
+    return jsonError(
+      500,
+      "INTERNAL_SERVER_ERROR",
+      "Unable to load viewers.",
+    );
+  }
+};
+
+export const POST = async (
+  request: Request,
+  { params }: { params: Promise<{ id: string }> | { id: string } },
+) => {
+  try {
+    const access = await requireCreatorTrip(request, params);
+    if (access.error) {
+      return access.error;
+    }
+
+    let body: unknown;
+    try {
+      body = await request.json();
+    } catch {
+      return jsonError(400, "INVALID_JSON", "Request body must be valid JSON.");
+    }
+
+    const parsed = inviteSchema.safeParse(body);
+    if (!parsed.success) {
+      return jsonError(400, "VALIDATION_ERROR", "Invite details are invalid.");
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { email: parsed.data.email },
+    });
+
+    if (!user || !user.isActive) {
+      return jsonError(404, "NOT_FOUND", "User not found.");
+    }
+
+    if (user.role !== "viewer") {
+      return jsonError(400, "VALIDATION_ERROR", "User must be a viewer.");
+    }
+
+    const existing = await prisma.tripAccess.findUnique({
+      where: {
+        tripId_userId: {
+          tripId: access.trip.id,
+          userId: user.id,
+        },
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+      },
+    });
+
+    if (existing) {
+      return NextResponse.json(
+        {
+          data: formatAccess(existing),
+          error: null,
+        },
+        { status: 200 },
+      );
+    }
+
+    const created = await prisma.tripAccess.create({
+      data: {
+        tripId: access.trip.id,
+        userId: user.id,
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+      },
+    });
+
+    return NextResponse.json(
+      {
+        data: formatAccess(created),
+        error: null,
+      },
+      { status: 201 },
+    );
+  } catch (error) {
+    console.error("Failed to invite viewer", error);
+    return jsonError(
+      500,
+      "INTERNAL_SERVER_ERROR",
+      "Unable to invite viewer.",
+    );
+  }
+};

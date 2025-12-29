@@ -765,11 +765,11 @@ So that I can help tell the story.
 **When** I edit an existing entry  
 **Then** my changes are saved and visible in the entry view
 
-### Story 5.8: Admin Deactivates User
+### Story 5.8: Admin Deactivates or Deletes User
 
 As an admin,
-I want to deactivate a user account,
-So that removed users can no longer access the system.
+I want to deactivate or delete a user account,
+So that removed users can no longer access the system and I can permanently remove users when needed.
 
 **Acceptance Criteria:**
 
@@ -780,6 +780,39 @@ So that removed users can no longer access the system.
 **Given** a deactivated user attempts to sign in  
 **When** they submit valid credentials  
 **Then** access is denied with a clear error
+
+**Given** I am signed in as an admin  
+**When** I delete a user  
+**Then** the user account is removed from the system  
+**And** the user no longer appears in the user list
+
+**Given** I delete a user  
+**When** they attempt to sign in  
+**Then** access is denied with a clear error
+
+### Story 5.9: Administrator Role and Admin Safeguards
+
+As an admin,
+I want an Administrator role with the same rights as the default admin,
+So that trusted users can manage accounts while protecting critical admin access.
+
+**Acceptance Criteria:**
+
+**Given** a user is assigned the Administrator role  
+**When** they access admin-only areas  
+**Then** they have the same permissions as the default admin
+
+**Given** I am signed in as an Administrator  
+**When** I deactivate the default admin in the Manage Users page  
+**Then** the default admin is marked inactive and cannot sign in
+
+**Given** there is only one active admin left  
+**When** I attempt to delete that admin  
+**Then** the action is blocked with a clear error
+
+**Given** I am signed in as an Administrator  
+**When** I attempt to remove my own admin privilege  
+**Then** the action is blocked with a clear error
 
 ## Epic 6: Map & Timeline Storytelling (Phase 3)
 

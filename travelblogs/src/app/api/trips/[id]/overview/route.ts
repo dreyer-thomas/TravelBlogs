@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getToken } from "next-auth/jwt";
 
 import { prisma } from "../../../../../utils/db";
+import { hasTripAccess } from "../../../../../utils/trip-access";
 
 export const runtime = "nodejs";
 
@@ -31,6 +32,9 @@ export const GET = async (
   try {
     const { id } = await params;
     const userId = await getUserId(request);
+    if (!userId) {
+      return jsonError(401, "UNAUTHORIZED", "Authentication required.");
+    }
 
     const trip = await prisma.trip.findUnique({
       where: {
@@ -70,8 +74,11 @@ export const GET = async (
       return jsonError(404, "NOT_FOUND", "Trip not found.");
     }
 
-    if (trip.ownerId !== "creator" && userId !== trip.ownerId) {
-      return jsonError(403, "FORBIDDEN", "Not authorized to view this trip.");
+    if (trip.ownerId !== userId) {
+      const canView = await hasTripAccess(trip.id, userId);
+      if (!canView) {
+        return jsonError(403, "FORBIDDEN", "Not authorized to view this trip.");
+      }
     }
 
     return NextResponse.json(

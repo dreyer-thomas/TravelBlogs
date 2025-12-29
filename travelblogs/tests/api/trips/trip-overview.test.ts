@@ -42,6 +42,7 @@ describe("GET /api/trips/[id]/overview", () => {
 
   beforeEach(async () => {
     getToken.mockReset();
+    getToken.mockResolvedValue({ sub: "creator" });
     await prisma.entryMedia.deleteMany();
     await prisma.entry.deleteMany();
     await prisma.trip.deleteMany();
@@ -150,7 +151,7 @@ describe("GET /api/trips/[id]/overview", () => {
   });
 
   it("rejects overview access for trips not owned by the creator", async () => {
-    getToken.mockResolvedValue(null);
+    getToken.mockResolvedValue({ sub: "creator" });
     const trip = await prisma.trip.create({
       data: {
         title: "Private trip",

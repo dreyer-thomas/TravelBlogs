@@ -43,7 +43,9 @@ describe("GET /api/entries/[id]", () => {
     getToken.mockResolvedValue({ sub: "creator" });
     await prisma.entryMedia.deleteMany();
     await prisma.entry.deleteMany();
+    await prisma.tripAccess.deleteMany();
     await prisma.trip.deleteMany();
+    await prisma.user.deleteMany();
   });
 
   afterAll(async () => {
@@ -87,7 +89,7 @@ describe("GET /api/entries/[id]", () => {
     expect(body.data.media).toHaveLength(1);
   });
 
-  it("allows unauthenticated viewers to read entry details", async () => {
+  it("rejects unauthenticated requests", async () => {
     getToken.mockResolvedValue(null);
     const trip = await prisma.trip.create({
       data: {
@@ -119,19 +121,33 @@ describe("GET /api/entries/[id]", () => {
     const response = await get(request, { params: { id: entry.id } });
     const body = await response.json();
 
-    expect(response.status).toBe(200);
-    expect(body.error).toBeNull();
-    expect(body.data.id).toBe(entry.id);
+    expect(response.status).toBe(401);
+    expect(body.error.code).toBe("UNAUTHORIZED");
   });
 
   it("allows authenticated viewers to read entry details", async () => {
-    getToken.mockResolvedValue({ sub: "viewer-1" });
+    const viewer = await prisma.user.create({
+      data: {
+        email: "viewer@example.com",
+        name: "Viewer",
+        role: "viewer",
+        passwordHash: "hash",
+      },
+    });
+    getToken.mockResolvedValue({ sub: viewer.id });
     const trip = await prisma.trip.create({
       data: {
         title: "Shared access",
         startDate: new Date("2025-06-01"),
         endDate: new Date("2025-06-10"),
         ownerId: "creator",
+      },
+    });
+
+    await prisma.tripAccess.create({
+      data: {
+        tripId: trip.id,
+        userId: viewer.id,
       },
     });
 
@@ -159,6 +175,48 @@ describe("GET /api/entries/[id]", () => {
     expect(response.status).toBe(200);
     expect(body.error).toBeNull();
     expect(body.data.id).toBe(entry.id);
+  });
+
+  it("rejects non-invited viewers", async () => {
+    const viewer = await prisma.user.create({
+      data: {
+        email: "viewer@example.com",
+        name: "Viewer",
+        role: "viewer",
+        passwordHash: "hash",
+      },
+    });
+    getToken.mockResolvedValue({ sub: viewer.id });
+
+    const trip = await prisma.trip.create({
+      data: {
+        title: "Private trip",
+        startDate: new Date("2025-06-01"),
+        endDate: new Date("2025-06-10"),
+        ownerId: "creator",
+      },
+    });
+
+    const entry = await prisma.entry.create({
+      data: {
+        tripId: trip.id,
+        title: "Hidden entry",
+        text: "Private entry",
+        media: {
+          create: [{ url: "/uploads/entries/private.jpg" }],
+        },
+      },
+    });
+
+    const request = new Request(`http://localhost/api/entries/${entry.id}`, {
+      method: "GET",
+    });
+
+    const response = await get(request, { params: { id: entry.id } });
+    const body = await response.json();
+
+    expect(response.status).toBe(403);
+    expect(body.error.code).toBe("FORBIDDEN");
   });
 
   it("rejects entry access for trips not owned by the creator", async () => {

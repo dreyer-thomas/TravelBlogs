@@ -4,6 +4,7 @@ import { z } from "zod";
 
 import { prisma } from "../../../../utils/db";
 import { extractInlineImageUrls } from "../../../../utils/entry-content";
+import { hasTripAccess } from "../../../../utils/trip-access";
 
 export const runtime = "nodejs";
 
@@ -73,6 +74,9 @@ export const GET = async (
     const { id } = await params;
 
     const userId = await getUserId(request);
+    if (!userId) {
+      return jsonError(401, "UNAUTHORIZED", "Authentication required.");
+    }
     const entry = await prisma.entry.findUnique({
       where: {
         id,
@@ -91,8 +95,11 @@ export const GET = async (
       return jsonError(404, "NOT_FOUND", "Entry not found.");
     }
 
-    if (entry.trip.ownerId !== "creator" && userId !== entry.trip.ownerId) {
-      return jsonError(403, "FORBIDDEN", "Not authorized to view this entry.");
+    if (entry.trip.ownerId !== userId) {
+      const canView = await hasTripAccess(entry.tripId, userId);
+      if (!canView) {
+        return jsonError(403, "FORBIDDEN", "Not authorized to view this entry.");
+      }
     }
 
     const [previousEntry, nextEntry] = await Promise.all([

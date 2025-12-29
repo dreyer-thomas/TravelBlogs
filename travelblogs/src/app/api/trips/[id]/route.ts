@@ -4,6 +4,7 @@ import { z } from "zod";
 
 import { prisma } from "../../../../utils/db";
 import { isCoverImageUrl } from "../../../../utils/media";
+import { hasTripAccess } from "../../../../utils/trip-access";
 
 export const runtime = "nodejs";
 
@@ -93,10 +94,6 @@ export const GET = async (
     if (!userId) {
       return jsonError(401, "UNAUTHORIZED", "Authentication required.");
     }
-    if (userId !== "creator") {
-      return jsonError(403, "FORBIDDEN", "Creator access required.");
-    }
-
     const { id } = await params;
 
     const trip = await prisma.trip.findUnique({
@@ -110,7 +107,10 @@ export const GET = async (
     }
 
     if (trip.ownerId !== userId) {
-      return jsonError(403, "FORBIDDEN", "Not authorized to view this trip.");
+      const canView = await hasTripAccess(trip.id, userId);
+      if (!canView) {
+        return jsonError(403, "FORBIDDEN", "Not authorized to view this trip.");
+      }
     }
 
     return NextResponse.json(

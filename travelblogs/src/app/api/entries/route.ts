@@ -4,6 +4,7 @@ import { z } from "zod";
 
 import { prisma } from "../../../utils/db";
 import { extractInlineImageUrls } from "../../../utils/entry-content";
+import { hasTripAccess } from "../../../utils/trip-access";
 
 export const runtime = "nodejs";
 
@@ -74,9 +75,6 @@ export const POST = async (request: Request) => {
     const userId = await getUserId(request);
     if (!userId) {
       return jsonError(401, "UNAUTHORIZED", "Authentication required.");
-    }
-    if (userId !== "creator") {
-      return jsonError(403, "FORBIDDEN", "Creator access required.");
     }
 
     let body: unknown;
@@ -165,10 +163,6 @@ export const GET = async (request: Request) => {
     if (!userId) {
       return jsonError(401, "UNAUTHORIZED", "Authentication required.");
     }
-    if (userId !== "creator") {
-      return jsonError(403, "FORBIDDEN", "Creator access required.");
-    }
-
     const url = new URL(request.url);
     const tripId = url.searchParams.get("tripId")?.trim() ?? "";
     if (!tripId) {
@@ -186,7 +180,10 @@ export const GET = async (request: Request) => {
     }
 
     if (trip.ownerId !== userId) {
-      return jsonError(403, "FORBIDDEN", "Not authorized to view entries.");
+      const canView = await hasTripAccess(trip.id, userId);
+      if (!canView) {
+        return jsonError(403, "FORBIDDEN", "Not authorized to view entries.");
+      }
     }
 
     const entries = await prisma.entry.findMany({

@@ -25,6 +25,21 @@ type EntryMedia = {
   createdAt: string;
 };
 
+type ViewerUser = {
+  id: string;
+  name: string;
+  email: string;
+};
+
+type ViewerAccess = {
+  id: string;
+  tripId: string;
+  userId: string;
+  canContribute: boolean;
+  createdAt: string;
+  user: ViewerUser;
+};
+
 type EntrySummary = {
   id: string;
   tripId: string;
@@ -65,6 +80,12 @@ const TripDetail = ({ tripId }: TripDetailProps) => {
   const [shareCopied, setShareCopied] = useState(false);
   const [shareRevoked, setShareRevoked] = useState(false);
   const [isSharePanelOpen, setIsSharePanelOpen] = useState(false);
+  const [viewers, setViewers] = useState<ViewerAccess[]>([]);
+  const [viewersLoading, setViewersLoading] = useState(false);
+  const [viewersError, setViewersError] = useState<string | null>(null);
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteError, setInviteError] = useState<string | null>(null);
+  const [inviteSending, setInviteSending] = useState(false);
   const [isRevokeOpen, setIsRevokeOpen] = useState(false);
   const [isRevoking, setIsRevoking] = useState(false);
   const [revokeError, setRevokeError] = useState<string | null>(null);
@@ -192,12 +213,62 @@ const TripDetail = ({ tripId }: TripDetailProps) => {
     };
   }, [tripId]);
 
+  useEffect(() => {
+    if (!isSharePanelOpen) {
+      return;
+    }
+
+    let isActive = true;
+    setViewersLoading(true);
+    setViewersError(null);
+    setInviteError(null);
+
+    const loadViewers = async () => {
+      try {
+        const response = await fetch(`/api/trips/${tripId}/viewers`, {
+          method: "GET",
+          credentials: "include",
+          cache: "no-store",
+        });
+        const body = await response.json().catch(() => null);
+
+        if (!response.ok || body?.error) {
+          throw new Error(
+            body?.error?.message ?? "Unable to load invited viewers.",
+          );
+        }
+
+        if (isActive) {
+          setViewers((body?.data as ViewerAccess[]) ?? []);
+          setViewersLoading(false);
+        }
+      } catch (err) {
+        if (isActive) {
+          setViewers([]);
+          setViewersError(
+            err instanceof Error
+              ? err.message
+              : "Unable to load invited viewers.",
+          );
+          setViewersLoading(false);
+        }
+      }
+    };
+
+    loadViewers();
+
+    return () => {
+      isActive = false;
+    };
+  }, [isSharePanelOpen, tripId]);
+
   const entriesByDate = useMemo(() => {
     return [...entries].sort(
       (left, right) =>
         new Date(left.createdAt).getTime() - new Date(right.createdAt).getTime(),
     );
   }, [entries]);
+
 
   if (isLoading) {
     return (
@@ -268,6 +339,54 @@ const TripDetail = ({ tripId }: TripDetailProps) => {
       );
     } finally {
       setShareLoading(false);
+    }
+  };
+
+  const handleInviteViewer = async () => {
+    const trimmedEmail = inviteEmail.trim().toLowerCase();
+    if (!trimmedEmail) {
+      setInviteError("Enter an email address to invite.");
+      return;
+    }
+
+    setInviteSending(true);
+    setInviteError(null);
+
+    try {
+      const response = await fetch(`/api/trips/${trip.id}/viewers`, {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email: trimmedEmail }),
+      });
+      const body = await response.json().catch(() => null);
+
+      if (!response.ok || body?.error) {
+        throw new Error(body?.error?.message ?? "Unable to invite viewer.");
+      }
+
+      const created = body?.data as ViewerAccess | undefined;
+      if (created) {
+        setViewers((prev) => {
+          const existingIndex = prev.findIndex((item) => item.id === created.id);
+          if (existingIndex >= 0) {
+            const next = [...prev];
+            next[existingIndex] = created;
+            return next;
+          }
+          return [...prev, created];
+        });
+      }
+
+      setInviteEmail("");
+    } catch (err) {
+      setInviteError(
+        err instanceof Error ? err.message : "Unable to invite viewer.",
+      );
+    } finally {
+      setInviteSending(false);
     }
   };
 
@@ -423,6 +542,63 @@ const TripDetail = ({ tripId }: TripDetailProps) => {
                   {shareLoading ? "Creating…" : "Generate link"}
                 </button>
               )}
+
+              <div className="mt-6 border-t border-black/10 pt-4">
+                <p className="text-xs uppercase tracking-[0.2em] text-[#6B635B]">
+                  Invite viewers
+                </p>
+                <p className="mt-2">
+                  Invite existing users to view this trip.
+                </p>
+
+                {viewersError ? (
+                  <p className="mt-3 text-sm text-[#B34A3C]">{viewersError}</p>
+                ) : null}
+
+                {viewersLoading ? (
+                  <p className="mt-3 text-sm">Loading viewers…</p>
+                ) : viewers.length === 0 ? (
+                  <p className="mt-3 text-sm">No invited viewers yet.</p>
+                ) : (
+                  <ul className="mt-3 space-y-2 text-sm text-[#2D2A26]">
+                    {viewers.map((viewer) => (
+                      <li key={viewer.id} className="flex flex-col">
+                        <span className="font-semibold">
+                          {viewer.user.name}
+                        </span>
+                        <span className="text-xs text-[#6B635B]">
+                          {viewer.user.email}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+
+                <div className="mt-4 flex flex-wrap items-center gap-3">
+                  <div className="w-full flex-1">
+                    <input
+                      type="email"
+                      value={inviteEmail}
+                      onChange={(event) => setInviteEmail(event.target.value)}
+                      placeholder="viewer@example.com"
+                      className="w-full rounded-xl border border-black/10 bg-white px-3 py-2 text-sm text-[#2D2A26]"
+                      aria-label="Invite viewer email"
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleInviteViewer}
+                    className="rounded-xl border border-[#1F6F78] px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-[#1F6F78] transition hover:bg-[#1F6F78] hover:text-white disabled:cursor-not-allowed disabled:opacity-70"
+                    disabled={inviteSending}
+                  >
+                    {inviteSending ? "Inviting…" : "Invite"}
+                  </button>
+                </div>
+
+                {inviteError ? (
+                  <p className="mt-3 text-sm text-[#B34A3C]">{inviteError}</p>
+                ) : null}
+              </div>
             </div>
           ) : null}
         </section>
