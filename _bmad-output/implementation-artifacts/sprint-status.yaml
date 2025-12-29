@@ -77,11 +77,11 @@ development_status:
   4-2-regenerate-shareable-link: done
   4-3-revoke-shareable-link: done
   4-4-discreet-share-ui: done
-  4-5-invalidate-shared-entry-pages-on-revoke: ready-for-dev
+  4-5-invalidate-shared-entry-pages-on-revoke: done
   epic-4-retrospective: done
 
-  epic-5: backlog
-  5-1-admin-creates-user-accounts: backlog
+  epic-5: in-progress
+  5-1-admin-creates-user-accounts: done
   5-2-user-sign-in: backlog
   5-3-admin-changes-user-role: backlog
   5-4-invite-viewers-to-a-trip: backlog

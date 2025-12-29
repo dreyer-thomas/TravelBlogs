@@ -160,4 +160,97 @@ describe("GET /api/trips/share/[token]/entries/[entryId]", () => {
     expect(body.data).toBeNull();
     expect(body.error.code).toBe("NOT_FOUND");
   });
+
+  it("returns 404 for a revoked share token", async () => {
+    const trip = await prisma.trip.create({
+      data: {
+        title: "Revoked entry trip",
+        startDate: new Date("2025-09-15T00:00:00.000Z"),
+        endDate: new Date("2025-09-18T00:00:00.000Z"),
+        ownerId: "creator",
+      },
+    });
+
+    const entry = await prisma.entry.create({
+      data: {
+        tripId: trip.id,
+        title: "Revoked entry",
+        text: "Revoked content",
+        createdAt: new Date("2025-09-16T08:00:00.000Z"),
+      },
+    });
+
+    await prisma.tripShareLink.create({
+      data: {
+        tripId: trip.id,
+        token: "revoked-token",
+      },
+    });
+
+    await prisma.tripShareLink.delete({
+      where: { tripId: trip.id },
+    });
+
+    const request = new Request(
+      `http://localhost/api/trips/share/revoked-token/entries/${entry.id}`,
+      { method: "GET" },
+    );
+
+    const response = await get(request, {
+      params: { token: "revoked-token", entryId: entry.id },
+    });
+    const body = await response.json();
+
+    expect(response.status).toBe(404);
+    expect(response.headers.get("cache-control")).toBe("no-store");
+    expect(body.data).toBeNull();
+    expect(body.error.code).toBe("NOT_FOUND");
+  });
+
+  it("returns 404 for a rotated share token", async () => {
+    const trip = await prisma.trip.create({
+      data: {
+        title: "Rotated entry trip",
+        startDate: new Date("2025-09-20T00:00:00.000Z"),
+        endDate: new Date("2025-09-22T00:00:00.000Z"),
+        ownerId: "creator",
+      },
+    });
+
+    const entry = await prisma.entry.create({
+      data: {
+        tripId: trip.id,
+        title: "Rotated entry",
+        text: "Rotated content",
+        createdAt: new Date("2025-09-21T08:00:00.000Z"),
+      },
+    });
+
+    const shareLink = await prisma.tripShareLink.create({
+      data: {
+        tripId: trip.id,
+        token: "old-entry-token",
+      },
+    });
+
+    await prisma.tripShareLink.update({
+      where: { tripId: trip.id },
+      data: { token: "new-entry-token" },
+    });
+
+    const request = new Request(
+      `http://localhost/api/trips/share/${shareLink.token}/entries/${entry.id}`,
+      { method: "GET" },
+    );
+
+    const response = await get(request, {
+      params: { token: shareLink.token, entryId: entry.id },
+    });
+    const body = await response.json();
+
+    expect(response.status).toBe(404);
+    expect(response.headers.get("cache-control")).toBe("no-store");
+    expect(body.data).toBeNull();
+    expect(body.error.code).toBe("NOT_FOUND");
+  });
 });

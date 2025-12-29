@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 
 import SharedTripGuard from "../../src/components/trips/shared-trip-guard";
 
@@ -30,5 +30,26 @@ describe("SharedTripGuard", () => {
     expect(
       await screen.findByText("This share link is no longer valid."),
     ).toBeInTheDocument();
+  });
+
+  it("checks the share token on mount", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ data: {}, error: null }), { status: 200 }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(
+      <SharedTripGuard token="active-token">
+        <div>Shared content</div>
+      </SharedTripGuard>,
+    );
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith("/api/trips/share/active-token", {
+        method: "GET",
+        cache: "no-store",
+      });
+    });
+    expect(screen.getByText("Shared content")).toBeInTheDocument();
   });
 });

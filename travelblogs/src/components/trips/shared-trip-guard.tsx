@@ -9,14 +9,18 @@ type SharedTripGuardProps = {
 };
 
 const INVALID_MESSAGE = "This share link is no longer valid.";
+const CHECK_INTERVAL_MS = 10000;
 
 const SharedTripGuard = ({ token, children }: SharedTripGuardProps) => {
   const [invalid, setInvalid] = useState(false);
+  const [isChecking, setIsChecking] = useState(true);
+  const hasCheckedRef = useRef(false);
   const pollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const checkLinkRef = useRef<() => void>(() => {});
 
   const markInvalid = () => {
     setInvalid(true);
+    setIsChecking(false);
     if (pollTimeoutRef.current) {
       clearTimeout(pollTimeoutRef.current);
       pollTimeoutRef.current = null;
@@ -29,10 +33,11 @@ const SharedTripGuard = ({ token, children }: SharedTripGuardProps) => {
     }
     pollTimeoutRef.current = setTimeout(() => {
       checkLinkRef.current();
-    }, 60000);
+    }, CHECK_INTERVAL_MS);
   }, []);
 
   const checkLink = useCallback(async () => {
+    const isInitialCheck = !hasCheckedRef.current;
     try {
       const response = await fetch(`/api/trips/share/${token}`, {
         method: "GET",
@@ -49,6 +54,10 @@ const SharedTripGuard = ({ token, children }: SharedTripGuardProps) => {
       }
     } catch {
       // Ignore network errors; only invalidate on confirmed 404.
+    }
+    if (isInitialCheck) {
+      hasCheckedRef.current = true;
+      setIsChecking(false);
     }
     scheduleNextCheck();
   }, [scheduleNextCheck, token]);
@@ -88,6 +97,20 @@ const SharedTripGuard = ({ token, children }: SharedTripGuardProps) => {
         <main className="mx-auto w-full max-w-3xl">
           <section className="rounded-2xl border border-black/10 bg-white p-8 text-center">
             <p className="text-sm text-[#B34A3C]">{INVALID_MESSAGE}</p>
+          </section>
+        </main>
+      </div>
+    );
+  }
+
+  if (isChecking) {
+    return (
+      <div className="min-h-screen bg-[#FBF7F1] px-6 py-12">
+        <main className="mx-auto w-full max-w-3xl">
+          <section className="rounded-2xl border border-black/10 bg-white p-8 text-center">
+            <p className="text-sm text-[#6B635B]">
+              Validating share link...
+            </p>
           </section>
         </main>
       </div>

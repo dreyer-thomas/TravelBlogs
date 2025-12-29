@@ -6,6 +6,7 @@ import EntryReader from "../../../../../../components/entries/entry-reader";
 import SharedTripGuard from "../../../../../../components/trips/shared-trip-guard";
 import type { EntryApiData } from "../../../../../../utils/entry-reader";
 import { mapEntryToReader } from "../../../../../../utils/entry-reader";
+import { getRequestBaseUrl } from "../../../../../../utils/request-base-url";
 
 export const dynamic = "force-dynamic";
 
@@ -63,10 +64,7 @@ const SharedEntryPage = async ({ params }: SharedEntryPageProps) => {
   const { token, entryId } = await params;
 
   const headersList = await headers();
-  const forwardedHost = headersList.get("x-forwarded-host");
-  const host = forwardedHost ?? headersList.get("host");
-  const protocol = headersList.get("x-forwarded-proto") ?? "http";
-  const baseUrl = host ? `${protocol}://${host}` : null;
+  const baseUrl = getRequestBaseUrl(headersList);
 
   if (!baseUrl) {
     return (

@@ -6,6 +6,22 @@ datasource db {
   provider = "sqlite"
 }
 
+enum UserRole {
+  creator
+  viewer
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String
+  role         UserRole
+  passwordHash String
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
 model Trip {
   id            String   @id @default(cuid())
   title         String

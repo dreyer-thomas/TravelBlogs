@@ -4,6 +4,7 @@ import { headers } from "next/headers";
 
 import TripOverview from "../../../../components/trips/trip-overview";
 import SharedTripGuard from "../../../../components/trips/shared-trip-guard";
+import { getRequestBaseUrl } from "../../../../utils/request-base-url";
 
 export const dynamic = "force-dynamic";
 
@@ -73,10 +74,7 @@ const SharedTripPage = async ({
 
   const { token } = await params;
   const headersList = await headers();
-  const forwardedHost = headersList.get("x-forwarded-host");
-  const host = forwardedHost ?? headersList.get("host");
-  const protocol = headersList.get("x-forwarded-proto") ?? "http";
-  const baseUrl = host ? `${protocol}://${host}` : null;
+  const baseUrl = getRequestBaseUrl(headersList);
 
   if (!baseUrl) {
     return (

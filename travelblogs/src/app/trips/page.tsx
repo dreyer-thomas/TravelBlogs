@@ -69,12 +69,22 @@ const TripsPage = async () => {
               Start a new trip or revisit your existing plans.
             </p>
           </div>
-          <Link
-            href="/trips/new"
-            className="rounded-xl bg-[#1F6F78] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#195C63]"
-          >
-            Create trip
-          </Link>
+          <div className="flex flex-wrap items-center gap-3">
+            {session.user.id === "creator" ? (
+              <Link
+                href="/admin/users"
+                className="rounded-xl border border-[#1F6F78]/30 px-4 py-2 text-sm font-semibold text-[#1F6F78] transition hover:bg-[#1F6F78]/10"
+              >
+                Manage users
+              </Link>
+            ) : null}
+            <Link
+              href="/trips/new"
+              className="rounded-xl bg-[#1F6F78] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#195C63]"
+            >
+              Create trip
+            </Link>
+          </div>
         </header>
 
         {loadError ? (

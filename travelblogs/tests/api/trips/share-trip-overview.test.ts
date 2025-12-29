@@ -134,4 +134,75 @@ describe("GET /api/trips/share/[token]", () => {
     expect(body.data).toBeNull();
     expect(body.error.code).toBe("NOT_FOUND");
   });
+
+  it("returns 404 for a revoked share token", async () => {
+    const trip = await prisma.trip.create({
+      data: {
+        title: "Revoked trip",
+        startDate: new Date("2025-09-10T00:00:00.000Z"),
+        endDate: new Date("2025-09-12T00:00:00.000Z"),
+        ownerId: "creator",
+      },
+    });
+
+    await prisma.tripShareLink.create({
+      data: {
+        tripId: trip.id,
+        token: "revoked-token",
+      },
+    });
+
+    await prisma.tripShareLink.delete({
+      where: { tripId: trip.id },
+    });
+
+    const request = new Request(
+      "http://localhost/api/trips/share/revoked-token",
+      { method: "GET" },
+    );
+
+    const response = await get(request, { params: { token: "revoked-token" } });
+    const body = await response.json();
+
+    expect(response.status).toBe(404);
+    expect(response.headers.get("cache-control")).toBe("no-store");
+    expect(body.data).toBeNull();
+    expect(body.error.code).toBe("NOT_FOUND");
+  });
+
+  it("returns 404 for a rotated share token", async () => {
+    const trip = await prisma.trip.create({
+      data: {
+        title: "Rotated trip",
+        startDate: new Date("2025-10-01T00:00:00.000Z"),
+        endDate: new Date("2025-10-04T00:00:00.000Z"),
+        ownerId: "creator",
+      },
+    });
+
+    const shareLink = await prisma.tripShareLink.create({
+      data: {
+        tripId: trip.id,
+        token: "old-token",
+      },
+    });
+
+    await prisma.tripShareLink.update({
+      where: { tripId: trip.id },
+      data: { token: "new-token" },
+    });
+
+    const request = new Request(
+      `http://localhost/api/trips/share/${shareLink.token}`,
+      { method: "GET" },
+    );
+
+    const response = await get(request, { params: { token: shareLink.token } });
+    const body = await response.json();
+
+    expect(response.status).toBe(404);
+    expect(response.headers.get("cache-control")).toBe("no-store");
+    expect(body.data).toBeNull();
+    expect(body.error.code).toBe("NOT_FOUND");
+  });
 });
