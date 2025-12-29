@@ -111,9 +111,7 @@ const SharedTripPage = async ({
     );
   }
 
-  return (
-    <TripOverview trip={data.trip} entries={data.entries} linkEntries={false} />
-  );
+  return <TripOverview trip={data.trip} entries={data.entries} />;
 };
 
 export default SharedTripPage;
