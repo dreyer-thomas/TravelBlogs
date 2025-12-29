@@ -22,6 +22,7 @@ type TripOverviewProps = {
   trip: TripOverviewTrip;
   entries: TripOverviewEntry[];
   linkEntries?: boolean;
+  entryLinkBase?: string;
 };
 
 const formatDate = (value: string) =>
@@ -41,7 +42,12 @@ const getPreviewImage = (entry: TripOverviewEntry) => {
   );
 };
 
-const TripOverview = ({ trip, entries, linkEntries = true }: TripOverviewProps) => {
+const TripOverview = ({
+  trip,
+  entries,
+  linkEntries = true,
+  entryLinkBase,
+}: TripOverviewProps) => {
   return (
     <div className="min-h-screen bg-[#FBF7F1] px-6 py-12">
       <main className="mx-auto w-full max-w-4xl space-y-8">
@@ -121,10 +127,13 @@ const TripOverview = ({ trip, entries, linkEntries = true }: TripOverviewProps) 
                 );
 
                 if (linkEntries) {
+                  const entryHref = entryLinkBase
+                    ? `${entryLinkBase}/${entry.id}`
+                    : `/entries/${entry.id}`;
                   return (
                     <Link
                       key={entry.id}
-                      href={`/entries/${entry.id}`}
+                      href={entryHref}
                       className="flex flex-wrap items-center gap-4 rounded-2xl border border-black/10 bg-white p-4 transition hover:border-[#1F6F78]/40 hover:shadow-sm"
                     >
                       {content}

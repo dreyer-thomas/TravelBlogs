@@ -1,8 +1,14 @@
 import { NextResponse } from "next/server";
+import { unstable_noStore as noStore } from "next/cache";
 
 import { prisma } from "../../../../../utils/db";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
+const cacheHeaders = {
+  "Cache-Control": "no-store",
+};
 
 const jsonError = (status: number, code: string, message: string) => {
   return NextResponse.json(
@@ -10,7 +16,7 @@ const jsonError = (status: number, code: string, message: string) => {
       data: null,
       error: { code, message },
     },
-    { status },
+    { status, headers: cacheHeaders },
   );
 };
 
@@ -19,6 +25,7 @@ export const GET = async (
   { params }: { params: Promise<{ token: string }> | { token: string } },
 ) => {
   try {
+    noStore();
     const { token } = await params;
 
     if (!token) {
@@ -87,7 +94,7 @@ export const GET = async (
         },
         error: null,
       },
-      { status: 200 },
+      { status: 200, headers: cacheHeaders },
     );
   } catch (error) {
     console.error("Failed to load shared trip", error);

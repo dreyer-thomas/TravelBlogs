@@ -97,6 +97,7 @@ describe("GET /api/trips/share/[token]", () => {
     const body = await response.json();
 
     expect(response.status).toBe(200);
+    expect(response.headers.get("cache-control")).toBe("no-store");
     expect(body.error).toBeNull();
     expect(body.data.trip).toEqual({
       id: trip.id,
@@ -129,6 +130,7 @@ describe("GET /api/trips/share/[token]", () => {
     const body = await response.json();
 
     expect(response.status).toBe(404);
+    expect(response.headers.get("cache-control")).toBe("no-store");
     expect(body.data).toBeNull();
     expect(body.error.code).toBe("NOT_FOUND");
   });

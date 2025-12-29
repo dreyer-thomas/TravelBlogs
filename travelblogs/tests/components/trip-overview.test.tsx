@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+/* eslint-disable @next/next/no-img-element, jsx-a11y/alt-text */
 import type { ImgHTMLAttributes, ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
@@ -6,11 +7,7 @@ import { render, screen } from "@testing-library/react";
 import TripOverview from "../../src/components/trips/trip-overview";
 
 vi.mock("next/image", () => ({
-  default: ({
-    fill: _fill,
-    unoptimized: _unoptimized,
-    ...props
-  }: ImgHTMLAttributes<HTMLImageElement>) => <img {...props} />,
+  default: (props: ImgHTMLAttributes<HTMLImageElement>) => <img {...props} />,
 }));
 
 vi.mock("next/link", () => ({
@@ -69,5 +66,35 @@ describe("TripOverview", () => {
     expect(
       screen.getByText("No entries yet. Check back soon."),
     ).toBeInTheDocument();
+  });
+
+  it("uses a custom entry link base when provided", () => {
+    render(
+      <TripOverview
+        trip={{
+          id: "trip-3",
+          title: "Shared trip",
+          startDate: "2025-06-01T00:00:00.000Z",
+          endDate: "2025-06-08T00:00:00.000Z",
+          coverImageUrl: null,
+        }}
+        entries={[
+          {
+            id: "entry-9",
+            tripId: "trip-3",
+            title: "Day nine",
+            createdAt: "2025-06-09T12:00:00.000Z",
+            coverImageUrl: "/uploads/entries/day-nine.jpg",
+            media: [{ url: "/uploads/entries/day-nine-media.jpg" }],
+          },
+        ]}
+        entryLinkBase="/trips/share/shared-token/entries"
+      />,
+    );
+
+    expect(screen.getByRole("link", { name: /day nine/i })).toHaveAttribute(
+      "href",
+      "/trips/share/shared-token/entries/entry-9",
+    );
   });
 });

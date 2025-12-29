@@ -231,10 +231,11 @@ Semantic mapping:
 
 ### Typography System
 
-Warm, human-readable pairing optimized for long-form entries.
+Clean, modern sans-serif typography optimized for long-form entries.
 
-- Headings: `Fraunces` (expressive, travel-journal feel)
-- Body: `Source Serif 4` (highly readable long-form)
+- Headings: `Source Sans 3` (crisp, contemporary)
+- Body: `Source Sans 3` (readable and consistent)
+- Fallbacks: `"Segoe UI", "Calibri", "Arial", sans-serif`
 
 Type scale (desktop):
 - H1 36/44, H2 28/36, H3 22/30

@@ -50,7 +50,6 @@ const FullScreenPhotoViewer = ({
   );
   const [activeIndex, setActiveIndex] = useState(safeIndex);
   const [zoomScale, setZoomScale] = useState(1);
-  const [isMounted, setIsMounted] = useState(false);
   const [progressKey, setProgressKey] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const dialogRef = useRef<HTMLDivElement | null>(null);
@@ -63,13 +62,10 @@ const FullScreenPhotoViewer = ({
   const isSlideshow = mode === "slideshow";
 
   useEffect(() => {
-    setIsMounted(true);
-  }, []);
-
-  useEffect(() => {
     if (!isOpen) {
       return;
     }
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setActiveIndex(safeIndex);
     setZoomScale(1);
     setIsPaused(false);
@@ -131,7 +127,7 @@ const FullScreenPhotoViewer = ({
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [images.length, isOpen, onClose]);
+  }, [images.length, isOpen, isSlideshow, onClose]);
 
   useEffect(() => {
     if (!isOpen || !isSlideshow || images.length <= 1 || isPaused) {
@@ -152,6 +148,7 @@ const FullScreenPhotoViewer = ({
     if (!isOpen || !isSlideshow) {
       return;
     }
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setProgressKey((prev) => prev + 1);
   }, [activeIndex, isOpen, isSlideshow]);
 
@@ -160,12 +157,13 @@ const FullScreenPhotoViewer = ({
       return;
     }
     if (wasPausedRef.current && !isPaused) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setProgressKey((prev) => prev + 1);
     }
     wasPausedRef.current = isPaused;
   }, [isOpen, isPaused, isSlideshow]);
 
-  if (!isOpen || images.length === 0 || !isMounted) {
+  if (!isOpen || images.length === 0 || typeof document === "undefined") {
     return null;
   }
 

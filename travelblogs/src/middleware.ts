@@ -3,14 +3,12 @@ import type { NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
 
 const publicTripEntryView = (pathname: string) => {
-  if (pathname.startsWith("/entries/")) {
-    const segments = pathname.split("/").filter(Boolean);
-    return segments.length === 2;
-  }
-
   if (pathname.startsWith("/trips/share/")) {
     const segments = pathname.split("/").filter(Boolean);
-    return segments.length === 3;
+    if (segments.length === 3) {
+      return true;
+    }
+    return segments.length === 5 && segments[3] === "entries";
   }
 
   if (pathname.startsWith("/trips/view/")) {

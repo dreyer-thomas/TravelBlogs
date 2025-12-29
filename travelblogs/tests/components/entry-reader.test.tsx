@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
-import type { ImgHTMLAttributes } from "react";
+/* eslint-disable @next/next/no-img-element, jsx-a11y/alt-text */
+import type { ImgHTMLAttributes, ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/react";
 
@@ -16,6 +17,12 @@ vi.mock("next/image", () => ({
       />
     );
   },
+}));
+
+vi.mock("next/link", () => ({
+  default: ({ href, children }: { href: string; children: ReactNode }) => (
+    <a href={href}>{children}</a>
+  ),
 }));
 
 describe("EntryReader", () => {
@@ -128,5 +135,43 @@ describe("EntryReader", () => {
     expect(
       await screen.findByRole("dialog", { name: /photo viewer/i }),
     ).toBeInTheDocument();
+  });
+
+  it("uses a custom entry link base for navigation when provided", () => {
+    render(
+      <EntryReader
+        entryLinkBase="/trips/share/token-1/entries"
+        entry={{
+          id: "entry-4",
+          title: "Village walk",
+          body: "Morning mist.",
+          createdAt: "2025-05-05T00:00:00.000Z",
+          media: [
+            {
+              id: "media-20",
+              url: "https://example.com/hero-walk.jpg",
+              width: 1600,
+              height: 1000,
+            },
+          ],
+          navigation: {
+            previousEntryId: "entry-3",
+            nextEntryId: "entry-5",
+            previousEntryTitle: "Prior day",
+            nextEntryTitle: "Next day",
+            previousEntryDate: "2025-05-04T00:00:00.000Z",
+            nextEntryDate: "2025-05-06T00:00:00.000Z",
+          },
+        }}
+      />,
+    );
+
+    expect(
+      screen.getByRole("link", { name: /previous prior day/i }),
+    ).toHaveAttribute("href", "/trips/share/token-1/entries/entry-3");
+    expect(screen.getByRole("link", { name: /next next day/i })).toHaveAttribute(
+      "href",
+      "/trips/share/token-1/entries/entry-5",
+    );
   });
 });

@@ -11,6 +11,7 @@ import FullScreenPhotoViewer from "./full-screen-photo-viewer";
 
 type EntryReaderProps = {
   entry: EntryReaderData;
+  entryLinkBase?: string;
 };
 
 const formatDate = (value: string) =>
@@ -32,19 +33,12 @@ const getNavLabel = (title?: string | null, date?: string | null) => {
   return "Daily entry";
 };
 
-const EntryReader = ({ entry }: EntryReaderProps) => {
+const EntryReader = ({ entry, entryLinkBase }: EntryReaderProps) => {
   const heroMedia = entry.media[0];
   const galleryItems = entry.media;
   const contentBlocks = useMemo(
     () => parseEntryContent(entry.body ?? ""),
     [entry.body],
-  );
-  const inlineImageUrls = useMemo(
-    () =>
-      contentBlocks
-        .filter((block) => block.type === "image")
-        .map((block) => block.url),
-    [contentBlocks],
   );
   const viewerImages = useMemo(() => {
     const images = new Map<string, { url: string; alt: string }>();
@@ -227,7 +221,11 @@ const EntryReader = ({ entry }: EntryReaderProps) => {
         <nav className="grid gap-4 sm:grid-cols-2">
           {navigation.previousEntryId ? (
             <Link
-              href={`/entries/${navigation.previousEntryId}`}
+              href={
+                entryLinkBase
+                  ? `${entryLinkBase}/${navigation.previousEntryId}`
+                  : `/entries/${navigation.previousEntryId}`
+              }
               aria-label="Previous entry"
               className="group rounded-2xl border border-black/10 bg-white px-5 py-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
             >
@@ -251,7 +249,11 @@ const EntryReader = ({ entry }: EntryReaderProps) => {
 
           {navigation.nextEntryId ? (
             <Link
-              href={`/entries/${navigation.nextEntryId}`}
+              href={
+                entryLinkBase
+                  ? `${entryLinkBase}/${navigation.nextEntryId}`
+                  : `/entries/${navigation.nextEntryId}`
+              }
               aria-label="Next entry"
               className="group rounded-2xl border border-black/10 bg-white px-5 py-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
             >

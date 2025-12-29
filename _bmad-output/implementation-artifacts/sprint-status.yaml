@@ -1,4 +1,4 @@
-# generated: 2025-12-28T17:02:44Z
+# generated: 2025-12-29T16:38:16Z
 # project: TravelBlogs
 # project_key: travelblogs
 # tracking_system: file-system
@@ -33,7 +33,7 @@
 # - SM typically creates next story after previous one is 'done' to incorporate learnings
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
-generated: 2025-12-28T17:02:44Z
+generated: 2025-12-29T16:38:16Z
 project: TravelBlogs
 project_key: travelblogs
 tracking_system: file-system
@@ -51,6 +51,7 @@ development_status:
   1-4-edit-trip-metadata: done
   1-5-view-trip-list: done
   1-6-trip-cover-image-upload: done
+  1-7-typography-refresh-sans-serif: done
   epic-1-retrospective: optional
 
   epic-2: in-progress
@@ -73,9 +74,11 @@ development_status:
 
   epic-4: in-progress
   4-1-create-shareable-trip-link: done
-  4-2-regenerate-shareable-link: backlog
-  4-3-revoke-shareable-link: backlog
-  epic-4-retrospective: optional
+  4-2-regenerate-shareable-link: done
+  4-3-revoke-shareable-link: done
+  4-4-discreet-share-ui: done
+  4-5-invalidate-shared-entry-pages-on-revoke: ready-for-dev
+  epic-4-retrospective: done
 
   epic-5: backlog
   5-1-admin-creates-user-accounts: backlog

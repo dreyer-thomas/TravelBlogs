@@ -155,11 +155,11 @@ const CreateEntryForm = ({ tripId, onEntryCreated }: CreateEntryFormProps) => {
       return true;
     });
   }, [availableStoryImages, libraryImageUrls]);
-
-  useEffect(() => {
-    if (coverImageUrl && !selectableImageUrls.includes(coverImageUrl)) {
-      setCoverImageUrl("");
+  const validatedCoverImageUrl = useMemo(() => {
+    if (coverImageUrl && selectableImageUrls.includes(coverImageUrl)) {
+      return coverImageUrl;
     }
+    return "";
   }, [coverImageUrl, selectableImageUrls]);
 
   useEffect(() => {
@@ -588,7 +588,9 @@ const CreateEntryForm = ({ tripId, onEntryCreated }: CreateEntryFormProps) => {
           tripId,
           entryDate,
           title: title.trim(),
-          coverImageUrl: coverImageUrl.trim() ? coverImageUrl : undefined,
+          coverImageUrl: validatedCoverImageUrl.trim()
+            ? validatedCoverImageUrl
+            : undefined,
           text: text.trim(),
           mediaUrls: mergedMediaUrls,
         }),
@@ -727,7 +729,7 @@ const CreateEntryForm = ({ tripId, onEntryCreated }: CreateEntryFormProps) => {
         {libraryImageUrls.length > 0 ? (
           <div className="grid grid-cols-2 gap-2 md:grid-cols-3">
             {libraryImageUrls.map((url, index) => {
-              const isSelected = coverImageUrl === url;
+              const isSelected = validatedCoverImageUrl === url;
               const isPreview = url.startsWith("blob:");
               const canSelect = !isPreview;
               const isHovered = hoveredImageUrl === url;

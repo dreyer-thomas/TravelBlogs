@@ -2,26 +2,18 @@ import { notFound } from "next/navigation";
 import { unstable_noStore as noStore } from "next/cache";
 import { headers } from "next/headers";
 
-import TripOverview from "../../../../components/trips/trip-overview";
-import SharedTripGuard from "../../../../components/trips/shared-trip-guard";
+import EntryReader from "../../../../../../components/entries/entry-reader";
+import SharedTripGuard from "../../../../../../components/trips/shared-trip-guard";
+import type { EntryApiData } from "../../../../../../utils/entry-reader";
+import { mapEntryToReader } from "../../../../../../utils/entry-reader";
 
 export const dynamic = "force-dynamic";
 
-type TripOverviewEntry = {
-  id: string;
-  tripId: string;
-  title: string;
-  createdAt: string;
-  coverImageUrl: string | null;
-  media: { url: string }[];
-};
-
-type TripOverviewTrip = {
-  id: string;
-  title: string;
-  startDate: string;
-  endDate: string;
-  coverImageUrl: string | null;
+type SharedEntryPageProps = {
+  params: Promise<{ token: string; entryId: string }> | {
+    token: string;
+    entryId: string;
+  };
 };
 
 type ApiError = {
@@ -30,21 +22,22 @@ type ApiError = {
 };
 
 type ApiResponse = {
-  data: {
-    trip: TripOverviewTrip;
-    entries: TripOverviewEntry[];
-  } | null;
+  data: EntryApiData | null;
   error: ApiError | null;
 };
 
-const loadSharedTrip = async (
+const loadSharedEntry = async (
   baseUrl: string,
   token: string,
+  entryId: string,
 ): Promise<ApiResponse> => {
-  const response = await fetch(`${baseUrl}/api/trips/share/${token}`, {
-    method: "GET",
-    cache: "no-store",
-  });
+  const response = await fetch(
+    `${baseUrl}/api/trips/share/${token}/entries/${entryId}`,
+    {
+      method: "GET",
+      cache: "no-store",
+    },
+  );
 
   const body = await response.json().catch(() => null);
 
@@ -53,25 +46,22 @@ const loadSharedTrip = async (
       data: null,
       error: {
         code: body?.error?.code ?? "UNKNOWN_ERROR",
-        message: body?.error?.message ?? "Unable to load this trip.",
+        message: body?.error?.message ?? "Unable to load this entry.",
       },
     };
   }
 
   return {
-    data: (body?.data ?? null) as ApiResponse["data"],
+    data: (body?.data ?? null) as EntryApiData | null,
     error: null,
   };
 };
 
-const SharedTripPage = async ({
-  params,
-}: {
-  params: Promise<{ token: string }> | { token: string };
-}) => {
+const SharedEntryPage = async ({ params }: SharedEntryPageProps) => {
   noStore();
 
-  const { token } = await params;
+  const { token, entryId } = await params;
+
   const headersList = await headers();
   const forwardedHost = headersList.get("x-forwarded-host");
   const host = forwardedHost ?? headersList.get("host");
@@ -92,7 +82,7 @@ const SharedTripPage = async ({
     );
   }
 
-  const { data, error } = await loadSharedTrip(baseUrl, token);
+  const { data, error } = await loadSharedEntry(baseUrl, token, entryId);
 
   if (error?.code === "NOT_FOUND") {
     notFound();
@@ -104,7 +94,7 @@ const SharedTripPage = async ({
         <main className="mx-auto w-full max-w-3xl">
           <section className="rounded-2xl border border-black/10 bg-white p-8 text-center">
             <p className="text-sm text-[#B34A3C]">
-              {error?.message ?? "Unable to load this trip."}
+              {error?.message ?? "Unable to load this entry."}
             </p>
           </section>
         </main>
@@ -114,13 +104,12 @@ const SharedTripPage = async ({
 
   return (
     <SharedTripGuard token={token}>
-      <TripOverview
-        trip={data.trip}
-        entries={data.entries}
+      <EntryReader
+        entry={mapEntryToReader(data)}
         entryLinkBase={`/trips/share/${token}/entries`}
       />
     </SharedTripGuard>
   );
 };
 
-export default SharedTripPage;
+export default SharedEntryPage;

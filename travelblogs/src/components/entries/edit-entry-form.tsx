@@ -162,6 +162,12 @@ const EditEntryForm = ({
       return true;
     });
   }, [availableStoryImages, libraryImageUrls]);
+  const validatedCoverImageUrl = useMemo(() => {
+    if (coverImageUrl && selectableImageUrls.includes(coverImageUrl)) {
+      return coverImageUrl;
+    }
+    return "";
+  }, [coverImageUrl, selectableImageUrls]);
 
   useEffect(() => {
     return () => {
@@ -172,12 +178,6 @@ const EditEntryForm = ({
       });
     };
   }, [mediaPreviews]);
-
-  useEffect(() => {
-    if (coverImageUrl && !selectableImageUrls.includes(coverImageUrl)) {
-      setCoverImageUrl("");
-    }
-  }, [coverImageUrl, selectableImageUrls]);
 
   const updateText = (value: string) => {
     setText(value);
@@ -592,7 +592,9 @@ const EditEntryForm = ({
         body: JSON.stringify({
           entryDate,
           title: title.trim(),
-          coverImageUrl: coverImageUrl ? coverImageUrl : null,
+          coverImageUrl: validatedCoverImageUrl
+            ? validatedCoverImageUrl
+            : null,
           text: text.trim(),
           mediaUrls: mergedMediaUrls,
         }),
@@ -728,7 +730,7 @@ const EditEntryForm = ({
         {libraryImageUrls.length > 0 ? (
           <div className="grid grid-cols-2 gap-2 md:grid-cols-3">
             {libraryImageUrls.map((url, index) => {
-              const isSelected = coverImageUrl === url;
+              const isSelected = validatedCoverImageUrl === url;
               const isPreview = url.startsWith("blob:");
               const canSelect = !isPreview;
               const isHovered = hoveredImageUrl === url;

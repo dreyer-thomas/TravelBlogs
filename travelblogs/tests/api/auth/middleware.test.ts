@@ -32,15 +32,25 @@ describe("middleware", () => {
     expect(response?.headers.get("x-middleware-next")).toBe("1");
   });
 
-  it("allows public access to shareable entry routes", async () => {
+  it("redirects unauthenticated users from entry routes", async () => {
     getToken.mockResolvedValue(null);
     const response = await middleware(makeRequest("/entries/abc123"));
-    expect(response?.headers.get("x-middleware-next")).toBe("1");
+    expect(response?.headers.get("location")).toBe(
+      "http://localhost/sign-in?callbackUrl=%2Fentries%2Fabc123",
+    );
   });
 
   it("allows public access to shareable trip routes", async () => {
     getToken.mockResolvedValue(null);
     const response = await middleware(makeRequest("/trips/share/abc123"));
+    expect(response?.headers.get("x-middleware-next")).toBe("1");
+  });
+
+  it("allows public access to shared entry routes", async () => {
+    getToken.mockResolvedValue(null);
+    const response = await middleware(
+      makeRequest("/trips/share/abc123/entries/entry-1"),
+    );
     expect(response?.headers.get("x-middleware-next")).toBe("1");
   });
 

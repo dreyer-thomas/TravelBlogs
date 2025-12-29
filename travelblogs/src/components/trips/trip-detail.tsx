@@ -63,6 +63,11 @@ const TripDetail = ({ tripId }: TripDetailProps) => {
   const [shareError, setShareError] = useState<string | null>(null);
   const [shareLoading, setShareLoading] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
+  const [shareRevoked, setShareRevoked] = useState(false);
+  const [isSharePanelOpen, setIsSharePanelOpen] = useState(false);
+  const [isRevokeOpen, setIsRevokeOpen] = useState(false);
+  const [isRevoking, setIsRevoking] = useState(false);
+  const [revokeError, setRevokeError] = useState<string | null>(null);
 
   useEffect(() => {
     let isActive = true;
@@ -148,6 +153,7 @@ const TripDetail = ({ tripId }: TripDetailProps) => {
     let isActive = true;
     setShareError(null);
     setShareCopied(false);
+    setShareRevoked(false);
 
     const loadShareLink = async () => {
       try {
@@ -237,6 +243,7 @@ const TripDetail = ({ tripId }: TripDetailProps) => {
     setShareLoading(true);
     setShareError(null);
     setShareCopied(false);
+    setShareRevoked(false);
 
     try {
       const response = await fetch(`/api/trips/${trip.id}/share-link`, {
@@ -261,6 +268,49 @@ const TripDetail = ({ tripId }: TripDetailProps) => {
       );
     } finally {
       setShareLoading(false);
+    }
+  };
+
+  const handleOpenRevoke = () => {
+    setIsRevokeOpen(true);
+    setRevokeError(null);
+  };
+
+  const handleCloseRevoke = () => {
+    setIsRevokeOpen(false);
+    setIsRevoking(false);
+    setRevokeError(null);
+  };
+
+  const handleRevokeShareLink = async () => {
+    if (!shareLink) {
+      return;
+    }
+
+    setIsRevoking(true);
+    setRevokeError(null);
+
+    try {
+      const response = await fetch(`/api/trips/${trip.id}/share-link`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      const body = await response.json().catch(() => null);
+
+      if (!response.ok || body?.error) {
+        throw new Error(body?.error?.message ?? "Unable to revoke share link.");
+      }
+
+      setShareLink(null);
+      setShareRevoked(true);
+      setShareCopied(false);
+      setIsRevokeOpen(false);
+      setIsRevoking(false);
+    } catch (err) {
+      setRevokeError(
+        err instanceof Error ? err.message : "Unable to revoke share link.",
+      );
+      setIsRevoking(false);
     }
   };
 
@@ -314,62 +364,65 @@ const TripDetail = ({ tripId }: TripDetailProps) => {
             </div>
           ) : null}
 
-          <div className="mt-6 space-y-3 text-sm text-[#6B635B]">
-            <div>
-              <span className="font-semibold text-[#2D2A26]">Owner:</span>{" "}
-              Creator
-            </div>
-          </div>
-        </section>
-
-        <section className="rounded-2xl border border-black/10 bg-white p-6 shadow-sm">
-          <div className="flex flex-wrap items-start justify-between gap-4">
-            <div>
-              <p className="text-xs uppercase tracking-[0.2em] text-[#6B635B]">
-                Share trip
-              </p>
-              <p className="mt-2 text-sm text-[#6B635B]">
-                Create a read-only link that lets anyone view this trip.
-              </p>
+          <div className="mt-6 flex flex-wrap items-center gap-3 text-sm text-[#6B635B]">
+            <div className="flex items-center gap-2">
+              <span className="font-semibold text-[#2D2A26]">Owner:</span>
+              <span>Creator</span>
             </div>
             <button
               type="button"
-              onClick={handleCreateShareLink}
-              className="rounded-xl bg-[#1F6F78] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#195C63] disabled:cursor-not-allowed disabled:opacity-70"
-              disabled={shareLoading}
+              onClick={() => setIsSharePanelOpen((prev) => !prev)}
+              aria-label="Share trip"
+              className="inline-flex items-center gap-2 rounded-full border border-black/10 bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-[#6B635B] transition hover:border-[#1F6F78]/40 hover:text-[#1F6F78]"
             >
-              {shareLoading ? "Creating…" : "Create share link"}
+              Share
             </button>
           </div>
 
-          {shareError ? (
-            <p className="mt-3 text-sm text-[#B34A3C]">{shareError}</p>
-          ) : null}
+          {isSharePanelOpen ? (
+            <div className="mt-4 rounded-2xl border border-black/10 bg-[#FBF7F1] p-4 text-sm text-[#6B635B]">
+              <p className="text-xs uppercase tracking-[0.2em] text-[#6B635B]">
+                Share link
+              </p>
+              <p className="mt-2">
+                Create a read-only link for this trip.
+              </p>
 
-          {shareLink ? (
-            <div className="mt-4 space-y-3">
-              <label className="block text-xs uppercase tracking-[0.2em] text-[#6B635B]">
-                Share URL
-              </label>
-              <div className="flex flex-wrap items-center gap-3">
-                <input
-                  type="text"
-                  value={shareLink}
-                  readOnly
-                  className="w-full flex-1 rounded-xl border border-black/10 bg-[#FBF7F1] px-3 py-2 text-sm text-[#2D2A26]"
-                  aria-label="Share URL"
-                />
+              {shareError ? (
+                <p className="mt-3 text-sm text-[#B34A3C]">{shareError}</p>
+              ) : null}
+
+              {shareRevoked && !shareLink ? (
+                <p className="mt-3">Link revoked.</p>
+              ) : null}
+
+              {shareLink ? (
+                <div className="mt-3 flex flex-wrap items-center gap-3">
+                  <input
+                    type="text"
+                    value={shareLink}
+                    readOnly
+                    className="w-full flex-1 rounded-xl border border-black/10 bg-white px-3 py-2 text-sm text-[#2D2A26]"
+                    aria-label="Share URL"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleCopyShareLink}
+                    className="rounded-xl border border-[#1F6F78] px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-[#1F6F78] transition hover:bg-[#1F6F78] hover:text-white"
+                  >
+                    {shareCopied ? "Copied" : "Copy link"}
+                  </button>
+                </div>
+              ) : (
                 <button
                   type="button"
-                  onClick={handleCopyShareLink}
-                  className="rounded-xl border border-[#1F6F78] px-4 py-2 text-sm font-semibold text-[#1F6F78] transition hover:bg-[#1F6F78] hover:text-white"
+                  onClick={handleCreateShareLink}
+                  className="mt-3 rounded-xl bg-[#1F6F78] px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-white transition hover:bg-[#195C63] disabled:cursor-not-allowed disabled:opacity-70"
+                  disabled={shareLoading}
                 >
-                  {shareCopied ? "Copied" : "Copy link"}
+                  {shareLoading ? "Creating…" : "Generate link"}
                 </button>
-              </div>
-              <p className="text-xs text-[#6B635B]">
-                Anyone with this link can view your trip overview.
-              </p>
+              )}
             </div>
           ) : null}
         </section>
@@ -466,10 +519,67 @@ const TripDetail = ({ tripId }: TripDetailProps) => {
                 Edit trip
               </Link>
               <DeleteTripModal tripId={trip.id} tripTitle={trip.title} />
+              {shareLink ? (
+                <button
+                  type="button"
+                  onClick={handleOpenRevoke}
+                  className="rounded-xl border border-[#B64A3A] px-4 py-2 text-sm font-semibold text-[#B64A3A] transition hover:bg-[#B64A3A]/10"
+                  disabled={shareLoading || isRevoking}
+                >
+                  Revoke share link
+                </button>
+              ) : null}
             </div>
           </div>
         </section>
       </main>
+
+      {isRevokeOpen ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="revoke-share-title"
+            aria-describedby="revoke-share-description"
+            className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl"
+          >
+            <h2
+              id="revoke-share-title"
+              className="text-lg font-semibold text-[#2D2A26]"
+            >
+              Revoke this link?
+            </h2>
+            <p
+              id="revoke-share-description"
+              className="mt-2 text-sm text-[#6B635B]"
+            >
+              Anyone using this link will lose access immediately.
+            </p>
+
+            {revokeError ? (
+              <p className="mt-3 text-sm text-[#B64A3A]">{revokeError}</p>
+            ) : null}
+
+            <div className="mt-6 flex flex-wrap gap-3">
+              <button
+                type="button"
+                onClick={handleCloseRevoke}
+                className="min-h-[44px] rounded-xl border border-[#D5CDC4] px-4 py-2 text-sm font-semibold text-[#2D2A26] transition hover:bg-[#F6F1EB] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2D2A26]"
+              >
+                Keep link
+              </button>
+              <button
+                type="button"
+                onClick={handleRevokeShareLink}
+                disabled={isRevoking}
+                className="min-h-[44px] rounded-xl bg-[#B64A3A] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#9E3F31] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#B64A3A] disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {isRevoking ? "Revoking..." : "Yes, revoke"}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 };

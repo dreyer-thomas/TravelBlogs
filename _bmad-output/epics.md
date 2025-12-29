@@ -282,6 +282,26 @@ So that I can quickly access and manage them.
 **When** I open the trips area  
 **Then** I see an empty state with a clear call to create a trip
 
+### Story 1.7: Typography Refresh (Sans-Serif)
+
+As a creator or viewer,
+I want the app typography to use a clean sans-serif style,
+So that reading and navigation feel modern and crisp across the whole app.
+
+**Acceptance Criteria:**
+
+**Given** I open any page in the app  
+**When** the UI renders  
+**Then** headings and body text use the new sans-serif typography system  
+
+**Given** the UI uses a sans-serif system  
+**When** I view long-form entry text  
+**Then** text remains readable and consistent with established spacing and sizing  
+
+**Given** I inspect the UI styles  
+**When** I check typography tokens or global styles  
+**Then** legacy serif font references are removed or replaced with the new sans-serif font family
+
 ## Epic 2: Daily Entry Creation & Media Upload (MVP)
 
 Creators can add daily entries with text and multiple media files.
@@ -571,6 +591,58 @@ So that the trip is no longer accessible via that link.
 **Given** I open a revoked link  
 **When** the trip is requested  
 **Then** I see an access denied or not found message
+
+### Story 4.4: Discreet Share UI
+
+As a creator,
+I want the share controls to be subtle and secondary in the trip UI,
+So that sharing is available without dominating the trip experience.
+
+**Acceptance Criteria:**
+
+**Given** I view a trip I own  
+**When** the trip header renders  
+**Then** the share control is shown as a small icon/button in the header near the Owner label  
+
+**Given** I open trip actions  
+**When** I review destructive options  
+**Then** revoke share link is placed in the Trip Actions area  
+
+**Given** the share UI is visible  
+**When** I look for link actions  
+**Then** there is no "Regenerate" action (Revoke + Generate only)  
+
+**Given** no share link exists  
+**When** I use the share control  
+**Then** I can generate a new share link and copy it  
+
+**Given** a share link exists  
+**When** I use the share control  
+**Then** I can view and copy the existing link without excessive UI emphasis
+
+### Story 4.5: Invalidate Shared Entry Pages on Revoke
+
+As a creator,
+I want revoked share links to invalidate all shared pages immediately,
+So that old links never grant access after revocation or replacement.
+
+**Acceptance Criteria:**
+
+**Given** I revoke a trip share link  
+**When** I open the old share link to the trip overview  
+**Then** I see not found or access denied  
+
+**Given** I revoke a trip share link  
+**When** I open a shared entry page using the old token  
+**Then** I see not found or access denied  
+
+**Given** I revoke and then generate a new share link  
+**When** I open the old share link or any old shared entry page  
+**Then** access is denied and no data is returned  
+
+**Given** I open a valid share link  
+**When** I navigate between overview and entry pages  
+**Then** access remains valid for that token only
 
 ## Epic 5: Accounts, Roles, and Contributions (Phase 2)
 
