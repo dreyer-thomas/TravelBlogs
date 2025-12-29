@@ -13,6 +13,25 @@ export type EntryApiData = {
   text: string;
   createdAt: string;
   media: EntryApiMedia[];
+  navigation?: EntryApiNavigation;
+};
+
+export type EntryApiNavigation = {
+  previousEntryId: string | null;
+  nextEntryId: string | null;
+  previousEntryTitle?: string | null;
+  nextEntryTitle?: string | null;
+  previousEntryDate?: string | null;
+  nextEntryDate?: string | null;
+};
+
+export type EntryReaderNavigation = {
+  previousEntryId: string | null;
+  nextEntryId: string | null;
+  previousEntryTitle: string | null;
+  nextEntryTitle: string | null;
+  previousEntryDate: string | null;
+  nextEntryDate: string | null;
 };
 
 export type EntryReaderMedia = {
@@ -30,6 +49,7 @@ export type EntryReaderData = {
   body: string;
   createdAt: string;
   media: EntryReaderMedia[];
+  navigation?: EntryReaderNavigation;
 };
 
 const imageExtensions = new Set(["jpg", "jpeg", "png", "webp", "gif", "avif"]);
@@ -63,5 +83,13 @@ export const mapEntryToReader = (entry: EntryApiData): EntryReaderData => {
       height: null,
       alt: findInlineImageAlt(entry.text, item.url),
     })),
+    navigation: {
+      previousEntryId: entry.navigation?.previousEntryId ?? null,
+      nextEntryId: entry.navigation?.nextEntryId ?? null,
+      previousEntryTitle: entry.navigation?.previousEntryTitle ?? null,
+      nextEntryTitle: entry.navigation?.nextEntryTitle ?? null,
+      previousEntryDate: entry.navigation?.previousEntryDate ?? null,
+      nextEntryDate: entry.navigation?.nextEntryDate ?? null,
+    },
   };
 };

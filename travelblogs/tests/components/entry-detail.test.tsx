@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import type { ImgHTMLAttributes, ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
-import { act, fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen, within } from "@testing-library/react";
 
 import EntryDetail from "../../src/components/entries/entry-detail";
 
@@ -81,10 +81,11 @@ describe("EntryDetail", () => {
 
     fireEvent.click(openButtons[0]);
 
-    expect(await screen.findByRole("dialog")).toBeInTheDocument();
-    expect(screen.getByText("1 of 2")).toBeInTheDocument();
+    const dialog = await screen.findByRole("dialog");
+    expect(within(dialog).queryAllByRole("button")).toHaveLength(0);
+    expect(screen.queryByText("1 of 2")).not.toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("dialog"));
+    fireEvent.click(dialog);
 
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
@@ -117,11 +118,14 @@ describe("EntryDetail", () => {
 
     fireEvent.click(openButtons[0]);
 
-    expect(await screen.findByRole("dialog")).toBeInTheDocument();
-    expect(screen.getByText("1 of 2")).toBeInTheDocument();
+    const dialog = await screen.findByRole("dialog");
+    expect(within(dialog).getByAltText("Neon sign")).toBeInTheDocument();
 
     fireEvent.keyDown(window, { key: "ArrowRight" });
-    expect(screen.getByText("2 of 2")).toBeInTheDocument();
+    expect(within(dialog).getByAltText("Entry photo")).toBeInTheDocument();
+    expect(
+      within(dialog).queryByAltText("Neon sign"),
+    ).not.toBeInTheDocument();
 
     fireEvent.keyDown(window, { key: "Escape" });
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
@@ -156,7 +160,7 @@ describe("EntryDetail", () => {
     fireEvent.click(mediaButton);
 
     expect(await screen.findByRole("dialog")).toBeInTheDocument();
-    expect(screen.getByText("2 of 2")).toBeInTheDocument();
+    expect(screen.getByAltText("Entry photo")).toBeInTheDocument();
   });
 
   it("starts a slideshow and auto-advances with looping", async () => {
@@ -195,77 +199,66 @@ describe("EntryDetail", () => {
       await act(async () => {});
 
       expect(screen.getByRole("dialog")).toBeInTheDocument();
-      expect(screen.getByText("1 of 2")).toBeInTheDocument();
+      expect(screen.getByRole("img", { name: "Entry photo" })).toHaveAttribute(
+        "src",
+        "https://example.com/photo-1700000200-media.jpg",
+      );
 
       await act(async () => {
         vi.advanceTimersByTime(5000);
       });
-      expect(screen.getByText("2 of 2")).toBeInTheDocument();
+      expect(screen.getByRole("img", { name: "Entry photo" })).toHaveAttribute(
+        "src",
+        "https://example.com/photo-1700000300-media.jpg",
+      );
 
       await act(async () => {
         vi.advanceTimersByTime(5000);
       });
-      expect(screen.getByText("1 of 2")).toBeInTheDocument();
+      expect(screen.getByRole("img", { name: "Entry photo" })).toHaveAttribute(
+        "src",
+        "https://example.com/photo-1700000200-media.jpg",
+      );
     } finally {
       vi.useRealTimers();
     }
   });
 
-  it("pauses, resumes, and exits the slideshow", async () => {
-    vi.useFakeTimers();
+  it("exits the slideshow on click", async () => {
+    render(
+      <EntryDetail
+        entry={{
+          id: "entry-6",
+          tripId: "trip-3",
+          title: "Hidden cafe",
+          coverImageUrl: null,
+          text: "Latte art memories.",
+          createdAt: "2025-05-05T00:00:00.000Z",
+          updatedAt: "2025-05-05T00:00:00.000Z",
+          media: [
+            {
+              id: "media-5",
+              url: "https://example.com/photo-1700000400-media.jpg",
+              createdAt: "2025-05-05T00:00:00.000Z",
+            },
+            {
+              id: "media-6",
+              url: "https://example.com/photo-1700000500-media.jpg",
+              createdAt: "2025-05-05T00:00:00.000Z",
+            },
+          ],
+        }}
+      />,
+    );
 
-    try {
-      render(
-        <EntryDetail
-          entry={{
-            id: "entry-6",
-            tripId: "trip-3",
-            title: "Hidden cafe",
-            coverImageUrl: null,
-            text: "Latte art memories.",
-            createdAt: "2025-05-05T00:00:00.000Z",
-            updatedAt: "2025-05-05T00:00:00.000Z",
-            media: [
-              {
-                id: "media-5",
-                url: "https://example.com/photo-1700000400-media.jpg",
-                createdAt: "2025-05-05T00:00:00.000Z",
-              },
-              {
-                id: "media-6",
-                url: "https://example.com/photo-1700000500-media.jpg",
-                createdAt: "2025-05-05T00:00:00.000Z",
-              },
-            ],
-          }}
-        />,
-      );
+    fireEvent.click(
+      screen.getByRole("button", { name: /start slideshow/i }),
+    );
+    await act(async () => {});
 
-      fireEvent.click(
-        screen.getByRole("button", { name: /start slideshow/i }),
-      );
-      await act(async () => {});
+    const dialog = screen.getByRole("dialog");
 
-      expect(screen.getByRole("dialog")).toBeInTheDocument();
-
-      fireEvent.click(screen.getByRole("button", { name: /pause/i }));
-
-      await act(async () => {
-        vi.advanceTimersByTime(5000);
-      });
-      expect(screen.getByText("1 of 2")).toBeInTheDocument();
-
-      fireEvent.click(screen.getByRole("button", { name: /resume/i }));
-
-      await act(async () => {
-        vi.advanceTimersByTime(5000);
-      });
-      expect(screen.getByText("2 of 2")).toBeInTheDocument();
-
-      fireEvent.click(screen.getByRole("button", { name: /close/i }));
-      expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
-    } finally {
-      vi.useRealTimers();
-    }
+    fireEvent.click(dialog);
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 });

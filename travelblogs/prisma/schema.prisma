@@ -17,7 +17,7 @@ model Trip {
   updatedAt     DateTime @updatedAt
 
   entries       Entry[]
-  // Future relations: shareLinks, tripAccess
+  shareLink     TripShareLink?
 }
 
 model Entry {
@@ -40,4 +40,13 @@ model EntryMedia {
   createdAt DateTime @default(now())
 
   entry     Entry    @relation(fields: [entryId], references: [id], onDelete: Cascade)
+}
+
+model TripShareLink {
+  id        String   @id @default(cuid())
+  tripId    String   @unique
+  token     String   @unique
+  createdAt DateTime @default(now())
+
+  trip      Trip     @relation(fields: [tripId], references: [id], onDelete: Cascade)
 }

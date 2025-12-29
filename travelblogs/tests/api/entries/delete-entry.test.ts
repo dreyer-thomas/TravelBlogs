@@ -80,6 +80,7 @@ describe("DELETE /api/entries/[id]", () => {
     const entry = await prisma.entry.create({
       data: {
         tripId: trip.id,
+        title: "Entry to delete",
         text: "Entry to delete.",
         media: {
           create: [{ url: "/uploads/entries/delete-1.jpg" }],
@@ -146,6 +147,7 @@ describe("DELETE /api/entries/[id]", () => {
     const entry = await prisma.entry.create({
       data: {
         tripId: trip.id,
+        title: "Not yours",
         text: "Not yours.",
         media: {
           create: [{ url: "/uploads/entries/other.jpg" }],

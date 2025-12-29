@@ -66,4 +66,28 @@ describe("MediaGallery", () => {
     const images = screen.getAllByRole("img");
     expect(images[0]).toHaveAttribute("loading", "lazy");
   });
+
+  it("triggers slideshow action when provided", () => {
+    const startSlideshow = vi.fn();
+
+    render(
+      <MediaGallery
+        items={[
+          {
+            id: "media-1",
+            url: "https://example.com/gallery-1.jpg",
+            width: 1200,
+            height: 900,
+          },
+        ]}
+        onStartSlideshow={startSlideshow}
+      />,
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: /start slideshow/i }),
+    );
+
+    expect(startSlideshow).toHaveBeenCalledTimes(1);
+  });
 });

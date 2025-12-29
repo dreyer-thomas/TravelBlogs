@@ -13,13 +13,19 @@ export type MediaGalleryItem = {
 
 type MediaGalleryProps = {
   items: MediaGalleryItem[];
+  onItemClick?: (url: string) => void;
+  onStartSlideshow?: () => void;
 };
 
 const SCROLL_AMOUNT = 320;
 
 const isOptimizedImage = (url: string) => url.startsWith("/");
 
-const MediaGallery = ({ items }: MediaGalleryProps) => {
+const MediaGallery = ({
+  items,
+  onItemClick,
+  onStartSlideshow,
+}: MediaGalleryProps) => {
   const scrollerRef = useRef<HTMLDivElement | null>(null);
 
   if (items.length === 0) {
@@ -43,6 +49,15 @@ const MediaGallery = ({ items }: MediaGalleryProps) => {
           </h2>
         </div>
         <div className="flex items-center gap-2">
+          {onStartSlideshow ? (
+            <button
+              type="button"
+              onClick={onStartSlideshow}
+              className="rounded-xl border border-[#2D2A26]/20 bg-[#F2ECE3] px-3 py-2 text-sm font-semibold text-[#2D2A26] transition hover:bg-[#E8E0D4] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2D2A26]"
+            >
+              Start slideshow
+            </button>
+          ) : null}
           <button
             type="button"
             onClick={() => handleScroll("prev")}
@@ -67,30 +82,52 @@ const MediaGallery = ({ items }: MediaGalleryProps) => {
         data-testid="media-gallery-scroller"
         className="mt-6 flex snap-x snap-mandatory gap-4 overflow-x-auto pb-4"
       >
-        {items.map((item) => (
-          <figure
-            key={item.id ?? item.url}
-            className="snap-start shrink-0 basis-64 sm:basis-72 md:basis-80"
-          >
-            <div className="overflow-hidden rounded-2xl bg-[#F2ECE3]">
-              <Image
-                src={item.url}
-                alt={item.alt ?? "Entry media"}
-                width={item.width ?? 1200}
-                height={item.height ?? 900}
-                sizes="(min-width: 1024px) 320px, 70vw"
-                className="h-auto w-full object-cover"
-                loading="lazy"
-                unoptimized={!isOptimizedImage(item.url)}
-              />
-            </div>
-            {item.alt ? (
-              <figcaption className="mt-3 text-sm text-[#6B635B]">
-                {item.alt}
-              </figcaption>
-            ) : null}
-          </figure>
-        ))}
+        {items.map((item) => {
+          const caption = item.alt?.trim();
+          const showCaption = Boolean(caption && caption !== "Entry photo");
+
+          const image = (
+            <Image
+              src={item.url}
+              alt={item.alt ?? "Entry media"}
+              width={item.width ?? 1200}
+              height={item.height ?? 900}
+              sizes="(min-width: 1024px) 320px, 70vw"
+              className="h-auto w-full object-cover"
+              loading="lazy"
+              unoptimized={!isOptimizedImage(item.url)}
+            />
+          );
+
+          const media = onItemClick ? (
+            <button
+              type="button"
+              onClick={() => onItemClick(item.url)}
+              className="block h-full w-full focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2D2A26]"
+              aria-label="Open photo"
+            >
+              {image}
+            </button>
+          ) : (
+            image
+          );
+
+          return (
+            <figure
+              key={item.id ?? item.url}
+              className="snap-start shrink-0 basis-64 sm:basis-72 md:basis-80"
+            >
+              <div className="overflow-hidden rounded-2xl bg-[#F2ECE3]">
+                {media}
+              </div>
+              {showCaption ? (
+                <figcaption className="mt-3 text-sm text-[#6B635B]">
+                  {caption}
+                </figcaption>
+              ) : null}
+            </figure>
+          );
+        })}
       </div>
     </section>
   );

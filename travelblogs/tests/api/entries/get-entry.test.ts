@@ -124,6 +124,43 @@ describe("GET /api/entries/[id]", () => {
     expect(body.data.id).toBe(entry.id);
   });
 
+  it("allows authenticated viewers to read entry details", async () => {
+    getToken.mockResolvedValue({ sub: "viewer-1" });
+    const trip = await prisma.trip.create({
+      data: {
+        title: "Shared access",
+        startDate: new Date("2025-06-01"),
+        endDate: new Date("2025-06-10"),
+        ownerId: "creator",
+      },
+    });
+
+    const entry = await prisma.entry.create({
+      data: {
+        tripId: trip.id,
+        title: "Viewer entry",
+        text: "Viewer can read",
+        media: {
+          create: [{ url: "/uploads/entries/viewer.jpg" }],
+        },
+      },
+      include: {
+        media: true,
+      },
+    });
+
+    const request = new Request(`http://localhost/api/entries/${entry.id}`, {
+      method: "GET",
+    });
+
+    const response = await get(request, { params: { id: entry.id } });
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.error).toBeNull();
+    expect(body.data.id).toBe(entry.id);
+  });
+
   it("rejects entry access for trips not owned by the creator", async () => {
     const trip = await prisma.trip.create({
       data: {
@@ -154,5 +191,107 @@ describe("GET /api/entries/[id]", () => {
 
     expect(response.status).toBe(403);
     expect(body.error.code).toBe("FORBIDDEN");
+  });
+
+  it("returns navigation metadata for adjacent entries in chronological order", async () => {
+    const trip = await prisma.trip.create({
+      data: {
+        title: "Navigation Trip",
+        startDate: new Date("2025-06-01"),
+        endDate: new Date("2025-06-10"),
+        ownerId: "creator",
+      },
+    });
+
+    const firstEntry = await prisma.entry.create({
+      data: {
+        tripId: trip.id,
+        title: "Day one",
+        text: "First day",
+        createdAt: new Date("2025-06-01T08:00:00Z"),
+        media: {
+          create: [{ url: "/uploads/entries/first.jpg" }],
+        },
+      },
+    });
+
+    const middleEntry = await prisma.entry.create({
+      data: {
+        tripId: trip.id,
+        title: "Day two",
+        text: "Second day",
+        createdAt: new Date("2025-06-02T08:00:00Z"),
+        media: {
+          create: [{ url: "/uploads/entries/middle.jpg" }],
+        },
+      },
+    });
+
+    const lastEntry = await prisma.entry.create({
+      data: {
+        tripId: trip.id,
+        title: "Day three",
+        text: "Third day",
+        createdAt: new Date("2025-06-03T08:00:00Z"),
+        media: {
+          create: [{ url: "/uploads/entries/last.jpg" }],
+        },
+      },
+    });
+
+    const request = new Request(`http://localhost/api/entries/${middleEntry.id}`, {
+      method: "GET",
+    });
+
+    const response = await get(request, { params: { id: middleEntry.id } });
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.error).toBeNull();
+    expect(body.data.navigation).toEqual(
+      expect.objectContaining({
+        previousEntryId: firstEntry.id,
+        nextEntryId: lastEntry.id,
+      }),
+    );
+  });
+
+  it("returns null navigation ids at the bounds of a trip", async () => {
+    const trip = await prisma.trip.create({
+      data: {
+        title: "Bounds Trip",
+        startDate: new Date("2025-06-01"),
+        endDate: new Date("2025-06-10"),
+        ownerId: "creator",
+      },
+    });
+
+    const onlyEntry = await prisma.entry.create({
+      data: {
+        tripId: trip.id,
+        title: "Solo day",
+        text: "Only entry",
+        createdAt: new Date("2025-06-01T08:00:00Z"),
+        media: {
+          create: [{ url: "/uploads/entries/solo.jpg" }],
+        },
+      },
+    });
+
+    const request = new Request(`http://localhost/api/entries/${onlyEntry.id}`, {
+      method: "GET",
+    });
+
+    const response = await get(request, { params: { id: onlyEntry.id } });
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.error).toBeNull();
+    expect(body.data.navigation).toEqual(
+      expect.objectContaining({
+        previousEntryId: null,
+        nextEntryId: null,
+      }),
+    );
   });
 });

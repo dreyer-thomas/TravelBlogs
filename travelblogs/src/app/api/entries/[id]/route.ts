@@ -70,13 +70,9 @@ export const GET = async (
   { params }: { params: Promise<{ id: string }> | { id: string } },
 ) => {
   try {
-    const userId = await getUserId(request);
-    if (userId && userId !== "creator") {
-      return jsonError(403, "FORBIDDEN", "Creator access required.");
-    }
-
     const { id } = await params;
 
+    const userId = await getUserId(request);
     const entry = await prisma.entry.findUnique({
       where: {
         id,
@@ -95,9 +91,44 @@ export const GET = async (
       return jsonError(404, "NOT_FOUND", "Entry not found.");
     }
 
-    if (userId && entry.trip.ownerId !== userId) {
+    if (entry.trip.ownerId !== "creator" && userId !== entry.trip.ownerId) {
       return jsonError(403, "FORBIDDEN", "Not authorized to view this entry.");
     }
+
+    const [previousEntry, nextEntry] = await Promise.all([
+      prisma.entry.findFirst({
+        where: {
+          tripId: entry.tripId,
+          createdAt: {
+            lt: entry.createdAt,
+          },
+        },
+        orderBy: {
+          createdAt: "desc",
+        },
+        select: {
+          id: true,
+          title: true,
+          createdAt: true,
+        },
+      }),
+      prisma.entry.findFirst({
+        where: {
+          tripId: entry.tripId,
+          createdAt: {
+            gt: entry.createdAt,
+          },
+        },
+        orderBy: {
+          createdAt: "asc",
+        },
+        select: {
+          id: true,
+          title: true,
+          createdAt: true,
+        },
+      }),
+    ]);
 
     return NextResponse.json(
       {
@@ -114,6 +145,14 @@ export const GET = async (
             url: item.url,
             createdAt: item.createdAt.toISOString(),
           })),
+          navigation: {
+            previousEntryId: previousEntry?.id ?? null,
+            nextEntryId: nextEntry?.id ?? null,
+            previousEntryTitle: previousEntry?.title ?? null,
+            nextEntryTitle: nextEntry?.title ?? null,
+            previousEntryDate: previousEntry?.createdAt.toISOString() ?? null,
+            nextEntryDate: nextEntry?.createdAt.toISOString() ?? null,
+          },
         },
         error: null,
       },

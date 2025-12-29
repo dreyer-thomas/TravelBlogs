@@ -1,6 +1,6 @@
 # Story 3.2: Entry Navigation
 
-Status: ready-for-dev
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -18,20 +18,20 @@ so that I can move through the story in order.
 
 ## Tasks / Subtasks
 
-- [ ] Add navigation metadata to the public entry read flow (AC: 1, 2, 3)
-  - [ ] Extend `GET /api/entries/[id]` to return adjacent entry IDs (and optional titles/dates) in chronological order
-  - [ ] Ensure navigation respects the same trip ordering used in trip timelines (oldest → newest)
-  - [ ] Keep `{ data, error }` response shape and error format `{ error: { code, message } }`
-- [ ] Update entry reader UI to render navigation controls (AC: 1, 2, 3)
-  - [ ] Add previous/next controls that link to `/entries/:id` and preserve the reader layout
-  - [ ] Disable or visually indicate unavailable direction at bounds
-  - [ ] Keep typography, spacing, and palette consistent with the reader layout (Fraunces + Source Serif 4, warm palette)
-- [ ] Confirm navigation behavior stays in the single-page reader experience (AC: 1, 2)
-  - [ ] Use App Router route transitions only; no separate pages or dialogs
-  - [ ] Preserve reader layout and media-first hierarchy during navigation
-- [ ] Add tests (AC: 1, 2, 3)
-  - [ ] API test: entry response includes correct prev/next metadata for a trip
-  - [ ] Component test: navigation controls render and respect disabled bounds
+- [x] Add navigation metadata to the public entry read flow (AC: 1, 2, 3)
+  - [x] Extend `GET /api/entries/[id]` to return adjacent entry IDs (and optional titles/dates) in chronological order
+  - [x] Ensure navigation respects the same trip ordering used in trip timelines (oldest → newest)
+  - [x] Keep `{ data, error }` response shape and error format `{ error: { code, message } }`
+- [x] Update entry reader UI to render navigation controls (AC: 1, 2, 3)
+  - [x] Add previous/next controls that link to `/entries/:id` and preserve the reader layout
+  - [x] Disable or visually indicate unavailable direction at bounds
+  - [x] Keep typography, spacing, and palette consistent with the reader layout (Fraunces + Source Serif 4, warm palette)
+- [x] Confirm navigation behavior stays in the single-page reader experience (AC: 1, 2)
+  - [x] Use App Router route transitions only; no separate pages or dialogs
+  - [x] Preserve reader layout and media-first hierarchy during navigation
+- [x] Add tests (AC: 1, 2, 3)
+  - [x] API test: entry response includes correct prev/next metadata for a trip
+  - [x] Component test: navigation controls render and respect disabled bounds
 
 ## Dev Notes
 
@@ -164,18 +164,63 @@ GPT-5 (Codex CLI)
 
 ### Debug Log References
 
+### Implementation Plan
+
+- Add adjacent entry lookup (prev/next by createdAt within trip) to `GET /api/entries/[id]`
+- Extend API response with navigation metadata for IDs and optional titles/dates
+- Add API tests for mid-trip adjacency and bounds nulls
+
 ### Completion Notes List
 
 - Ultimate context engine analysis completed - comprehensive developer guide created
+- Added prev/next navigation metadata to the entry read API response for chronological navigation
+- Tests: `npm test`
+- Added entry reader navigation controls with disabled bounds styling and mapping support
+- Tests: `npm test`
+- Added navigation API/component coverage and updated reader mapping defaults
+- Removed full-screen viewer position/close UI per latest request
+- Tests: `npm test -- tests/components/entry-detail.test.tsx`
+- Removed full-screen viewer previous/next buttons per latest request
+- Tests: `npm test -- tests/components/entry-detail.test.tsx`
+- Removed full-screen viewer arrow key navigation per latest request
+- Tests: `npm test -- tests/components/entry-detail.test.tsx`
+- Removed slideshow pause control; progress bar always runs
+- Tests: `npm test -- tests/components/entry-detail.test.tsx`
+- Switched slideshow progress UI to a single bar to avoid dot segments
+- Boosted slideshow progress bar contrast/height for visibility
+- Moved slideshow progress bar to a fixed bottom overlay for guaranteed visibility
+- Increased slideshow progress bar size/contrast for visibility testing
+- Forced inline styles for slideshow progress bar to ensure rendering
+- Restored segmented slideshow progress bar with one segment per image
+- Reverted unrelated full-screen viewer changes to keep EntryDetail unchanged
+- Allowed authenticated viewers to access public entry reads
+- Added API coverage for authenticated viewer access
+- Added reader navigation re-render coverage
 
 ### File List
 
-- travelblogs/src/app/entries/[id]/page.tsx
-- travelblogs/src/components/entries/entry-reader.tsx
 - travelblogs/src/app/api/entries/[id]/route.ts
+- travelblogs/src/components/entries/entry-reader.tsx
+- travelblogs/src/utils/entry-reader.ts
 - travelblogs/tests/api/entries/get-entry.test.ts
 - travelblogs/tests/components/entries/entry-reader-navigation.test.tsx
+- travelblogs/tests/utils/entry-reader-mapper.test.ts
+
+### Change Log
+
+- 2025-12-28: Added entry navigation metadata, reader navigation controls, and coverage for API/reader navigation behavior.
+- 2025-12-28: Removed full-screen viewer position/close UI and updated viewer tests.
+- 2025-12-28: Removed full-screen viewer prev/next controls.
+- 2025-12-28: Removed full-screen viewer arrow key navigation.
+- 2025-12-28: Removed slideshow pause control; kept progress bar visible.
+- 2025-12-28: Simplified slideshow progress bar to a single full-width track.
+- 2025-12-28: Increased slideshow progress bar contrast and height.
+- 2025-12-28: Relocated slideshow progress bar to fixed bottom overlay.
+- 2025-12-28: Increased slideshow progress bar size and contrast.
+- 2025-12-28: Forced inline styles for slideshow progress bar to ensure visibility.
+- 2025-12-28: Restored segmented slideshow progress bar (one segment per image).
+- 2025-12-28: Restored public entry reads for authenticated viewers and added navigation re-render coverage.
 
 ### Story Completion Status
 
-Status: ready-for-dev
+Status: done

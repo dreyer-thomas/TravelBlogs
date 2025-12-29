@@ -34,6 +34,14 @@ describe("mapEntryToReader", () => {
           width: null,
         },
       ],
+      navigation: {
+        previousEntryId: null,
+        nextEntryId: null,
+        previousEntryTitle: null,
+        nextEntryTitle: null,
+        previousEntryDate: null,
+        nextEntryDate: null,
+      },
     });
   });
 });

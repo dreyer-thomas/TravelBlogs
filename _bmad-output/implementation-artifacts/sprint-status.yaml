@@ -66,12 +66,13 @@ development_status:
 
   epic-3: in-progress
   3-1-view-entry-single-page-reader: done
-  3-2-entry-navigation: ready-for-dev
-  3-3-trip-overview-with-latest-entries: backlog
+  3-2-entry-navigation: done
+  3-3-trip-overview-with-latest-entries: done
+  3-4-fullscreen-viewer-minimal-chrome-and-segmented-progress: done
   epic-3-retrospective: optional
 
-  epic-4: backlog
-  4-1-create-shareable-trip-link: backlog
+  epic-4: in-progress
+  4-1-create-shareable-trip-link: done
   4-2-regenerate-shareable-link: backlog
   4-3-revoke-shareable-link: backlog
   epic-4-retrospective: optional

@@ -497,6 +497,28 @@ So that I can quickly access the most recent updates.
 **When** I open the trip overview  
 **Then** I see a clear empty state
 
+### Story 3.4: Fullscreen Viewer Minimal Chrome & Segmented Slideshow Progress
+
+As a viewer,
+I want a distraction-free fullscreen image viewer and a clear slideshow progress indicator,
+So that I can focus on the photos without UI clutter.
+
+**Acceptance Criteria:**
+
+**Given** I open the fullscreen image viewer from any entry photo  
+**When** the viewer is displayed  
+**Then** no on-screen buttons are visible  
+**And** no image position text (e.g., "2 of 8") is shown  
+
+**Given** the fullscreen viewer is open  
+**When** I want to exit  
+**Then** I can close it without on-screen buttons (Escape key and tap/click anywhere)  
+
+**Given** I start a slideshow  
+**When** the slideshow is running  
+**Then** a horizontal progress bar is shown with one segment per image  
+**And** the progress bar advances in order and loops after the last image
+
 ## Epic 4: Simple Sharing (MVP)
 
 Creators can generate a shareable link so others can view trips without friction.

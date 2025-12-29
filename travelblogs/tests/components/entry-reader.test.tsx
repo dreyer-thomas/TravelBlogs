@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import type { ImgHTMLAttributes } from "react";
 import { describe, expect, it, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 
 import EntryReader from "../../src/components/entries/entry-reader";
 
@@ -90,5 +90,43 @@ describe("EntryReader", () => {
     expect(
       screen.getByRole("img", { name: /Fresh produce/i }),
     ).toHaveAttribute("src", "https://example.com/inline.jpg");
+  });
+
+  it("opens the fullscreen viewer from the slideshow button", async () => {
+    render(
+      <EntryReader
+        entry={{
+          id: "entry-3",
+          title: "Night market",
+          body: "Neon lights and snacks.",
+          createdAt: "2025-05-04T00:00:00.000Z",
+          media: [
+            {
+              id: "media-10",
+              url: "https://example.com/hero-night.jpg",
+              width: 1600,
+              height: 1000,
+              alt: "Night hero",
+            },
+            {
+              id: "media-11",
+              url: "https://example.com/gallery-night.jpg",
+              width: 1200,
+              height: 900,
+              alt: "Night market",
+            },
+          ],
+        }}
+      />,
+    );
+
+    const slideshowButton = screen.getByRole("button", {
+      name: /start slideshow/i,
+    });
+    fireEvent.click(slideshowButton);
+
+    expect(
+      await screen.findByRole("dialog", { name: /photo viewer/i }),
+    ).toBeInTheDocument();
   });
 });

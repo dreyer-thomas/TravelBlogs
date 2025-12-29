@@ -1,6 +1,6 @@
 "use client";
 
-import type { KeyboardEvent, MouseEvent, TouchEvent } from "react";
+import type { KeyboardEvent, TouchEvent } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import Image from "next/image";
@@ -58,6 +58,8 @@ const FullScreenPhotoViewer = ({
   const pinchStartRef = useRef<{ distance: number; scale: number } | null>(
     null,
   );
+  const ignoreClickRef = useRef(false);
+  const wasPausedRef = useRef(false);
   const isSlideshow = mode === "slideshow";
 
   useEffect(() => {
@@ -101,6 +103,14 @@ const FullScreenPhotoViewer = ({
         onClose();
         return;
       }
+      if (
+        isSlideshow &&
+        (event.code === "Space" || event.key === " ")
+      ) {
+        event.preventDefault();
+        setIsPaused((prev) => !prev);
+        return;
+      }
       if (event.key === "ArrowRight") {
         event.preventDefault();
         setActiveIndex((prev) =>
@@ -139,11 +149,21 @@ const FullScreenPhotoViewer = ({
   }, [activeIndex, images.length, isOpen, isPaused, isSlideshow]);
 
   useEffect(() => {
-    if (!isOpen || !isSlideshow || isPaused) {
+    if (!isOpen || !isSlideshow) {
       return;
     }
     setProgressKey((prev) => prev + 1);
-  }, [activeIndex, isOpen, isPaused, isSlideshow]);
+  }, [activeIndex, isOpen, isSlideshow]);
+
+  useEffect(() => {
+    if (!isOpen || !isSlideshow) {
+      return;
+    }
+    if (wasPausedRef.current && !isPaused) {
+      setProgressKey((prev) => prev + 1);
+    }
+    wasPausedRef.current = isPaused;
+  }, [isOpen, isPaused, isSlideshow]);
 
   if (!isOpen || images.length === 0 || !isMounted) {
     return null;
@@ -156,7 +176,6 @@ const FullScreenPhotoViewer = ({
     ? images.length > 1
     : activeIndex < images.length - 1;
   const activeImage = images[activeIndex];
-  const positionLabel = `${activeIndex + 1} of ${images.length}`;
 
   const handlePrevious = () => {
     if (!canGoBack) {
@@ -182,29 +201,21 @@ const FullScreenPhotoViewer = ({
     setZoomScale(1);
   };
 
-  const handlePauseToggle = () => {
-    setIsPaused((prev) => {
-      const nextValue = !prev;
-      if (!nextValue) {
-        setProgressKey((key) => key + 1);
-      }
-      return nextValue;
-    });
-  };
-
-  const handleControlClick = (
-    event: MouseEvent<HTMLButtonElement | HTMLDivElement>,
-  ) => {
-    event.stopPropagation();
-  };
-
   const handleTouchStart = (event: TouchEvent<HTMLDivElement>) => {
+    const suppressNextClick = () => {
+      ignoreClickRef.current = true;
+      window.setTimeout(() => {
+        ignoreClickRef.current = false;
+      }, 300);
+    };
+
     if (event.touches.length === 2) {
       pinchStartRef.current = {
         distance: getTouchDistance(event.touches),
         scale: zoomScale,
       };
       touchStartRef.current = null;
+      suppressNextClick();
       return;
     }
 
@@ -243,6 +254,10 @@ const FullScreenPhotoViewer = ({
     touchStartRef.current = null;
 
     if (Math.abs(deltaX) > 50 && Math.abs(deltaX) > Math.abs(deltaY)) {
+      ignoreClickRef.current = true;
+      window.setTimeout(() => {
+        ignoreClickRef.current = false;
+      }, 300);
       if (deltaX < 0) {
         handleNext();
       } else {
@@ -286,6 +301,14 @@ const FullScreenPhotoViewer = ({
     }
   };
 
+  const handleOverlayClick = () => {
+    if (ignoreClickRef.current) {
+      ignoreClickRef.current = false;
+      return;
+    }
+    onClose();
+  };
+
   return createPortal(
     <div
       ref={dialogRef}
@@ -294,7 +317,7 @@ const FullScreenPhotoViewer = ({
       aria-modal="true"
       aria-label="Photo viewer"
       onKeyDown={handleDialogKeyDown}
-      onClick={onClose}
+      onClick={handleOverlayClick}
       tabIndex={-1}
       style={{ backgroundColor: "#000000" }}
     >
@@ -305,103 +328,60 @@ const FullScreenPhotoViewer = ({
         }
       `}</style>
 
-      {images.length > 0 ? (
+      {isSlideshow ? (
         <div
-          onClick={handleControlClick}
-          className="fixed left-6 right-6 top-4 z-[2147483647] flex flex-col gap-3 text-white"
+          data-testid="slideshow-progress"
+          aria-hidden="true"
+          className="fixed left-6 right-6 top-4 z-[2147483647] flex h-1.5 gap-2 opacity-70"
         >
-          <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-[0.3em]">
-            <span>{positionLabel}</span>
-            <button
-              type="button"
-              onClick={onClose}
-              className="rounded-full border border-white/40 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.3em] transition hover:border-white/80 hover:bg-white/10"
-              aria-label="Close"
-            >
-              Close
-            </button>
-          </div>
-          {isSlideshow ? (
-            <div
-              aria-hidden="true"
-              className="flex h-1.5 gap-2 opacity-70"
-            >
-              {images.map((image, index) => {
-                const isComplete = index < activeIndex;
-                const isActive = index === activeIndex;
-                return (
+          {images.map((image, index) => {
+            const isComplete = index < activeIndex;
+            const isActive = index === activeIndex;
+            const segmentState = isComplete
+              ? "complete"
+              : isActive
+                ? "active"
+                : "upcoming";
+            return (
+              <div
+                key={`${image.url}-${index}`}
+                data-testid="slideshow-segment"
+                data-segment-state={segmentState}
+                className="relative flex-1 overflow-hidden rounded-full"
+                style={{
+                  backgroundColor: "#4F4F4F",
+                  boxShadow: "0 0 0 1px rgba(255, 255, 255, 0.3)",
+                }}
+              >
+                {isComplete ? (
                   <div
-                    key={`${image.url}-${index}`}
-                    className="relative flex-1 overflow-hidden rounded-full"
+                    className="h-full w-full"
+                    style={{ backgroundColor: "#E5E5E5" }}
+                  />
+                ) : null}
+                {isActive ? (
+                  <div
+                    key={progressKey}
+                    className="h-full w-full"
                     style={{
-                      backgroundColor: "#4F4F4F",
-                      boxShadow: "0 0 0 1px rgba(255, 255, 255, 0.3)",
+                      backgroundColor: "#E5E5E5",
+                      transformOrigin: "left",
+                      transform: "scaleX(0)",
+                      animation:
+                        "slideshowProgressFill 5s linear forwards",
+                      animationPlayState: isPaused ? "paused" : "running",
                     }}
-                  >
-                    {isComplete ? (
-                      <div
-                        className="h-full w-full"
-                        style={{ backgroundColor: "#E5E5E5" }}
-                      />
-                    ) : null}
-                    {isActive ? (
-                      <div
-                        key={progressKey}
-                        className="h-full w-full"
-                        style={{
-                          backgroundColor: "#E5E5E5",
-                          transformOrigin: "left",
-                          transform: "scaleX(0)",
-                          animation:
-                            "slideshowProgressFill 5s linear forwards",
-                          animationPlayState: isPaused
-                            ? "paused"
-                            : "running",
-                        }}
-                      />
-                    ) : null}
-                  </div>
-                );
-              })}
-            </div>
-          ) : null}
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <button
-                type="button"
-                onClick={handlePrevious}
-                disabled={!canGoBack}
-                aria-label="Previous"
-                className="rounded-full border border-white/40 px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em] transition hover:border-white/80 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
-              >
-                Prev
-              </button>
-              <button
-                type="button"
-                onClick={handleNext}
-                disabled={!canGoForward}
-                aria-label="Next"
-                className="rounded-full border border-white/40 px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em] transition hover:border-white/80 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
-              >
-                Next
-              </button>
-            </div>
-            {isSlideshow ? (
-              <button
-                type="button"
-                onClick={handlePauseToggle}
-                aria-label={isPaused ? "Resume" : "Pause"}
-                className="rounded-full border border-white/40 px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em] transition hover:border-white/80 hover:bg-white/10"
-              >
-                {isPaused ? "Resume" : "Pause"}
-              </button>
-            ) : null}
-          </div>
+                  />
+                ) : null}
+              </div>
+            );
+          })}
         </div>
       ) : null}
 
       <div className="relative z-10 flex flex-1 items-center justify-center">
         <div
+          data-testid="photo-viewer-gesture-layer"
           className="absolute inset-0 flex items-center justify-center"
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
