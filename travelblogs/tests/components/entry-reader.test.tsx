@@ -55,7 +55,7 @@ describe("EntryReader", () => {
     );
 
     const images = screen.getAllByRole("img");
-    expect(images).toHaveLength(3);
+    expect(images).toHaveLength(4);
     expect(images[0]).toHaveAttribute("src", "https://example.com/hero.jpg");
     expect(images[0]).toHaveAttribute("width", "1600");
     expect(images[0]).toHaveAttribute("height", "1000");

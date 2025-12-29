@@ -34,7 +34,7 @@ const getNavLabel = (title?: string | null, date?: string | null) => {
 
 const EntryReader = ({ entry }: EntryReaderProps) => {
   const heroMedia = entry.media[0];
-  const galleryItems = entry.media.slice(1);
+  const galleryItems = entry.media;
   const contentBlocks = useMemo(
     () => parseEntryContent(entry.body ?? ""),
     [entry.body],
