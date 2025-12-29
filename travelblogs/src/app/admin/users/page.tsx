@@ -89,7 +89,7 @@ const AdminUsersPage = async () => {
             <p className="text-sm text-[#B34A3C]">{loadError}</p>
           </section>
         ) : (
-          <UsersDashboard users={users} />
+          <UsersDashboard users={users} currentUserId={session.user.id} />
         )}
       </main>
     </div>

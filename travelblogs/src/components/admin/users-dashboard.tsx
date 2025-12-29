@@ -16,9 +16,10 @@ type UserListItem = {
 
 type UsersDashboardProps = {
   users: UserListItem[];
+  currentUserId?: string;
 };
 
-const UsersDashboard = ({ users }: UsersDashboardProps) => {
+const UsersDashboard = ({ users, currentUserId }: UsersDashboardProps) => {
   const [showForm, setShowForm] = useState(false);
 
   return (
@@ -53,7 +54,7 @@ const UsersDashboard = ({ users }: UsersDashboardProps) => {
         </section>
       ) : null}
 
-      <UserList users={users} />
+      <UserList users={users} currentUserId={currentUserId} />
     </div>
   );
 };
