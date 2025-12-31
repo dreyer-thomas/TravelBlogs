@@ -49,6 +49,7 @@ describe("DELETE /api/entries/[id]", () => {
     await prisma.entryMedia.deleteMany();
     await prisma.entry.deleteMany();
     await prisma.trip.deleteMany();
+    await prisma.user.deleteMany();
   });
 
   afterAll(async () => {
@@ -149,6 +150,58 @@ describe("DELETE /api/entries/[id]", () => {
         tripId: trip.id,
         title: "Not yours",
         text: "Not yours.",
+        media: {
+          create: [{ url: "/uploads/entries/other.jpg" }],
+        },
+      },
+    });
+
+    const request = new Request(`http://localhost/api/entries/${entry.id}`, {
+      method: "DELETE",
+    });
+
+    const response = await del(request, { params: { id: entry.id } });
+    const body = await response.json();
+
+    expect(response.status).toBe(403);
+    expect(body.error.code).toBe("FORBIDDEN");
+  });
+
+  it("rejects contributor deletes even with access", async () => {
+    getToken.mockResolvedValue({ sub: "viewer-1" });
+
+    const trip = await prisma.trip.create({
+      data: {
+        title: "Contributor Trip",
+        startDate: new Date("2025-05-01"),
+        endDate: new Date("2025-05-02"),
+        ownerId: "creator",
+      },
+    });
+
+    await prisma.user.create({
+      data: {
+        id: "viewer-1",
+        email: "viewer-1@example.com",
+        name: "Viewer One",
+        role: "viewer",
+        passwordHash: "hash",
+      },
+    });
+
+    await prisma.tripAccess.create({
+      data: {
+        tripId: trip.id,
+        userId: "viewer-1",
+        canContribute: true,
+      },
+    });
+
+    const entry = await prisma.entry.create({
+      data: {
+        tripId: trip.id,
+        title: "Contributor entry",
+        text: "Contributor entry.",
         media: {
           create: [{ url: "/uploads/entries/other.jpg" }],
         },

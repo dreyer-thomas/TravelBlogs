@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import DeleteTripModal from "./delete-trip-modal";
@@ -38,6 +38,15 @@ type ViewerAccess = {
   canContribute: boolean;
   createdAt: string;
   user: ViewerUser;
+};
+
+type Invitee = {
+  id: string;
+  name: string;
+  email: string;
+  role: "creator" | "viewer";
+  createdAt: string;
+  updatedAt: string;
 };
 
 type EntrySummary = {
@@ -83,12 +92,22 @@ const TripDetail = ({ tripId }: TripDetailProps) => {
   const [viewers, setViewers] = useState<ViewerAccess[]>([]);
   const [viewersLoading, setViewersLoading] = useState(false);
   const [viewersError, setViewersError] = useState<string | null>(null);
-  const [inviteEmail, setInviteEmail] = useState("");
+  const [eligibleInvitees, setEligibleInvitees] = useState<Invitee[]>([]);
+  const [eligibleLoading, setEligibleLoading] = useState(false);
+  const [eligibleError, setEligibleError] = useState<string | null>(null);
+  const [selectedInviteeId, setSelectedInviteeId] = useState("");
+  const [isInviteeMenuOpen, setIsInviteeMenuOpen] = useState(false);
   const [inviteError, setInviteError] = useState<string | null>(null);
   const [inviteSending, setInviteSending] = useState(false);
+  const [pendingRemoval, setPendingRemoval] = useState<ViewerAccess | null>(null);
+  const [removalError, setRemovalError] = useState<string | null>(null);
+  const [removingUserId, setRemovingUserId] = useState<string | null>(null);
+  const [toggleError, setToggleError] = useState<string | null>(null);
+  const [togglingUserId, setTogglingUserId] = useState<string | null>(null);
   const [isRevokeOpen, setIsRevokeOpen] = useState(false);
   const [isRevoking, setIsRevoking] = useState(false);
   const [revokeError, setRevokeError] = useState<string | null>(null);
+  const inviteeMenuRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     let isActive = true;
@@ -215,13 +234,18 @@ const TripDetail = ({ tripId }: TripDetailProps) => {
 
   useEffect(() => {
     if (!isSharePanelOpen) {
+      setIsInviteeMenuOpen(false);
       return;
     }
 
     let isActive = true;
     setViewersLoading(true);
     setViewersError(null);
+    setEligibleLoading(true);
+    setEligibleError(null);
     setInviteError(null);
+    setRemovalError(null);
+    setToggleError(null);
 
     const loadViewers = async () => {
       try {
@@ -255,12 +279,105 @@ const TripDetail = ({ tripId }: TripDetailProps) => {
       }
     };
 
-    loadViewers();
+    const loadEligibleInvitees = async () => {
+      try {
+        const response = await fetch(`/api/trips/${tripId}/viewers/eligible`, {
+          method: "GET",
+          credentials: "include",
+          cache: "no-store",
+        });
+        const body = await response.json().catch(() => null);
+
+        if (!response.ok || body?.error) {
+          throw new Error(
+            body?.error?.message ?? "Unable to load eligible invitees.",
+          );
+        }
+
+        if (isActive) {
+          setEligibleInvitees((body?.data as Invitee[]) ?? []);
+          setEligibleLoading(false);
+        }
+      } catch (err) {
+        if (isActive) {
+          setEligibleInvitees([]);
+          setEligibleError(
+            err instanceof Error
+              ? err.message
+              : "Unable to load eligible invitees.",
+          );
+          setEligibleLoading(false);
+        }
+      }
+    };
+
+    const loadSharePanelData = async () => {
+      await loadViewers();
+      await loadEligibleInvitees();
+    };
+
+    loadSharePanelData();
 
     return () => {
       isActive = false;
     };
   }, [isSharePanelOpen, tripId]);
+
+  useEffect(() => {
+    if (!isInviteeMenuOpen) {
+      return;
+    }
+
+    const handleClick = (event: MouseEvent) => {
+      const target = event.target as Node | null;
+      if (target && inviteeMenuRef.current?.contains(target)) {
+        return;
+      }
+      setIsInviteeMenuOpen(false);
+    };
+
+    document.addEventListener("mousedown", handleClick);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClick);
+    };
+  }, [isInviteeMenuOpen]);
+
+  useEffect(() => {
+    if (pendingRemoval) {
+      setIsInviteeMenuOpen(false);
+    }
+  }, [pendingRemoval]);
+
+  useEffect(() => {
+    if (!isSharePanelOpen) {
+      setSelectedInviteeId("");
+    }
+  }, [isSharePanelOpen]);
+
+  const filteredInvitees = useMemo(() => {
+    if (eligibleInvitees.length === 0) {
+      return eligibleInvitees;
+    }
+    const invitedIds = new Set(viewers.map((viewer) => viewer.userId));
+    return eligibleInvitees.filter((invitee) => !invitedIds.has(invitee.id));
+  }, [eligibleInvitees, viewers]);
+
+  const selectedInvitee = useMemo(() => {
+    return eligibleInvitees.find((invitee) => invitee.id === selectedInviteeId);
+  }, [eligibleInvitees, selectedInviteeId]);
+
+  useEffect(() => {
+    if (!selectedInviteeId) {
+      return;
+    }
+    const stillEligible = filteredInvitees.some(
+      (invitee) => invitee.id === selectedInviteeId,
+    );
+    if (!stillEligible) {
+      setSelectedInviteeId("");
+    }
+  }, [filteredInvitees, selectedInviteeId]);
 
   const entriesByDate = useMemo(() => {
     return [...entries].sort(
@@ -343,9 +460,18 @@ const TripDetail = ({ tripId }: TripDetailProps) => {
   };
 
   const handleInviteViewer = async () => {
-    const trimmedEmail = inviteEmail.trim().toLowerCase();
-    if (!trimmedEmail) {
-      setInviteError("Enter an email address to invite.");
+    if (!selectedInviteeId) {
+      setInviteError("Select a user to invite.");
+      return;
+    }
+
+    const isEligible = filteredInvitees.some(
+      (invitee) => invitee.id === selectedInviteeId,
+    );
+    if (!isEligible) {
+      setInviteError("Selected user is no longer eligible.");
+      setSelectedInviteeId("");
+      setIsInviteeMenuOpen(false);
       return;
     }
 
@@ -359,7 +485,7 @@ const TripDetail = ({ tripId }: TripDetailProps) => {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ email: trimmedEmail }),
+        body: JSON.stringify({ userId: selectedInviteeId }),
       });
       const body = await response.json().catch(() => null);
 
@@ -380,13 +506,124 @@ const TripDetail = ({ tripId }: TripDetailProps) => {
         });
       }
 
-      setInviteEmail("");
+      setEligibleInvitees((prev) =>
+        prev.filter((invitee) => invitee.id !== selectedInviteeId),
+      );
+      setSelectedInviteeId("");
+      setIsInviteeMenuOpen(false);
     } catch (err) {
       setInviteError(
         err instanceof Error ? err.message : "Unable to invite viewer.",
       );
     } finally {
       setInviteSending(false);
+    }
+  };
+
+  const handleRemoveInvite = async (viewer: ViewerAccess) => {
+    setRemovingUserId(viewer.userId);
+    setRemovalError(null);
+
+    try {
+      const response = await fetch(
+        `/api/trips/${trip.id}/viewers/${viewer.userId}`,
+        {
+          method: "DELETE",
+          credentials: "include",
+        },
+      );
+      const body = await response.json().catch(() => null);
+
+      if (!response.ok || body?.error) {
+        throw new Error(body?.error?.message ?? "Unable to remove invite.");
+      }
+
+      setViewers((prev) =>
+        prev.filter((item) => item.userId !== viewer.userId),
+      );
+      setPendingRemoval(null);
+
+      const eligibleResponse = await fetch(
+        `/api/trips/${trip.id}/viewers/eligible`,
+        {
+          method: "GET",
+          credentials: "include",
+          cache: "no-store",
+        },
+      );
+      const eligibleBody = await eligibleResponse.json().catch(() => null);
+      if (eligibleResponse.ok && !eligibleBody?.error) {
+        setEligibleInvitees((eligibleBody?.data as Invitee[]) ?? []);
+      }
+    } catch (err) {
+      setRemovalError(
+        err instanceof Error ? err.message : "Unable to remove invite.",
+      );
+    } finally {
+      setRemovingUserId(null);
+    }
+  };
+
+  const handleToggleContributor = async (viewer: ViewerAccess) => {
+    if (togglingUserId === viewer.userId || pendingRemoval) {
+      return;
+    }
+
+    const nextCanContribute = !viewer.canContribute;
+    setTogglingUserId(viewer.userId);
+    setToggleError(null);
+
+    setViewers((prev) =>
+      prev.map((item) =>
+        item.userId === viewer.userId
+          ? { ...item, canContribute: nextCanContribute }
+          : item,
+      ),
+    );
+
+    try {
+      const response = await fetch(
+        `/api/trips/${trip?.id}/viewers/${viewer.userId}`,
+        {
+          method: "PATCH",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ canContribute: nextCanContribute }),
+        },
+      );
+      const body = await response.json().catch(() => null);
+
+      if (!response.ok || body?.error) {
+        throw new Error(
+          body?.error?.message ?? "Unable to update contributor access.",
+        );
+      }
+
+      const updated = body?.data as ViewerAccess | undefined;
+      if (updated) {
+        setViewers((prev) =>
+          prev.map((item) =>
+            item.userId === updated.userId ? updated : item,
+          ),
+        );
+      }
+    } catch (err) {
+      setViewers((prev) =>
+        prev.map((item) =>
+          item.userId === viewer.userId
+            ? { ...item, canContribute: viewer.canContribute }
+            : item,
+        ),
+      );
+      setToggleError(
+        err instanceof Error
+          ? err.message
+          : "Unable to update contributor access.",
+      );
+    } finally {
+      setTogglingUserId(null);
     }
   };
 
@@ -499,7 +736,7 @@ const TripDetail = ({ tripId }: TripDetailProps) => {
           </div>
 
           {isSharePanelOpen ? (
-            <div className="mt-4 rounded-2xl border border-black/10 bg-[#FBF7F1] p-4 text-sm text-[#6B635B]">
+            <div className="relative mt-4 rounded-2xl border border-black/10 bg-[#FBF7F1] p-4 text-sm text-[#6B635B]">
               <p className="text-xs uppercase tracking-[0.2em] text-[#6B635B]">
                 Share link
               </p>
@@ -550,6 +787,9 @@ const TripDetail = ({ tripId }: TripDetailProps) => {
                 <p className="mt-2">
                   Invite existing users to view this trip.
                 </p>
+                <p className="mt-1 text-xs text-[#6B635B]">
+                  Contributor access applies to this trip only.
+                </p>
 
                 {viewersError ? (
                   <p className="mt-3 text-sm text-[#B34A3C]">{viewersError}</p>
@@ -562,34 +802,195 @@ const TripDetail = ({ tripId }: TripDetailProps) => {
                 ) : (
                   <ul className="mt-3 space-y-2 text-sm text-[#2D2A26]">
                     {viewers.map((viewer) => (
-                      <li key={viewer.id} className="flex flex-col">
-                        <span className="font-semibold">
-                          {viewer.user.name}
-                        </span>
-                        <span className="text-xs text-[#6B635B]">
-                          {viewer.user.email}
-                        </span>
+                      <li
+                        key={viewer.id}
+                        className="flex flex-wrap items-start justify-between gap-3"
+                      >
+                        <div className="flex flex-col">
+                          <span className="font-semibold">
+                            {viewer.user.name}
+                          </span>
+                          <span className="text-xs text-[#6B635B]">
+                            {viewer.user.email}
+                          </span>
+                          <span
+                            className={`mt-1 w-fit rounded-full border px-2 py-0.5 text-[0.55rem] font-semibold uppercase tracking-[0.2em] ${
+                              viewer.canContribute
+                                ? "border-[#1F6F78]/30 text-[#1F6F78]"
+                                : "border-black/10 text-[#6B635B]"
+                            }`}
+                          >
+                            {viewer.canContribute ? "Contributor" : "View only"}
+                          </span>
+                          {togglingUserId === viewer.userId ? (
+                            <span className="mt-1 text-[0.55rem] uppercase tracking-[0.2em] text-[#6B635B]">
+                              Updating…
+                            </span>
+                          ) : null}
+                        </div>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => handleToggleContributor(viewer)}
+                            disabled={
+                              togglingUserId === viewer.userId ||
+                              Boolean(pendingRemoval)
+                            }
+                            aria-label={
+                              viewer.canContribute
+                                ? "Disable contribution"
+                                : "Enable contribution"
+                            }
+                            aria-busy={togglingUserId === viewer.userId}
+                            className="inline-flex h-14 w-14 items-center justify-center rounded-full border border-[#1F6F78]/30 text-[#1F6F78] transition hover:border-[#1F6F78]/60 disabled:cursor-not-allowed disabled:opacity-60"
+                          >
+                            <svg
+                              aria-hidden="true"
+                              viewBox="0 0 24 24"
+                              className="block"
+                              width="28"
+                              height="28"
+                            >
+                              {viewer.canContribute ? (
+                                <>
+                                  <circle
+                                    cx="12"
+                                    cy="12"
+                                    r="9"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                  />
+                                  <path
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                    strokeLinecap="round"
+                                    d="M7 17L17 7"
+                                  />
+                                </>
+                              ) : (
+                                <path
+                                  fill="currentColor"
+                                  d="M16.1 3.6a2.5 2.5 0 0 1 3.5 3.5L8.3 18.4l-4.3 1 1-4.3L16.1 3.6zm1.4 1.4L6.8 15.7l-.4 1.6 1.6-.4L18.7 6.6a.5.5 0 0 0 0-.7l-.5-.5a.5.5 0 0 0-.7 0z"
+                                />
+                              )}
+                            </svg>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setPendingRemoval(viewer);
+                              setRemovalError(null);
+                              setIsInviteeMenuOpen(false);
+                            }}
+                            aria-label="Remove invite"
+                            className="inline-flex h-14 w-14 items-center justify-center rounded-full border border-[#B34A3C]/40 text-[#B34A3C] transition hover:border-[#B34A3C]/70 hover:text-[#B34A3C]"
+                          >
+                            <svg
+                              aria-hidden="true"
+                              viewBox="0 0 24 24"
+                              className="block"
+                              width="28"
+                              height="28"
+                            >
+                              <path
+                                fill="currentColor"
+                                d="M9 3h6l1 2h4v2H4V5h4l1-2zm1 6h2v8h-2V9zm4 0h-2v8h2V9zM7 9h2v8H7V9zm1 11h8a2 2 0 0 0 2-2V9H6v9a2 2 0 0 0 2 2z"
+                              />
+                            </svg>
+                          </button>
+                        </div>
                       </li>
                     ))}
                   </ul>
                 )}
 
+                {eligibleError ? (
+                  <p className="mt-3 text-sm text-[#B34A3C]">
+                    {eligibleError}
+                  </p>
+                ) : null}
+
+                {removalError && !pendingRemoval ? (
+                  <p className="mt-3 text-sm text-[#B34A3C]">
+                    {removalError}
+                  </p>
+                ) : null}
+
+                {toggleError ? (
+                  <p className="mt-3 text-sm text-[#B34A3C]">{toggleError}</p>
+                ) : null}
+
                 <div className="mt-4 flex flex-wrap items-center gap-3">
                   <div className="w-full flex-1">
-                    <input
-                      type="email"
-                      value={inviteEmail}
-                      onChange={(event) => setInviteEmail(event.target.value)}
-                      placeholder="viewer@example.com"
-                      className="w-full rounded-xl border border-black/10 bg-white px-3 py-2 text-sm text-[#2D2A26]"
-                      aria-label="Invite viewer email"
-                    />
+                    <div className="relative mt-2" ref={inviteeMenuRef}>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setIsInviteeMenuOpen((prev) => !prev)
+                        }
+                        className="flex w-full items-center justify-between rounded-xl border border-black/10 bg-white px-3 py-2 text-left text-sm text-[#2D2A26] transition hover:border-[#1F6F78]/40"
+                        aria-label="Invite viewer selector"
+                        aria-haspopup="listbox"
+                        aria-expanded={isInviteeMenuOpen}
+                        disabled={
+                          eligibleLoading ||
+                          filteredInvitees.length === 0 ||
+                          Boolean(pendingRemoval)
+                        }
+                      >
+                        <span className={selectedInvitee ? "" : "text-[#6B635B]"}>
+                          {selectedInvitee
+                            ? `${selectedInvitee.name} — ${selectedInvitee.email}`
+                            : eligibleLoading
+                              ? "Loading invitees…"
+                              : filteredInvitees.length === 0
+                                ? "No eligible users"
+                                : "Select invitee"}
+                        </span>
+                        <span className="text-xs text-[#6B635B]">▾</span>
+                      </button>
+                      {isInviteeMenuOpen &&
+                      !pendingRemoval &&
+                      filteredInvitees.length > 0 ? (
+                        <div className="absolute z-10 mt-2 w-full rounded-2xl border border-black/10 bg-white p-2 shadow-lg">
+                          <ul
+                            role="listbox"
+                            aria-label="Eligible invitees"
+                            className="max-h-48 space-y-1 overflow-auto"
+                          >
+                            {filteredInvitees.map((invitee) => (
+                              <li key={invitee.id}>
+                                <button
+                                  type="button"
+                                  role="option"
+                                  aria-selected={invitee.id === selectedInviteeId}
+                                  onClick={() => {
+                                    setSelectedInviteeId(invitee.id);
+                                    setIsInviteeMenuOpen(false);
+                                  }}
+                                  className="flex w-full flex-col rounded-xl px-3 py-2 text-left text-sm text-[#2D2A26] transition hover:bg-[#FBF7F1]"
+                                >
+                                  <span className="font-semibold">
+                                    {invitee.name}
+                                  </span>
+                                  <span className="text-xs text-[#6B635B]">
+                                    {invitee.email}
+                                  </span>
+                                </button>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      ) : null}
+                    </div>
                   </div>
                   <button
                     type="button"
                     onClick={handleInviteViewer}
                     className="rounded-xl border border-[#1F6F78] px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-[#1F6F78] transition hover:bg-[#1F6F78] hover:text-white disabled:cursor-not-allowed disabled:opacity-70"
-                    disabled={inviteSending}
+                    disabled={inviteSending || eligibleLoading}
                   >
                     {inviteSending ? "Inviting…" : "Invite"}
                   </button>
@@ -602,6 +1003,64 @@ const TripDetail = ({ tripId }: TripDetailProps) => {
             </div>
           ) : null}
         </section>
+
+        {pendingRemoval ? (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+            <div
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="remove-invite-title"
+              aria-describedby="remove-invite-description"
+              className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl"
+            >
+              <h2
+                id="remove-invite-title"
+                className="text-lg font-semibold text-[#2D2A26]"
+              >
+                Remove this invite?
+              </h2>
+              <p
+                id="remove-invite-description"
+                className="mt-2 text-sm text-[#6B635B]"
+              >
+                This will revoke access for{" "}
+                <span className="font-semibold text-[#2D2A26]">
+                  {pendingRemoval.user.name}
+                </span>
+                .
+              </p>
+
+              {removalError ? (
+                <p className="mt-3 text-sm text-[#B64A3A]">{removalError}</p>
+              ) : null}
+
+              <div className="mt-6 flex flex-wrap gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPendingRemoval(null);
+                    setRemovalError(null);
+                  }}
+                  className="min-h-[44px] rounded-xl border border-[#D5CDC4] px-4 py-2 text-sm font-semibold text-[#2D2A26] transition hover:bg-[#F6F1EB] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2D2A26]"
+                  disabled={removingUserId === pendingRemoval.userId}
+                >
+                  No, keep
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleRemoveInvite(pendingRemoval)}
+                  disabled={removingUserId === pendingRemoval.userId}
+                  className="min-h-[44px] rounded-xl bg-[#B64A3A] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#9E3F31] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#B64A3A] disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {removingUserId === pendingRemoval.userId
+                    ? "Removing..."
+                    : "Yes, remove"}
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : null}
+
 
         <section className="rounded-2xl border border-black/10 bg-white p-8 shadow-sm">
           <div className="flex flex-wrap items-center justify-between gap-4">

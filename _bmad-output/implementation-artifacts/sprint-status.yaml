@@ -85,11 +85,12 @@ development_status:
   5-2-user-sign-in: done
   5-3-admin-changes-user-role: done
   5-4-invite-viewers-to-a-trip: done
-  5-5-enable-contributor-access-for-a-viewer: backlog
+  5-5-enable-contributor-access-for-a-viewer: done
   5-6-viewer-access-to-invited-trips: backlog
   5-7-contributor-adds-and-edits-entries: backlog
   5-8-admin-deactivates-user: backlog
   5-9-administrator-role-and-admin-safeguards: backlog
+  5-10-refine-viewer-invitations-with-custom-selector: done
   epic-5-retrospective: optional
 
   epic-6: backlog

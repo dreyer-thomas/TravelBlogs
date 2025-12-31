@@ -4,7 +4,7 @@ import { z } from "zod";
 
 import { prisma } from "../../../utils/db";
 import { extractInlineImageUrls } from "../../../utils/entry-content";
-import { hasTripAccess } from "../../../utils/trip-access";
+import { canContributeToTrip, hasTripAccess } from "../../../utils/trip-access";
 
 export const runtime = "nodejs";
 
@@ -104,7 +104,10 @@ export const POST = async (request: Request) => {
     }
 
     if (trip.ownerId !== userId) {
-      return jsonError(403, "FORBIDDEN", "Not authorized to add entries.");
+      const canContribute = await canContributeToTrip(trip.id, userId);
+      if (!canContribute) {
+        return jsonError(403, "FORBIDDEN", "Not authorized to add entries.");
+      }
     }
 
     const createdAt = parsed.data.entryDate

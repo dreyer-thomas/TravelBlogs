@@ -40,6 +40,7 @@ describe("POST /api/entries", () => {
     await prisma.entryMedia.deleteMany();
     await prisma.entry.deleteMany();
     await prisma.trip.deleteMany();
+    await prisma.user.deleteMany();
   });
 
   afterAll(async () => {
@@ -177,6 +178,108 @@ describe("POST /api/entries", () => {
         tripId: trip.id,
         title: "Should not be allowed",
         text: "Should not be allowed.",
+        mediaUrls: ["/uploads/entries/rome-1.jpg"],
+      }),
+    });
+
+    const response = await post(request);
+    const body = await response.json();
+
+    expect(response.status).toBe(403);
+    expect(body.error.code).toBe("FORBIDDEN");
+  });
+
+  it("allows contributors with access to create entries", async () => {
+    getToken.mockResolvedValue({ sub: "viewer-1" });
+
+    const trip = await prisma.trip.create({
+      data: {
+        title: "Contributor Trip",
+        startDate: new Date("2025-05-01"),
+        endDate: new Date("2025-05-10"),
+        ownerId: "creator",
+      },
+    });
+
+    await prisma.user.create({
+      data: {
+        id: "viewer-1",
+        email: "viewer-1@example.com",
+        name: "Viewer One",
+        role: "viewer",
+        passwordHash: "hash",
+      },
+    });
+
+    await prisma.tripAccess.create({
+      data: {
+        tripId: trip.id,
+        userId: "viewer-1",
+        canContribute: true,
+      },
+    });
+
+    const request = new Request("http://localhost/api/entries", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        tripId: trip.id,
+        title: "Contributor entry",
+        text: "Contributor entry text.",
+        mediaUrls: ["/uploads/entries/rome-1.jpg"],
+      }),
+    });
+
+    const response = await post(request);
+    const body = await response.json();
+
+    expect(response.status).toBe(201);
+    expect(body.error).toBeNull();
+    expect(body.data.tripId).toBe(trip.id);
+  });
+
+  it("rejects inactive contributors from creating entries", async () => {
+    getToken.mockResolvedValue({ sub: "viewer-1" });
+
+    const trip = await prisma.trip.create({
+      data: {
+        title: "Inactive contributor",
+        startDate: new Date("2025-05-01"),
+        endDate: new Date("2025-05-10"),
+        ownerId: "creator",
+      },
+    });
+
+    await prisma.user.create({
+      data: {
+        id: "viewer-1",
+        email: "viewer-1@example.com",
+        name: "Viewer One",
+        role: "viewer",
+        passwordHash: "hash",
+        isActive: false,
+      },
+    });
+
+    await prisma.tripAccess.create({
+      data: {
+        tripId: trip.id,
+        userId: "viewer-1",
+        canContribute: true,
+      },
+    });
+
+    const request = new Request("http://localhost/api/entries", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        tripId: trip.id,
+        title: "Contributor entry",
+        text: "Contributor entry text.",
         mediaUrls: ["/uploads/entries/rome-1.jpg"],
       }),
     });

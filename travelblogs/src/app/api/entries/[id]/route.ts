@@ -4,7 +4,7 @@ import { z } from "zod";
 
 import { prisma } from "../../../../utils/db";
 import { extractInlineImageUrls } from "../../../../utils/entry-content";
-import { hasTripAccess } from "../../../../utils/trip-access";
+import { canContributeToTrip, hasTripAccess } from "../../../../utils/trip-access";
 
 export const runtime = "nodejs";
 
@@ -180,10 +180,6 @@ export const PATCH = async (
     if (!userId) {
       return jsonError(401, "UNAUTHORIZED", "Authentication required.");
     }
-    if (userId !== "creator") {
-      return jsonError(403, "FORBIDDEN", "Creator access required.");
-    }
-
     const { id } = await params;
 
     let body: unknown;
@@ -212,7 +208,14 @@ export const PATCH = async (
     }
 
     if (entry.trip.ownerId !== userId) {
-      return jsonError(403, "FORBIDDEN", "Not authorized to edit this entry.");
+      const canContribute = await canContributeToTrip(entry.tripId, userId);
+      if (!canContribute) {
+        return jsonError(
+          403,
+          "FORBIDDEN",
+          "Not authorized to edit this entry.",
+        );
+      }
     }
 
     const inlineImages = extractInlineImageUrls(parsed.data.text);

@@ -2,7 +2,7 @@
 /* eslint-disable @next/next/no-img-element, jsx-a11y/alt-text */
 import type { ImgHTMLAttributes, ReactNode } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 
 import TripDetail from "../../src/components/trips/trip-detail";
 
@@ -129,6 +129,15 @@ describe("TripDetail share panel", () => {
       .mockResolvedValueOnce(
         new Response(
           JSON.stringify({
+            data: [],
+            error: null,
+          }),
+          { status: 200 },
+        ),
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
             data: {
               shareUrl,
               token: "test-token",
@@ -234,6 +243,15 @@ describe("TripDetail share panel", () => {
           { status: 200 },
         ),
       );
+    fetchMock.mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({
+          data: [],
+          error: null,
+        }),
+        { status: 200 },
+      ),
+    );
 
     vi.stubGlobal("fetch", fetchMock);
 
@@ -314,6 +332,15 @@ describe("TripDetail share panel", () => {
           { status: 200 },
         ),
       );
+    fetchMock.mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({
+          data: [],
+          error: null,
+        }),
+        { status: 200 },
+      ),
+    );
 
     vi.stubGlobal("fetch", fetchMock);
 
@@ -347,6 +374,16 @@ describe("TripDetail share panel", () => {
   });
 
   it("lists invited viewers and sends an invite", async () => {
+    const eligibleResponse = [
+      {
+        id: "viewer-2",
+        name: "Riley Guest",
+        email: "riley@example.com",
+        role: "viewer",
+        createdAt: "2025-05-02T00:00:00.000Z",
+        updatedAt: "2025-05-02T00:00:00.000Z",
+      },
+    ];
     const fetchMock = vi
       .fn()
       .mockResolvedValueOnce(
@@ -399,6 +436,15 @@ describe("TripDetail share panel", () => {
       .mockResolvedValueOnce(
         new Response(
           JSON.stringify({
+            data: eligibleResponse,
+            error: null,
+          }),
+          { status: 200 },
+        ),
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
             data: {
               id: "access-2",
               tripId: "trip-1",
@@ -428,19 +474,235 @@ describe("TripDetail share panel", () => {
 
     await screen.findByText("Jamie Viewer");
     expect(screen.getByText("viewer@example.com")).toBeInTheDocument();
-    const inviteInput = await screen.findByLabelText("Invite viewer email");
-    fireEvent.change(inviteInput, {
-      target: { value: "riley@example.com" },
+    const inviteSelect = await screen.findByLabelText("Invite viewer selector");
+    fireEvent.click(inviteSelect);
+    const inviteOption = await screen.findByRole("option", {
+      name: /riley guest/i,
     });
+    fireEvent.click(inviteOption);
 
     fireEvent.click(screen.getByRole("button", { name: /^invite$/i }));
 
     await screen.findByText("Riley Guest");
     expect(screen.getByText("riley@example.com")).toBeInTheDocument();
-    expect(inviteInput).toHaveValue("");
+    expect(inviteSelect).toHaveTextContent(/no eligible users/i);
+  });
+
+  it("toggles contributor access with optimistic updates", async () => {
+    const viewersResponse = [
+      {
+        id: "access-1",
+        tripId: "trip-1",
+        userId: "viewer-1",
+        canContribute: false,
+        createdAt: "2025-05-01T00:00:00.000Z",
+        user: {
+          id: "viewer-1",
+          name: "Jamie Viewer",
+          email: "viewer@example.com",
+        },
+      },
+    ];
+
+    let resolveToggle: ((value: Response) => void) | null = null;
+    const togglePromise = new Promise<Response>((resolve) => {
+      resolveToggle = resolve;
+    });
+
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            data: {
+              id: "trip-1",
+              title: "Italy Highlights",
+              startDate: "2025-05-01T00:00:00.000Z",
+              endDate: "2025-05-10T00:00:00.000Z",
+              coverImageUrl: null,
+            },
+            error: null,
+          }),
+          { status: 200 },
+        ),
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            data: [],
+            error: null,
+          }),
+          { status: 200 },
+        ),
+      )
+      .mockResolvedValueOnce(new Response(null, { status: 404 }))
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            data: viewersResponse,
+            error: null,
+          }),
+          { status: 200 },
+        ),
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            data: [],
+            error: null,
+          }),
+          { status: 200 },
+        ),
+      )
+      .mockImplementationOnce(() => togglePromise);
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<TripDetail tripId="trip-1" />);
+
+    fireEvent.click(
+      await screen.findByRole("button", { name: /share trip/i }),
+    );
+
+    await screen.findByText("Jamie Viewer");
+    expect(screen.getByText(/view only/i)).toBeInTheDocument();
+
+    fireEvent.click(
+      screen.getByRole("button", { name: /enable contribution/i }),
+    );
+
+    const viewerName = await screen.findByText("Jamie Viewer");
+    const viewerRow = viewerName.closest("li");
+    expect(viewerRow).not.toBeNull();
+    if (viewerRow) {
+      expect(within(viewerRow).getByText("Contributor")).toBeInTheDocument();
+    }
+
+    resolveToggle?.(
+      new Response(
+        JSON.stringify({
+          data: {
+            ...viewersResponse[0],
+            canContribute: true,
+          },
+          error: null,
+        }),
+        { status: 200 },
+      ),
+    );
+
+    await waitFor(() => {
+      const refreshedViewer = screen.getByText("Jamie Viewer");
+      const refreshedRow = refreshedViewer.closest("li");
+      expect(refreshedRow).not.toBeNull();
+      if (refreshedRow) {
+        expect(within(refreshedRow).getByText("Contributor")).toBeInTheDocument();
+      }
+    });
+  });
+
+  it("shows contributor toggle errors and reverts state", async () => {
+    const viewersResponse = [
+      {
+        id: "access-1",
+        tripId: "trip-1",
+        userId: "viewer-1",
+        canContribute: false,
+        createdAt: "2025-05-01T00:00:00.000Z",
+        user: {
+          id: "viewer-1",
+          name: "Jamie Viewer",
+          email: "viewer@example.com",
+        },
+      },
+    ];
+
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            data: {
+              id: "trip-1",
+              title: "Italy Highlights",
+              startDate: "2025-05-01T00:00:00.000Z",
+              endDate: "2025-05-10T00:00:00.000Z",
+              coverImageUrl: null,
+            },
+            error: null,
+          }),
+          { status: 200 },
+        ),
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            data: [],
+            error: null,
+          }),
+          { status: 200 },
+        ),
+      )
+      .mockResolvedValueOnce(new Response(null, { status: 404 }))
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            data: viewersResponse,
+            error: null,
+          }),
+          { status: 200 },
+        ),
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            data: [],
+            error: null,
+          }),
+          { status: 200 },
+        ),
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            data: null,
+            error: {
+              code: "INTERNAL_SERVER_ERROR",
+              message: "Unable to update contributor access.",
+            },
+          }),
+          { status: 500 },
+        ),
+      );
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<TripDetail tripId="trip-1" />);
+
+    fireEvent.click(
+      await screen.findByRole("button", { name: /share trip/i }),
+    );
+
+    await screen.findByText("Jamie Viewer");
+    fireEvent.click(
+      screen.getByRole("button", { name: /enable contribution/i }),
+    );
+
+    await screen.findByText("Unable to update contributor access.");
+    expect(screen.getByText(/view only/i)).toBeInTheDocument();
   });
 
   it("shows invite errors inline", async () => {
+    const eligibleResponse = [
+      {
+        id: "viewer-1",
+        name: "Jamie Viewer",
+        email: "viewer@example.com",
+        role: "viewer",
+        createdAt: "2025-05-01T00:00:00.000Z",
+        updatedAt: "2025-05-01T00:00:00.000Z",
+      },
+    ];
     const fetchMock = vi
       .fn()
       .mockResolvedValueOnce(
@@ -480,6 +742,15 @@ describe("TripDetail share panel", () => {
       .mockResolvedValueOnce(
         new Response(
           JSON.stringify({
+            data: eligibleResponse,
+            error: null,
+          }),
+          { status: 200 },
+        ),
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
             data: null,
             error: {
               code: "NOT_FOUND",
@@ -499,13 +770,227 @@ describe("TripDetail share panel", () => {
     });
     fireEvent.click(shareTrigger);
 
-    const inviteInput = await screen.findByLabelText("Invite viewer email");
-    fireEvent.change(inviteInput, {
-      target: { value: "viewer@example.com" },
+    const inviteSelect = await screen.findByLabelText("Invite viewer selector");
+    fireEvent.click(inviteSelect);
+    const inviteOption = await screen.findByRole("option", {
+      name: /jamie viewer/i,
     });
+    fireEvent.click(inviteOption);
 
     fireEvent.click(screen.getByRole("button", { name: /^invite$/i }));
 
     await screen.findByText("User not found.");
+  });
+
+  it("filters already invited users out of the selector", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            data: {
+              id: "trip-1",
+              title: "Italy Highlights",
+              startDate: "2025-05-01T00:00:00.000Z",
+              endDate: "2025-05-10T00:00:00.000Z",
+              coverImageUrl: null,
+            },
+            error: null,
+          }),
+          { status: 200 },
+        ),
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            data: [],
+            error: null,
+          }),
+          { status: 200 },
+        ),
+      )
+      .mockResolvedValueOnce(new Response(null, { status: 404 }))
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            data: [
+              {
+                id: "access-1",
+                tripId: "trip-1",
+                userId: "viewer-1",
+                canContribute: false,
+                createdAt: "2025-05-01T00:00:00.000Z",
+                user: {
+                  id: "viewer-1",
+                  name: "Jamie Viewer",
+                  email: "viewer@example.com",
+                },
+              },
+            ],
+            error: null,
+          }),
+          { status: 200 },
+        ),
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            data: [
+              {
+                id: "viewer-1",
+                name: "Jamie Viewer",
+                email: "viewer@example.com",
+                role: "viewer",
+                createdAt: "2025-05-01T00:00:00.000Z",
+                updatedAt: "2025-05-01T00:00:00.000Z",
+              },
+              {
+                id: "viewer-2",
+                name: "Riley Guest",
+                email: "riley@example.com",
+                role: "viewer",
+                createdAt: "2025-05-02T00:00:00.000Z",
+                updatedAt: "2025-05-02T00:00:00.000Z",
+              },
+            ],
+            error: null,
+          }),
+          { status: 200 },
+        ),
+      );
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<TripDetail tripId="trip-1" />);
+
+    const shareTrigger = await screen.findByRole("button", {
+      name: /share trip/i,
+    });
+    fireEvent.click(shareTrigger);
+
+    const inviteSelect = await screen.findByLabelText("Invite viewer selector");
+    fireEvent.click(inviteSelect);
+    expect(
+      screen.queryByRole("option", { name: /viewer@example.com/i }),
+    ).toBeNull();
+    expect(
+      screen.getByRole("option", { name: /riley@example.com/i }),
+    ).toBeInTheDocument();
+  });
+
+  it("removes invited users with confirmation", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            data: {
+              id: "trip-1",
+              title: "Italy Highlights",
+              startDate: "2025-05-01T00:00:00.000Z",
+              endDate: "2025-05-10T00:00:00.000Z",
+              coverImageUrl: null,
+            },
+            error: null,
+          }),
+          { status: 200 },
+        ),
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            data: [],
+            error: null,
+          }),
+          { status: 200 },
+        ),
+      )
+      .mockResolvedValueOnce(new Response(null, { status: 404 }))
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            data: [
+              {
+                id: "access-1",
+                tripId: "trip-1",
+                userId: "viewer-1",
+                canContribute: false,
+                createdAt: "2025-05-01T00:00:00.000Z",
+                user: {
+                  id: "viewer-1",
+                  name: "Jamie Viewer",
+                  email: "viewer@example.com",
+                },
+              },
+            ],
+            error: null,
+          }),
+          { status: 200 },
+        ),
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            data: [],
+            error: null,
+          }),
+          { status: 200 },
+        ),
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            data: {
+              id: "access-1",
+              tripId: "trip-1",
+              userId: "viewer-1",
+              canContribute: false,
+              createdAt: "2025-05-01T00:00:00.000Z",
+              user: {
+                id: "viewer-1",
+                name: "Jamie Viewer",
+                email: "viewer@example.com",
+              },
+            },
+            error: null,
+          }),
+          { status: 200 },
+        ),
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            data: [
+              {
+                id: "viewer-1",
+                name: "Jamie Viewer",
+                email: "viewer@example.com",
+                role: "viewer",
+                createdAt: "2025-05-01T00:00:00.000Z",
+                updatedAt: "2025-05-01T00:00:00.000Z",
+              },
+            ],
+            error: null,
+          }),
+          { status: 200 },
+        ),
+      );
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<TripDetail tripId="trip-1" />);
+
+    const shareTrigger = await screen.findByRole("button", {
+      name: /share trip/i,
+    });
+    fireEvent.click(shareTrigger);
+
+    await screen.findByText("Jamie Viewer");
+    fireEvent.click(screen.getByRole("button", { name: /remove/i }));
+    fireEvent.click(screen.getByRole("button", { name: /yes, remove/i }));
+
+    await waitFor(() => {
+      expect(screen.queryByText("Jamie Viewer")).toBeNull();
+    });
   });
 });

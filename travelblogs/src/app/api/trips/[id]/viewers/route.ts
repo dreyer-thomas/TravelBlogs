@@ -16,10 +16,16 @@ const jsonError = (status: number, code: string, message: string) => {
   );
 };
 
-const getUserId = async (request: Request) => {
+const getUser = async (request: Request) => {
   try {
     const token = await getToken({ req: request });
-    return token?.sub ?? null;
+    if (!token?.sub) {
+      return null;
+    }
+    return {
+      id: token.sub,
+      role: typeof token.role === "string" ? token.role : null,
+    };
   } catch {
     return null;
   }
@@ -29,24 +35,30 @@ const tripIdSchema = z.object({
   id: z.string().trim().min(1, "Trip id is required."),
 });
 
-const inviteSchema = z.object({
-  email: z
-    .string()
-    .trim()
-    .min(1, "Email is required.")
-    .email("Email must be valid.")
-    .transform((value) => value.toLowerCase()),
-});
+const inviteSchema = z
+  .object({
+    email: z
+      .string()
+      .trim()
+      .min(1, "Email is required.")
+      .email("Email must be valid.")
+      .transform((value) => value.toLowerCase())
+      .optional(),
+    userId: z.string().trim().min(1, "User id is required.").optional(),
+  })
+  .refine((data) => Boolean(data.email || data.userId), {
+    message: "Invite details are invalid.",
+  });
 
 const requireCreatorTrip = async (
   request: Request,
   params: Promise<{ id: string }> | { id: string },
 ) => {
-  const userId = await getUserId(request);
-  if (!userId) {
+  const user = await getUser(request);
+  if (!user) {
     return { error: jsonError(401, "UNAUTHORIZED", "Authentication required.") };
   }
-  if (userId !== "creator") {
+  if (user.role !== "creator") {
     return { error: jsonError(403, "FORBIDDEN", "Creator access required.") };
   }
 
@@ -74,7 +86,7 @@ const requireCreatorTrip = async (
     return { error: jsonError(404, "NOT_FOUND", "Trip not found.") };
   }
 
-  if (trip.ownerId !== userId) {
+  if (trip.ownerId !== user.id) {
     return {
       error: jsonError(403, "FORBIDDEN", "Not authorized to view this trip."),
     };
@@ -168,16 +180,24 @@ export const POST = async (
       return jsonError(400, "VALIDATION_ERROR", "Invite details are invalid.");
     }
 
+    const userLookup = parsed.data.userId
+      ? { id: parsed.data.userId }
+      : { email: parsed.data.email ?? "" };
+
     const user = await prisma.user.findUnique({
-      where: { email: parsed.data.email },
+      where: userLookup,
     });
 
     if (!user || !user.isActive) {
       return jsonError(404, "NOT_FOUND", "User not found.");
     }
 
-    if (user.role !== "viewer") {
-      return jsonError(400, "VALIDATION_ERROR", "User must be a viewer.");
+    if (user.role !== "viewer" && user.role !== "creator") {
+      return jsonError(
+        400,
+        "VALIDATION_ERROR",
+        "User must be a creator or viewer.",
+      );
     }
 
     const existing = await prisma.tripAccess.findUnique({

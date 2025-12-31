@@ -43,6 +43,7 @@ describe("PATCH /api/entries/[id]", () => {
     await prisma.entryMedia.deleteMany();
     await prisma.entry.deleteMany();
     await prisma.trip.deleteMany();
+    await prisma.user.deleteMany();
   });
 
   afterAll(async () => {
@@ -267,6 +268,128 @@ describe("PATCH /api/entries/[id]", () => {
         ownerId: "someone-else",
       },
     });
+    const entry = await prisma.entry.create({
+      data: {
+        tripId: trip.id,
+        title: "Original title",
+        text: "Old text",
+        media: {
+          create: [{ url: "/uploads/entries/old.jpg" }],
+        },
+      },
+    });
+
+    const request = new Request(`http://localhost/api/entries/${entry.id}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        title: "Updated title",
+        text: "Updated text",
+        mediaUrls: ["/uploads/entries/new.jpg"],
+      }),
+    });
+
+    const response = await patch(request, { params: { id: entry.id } });
+    const body = await response.json();
+
+    expect(response.status).toBe(403);
+    expect(body.error.code).toBe("FORBIDDEN");
+  });
+
+  it("allows contributors with access to update entries", async () => {
+    getToken.mockResolvedValue({ sub: "viewer-1" });
+
+    const trip = await prisma.trip.create({
+      data: {
+        title: "Contributor Trip",
+        startDate: new Date("2025-05-01"),
+        endDate: new Date("2025-05-10"),
+        ownerId: "creator",
+      },
+    });
+
+    await prisma.user.create({
+      data: {
+        id: "viewer-1",
+        email: "viewer-1@example.com",
+        name: "Viewer One",
+        role: "viewer",
+        passwordHash: "hash",
+      },
+    });
+
+    await prisma.tripAccess.create({
+      data: {
+        tripId: trip.id,
+        userId: "viewer-1",
+        canContribute: true,
+      },
+    });
+
+    const entry = await prisma.entry.create({
+      data: {
+        tripId: trip.id,
+        title: "Original title",
+        text: "Old text",
+        media: {
+          create: [{ url: "/uploads/entries/old.jpg" }],
+        },
+      },
+    });
+
+    const request = new Request(`http://localhost/api/entries/${entry.id}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        title: "Updated title",
+        text: "Updated text",
+        mediaUrls: ["/uploads/entries/new.jpg"],
+      }),
+    });
+
+    const response = await patch(request, { params: { id: entry.id } });
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.error).toBeNull();
+    expect(body.data.title).toBe("Updated title");
+  });
+
+  it("rejects inactive contributors from updating entries", async () => {
+    getToken.mockResolvedValue({ sub: "viewer-1" });
+
+    const trip = await prisma.trip.create({
+      data: {
+        title: "Contributor Trip",
+        startDate: new Date("2025-05-01"),
+        endDate: new Date("2025-05-10"),
+        ownerId: "creator",
+      },
+    });
+
+    await prisma.user.create({
+      data: {
+        id: "viewer-1",
+        email: "viewer-1@example.com",
+        name: "Viewer One",
+        role: "viewer",
+        passwordHash: "hash",
+        isActive: false,
+      },
+    });
+
+    await prisma.tripAccess.create({
+      data: {
+        tripId: trip.id,
+        userId: "viewer-1",
+        canContribute: true,
+      },
+    });
+
     const entry = await prisma.entry.create({
       data: {
         tripId: trip.id,

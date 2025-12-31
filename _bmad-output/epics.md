@@ -814,6 +814,28 @@ So that trusted users can manage accounts while protecting critical admin access
 **When** I attempt to remove my own admin privilege  
 **Then** the action is blocked with a clear error
 
+### Story 5.10: Refine Viewer Invitations with Custom Selector
+
+As a creator,
+I want to select invitees from a themed selector and manage the invited list,
+so that inviting viewers is faster and mistakes are easy to undo.
+
+**Acceptance Criteria:**
+
+**Given** I am a creator viewing a trip I own  
+**When** I open the invite selector  
+**Then** I can choose from all active viewers and creators  
+**And** already invited users are not shown in the selector  
+
+**Given** I am viewing the invited users list  
+**When** I remove an invited user  
+**Then** the user is removed from the list  
+**And** they can no longer access the trip  
+
+**Given** I am inviting a user  
+**When** I interact with the selector  
+**Then** the selector matches the application's custom share panel styling
+
 ## Epic 6: Map & Timeline Storytelling (Phase 3)
 
 Add spatial storytelling with maps, timelines, and optional location extraction.
