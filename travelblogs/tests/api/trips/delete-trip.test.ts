@@ -48,7 +48,7 @@ describe("DELETE /api/trips/[id]", () => {
   });
 
   it("deletes an owned trip", async () => {
-    getToken.mockResolvedValue({ sub: "creator" });
+    getToken.mockResolvedValue({ sub: "creator", role: "creator" });
     const trip = await prisma.trip.create({
       data: {
         title: "To Delete",
@@ -86,7 +86,7 @@ describe("DELETE /api/trips/[id]", () => {
   });
 
   it("rejects deleting trips not owned by the creator", async () => {
-    getToken.mockResolvedValue({ sub: "creator" });
+    getToken.mockResolvedValue({ sub: "creator", role: "creator" });
     const trip = await prisma.trip.create({
       data: {
         title: "Not Yours",
@@ -107,7 +107,7 @@ describe("DELETE /api/trips/[id]", () => {
   });
 
   it("returns not found when the trip does not exist", async () => {
-    getToken.mockResolvedValue({ sub: "creator" });
+    getToken.mockResolvedValue({ sub: "creator", role: "creator" });
 
     const request = new Request("http://localhost/api/trips/missing", {
       method: "DELETE",

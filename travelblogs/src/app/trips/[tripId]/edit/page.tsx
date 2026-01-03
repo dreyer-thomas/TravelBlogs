@@ -5,6 +5,7 @@ import { notFound, redirect } from "next/navigation";
 import EditTripForm from "../../../../components/trips/edit-trip-form";
 import { prisma } from "../../../../utils/db";
 import { authOptions } from "../../../../utils/auth-options";
+import { canContributeToTrip } from "../../../../utils/trip-access";
 
 type EditTripPageProps = {
   params: {
@@ -21,17 +22,25 @@ const EditTripPage = async ({ params }: EditTripPageProps) => {
   if (!session?.user?.id) {
     redirect(`/sign-in?callbackUrl=/trips/${tripId}/edit`);
   }
-  const ownerId = session.user.id;
-
   const trip = await prisma.trip.findFirst({
     where: {
       id: tripId,
-      ownerId,
     },
   });
 
   if (!trip) {
     notFound();
+  }
+
+  const isOwner = trip.ownerId === session.user.id;
+  if (!isOwner) {
+    const canContribute = await canContributeToTrip(
+      trip.id,
+      session.user.id,
+    );
+    if (!canContribute) {
+      notFound();
+    }
   }
 
   return (

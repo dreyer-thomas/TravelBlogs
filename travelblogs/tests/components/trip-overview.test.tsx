@@ -7,7 +7,17 @@ import { render, screen } from "@testing-library/react";
 import TripOverview from "../../src/components/trips/trip-overview";
 
 vi.mock("next/image", () => ({
-  default: (props: ImgHTMLAttributes<HTMLImageElement>) => <img {...props} />,
+  default: (props: ImgHTMLAttributes<HTMLImageElement>) => {
+    const { fill, unoptimized, priority, ...rest } = props;
+    return (
+      <img
+        {...rest}
+        data-fill={fill ? "true" : undefined}
+        data-unoptimized={unoptimized ? "true" : undefined}
+        data-priority={priority ? "true" : undefined}
+      />
+    );
+  },
 }));
 
 vi.mock("next/link", () => ({

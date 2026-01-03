@@ -46,6 +46,8 @@ describe("EntryDetail", () => {
           updatedAt: "2025-05-03T00:00:00.000Z",
           media: [],
         }}
+        canEdit
+        canDelete
       />,
     );
 
@@ -73,6 +75,8 @@ describe("EntryDetail", () => {
             },
           ],
         }}
+        canEdit
+        canDelete
       />,
     );
 
@@ -110,6 +114,8 @@ describe("EntryDetail", () => {
             },
           ],
         }}
+        canEdit
+        canDelete
       />,
     );
 
@@ -151,6 +157,8 @@ describe("EntryDetail", () => {
             },
           ],
         }}
+        canEdit
+        canDelete
       />,
     );
 
@@ -191,6 +199,8 @@ describe("EntryDetail", () => {
               },
             ],
           }}
+          canEdit
+          canDelete
         />,
       );
 
@@ -249,6 +259,8 @@ describe("EntryDetail", () => {
             },
           ],
         }}
+        canEdit
+        canDelete
       />,
     );
 
@@ -261,5 +273,27 @@ describe("EntryDetail", () => {
 
     fireEvent.click(dialog);
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
+  it("hides delete actions for contributors without delete access", () => {
+    render(
+      <EntryDetail
+        entry={{
+          id: "entry-7",
+          tripId: "trip-3",
+          title: "Contributor entry",
+          coverImageUrl: null,
+          text: "Notes from the road.",
+          createdAt: "2025-05-06T00:00:00.000Z",
+          updatedAt: "2025-05-06T00:00:00.000Z",
+          media: [],
+        }}
+        canEdit
+        canDelete={false}
+      />,
+    );
+
+    expect(screen.getByText("Edit entry")).toBeInTheDocument();
+    expect(screen.queryByText("Delete entry")).not.toBeInTheDocument();
   });
 });

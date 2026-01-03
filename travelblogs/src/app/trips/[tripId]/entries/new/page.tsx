@@ -1,9 +1,11 @@
 import Link from "next/link";
 import { getServerSession } from "next-auth";
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 
 import CreateEntryFormWrapper from "@/components/entries/create-entry-form-wrapper";
 import { authOptions } from "@/utils/auth-options";
+import { prisma } from "@/utils/db";
+import { canContributeToTrip } from "@/utils/trip-access";
 
 type NewEntryPageProps = {
   params: {
@@ -17,6 +19,29 @@ const NewEntryPage = async ({ params }: NewEntryPageProps) => {
 
   if (!session?.user?.id) {
     redirect(`/sign-in?callbackUrl=/trips/${tripId}/entries/new`);
+  }
+
+  const trip = await prisma.trip.findUnique({
+    where: {
+      id: tripId,
+    },
+    select: {
+      ownerId: true,
+    },
+  });
+
+  if (!trip) {
+    notFound();
+  }
+
+  if (trip.ownerId !== session.user.id) {
+    const canContribute = await canContributeToTrip(
+      tripId,
+      session.user.id,
+    );
+    if (!canContribute) {
+      notFound();
+    }
   }
 
   return (

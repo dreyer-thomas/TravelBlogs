@@ -75,10 +75,16 @@ const jsonError = (status: number, code: string, message: string) => {
   );
 };
 
-const getUserId = async (request: Request) => {
+const getUser = async (request: Request) => {
   try {
     const token = await getToken({ req: request });
-    return token?.sub ?? null;
+    if (!token?.sub) {
+      return null;
+    }
+    return {
+      id: token.sub,
+      role: typeof token.role === "string" ? token.role : null,
+    };
   } catch {
     return null;
   }
@@ -86,35 +92,102 @@ const getUserId = async (request: Request) => {
 
 export const GET = async (request: Request) => {
   try {
-    const userId = await getUserId(request);
-    if (!userId) {
+    const user = await getUser(request);
+    if (!user) {
       return jsonError(401, "UNAUTHORIZED", "Authentication required.");
     }
-    if (userId !== "creator") {
-      return jsonError(403, "FORBIDDEN", "Creator access required.");
+    if (user.role !== "creator" && user.role !== "viewer") {
+      return jsonError(403, "FORBIDDEN", "Valid role required.");
+    }
+    if (user.id !== "creator") {
+      const account = await prisma.user.findUnique({
+        where: {
+          id: user.id,
+        },
+        select: {
+          isActive: true,
+        },
+      });
+      if (!account?.isActive) {
+        return jsonError(403, "FORBIDDEN", "Account is inactive.");
+      }
     }
 
-    const trips = await prisma.trip.findMany({
-      where: {
-        ownerId: userId,
-      },
-      // Most-recent updates first for list ordering.
-      orderBy: {
-        updatedAt: "desc",
-      },
-      select: {
-        id: true,
-        title: true,
-        startDate: true,
-        endDate: true,
-        coverImageUrl: true,
-        updatedAt: true,
-      },
-    });
+    const tripSelection = {
+      id: true,
+      title: true,
+      startDate: true,
+      endDate: true,
+      coverImageUrl: true,
+      updatedAt: true,
+    };
+
+    let tripList: {
+      id: string;
+      title: string;
+      startDate: Date;
+      endDate: Date;
+      coverImageUrl: string | null;
+      updatedAt: Date;
+    }[] = [];
+
+    if (user.role === "creator") {
+      const [ownedTrips, invitedAccess] = await Promise.all([
+        prisma.trip.findMany({
+          where: {
+            ownerId: user.id,
+          },
+          select: tripSelection,
+        }),
+        prisma.tripAccess.findMany({
+          where: {
+            userId: user.id,
+            user: {
+              isActive: true,
+            },
+          },
+          select: {
+            trip: {
+              select: tripSelection,
+            },
+          },
+        }),
+      ]);
+
+      const tripsById = new Map<string, (typeof ownedTrips)[number]>();
+      ownedTrips.forEach((trip) => tripsById.set(trip.id, trip));
+      invitedAccess.forEach((access) =>
+        tripsById.set(access.trip.id, access.trip),
+      );
+      tripList = Array.from(tripsById.values()).sort(
+        (a, b) => b.updatedAt.getTime() - a.updatedAt.getTime(),
+      );
+    } else {
+      const invitedAccess = await prisma.tripAccess.findMany({
+        where: {
+          userId: user.id,
+          user: {
+            isActive: true,
+          },
+        },
+        select: {
+          trip: {
+            select: tripSelection,
+          },
+        },
+        orderBy: {
+          trip: {
+            updatedAt: "desc",
+          },
+        },
+      });
+
+      tripList = invitedAccess.map((access) => access.trip);
+    }
 
     return NextResponse.json(
       {
-        data: trips.map((trip) => ({
+        data: tripList.map((trip) => ({
           id: trip.id,
           title: trip.title,
           startDate: trip.startDate.toISOString(),
@@ -133,19 +206,25 @@ export const GET = async (request: Request) => {
 };
 
 export const POST = async (request: Request) => {
-  let userId: string | null = null;
-  try {
-    const token = await getToken({ req: request });
-    userId = token?.sub ?? null;
-  } catch {
-    userId = null;
-  }
-
-  if (!userId) {
+  const user = await getUser(request);
+  if (!user) {
     return jsonError(401, "UNAUTHORIZED", "Authentication required.");
   }
-  if (userId !== "creator") {
+  if (user.role !== "creator") {
     return jsonError(403, "FORBIDDEN", "Creator access required.");
+  }
+  if (user.id !== "creator") {
+    const account = await prisma.user.findUnique({
+      where: {
+        id: user.id,
+      },
+      select: {
+        isActive: true,
+      },
+    });
+    if (!account?.isActive) {
+      return jsonError(403, "FORBIDDEN", "Account is inactive.");
+    }
   }
 
   let body: unknown;
@@ -175,7 +254,7 @@ export const POST = async (request: Request) => {
       startDate,
       endDate,
       coverImageUrl,
-      ownerId: userId,
+      ownerId: user.id,
     },
   });
 

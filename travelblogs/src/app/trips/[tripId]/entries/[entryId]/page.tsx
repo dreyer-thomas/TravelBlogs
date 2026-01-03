@@ -5,6 +5,7 @@ import { unstable_noStore as noStore } from "next/cache";
 import { authOptions } from "../../../../../utils/auth-options";
 import { prisma } from "../../../../../utils/db";
 import EntryDetail from "../../../../../components/entries/entry-detail";
+import { canContributeToTrip, hasTripAccess } from "../../../../../utils/trip-access";
 
 export const dynamic = "force-dynamic";
 
@@ -46,9 +47,22 @@ const EntryDetailPage = async ({ params }: EntryDetailPageProps) => {
     include: { media: true, trip: true },
   });
 
-  if (!entry || entry.trip.ownerId !== session.user.id) {
+  if (!entry) {
     notFound();
   }
+
+  const isOwner = entry.trip.ownerId === session.user.id;
+  if (!isOwner) {
+    const canView = await hasTripAccess(entry.tripId, session.user.id);
+    if (!canView) {
+      notFound();
+    }
+  }
+
+  const canEdit = isOwner
+    ? true
+    : await canContributeToTrip(entry.tripId, session.user.id);
+  const canDelete = isOwner;
 
   const entryData: EntryData = {
     id: entry.id,
@@ -65,7 +79,9 @@ const EntryDetailPage = async ({ params }: EntryDetailPageProps) => {
     })),
   };
 
-  return <EntryDetail entry={entryData} />;
+  return (
+    <EntryDetail entry={entryData} canEdit={canEdit} canDelete={canDelete} />
+  );
 };
 
 export default EntryDetailPage;

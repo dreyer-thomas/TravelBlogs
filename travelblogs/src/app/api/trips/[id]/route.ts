@@ -4,7 +4,7 @@ import { z } from "zod";
 
 import { prisma } from "../../../../utils/db";
 import { isCoverImageUrl } from "../../../../utils/media";
-import { hasTripAccess } from "../../../../utils/trip-access";
+import { canContributeToTrip, hasTripAccess } from "../../../../utils/trip-access";
 
 export const runtime = "nodejs";
 
@@ -76,10 +76,16 @@ const updateTripSchema = z
     { message: "Start date must be before end date." },
   );
 
-const getUserId = async (request: Request) => {
+const getUser = async (request: Request) => {
   try {
     const token = await getToken({ req: request });
-    return token?.sub ?? null;
+    if (!token?.sub) {
+      return null;
+    }
+    return {
+      id: token.sub,
+      role: typeof token.role === "string" ? token.role : null,
+    };
   } catch {
     return null;
   }
@@ -90,8 +96,8 @@ export const GET = async (
   { params }: { params: Promise<{ id: string }> | { id: string } },
 ) => {
   try {
-    const userId = await getUserId(request);
-    if (!userId) {
+    const user = await getUser(request);
+    if (!user) {
       return jsonError(401, "UNAUTHORIZED", "Authentication required.");
     }
     const { id } = await params;
@@ -106,8 +112,8 @@ export const GET = async (
       return jsonError(404, "NOT_FOUND", "Trip not found.");
     }
 
-    if (trip.ownerId !== userId) {
-      const canView = await hasTripAccess(trip.id, userId);
+    if (trip.ownerId !== user.id) {
+      const canView = await hasTripAccess(trip.id, user.id);
       if (!canView) {
         return jsonError(403, "FORBIDDEN", "Not authorized to view this trip.");
       }
@@ -140,12 +146,25 @@ export const PATCH = async (
   { params }: { params: Promise<{ id: string }> | { id: string } },
 ) => {
   try {
-    const userId = await getUserId(request);
-    if (!userId) {
+    const user = await getUser(request);
+    if (!user) {
       return jsonError(401, "UNAUTHORIZED", "Authentication required.");
     }
-    if (userId !== "creator") {
-      return jsonError(403, "FORBIDDEN", "Creator access required.");
+    if (user.role !== "creator" && user.role !== "viewer") {
+      return jsonError(403, "FORBIDDEN", "Valid role required.");
+    }
+    if (user.id !== "creator") {
+      const account = await prisma.user.findUnique({
+        where: {
+          id: user.id,
+        },
+        select: {
+          isActive: true,
+        },
+      });
+      if (!account?.isActive) {
+        return jsonError(403, "FORBIDDEN", "Account is inactive.");
+      }
     }
 
     const { id } = await params;
@@ -172,8 +191,15 @@ export const PATCH = async (
       return jsonError(404, "NOT_FOUND", "Trip not found.");
     }
 
-    if (trip.ownerId !== userId) {
-      return jsonError(403, "FORBIDDEN", "Not authorized to update this trip.");
+    if (trip.ownerId !== user.id) {
+      const canContribute = await canContributeToTrip(trip.id, user.id);
+      if (!canContribute) {
+        return jsonError(
+          403,
+          "FORBIDDEN",
+          "Not authorized to update this trip.",
+        );
+      }
     }
 
     const startDate = parseIsoDate(parsed.data.startDate);
@@ -228,12 +254,25 @@ export const DELETE = async (
   { params }: { params: Promise<{ id: string }> | { id: string } },
 ) => {
   try {
-    const userId = await getUserId(request);
-    if (!userId) {
+    const user = await getUser(request);
+    if (!user) {
       return jsonError(401, "UNAUTHORIZED", "Authentication required.");
     }
-    if (userId !== "creator") {
+    if (user.role !== "creator") {
       return jsonError(403, "FORBIDDEN", "Creator access required.");
+    }
+    if (user.id !== "creator") {
+      const account = await prisma.user.findUnique({
+        where: {
+          id: user.id,
+        },
+        select: {
+          isActive: true,
+        },
+      });
+      if (!account?.isActive) {
+        return jsonError(403, "FORBIDDEN", "Account is inactive.");
+      }
     }
 
     const { id } = await params;
@@ -248,7 +287,7 @@ export const DELETE = async (
       return jsonError(404, "NOT_FOUND", "Trip not found.");
     }
 
-    if (trip.ownerId !== userId) {
+    if (trip.ownerId !== user.id) {
       return jsonError(403, "FORBIDDEN", "Not authorized to delete this trip.");
     }
 

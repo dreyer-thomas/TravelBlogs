@@ -32,6 +32,8 @@ type EntryData = {
 
 type EntryDetailProps = {
   entry: EntryData;
+  canEdit: boolean;
+  canDelete: boolean;
 };
 
 const formatDate = (value: string) =>
@@ -43,7 +45,7 @@ const formatDate = (value: string) =>
 
 const isOptimizedImage = (url: string) => url.startsWith("/");
 
-const EntryDetail = ({ entry }: EntryDetailProps) => {
+const EntryDetail = ({ entry, canEdit, canDelete }: EntryDetailProps) => {
   const [viewerIndex, setViewerIndex] = useState(0);
   const [isViewerOpen, setIsViewerOpen] = useState(false);
   const [viewerMode, setViewerMode] = useState<"viewer" | "slideshow">(
@@ -251,28 +253,34 @@ const EntryDetail = ({ entry }: EntryDetailProps) => {
           )}
         </section>
 
-        <section className="rounded-2xl border border-black/10 bg-white p-6 shadow-sm">
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div>
-              <p className="text-xs uppercase tracking-[0.2em] text-[#6B635B]">
-                Entry actions
-              </p>
+        {canEdit || canDelete ? (
+          <section className="rounded-2xl border border-black/10 bg-white p-6 shadow-sm">
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <div>
+                <p className="text-xs uppercase tracking-[0.2em] text-[#6B635B]">
+                  Entry actions
+                </p>
+              </div>
+              <div className="flex flex-wrap items-center gap-3">
+                {canEdit ? (
+                  <Link
+                    href={`/trips/${entry.tripId}/entries/${entry.id}/edit`}
+                    className="rounded-xl bg-[#1F6F78] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#195C63]"
+                  >
+                    Edit entry
+                  </Link>
+                ) : null}
+                {canDelete ? (
+                  <DeleteEntryModal
+                    tripId={entry.tripId}
+                    entryId={entry.id}
+                    entryTitle={entry.title}
+                  />
+                ) : null}
+              </div>
             </div>
-            <div className="flex flex-wrap items-center gap-3">
-              <Link
-                href={`/trips/${entry.tripId}/entries/${entry.id}/edit`}
-                className="rounded-xl bg-[#1F6F78] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#195C63]"
-              >
-                Edit entry
-              </Link>
-              <DeleteEntryModal
-                tripId={entry.tripId}
-                entryId={entry.id}
-                entryTitle={entry.title}
-              />
-            </div>
-          </div>
-        </section>
+          </section>
+        ) : null}
 
         <FullScreenPhotoViewer
           images={viewerImages}

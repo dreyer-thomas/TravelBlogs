@@ -5,6 +5,7 @@ import { notFound, redirect } from "next/navigation";
 import EditEntryForm from "../../../../../../components/entries/edit-entry-form";
 import { prisma } from "../../../../../../utils/db";
 import { authOptions } from "../../../../../../utils/auth-options";
+import { canContributeToTrip } from "../../../../../../utils/trip-access";
 
 type EditEntryPageProps = {
   params: {
@@ -20,23 +21,30 @@ const EditEntryPage = async ({ params }: EditEntryPageProps) => {
   if (!session?.user?.id) {
     redirect(`/sign-in?callbackUrl=/trips/${tripId}/entries/${entryId}/edit`);
   }
-  const ownerId = session.user.id;
-
   const entry = await prisma.entry.findFirst({
     where: {
       id: entryId,
       tripId,
-      trip: {
-        ownerId,
-      },
     },
     include: {
       media: true,
+      trip: true,
     },
   });
 
   if (!entry) {
     notFound();
+  }
+
+  const isOwner = entry.trip.ownerId === session.user.id;
+  if (!isOwner) {
+    const canContribute = await canContributeToTrip(
+      entry.tripId,
+      session.user.id,
+    );
+    if (!canContribute) {
+      notFound();
+    }
   }
 
   return (

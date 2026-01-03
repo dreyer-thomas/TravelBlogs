@@ -69,8 +69,53 @@ describe("TripDetail", () => {
 
     vi.stubGlobal("fetch", fetchMock);
 
-    render(<TripDetail tripId="trip-1" />);
+    render(<TripDetail tripId="trip-1" canAddEntry canEditTrip canDeleteTrip canManageShare canManageViewers />);
 
     expect(await screen.findByText("Roman morning")).toBeInTheDocument();
+  });
+
+  it("shows edit trip without delete when delete access is missing", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            data: {
+              id: "trip-2",
+              title: "Contributor Trip",
+              startDate: "2025-06-01T00:00:00.000Z",
+              endDate: "2025-06-05T00:00:00.000Z",
+              coverImageUrl: null,
+            },
+            error: null,
+          }),
+          { status: 200 },
+        ),
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            data: [],
+            error: null,
+          }),
+          { status: 200 },
+        ),
+      );
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(
+      <TripDetail
+        tripId="trip-2"
+        canAddEntry
+        canEditTrip
+        canDeleteTrip={false}
+        canManageShare={false}
+        canManageViewers={false}
+      />,
+    );
+
+    expect(await screen.findByText("Edit trip")).toBeInTheDocument();
+    expect(screen.queryByText("Delete trip")).not.toBeInTheDocument();
   });
 });

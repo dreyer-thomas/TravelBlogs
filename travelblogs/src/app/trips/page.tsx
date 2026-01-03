@@ -42,6 +42,29 @@ const TripsPage = async () => {
     redirect("/sign-in?callbackUrl=/trips");
   }
 
+  const role = session.user.role ?? null;
+  const isCreator = role === "creator";
+  const isViewer = role === "viewer";
+
+  if (!isCreator && !isViewer) {
+    return (
+      <div className="min-h-screen bg-[#FBF7F1] px-6 py-12">
+        <main className="mx-auto w-full max-w-4xl space-y-8">
+          <header>
+            <h1 className="text-3xl font-semibold text-[#2D2A26]">Trips</h1>
+            <p className="mt-2 text-sm text-[#6B635B]">
+              Your account does not have access to trips.
+            </p>
+          </header>
+          <section className="rounded-2xl border border-black/10 bg-white p-8 text-center">
+            <p className="text-sm text-[#B34A3C]">
+              Access to this area is restricted.
+            </p>
+          </section>
+        </main>
+      </div>
+    );
+  }
   const headersList = await headers();
   const cookieHeader = headersList.get("cookie") ?? "";
   const forwardedHost = headersList.get("x-forwarded-host");
@@ -63,28 +86,30 @@ const TripsPage = async () => {
         <header className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <h1 className="text-3xl font-semibold text-[#2D2A26]">
-              Manage trips
+              {isViewer ? "Your trips" : "Manage trips"}
             </h1>
             <p className="mt-2 text-sm text-[#6B635B]">
-              Start a new trip or revisit your existing plans.
+              {isViewer
+                ? "Trips you have been invited to will appear here."
+                : "Start a new trip or revisit your existing plans."}
             </p>
           </div>
-          <div className="flex flex-wrap items-center gap-3">
-            {session.user.id === "creator" ? (
+          {isCreator ? (
+            <div className="flex flex-wrap items-center gap-3">
               <Link
                 href="/admin/users"
                 className="rounded-xl border border-[#1F6F78]/30 px-4 py-2 text-sm font-semibold text-[#1F6F78] transition hover:bg-[#1F6F78]/10"
               >
                 Manage users
               </Link>
-            ) : null}
-            <Link
-              href="/trips/new"
-              className="rounded-xl bg-[#1F6F78] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#195C63]"
-            >
-              Create trip
-            </Link>
-          </div>
+              <Link
+                href="/trips/new"
+                className="rounded-xl bg-[#1F6F78] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#195C63]"
+              >
+                Create trip
+              </Link>
+            </div>
+          ) : null}
         </header>
 
         {loadError ? (
@@ -94,18 +119,21 @@ const TripsPage = async () => {
         ) : trips.length === 0 ? (
           <section className="rounded-2xl border border-dashed border-black/10 bg-white p-8 text-center">
             <h2 className="text-lg font-semibold text-[#2D2A26]">
-              No trips yet
+              {isViewer ? "No invited trips yet" : "No trips yet"}
             </h2>
             <p className="mt-2 text-sm text-[#6B635B]">
-              No trips yet. Create your first trip to start capturing your
-              journey.
+              {isViewer
+                ? "When someone invites you to a trip, it will show up here."
+                : "No trips yet. Create your first trip to start capturing your journey."}
             </p>
-            <Link
-              href="/trips/new"
-              className="mt-4 inline-flex rounded-xl bg-[#1F6F78] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#195C63] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F6F78]/40"
-            >
-              Create a trip
-            </Link>
+            {isCreator ? (
+              <Link
+                href="/trips/new"
+                className="mt-4 inline-flex rounded-xl bg-[#1F6F78] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#195C63] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F6F78]/40"
+              >
+                Create a trip
+              </Link>
+            ) : null}
           </section>
         ) : (
           <section className="grid gap-4">

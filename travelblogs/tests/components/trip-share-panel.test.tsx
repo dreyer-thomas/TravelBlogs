@@ -59,7 +59,7 @@ describe("TripDetail share panel", () => {
 
     vi.stubGlobal("fetch", fetchMock);
 
-    render(<TripDetail tripId="trip-1" />);
+    render(<TripDetail tripId="trip-1" canAddEntry canEditTrip canDeleteTrip canManageShare canManageViewers />);
 
     const ownerLabel = await screen.findByText(/owner:/i);
     const headerSection = ownerLabel.closest("section");
@@ -157,7 +157,7 @@ describe("TripDetail share panel", () => {
     });
     vi.stubGlobal("fetch", fetchMock);
 
-    render(<TripDetail tripId="trip-1" />);
+    render(<TripDetail tripId="trip-1" canAddEntry canEditTrip canDeleteTrip canManageShare canManageViewers />);
 
     const shareTrigger = await screen.findByRole("button", {
       name: /share trip/i,
@@ -255,7 +255,7 @@ describe("TripDetail share panel", () => {
 
     vi.stubGlobal("fetch", fetchMock);
 
-    render(<TripDetail tripId="trip-1" />);
+    render(<TripDetail tripId="trip-1" canAddEntry canEditTrip canDeleteTrip canManageShare canManageViewers />);
 
     const shareTrigger = await screen.findByRole("button", {
       name: /share trip/i,
@@ -344,7 +344,7 @@ describe("TripDetail share panel", () => {
 
     vi.stubGlobal("fetch", fetchMock);
 
-    render(<TripDetail tripId="trip-1" />);
+    render(<TripDetail tripId="trip-1" canAddEntry canEditTrip canDeleteTrip canManageShare canManageViewers />);
 
     const actionsHeader = await screen.findByText(/trip actions/i);
     const actionsSection = actionsHeader.closest("section");
@@ -465,7 +465,7 @@ describe("TripDetail share panel", () => {
 
     vi.stubGlobal("fetch", fetchMock);
 
-    render(<TripDetail tripId="trip-1" />);
+    render(<TripDetail tripId="trip-1" canAddEntry canEditTrip canDeleteTrip canManageShare canManageViewers />);
 
     const shareTrigger = await screen.findByRole("button", {
       name: /share trip/i,
@@ -558,7 +558,7 @@ describe("TripDetail share panel", () => {
 
     vi.stubGlobal("fetch", fetchMock);
 
-    render(<TripDetail tripId="trip-1" />);
+    render(<TripDetail tripId="trip-1" canAddEntry canEditTrip canDeleteTrip canManageShare canManageViewers />);
 
     fireEvent.click(
       await screen.findByRole("button", { name: /share trip/i }),
@@ -677,7 +677,7 @@ describe("TripDetail share panel", () => {
 
     vi.stubGlobal("fetch", fetchMock);
 
-    render(<TripDetail tripId="trip-1" />);
+    render(<TripDetail tripId="trip-1" canAddEntry canEditTrip canDeleteTrip canManageShare canManageViewers />);
 
     fireEvent.click(
       await screen.findByRole("button", { name: /share trip/i }),
@@ -763,7 +763,7 @@ describe("TripDetail share panel", () => {
 
     vi.stubGlobal("fetch", fetchMock);
 
-    render(<TripDetail tripId="trip-1" />);
+    render(<TripDetail tripId="trip-1" canAddEntry canEditTrip canDeleteTrip canManageShare canManageViewers />);
 
     const shareTrigger = await screen.findByRole("button", {
       name: /share trip/i,
@@ -861,7 +861,7 @@ describe("TripDetail share panel", () => {
 
     vi.stubGlobal("fetch", fetchMock);
 
-    render(<TripDetail tripId="trip-1" />);
+    render(<TripDetail tripId="trip-1" canAddEntry canEditTrip canDeleteTrip canManageShare canManageViewers />);
 
     const shareTrigger = await screen.findByRole("button", {
       name: /share trip/i,
@@ -978,7 +978,7 @@ describe("TripDetail share panel", () => {
 
     vi.stubGlobal("fetch", fetchMock);
 
-    render(<TripDetail tripId="trip-1" />);
+    render(<TripDetail tripId="trip-1" canAddEntry canEditTrip canDeleteTrip canManageShare canManageViewers />);
 
     const shareTrigger = await screen.findByRole("button", {
       name: /share trip/i,

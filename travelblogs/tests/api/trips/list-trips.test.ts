@@ -37,7 +37,9 @@ describe("GET /api/trips", () => {
 
   beforeEach(async () => {
     getToken.mockReset();
+    await prisma.tripAccess.deleteMany();
     await prisma.trip.deleteMany();
+    await prisma.user.deleteMany();
   });
 
   afterAll(async () => {
@@ -45,7 +47,7 @@ describe("GET /api/trips", () => {
   });
 
   it("returns creator-owned trips with list fields", async () => {
-    getToken.mockResolvedValue({ sub: "creator" });
+    getToken.mockResolvedValue({ sub: "creator", role: "creator" });
 
     const trip = await prisma.trip.create({
       data: {
@@ -87,6 +89,76 @@ describe("GET /api/trips", () => {
     });
   });
 
+  it("returns creator-owned and invited trips", async () => {
+    await prisma.user.create({
+      data: {
+        id: "creator",
+        email: "creator@example.com",
+        name: "Creator",
+        role: "creator",
+        passwordHash: "hash",
+      },
+    });
+
+    const ownedTrip = await prisma.trip.create({
+      data: {
+        title: "Owned Trip",
+        startDate: new Date("2025-09-01T00:00:00.000Z"),
+        endDate: new Date("2025-09-03T00:00:00.000Z"),
+        ownerId: "creator",
+      },
+    });
+
+    const invitedTrip = await prisma.trip.create({
+      data: {
+        title: "Invited Trip",
+        startDate: new Date("2025-10-01T00:00:00.000Z"),
+        endDate: new Date("2025-10-03T00:00:00.000Z"),
+        ownerId: "someone-else",
+      },
+    });
+
+    await prisma.tripAccess.create({
+      data: {
+        tripId: invitedTrip.id,
+        userId: "creator",
+      },
+    });
+
+    getToken.mockResolvedValue({ sub: "creator", role: "creator" });
+
+    const request = new Request("http://localhost/api/trips", {
+      method: "GET",
+    });
+
+    const response = await get(request);
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.error).toBeNull();
+    expect(body.data).toHaveLength(2);
+    expect(body.data).toEqual(
+      expect.arrayContaining([
+        {
+          id: ownedTrip.id,
+          title: "Owned Trip",
+          startDate: "2025-09-01T00:00:00.000Z",
+          endDate: "2025-09-03T00:00:00.000Z",
+          coverImageUrl: null,
+          updatedAt: ownedTrip.updatedAt.toISOString(),
+        },
+        {
+          id: invitedTrip.id,
+          title: "Invited Trip",
+          startDate: "2025-10-01T00:00:00.000Z",
+          endDate: "2025-10-03T00:00:00.000Z",
+          coverImageUrl: null,
+          updatedAt: invitedTrip.updatedAt.toISOString(),
+        },
+      ]),
+    );
+  });
+
   it("rejects unauthenticated requests", async () => {
     getToken.mockResolvedValue(null);
 
@@ -101,8 +173,129 @@ describe("GET /api/trips", () => {
     expect(body.error.code).toBe("UNAUTHORIZED");
   });
 
-  it("rejects non-creator requests", async () => {
+  it("returns viewer-invited trips with list fields", async () => {
+    const trip = await prisma.trip.create({
+      data: {
+        title: "Coastal Drive",
+        startDate: new Date("2025-07-01T00:00:00.000Z"),
+        endDate: new Date("2025-07-03T00:00:00.000Z"),
+        coverImageUrl: "https://example.com/coast.jpg",
+        ownerId: "creator",
+      },
+    });
+
+    const viewer = await prisma.user.create({
+      data: {
+        email: "viewer@example.com",
+        name: "Viewer",
+        role: "viewer",
+        passwordHash: "hash",
+      },
+    });
+
+    await prisma.tripAccess.create({
+      data: {
+        tripId: trip.id,
+        userId: viewer.id,
+      },
+    });
+
+    await prisma.trip.create({
+      data: {
+        title: "Private Trip",
+        startDate: new Date("2025-08-01T00:00:00.000Z"),
+        endDate: new Date("2025-08-05T00:00:00.000Z"),
+        ownerId: "creator",
+      },
+    });
+
+    getToken.mockResolvedValue({ sub: viewer.id, role: "viewer" });
+
+    const request = new Request("http://localhost/api/trips", {
+      method: "GET",
+    });
+
+    const response = await get(request);
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.error).toBeNull();
+    expect(Array.isArray(body.data)).toBe(true);
+    expect(body.data).toHaveLength(1);
+    expect(body.data[0]).toEqual({
+      id: trip.id,
+      title: "Coastal Drive",
+      startDate: "2025-07-01T00:00:00.000Z",
+      endDate: "2025-07-03T00:00:00.000Z",
+      coverImageUrl: "https://example.com/coast.jpg",
+      updatedAt: trip.updatedAt.toISOString(),
+    });
+  });
+
+  it("returns an empty list for viewers with no invites", async () => {
+    const viewer = await prisma.user.create({
+      data: {
+        email: "viewer.empty@example.com",
+        name: "Viewer",
+        role: "viewer",
+        passwordHash: "hash",
+      },
+    });
+
+    getToken.mockResolvedValue({ sub: viewer.id, role: "viewer" });
+
+    const request = new Request("http://localhost/api/trips", {
+      method: "GET",
+    });
+
+    const response = await get(request);
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.error).toBeNull();
+    expect(body.data).toEqual([]);
+  });
+
+  it("rejects inactive viewers", async () => {
+    const viewer = await prisma.user.create({
+      data: {
+        email: "viewer.inactive@example.com",
+        name: "Viewer",
+        role: "viewer",
+        passwordHash: "hash",
+        isActive: false,
+      },
+    });
+
+    getToken.mockResolvedValue({ sub: viewer.id, role: "viewer" });
+
+    const request = new Request("http://localhost/api/trips", {
+      method: "GET",
+    });
+
+    const response = await get(request);
+    const body = await response.json();
+
+    expect(response.status).toBe(403);
+    expect(body.error.code).toBe("FORBIDDEN");
+  });
+
+  it("rejects requests with missing roles", async () => {
     getToken.mockResolvedValue({ sub: "viewer" });
+
+    const request = new Request("http://localhost/api/trips", {
+      method: "GET",
+    });
+
+    const response = await get(request);
+    const body = await response.json();
+
+    expect(response.status).toBe(403);
+    expect(body.error.code).toBe("FORBIDDEN");
+  });
+
+  it("rejects requests with unknown roles", async () => {
+    getToken.mockResolvedValue({ sub: "viewer", role: "admin" });
 
     const request = new Request("http://localhost/api/trips", {
       method: "GET",

@@ -8,12 +8,13 @@ import EntryReader from "../../src/components/entries/entry-reader";
 
 vi.mock("next/image", () => ({
   default: (props: ImgHTMLAttributes<HTMLImageElement>) => {
-    const { priority, unoptimized, ...rest } = props;
+    const { priority, unoptimized, fill, ...rest } = props;
     return (
       <img
         {...rest}
         data-priority={priority ? "true" : undefined}
         data-unoptimized={unoptimized ? "true" : undefined}
+        data-fill={fill ? "true" : undefined}
       />
     );
   },

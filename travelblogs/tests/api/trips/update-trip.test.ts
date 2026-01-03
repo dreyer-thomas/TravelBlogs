@@ -40,7 +40,9 @@ describe("PATCH /api/trips/[id]", () => {
 
   beforeEach(async () => {
     getToken.mockReset();
+    await prisma.tripAccess.deleteMany();
     await prisma.trip.deleteMany();
+    await prisma.user.deleteMany();
   });
 
   afterAll(async () => {
@@ -48,7 +50,7 @@ describe("PATCH /api/trips/[id]", () => {
   });
 
   it("updates an owned trip", async () => {
-    getToken.mockResolvedValue({ sub: "creator" });
+    getToken.mockResolvedValue({ sub: "creator", role: "creator" });
     const trip = await prisma.trip.create({
       data: {
         title: "Old Title",
@@ -86,7 +88,7 @@ describe("PATCH /api/trips/[id]", () => {
   });
 
   it("clears the cover image when an empty string is sent", async () => {
-    getToken.mockResolvedValue({ sub: "creator" });
+    getToken.mockResolvedValue({ sub: "creator", role: "creator" });
     const trip = await prisma.trip.create({
       data: {
         title: "With Cover",
@@ -143,7 +145,7 @@ describe("PATCH /api/trips/[id]", () => {
   });
 
   it("rejects updates for trips not owned by the creator", async () => {
-    getToken.mockResolvedValue({ sub: "creator" });
+    getToken.mockResolvedValue({ sub: "creator", role: "creator" });
     const trip = await prisma.trip.create({
       data: {
         title: "Not Yours",
@@ -172,8 +174,105 @@ describe("PATCH /api/trips/[id]", () => {
     expect(body.error.code).toBe("FORBIDDEN");
   });
 
+  it("allows contributors to update invited trips", async () => {
+    const contributor = await prisma.user.create({
+      data: {
+        email: "contributor@example.com",
+        name: "Contributor",
+        role: "viewer",
+        passwordHash: "hash",
+      },
+    });
+
+    const trip = await prisma.trip.create({
+      data: {
+        title: "Shared Trip",
+        startDate: new Date("2025-04-01"),
+        endDate: new Date("2025-04-05"),
+        ownerId: "creator",
+      },
+    });
+
+    await prisma.tripAccess.create({
+      data: {
+        tripId: trip.id,
+        userId: contributor.id,
+        canContribute: true,
+      },
+    });
+
+    getToken.mockResolvedValue({ sub: contributor.id, role: "viewer" });
+
+    const request = new Request(`http://localhost/api/trips/${trip.id}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        title: "Contributor Update",
+        startDate: "2025-04-02",
+        endDate: "2025-04-06",
+      }),
+    });
+
+    const response = await patch(request, { params: { id: trip.id } });
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.error).toBeNull();
+    expect(body.data.title).toBe("Contributor Update");
+  });
+
+  it("rejects view-only invited users", async () => {
+    const viewer = await prisma.user.create({
+      data: {
+        email: "viewer@example.com",
+        name: "Viewer",
+        role: "viewer",
+        passwordHash: "hash",
+      },
+    });
+
+    const trip = await prisma.trip.create({
+      data: {
+        title: "Read Only Trip",
+        startDate: new Date("2025-04-01"),
+        endDate: new Date("2025-04-05"),
+        ownerId: "creator",
+      },
+    });
+
+    await prisma.tripAccess.create({
+      data: {
+        tripId: trip.id,
+        userId: viewer.id,
+        canContribute: false,
+      },
+    });
+
+    getToken.mockResolvedValue({ sub: viewer.id, role: "viewer" });
+
+    const request = new Request(`http://localhost/api/trips/${trip.id}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        title: "Denied Update",
+        startDate: "2025-04-02",
+        endDate: "2025-04-06",
+      }),
+    });
+
+    const response = await patch(request, { params: { id: trip.id } });
+    const body = await response.json();
+
+    expect(response.status).toBe(403);
+    expect(body.error.code).toBe("FORBIDDEN");
+  });
+
   it("returns not found when the trip does not exist", async () => {
-    getToken.mockResolvedValue({ sub: "creator" });
+    getToken.mockResolvedValue({ sub: "creator", role: "creator" });
 
     const request = new Request("http://localhost/api/trips/missing", {
       method: "PATCH",
@@ -195,7 +294,7 @@ describe("PATCH /api/trips/[id]", () => {
   });
 
   it("rejects invalid cover image URLs", async () => {
-    getToken.mockResolvedValue({ sub: "creator" });
+    getToken.mockResolvedValue({ sub: "creator", role: "creator" });
     const trip = await prisma.trip.create({
       data: {
         title: "Validation",
@@ -226,7 +325,7 @@ describe("PATCH /api/trips/[id]", () => {
   });
 
   it("rejects non-upload cover URLs", async () => {
-    getToken.mockResolvedValue({ sub: "creator" });
+    getToken.mockResolvedValue({ sub: "creator", role: "creator" });
     const trip = await prisma.trip.create({
       data: {
         title: "External",
@@ -257,7 +356,7 @@ describe("PATCH /api/trips/[id]", () => {
   });
 
   it("returns validation errors for invalid payloads", async () => {
-    getToken.mockResolvedValue({ sub: "creator" });
+    getToken.mockResolvedValue({ sub: "creator", role: "creator" });
     const trip = await prisma.trip.create({
       data: {
         title: "Validation",
@@ -287,7 +386,7 @@ describe("PATCH /api/trips/[id]", () => {
   });
 
   it("rejects non-ISO date strings", async () => {
-    getToken.mockResolvedValue({ sub: "creator" });
+    getToken.mockResolvedValue({ sub: "creator", role: "creator" });
     const trip = await prisma.trip.create({
       data: {
         title: "Validation",

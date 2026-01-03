@@ -17,6 +17,11 @@ type TripDetail = {
 
 type TripDetailProps = {
   tripId: string;
+  canAddEntry: boolean;
+  canEditTrip: boolean;
+  canDeleteTrip: boolean;
+  canManageShare: boolean;
+  canManageViewers: boolean;
 };
 
 type EntryMedia = {
@@ -76,7 +81,14 @@ const formatEntryDate = (value: string) =>
 
 const isOptimizedImage = (url: string) => url.startsWith("/");
 
-const TripDetail = ({ tripId }: TripDetailProps) => {
+const TripDetail = ({
+  tripId,
+  canAddEntry,
+  canEditTrip,
+  canDeleteTrip,
+  canManageShare,
+  canManageViewers,
+}: TripDetailProps) => {
   const [trip, setTrip] = useState<TripDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -195,6 +207,14 @@ const TripDetail = ({ tripId }: TripDetailProps) => {
     setShareCopied(false);
     setShareRevoked(false);
 
+    if (!canManageShare) {
+      setShareLink(null);
+      setShareLoading(false);
+      return () => {
+        isActive = false;
+      };
+    }
+
     const loadShareLink = async () => {
       try {
         const response = await fetch(`/api/trips/${tripId}/share-link`, {
@@ -230,7 +250,7 @@ const TripDetail = ({ tripId }: TripDetailProps) => {
     return () => {
       isActive = false;
     };
-  }, [tripId]);
+  }, [tripId, canManageShare]);
 
   useEffect(() => {
     if (!isSharePanelOpen) {
@@ -311,17 +331,30 @@ const TripDetail = ({ tripId }: TripDetailProps) => {
       }
     };
 
-    const loadSharePanelData = async () => {
-      await loadViewers();
-      await loadEligibleInvitees();
-    };
+    if (canManageViewers) {
+      const loadSharePanelData = async () => {
+        await loadViewers();
+        await loadEligibleInvitees();
+      };
 
-    loadSharePanelData();
+      loadSharePanelData();
+    } else {
+      setViewers([]);
+      setEligibleInvitees([]);
+      setViewersLoading(false);
+      setEligibleLoading(false);
+    }
 
     return () => {
       isActive = false;
     };
-  }, [isSharePanelOpen, tripId]);
+  }, [isSharePanelOpen, tripId, canManageViewers]);
+
+  useEffect(() => {
+    if (!canManageShare && isSharePanelOpen) {
+      setIsSharePanelOpen(false);
+    }
+  }, [canManageShare, isSharePanelOpen]);
 
   useEffect(() => {
     if (!isInviteeMenuOpen) {
@@ -725,17 +758,19 @@ const TripDetail = ({ tripId }: TripDetailProps) => {
               <span className="font-semibold text-[#2D2A26]">Owner:</span>
               <span>Creator</span>
             </div>
-            <button
-              type="button"
-              onClick={() => setIsSharePanelOpen((prev) => !prev)}
-              aria-label="Share trip"
-              className="inline-flex items-center gap-2 rounded-full border border-black/10 bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-[#6B635B] transition hover:border-[#1F6F78]/40 hover:text-[#1F6F78]"
-            >
-              Share
-            </button>
+            {canManageShare ? (
+              <button
+                type="button"
+                onClick={() => setIsSharePanelOpen((prev) => !prev)}
+                aria-label="Share trip"
+                className="inline-flex items-center gap-2 rounded-full border border-black/10 bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-[#6B635B] transition hover:border-[#1F6F78]/40 hover:text-[#1F6F78]"
+              >
+                Share
+              </button>
+            ) : null}
           </div>
 
-          {isSharePanelOpen ? (
+          {canManageShare && isSharePanelOpen ? (
             <div className="relative mt-4 rounded-2xl border border-black/10 bg-[#FBF7F1] p-4 text-sm text-[#6B635B]">
               <p className="text-xs uppercase tracking-[0.2em] text-[#6B635B]">
                 Share link
@@ -780,16 +815,17 @@ const TripDetail = ({ tripId }: TripDetailProps) => {
                 </button>
               )}
 
-              <div className="mt-6 border-t border-black/10 pt-4">
-                <p className="text-xs uppercase tracking-[0.2em] text-[#6B635B]">
-                  Invite viewers
-                </p>
-                <p className="mt-2">
-                  Invite existing users to view this trip.
-                </p>
-                <p className="mt-1 text-xs text-[#6B635B]">
-                  Contributor access applies to this trip only.
-                </p>
+              {canManageViewers ? (
+                <div className="mt-6 border-t border-black/10 pt-4">
+                  <p className="text-xs uppercase tracking-[0.2em] text-[#6B635B]">
+                    Invite viewers
+                  </p>
+                  <p className="mt-2">
+                    Invite existing users to view this trip.
+                  </p>
+                  <p className="mt-1 text-xs text-[#6B635B]">
+                    Contributor access applies to this trip only.
+                  </p>
 
                 {viewersError ? (
                   <p className="mt-3 text-sm text-[#B34A3C]">{viewersError}</p>
@@ -996,10 +1032,11 @@ const TripDetail = ({ tripId }: TripDetailProps) => {
                   </button>
                 </div>
 
-                {inviteError ? (
-                  <p className="mt-3 text-sm text-[#B34A3C]">{inviteError}</p>
-                ) : null}
-              </div>
+                  {inviteError ? (
+                    <p className="mt-3 text-sm text-[#B34A3C]">{inviteError}</p>
+                  ) : null}
+                </div>
+              ) : null}
             </div>
           ) : null}
         </section>
@@ -1063,14 +1100,16 @@ const TripDetail = ({ tripId }: TripDetailProps) => {
 
 
         <section className="rounded-2xl border border-black/10 bg-white p-8 shadow-sm">
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <Link
-              href={`/trips/${trip.id}/entries/new`}
-              className="rounded-xl bg-[#1F6F78] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#195C63]"
-            >
-              Add story
-            </Link>
-          </div>
+          {canAddEntry ? (
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <Link
+                href={`/trips/${trip.id}/entries/new`}
+                className="rounded-xl bg-[#1F6F78] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#195C63]"
+              >
+                Add story
+              </Link>
+            </div>
+          ) : null}
 
           {entriesLoading ? (
             <p className="mt-4 text-sm text-[#6B635B]">Loading entries…</p>
@@ -1139,34 +1178,40 @@ const TripDetail = ({ tripId }: TripDetailProps) => {
           )}
         </section>
 
-        <section className="rounded-2xl border border-black/10 bg-white p-6 shadow-sm">
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div>
-              <p className="text-xs uppercase tracking-[0.2em] text-[#6B635B]">
-                Trip actions
-              </p>
+        {canEditTrip || canDeleteTrip || (canManageShare && shareLink) ? (
+          <section className="rounded-2xl border border-black/10 bg-white p-6 shadow-sm">
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <div>
+                <p className="text-xs uppercase tracking-[0.2em] text-[#6B635B]">
+                  Trip actions
+                </p>
+              </div>
+              <div className="flex flex-wrap items-center gap-3">
+                {canEditTrip ? (
+                  <Link
+                    href={`/trips/${trip.id}/edit`}
+                    className="rounded-xl bg-[#1F6F78] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#195C63]"
+                  >
+                    Edit trip
+                  </Link>
+                ) : null}
+                {canDeleteTrip ? (
+                  <DeleteTripModal tripId={trip.id} tripTitle={trip.title} />
+                ) : null}
+                {canManageShare && shareLink ? (
+                  <button
+                    type="button"
+                    onClick={handleOpenRevoke}
+                    className="rounded-xl border border-[#B64A3A] px-4 py-2 text-sm font-semibold text-[#B64A3A] transition hover:bg-[#B64A3A]/10"
+                    disabled={shareLoading || isRevoking}
+                  >
+                    Revoke share link
+                  </button>
+                ) : null}
+              </div>
             </div>
-            <div className="flex flex-wrap items-center gap-3">
-              <Link
-                href={`/trips/${trip.id}/edit`}
-                className="rounded-xl bg-[#1F6F78] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#195C63]"
-              >
-                Edit trip
-              </Link>
-              <DeleteTripModal tripId={trip.id} tripTitle={trip.title} />
-              {shareLink ? (
-                <button
-                  type="button"
-                  onClick={handleOpenRevoke}
-                  className="rounded-xl border border-[#B64A3A] px-4 py-2 text-sm font-semibold text-[#B64A3A] transition hover:bg-[#B64A3A]/10"
-                  disabled={shareLoading || isRevoking}
-                >
-                  Revoke share link
-                </button>
-              ) : null}
-            </div>
-          </div>
-        </section>
+          </section>
+        ) : null}
       </main>
 
       {isRevokeOpen ? (

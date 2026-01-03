@@ -45,7 +45,7 @@ describe("POST /api/trips", () => {
   });
 
   it("creates a trip with valid data", async () => {
-    getToken.mockResolvedValue({ sub: "creator" });
+    getToken.mockResolvedValue({ sub: "creator", role: "creator" });
 
     const request = new Request("http://localhost/api/trips", {
       method: "POST",
@@ -71,7 +71,7 @@ describe("POST /api/trips", () => {
   });
 
   it("returns validation errors for missing fields", async () => {
-    getToken.mockResolvedValue({ sub: "creator" });
+    getToken.mockResolvedValue({ sub: "creator", role: "creator" });
 
     const request = new Request("http://localhost/api/trips", {
       method: "POST",
@@ -93,7 +93,7 @@ describe("POST /api/trips", () => {
   });
 
   it("returns validation errors for invalid date strings", async () => {
-    getToken.mockResolvedValue({ sub: "creator" });
+    getToken.mockResolvedValue({ sub: "creator", role: "creator" });
 
     const request = new Request("http://localhost/api/trips", {
       method: "POST",
@@ -115,7 +115,7 @@ describe("POST /api/trips", () => {
   });
 
   it("returns validation errors for invalid cover image URLs", async () => {
-    getToken.mockResolvedValue({ sub: "creator" });
+    getToken.mockResolvedValue({ sub: "creator", role: "creator" });
 
     const request = new Request("http://localhost/api/trips", {
       method: "POST",
@@ -138,7 +138,7 @@ describe("POST /api/trips", () => {
   });
 
   it("rejects cover images that are not from the upload endpoint", async () => {
-    getToken.mockResolvedValue({ sub: "creator" });
+    getToken.mockResolvedValue({ sub: "creator", role: "creator" });
 
     const request = new Request("http://localhost/api/trips", {
       method: "POST",
@@ -161,7 +161,7 @@ describe("POST /api/trips", () => {
   });
 
   it("returns validation errors when end date precedes start date", async () => {
-    getToken.mockResolvedValue({ sub: "creator" });
+    getToken.mockResolvedValue({ sub: "creator", role: "creator" });
 
     const request = new Request("http://localhost/api/trips", {
       method: "POST",
