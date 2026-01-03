@@ -91,7 +91,7 @@ development_status:
   5-8-admin-deactivates-user: backlog
   5-9-administrator-role-and-admin-safeguards: backlog
   5-10-refine-viewer-invitations-with-custom-selector: done
-  5-11-change-password: ready-for-dev
+  5-11-change-password: done
   5-12-shared-view-button: ready-for-dev
   5-13-active-badge-date-range: ready-for-dev
   epic-5-retrospective: optional

@@ -13,6 +13,7 @@ describe("validateCredentials", () => {
     email: string;
     name: string;
     role: string;
+    mustChangePassword?: boolean;
   } | null>;
 
   beforeAll(async () => {
@@ -64,6 +65,7 @@ describe("validateCredentials", () => {
         name: "Viewer",
         role: "viewer",
         passwordHash,
+        mustChangePassword: true,
       },
     });
 
@@ -73,6 +75,7 @@ describe("validateCredentials", () => {
       email: "viewer@example.com",
       name: "Viewer",
       role: "viewer",
+      mustChangePassword: true,
     });
   });
 

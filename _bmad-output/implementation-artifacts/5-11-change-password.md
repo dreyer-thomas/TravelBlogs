@@ -1,6 +1,6 @@
 # Story 5.11: Change Password
 
-Status: ready-for-dev
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -30,28 +30,28 @@ so that I can keep my account secure.
 
 ## Tasks / Subtasks
 
-- [ ] Add first-login password change tracking (AC: 3, 4)
-  - [ ] Add `mustChangePassword` boolean to `User` (default `false` in migration)
-  - [ ] Set `mustChangePassword = true` when admin creates a user
-- [ ] Expose must-change state in auth session (AC: 3, 4)
-  - [ ] Extend `validateCredentials` to include `mustChangePassword` for DB users
-  - [ ] Add `mustChangePassword` to JWT + session callbacks and NextAuth typings
-- [ ] Add change password API (AC: 1, 2, 4)
-  - [ ] Add `PATCH /api/users/[id]/password` (self-service only)
-  - [ ] Validate payload with Zod: `{ currentPassword, newPassword }`
-  - [ ] Verify current password with bcryptjs; hash new password with cost 12
-  - [ ] On success, update `passwordHash` and set `mustChangePassword = false`
-- [ ] Enforce first-login flow (AC: 3, 4)
-  - [ ] Update middleware to redirect users with `mustChangePassword` to `/account/password`
-  - [ ] Allow access to `/account/password`, `/sign-in`, and auth APIs while gated
-- [ ] Add change password UI (AC: 1, 2, 4)
-  - [ ] Create `/account/password` page with current + new password fields
-  - [ ] Use warm palette + typography tokens; show clear validation messages
-  - [ ] On success, route to `callbackUrl` (default `/trips`)
-- [ ] Add/adjust tests (AC: 1-4)
-  - [ ] API tests for change password success/failure and `mustChangePassword` clearing
-  - [ ] Auth tests for `validateCredentials` returning `mustChangePassword`
-  - [ ] Middleware tests for forced redirect to `/account/password`
+- [x] Add first-login password change tracking (AC: 3, 4)
+  - [x] Add `mustChangePassword` boolean to `User` (default `false` in migration)
+  - [x] Set `mustChangePassword = true` when admin creates a user
+- [x] Expose must-change state in auth session (AC: 3, 4)
+  - [x] Extend `validateCredentials` to include `mustChangePassword` for DB users
+  - [x] Add `mustChangePassword` to JWT + session callbacks and NextAuth typings
+- [x] Add change password API (AC: 1, 2, 4)
+  - [x] Add `PATCH /api/users/[id]/password` (self-service only)
+  - [x] Validate payload with Zod: `{ currentPassword, newPassword }`
+  - [x] Verify current password with bcryptjs; hash new password with cost 12
+  - [x] On success, update `passwordHash` and set `mustChangePassword = false`
+- [x] Enforce first-login flow (AC: 3, 4)
+  - [x] Update middleware to redirect users with `mustChangePassword` to `/account/password`
+  - [x] Allow access to `/account/password`, `/sign-in`, and auth APIs while gated
+- [x] Add change password UI (AC: 1, 2, 4)
+  - [x] Create `/account/password` page with current + new password fields
+  - [x] Use warm palette + typography tokens; show clear validation messages
+  - [x] On success, route to `callbackUrl` (default `/trips`)
+- [x] Add/adjust tests (AC: 1-4)
+  - [x] API tests for change password success/failure and `mustChangePassword` clearing
+  - [x] Auth tests for `validateCredentials` returning `mustChangePassword`
+  - [x] Middleware tests for forced redirect to `/account/password`
 
 ## Dev Notes
 
@@ -127,7 +127,7 @@ so that I can keep my account secure.
 
 ### Story Completion Status
 
-- Status: ready-for-dev
+- Status: review
 - Completion note: Ultimate context engine analysis completed - comprehensive developer guide created.
 
 ### Project Structure Notes
@@ -153,24 +153,64 @@ so that I can keep my account secure.
 
 Codex (GPT-5)
 
+### Implementation Plan
+
+- Add `mustChangePassword` to the User model with a default false migration.
+- Set `mustChangePassword` to true when admin creates users.
+- Extend the user creation test to assert the must-change flag.
+- Return `mustChangePassword` from credential validation and propagate it to JWT/session payloads.
+- Create a change-password page with a client form that validates input and routes to the callback URL.
+
 ### Debug Log References
 
 ### Completion Notes List
 
 - Drafted change-password flow with forced first-login change and middleware gating.
 - Added API, schema, auth callback, and UI requirements plus test coverage expectations.
+- Added `mustChangePassword` field + migration, set admin-created users to require change, updated user creation test, ran `npx vitest run tests/api/users/create-user.test.ts`.
+- Added `mustChangePassword` to credentials auth results and NextAuth session/JWT, updated auth test, ran `npx vitest run tests/api/auth/credentials.test.ts`.
+- Added self-service change-password API with bcrypt validation and payload checks, plus API tests; ran `npx vitest run tests/api/users/change-password.test.ts`.
+- Added middleware gating for must-change users with redirect and allowlist, updated middleware tests, ran `npx vitest run tests/api/auth/middleware.test.ts`.
+- Added change password page + form with callback redirect and validation, plus component tests; ran `npx vitest run tests/components/change-password-form.test.tsx`.
+- Ran full regression suite with `npm test`.
+- Added user avatar menu with change password + check out actions.
+- Ran `npx vitest run tests/components/user-menu.test.tsx`.
+- Moved the avatar menu beside Manage users/Create trip actions and removed the global layout placement.
+- Guarded legacy creator account from change-password API with a clear error.
+- Tightened must-change middleware allowlist to only auth/password APIs and preserved callbackUrl query params; updated middleware tests.
 
 ### File List
 
-- _bmad-output/epics.md
-- _bmad-output/architecture.md
-- _bmad-output/project-context.md
-- _bmad-output/ux-design-specification.md
+- .codex/history.jsonl
+- .codex/log/codex-tui.log
+- .codex/sessions/2026/01/03/rollout-2026-01-03T13-54-09-019b83ec-22c4-7073-bbed-758a085c5209.jsonl
+- .codex/sessions/2026/01/03/rollout-2026-01-03T13-54-37-019b83ec-91a5-7cf2-ac97-53d7ea2c87b4.jsonl
+- .codex/sessions/2026/01/03/rollout-2026-01-03T14-27-13-019b840a-6b1a-7f82-a376-6e8ca97592a0.jsonl
+- _bmad-output/implementation-artifacts/5-11-change-password.md
+- _bmad-output/implementation-artifacts/sprint-status.yaml
 - travelblogs/prisma/schema.prisma
+- travelblogs/prisma/migrations/20260104120000_add_user_must_change_password/migration.sql
 - travelblogs/src/app/api/users/route.ts
-- travelblogs/src/app/api/users/[id]/route.ts
+- travelblogs/tests/api/users/create-user.test.ts
+- travelblogs/src/app/api/users/[id]/password/route.ts
+- travelblogs/tests/api/users/change-password.test.ts
+- travelblogs/src/middleware.ts
+- travelblogs/tests/api/auth/middleware.test.ts
+- travelblogs/src/components/account/change-password-form.tsx
+- travelblogs/src/app/account/password/page.tsx
+- travelblogs/tests/components/change-password-form.test.tsx
+- travelblogs/src/app/trips/page.tsx
+- travelblogs/src/app/layout.tsx
+- travelblogs/src/components/account/user-menu.tsx
+- travelblogs/tests/components/user-menu.test.tsx
 - travelblogs/src/utils/auth.ts
 - travelblogs/src/utils/auth-options.ts
 - travelblogs/src/types/next-auth.d.ts
-- travelblogs/src/app/sign-in/page.tsx
-- travelblogs/src/middleware.ts
+- travelblogs/tests/api/auth/credentials.test.ts
+
+## Change Log
+
+- 2026-01-03: Added change-password enforcement, API + UI flow, and tests for must-change behavior.
+- 2026-01-03: Added avatar menu with change password + check out actions in the app header.
+- 2026-01-03: Moved avatar menu into the Trips header action group.
+- 2026-01-03: Blocked legacy creator password changes with explicit error messaging.

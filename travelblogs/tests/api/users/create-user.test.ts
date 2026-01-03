@@ -76,6 +76,7 @@ describe("/api/users", () => {
     });
     expect(created).not.toBeNull();
     expect(created?.passwordHash).not.toBe("Password123!");
+    expect(created).toMatchObject({ mustChangePassword: true });
   });
 
   it("lists users for admins", async () => {

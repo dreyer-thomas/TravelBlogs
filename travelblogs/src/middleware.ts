@@ -40,6 +40,10 @@ const isProtectedPath = (pathname: string) => {
     return false;
   }
 
+  if (pathname === "/account/password") {
+    return true;
+  }
+
   if (pathname.startsWith("/trips")) {
     return true;
   }
@@ -51,21 +55,47 @@ const isProtectedPath = (pathname: string) => {
   return false;
 };
 
+const getCallbackUrl = (request: NextRequest) =>
+  `${request.nextUrl.pathname}${request.nextUrl.search}`;
+
+const isAllowedMustChangeApi = (pathname: string) => {
+  if (pathname.startsWith("/api/auth")) {
+    return true;
+  }
+
+  if (pathname.startsWith("/api/users/") && pathname.endsWith("/password")) {
+    return true;
+  }
+
+  return false;
+};
+
 export const middleware = async (request: NextRequest) => {
   const { pathname } = request.nextUrl;
+
+  const token = await getToken({ req: request });
+  if (token?.mustChangePassword) {
+    if (
+      pathname !== "/account/password" &&
+      pathname !== "/sign-in" &&
+      !isAllowedMustChangeApi(pathname)
+    ) {
+      const passwordUrl = new URL("/account/password", request.url);
+      passwordUrl.searchParams.set("callbackUrl", getCallbackUrl(request));
+      return NextResponse.redirect(passwordUrl);
+    }
+  }
 
   if (!isProtectedPath(pathname)) {
     return NextResponse.next();
   }
-
-  const token = await getToken({ req: request });
 
   if (token) {
     return NextResponse.next();
   }
 
   const signInUrl = new URL("/sign-in", request.url);
-  signInUrl.searchParams.set("callbackUrl", pathname);
+  signInUrl.searchParams.set("callbackUrl", getCallbackUrl(request));
   return NextResponse.redirect(signInUrl);
 };
 
@@ -73,6 +103,7 @@ export const config = {
   matcher: [
     "/trips/:path*",
     "/entries/:path*",
+    "/account/:path*",
     "/api/:path*",
   ],
 };

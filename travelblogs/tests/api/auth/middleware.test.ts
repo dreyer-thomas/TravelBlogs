@@ -61,4 +61,48 @@ describe("middleware", () => {
       "http://localhost/sign-in?callbackUrl=%2Ftrips%2Fabc123",
     );
   });
+
+  it("redirects must-change users to the password page", async () => {
+    getToken.mockResolvedValue({ sub: "viewer", mustChangePassword: true });
+    const response = await middleware(makeRequest("/trips"));
+    expect(response?.headers.get("location")).toBe(
+      "http://localhost/account/password?callbackUrl=%2Ftrips",
+    );
+  });
+
+  it("allows must-change users to access the password page", async () => {
+    getToken.mockResolvedValue({ sub: "viewer", mustChangePassword: true });
+    const response = await middleware(makeRequest("/account/password"));
+    expect(response?.headers.get("x-middleware-next")).toBe("1");
+  });
+
+  it("redirects must-change users away from protected APIs", async () => {
+    getToken.mockResolvedValue({ sub: "viewer", mustChangePassword: true });
+    const response = await middleware(makeRequest("/api/trips?view=all"));
+    expect(response?.headers.get("location")).toBe(
+      "http://localhost/account/password?callbackUrl=%2Fapi%2Ftrips%3Fview%3Dall",
+    );
+  });
+
+  it("allows must-change users to reach auth APIs", async () => {
+    getToken.mockResolvedValue({ sub: "viewer", mustChangePassword: true });
+    const response = await middleware(makeRequest("/api/auth/session"));
+    expect(response?.headers.get("x-middleware-next")).toBe("1");
+  });
+
+  it("allows must-change users to reach password update API", async () => {
+    getToken.mockResolvedValue({ sub: "viewer", mustChangePassword: true });
+    const response = await middleware(
+      makeRequest("/api/users/user-1/password"),
+    );
+    expect(response?.headers.get("x-middleware-next")).toBe("1");
+  });
+
+  it("preserves query params in callbackUrl", async () => {
+    getToken.mockResolvedValue(null);
+    const response = await middleware(makeRequest("/trips?source=share"));
+    expect(response?.headers.get("location")).toBe(
+      "http://localhost/sign-in?callbackUrl=%2Ftrips%3Fsource%3Dshare",
+    );
+  });
 });

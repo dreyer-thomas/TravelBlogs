@@ -138,6 +138,7 @@ export const POST = async (request: Request) => {
         name: parsed.data.name,
         role: parsed.data.role,
         passwordHash,
+        mustChangePassword: true,
       },
     });
 

@@ -8,6 +8,7 @@ type AuthUser = {
   name: string;
   email: string;
   role: UserRole;
+  mustChangePassword?: boolean;
 };
 
 const creatorUser: AuthUser = {
@@ -62,5 +63,6 @@ export const validateCredentials = async (
     name: user.name,
     email: user.email,
     role: user.role,
+    mustChangePassword: user.mustChangePassword,
   };
 };

@@ -5,6 +5,7 @@ import { headers } from "next/headers";
 import Link from "next/link";
 
 import { authOptions } from "../../utils/auth-options";
+import UserMenu from "../../components/account/user-menu";
 import TripCard from "../../components/trips/trip-card";
 
 export const dynamic = "force-dynamic";
@@ -45,6 +46,7 @@ const TripsPage = async () => {
   const role = session.user.role ?? null;
   const isCreator = role === "creator";
   const isViewer = role === "viewer";
+  const userEmail = session.user.email ?? "";
 
   if (!isCreator && !isViewer) {
     return (
@@ -108,6 +110,13 @@ const TripsPage = async () => {
               >
                 Create trip
               </Link>
+              <div className="relative">
+                <UserMenu
+                  name={session.user.name}
+                  email={userEmail}
+                  className="relative"
+                />
+              </div>
             </div>
           ) : null}
         </header>
