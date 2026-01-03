@@ -296,4 +296,27 @@ describe("EntryDetail", () => {
     expect(screen.getByText("Edit entry")).toBeInTheDocument();
     expect(screen.queryByText("Delete entry")).not.toBeInTheDocument();
   });
+
+  it("hides entry actions for view-only users", () => {
+    render(
+      <EntryDetail
+        entry={{
+          id: "entry-8",
+          tripId: "trip-4",
+          title: "View only entry",
+          coverImageUrl: null,
+          text: "Read-only memories.",
+          createdAt: "2025-05-07T00:00:00.000Z",
+          updatedAt: "2025-05-07T00:00:00.000Z",
+          media: [],
+        }}
+        canEdit={false}
+        canDelete={false}
+      />,
+    );
+
+    expect(screen.queryByText("Entry actions")).not.toBeInTheDocument();
+    expect(screen.queryByText("Edit entry")).not.toBeInTheDocument();
+    expect(screen.queryByText("Delete entry")).not.toBeInTheDocument();
+  });
 });

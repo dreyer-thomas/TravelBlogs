@@ -70,11 +70,26 @@ const getUserId = async (request: Request) => {
   }
 };
 
+const ensureActiveUser = async (userId: string) => {
+  if (userId === "creator") {
+    return true;
+  }
+  const account = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { isActive: true },
+  });
+  return account?.isActive !== false;
+};
+
 export const POST = async (request: Request) => {
   try {
     const userId = await getUserId(request);
     if (!userId) {
       return jsonError(401, "UNAUTHORIZED", "Authentication required.");
+    }
+    const isActive = await ensureActiveUser(userId);
+    if (!isActive) {
+      return jsonError(403, "FORBIDDEN", "Account is inactive.");
     }
 
     let body: unknown;

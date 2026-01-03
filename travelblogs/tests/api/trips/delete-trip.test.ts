@@ -85,6 +85,28 @@ describe("DELETE /api/trips/[id]", () => {
     expect(body.error.code).toBe("UNAUTHORIZED");
   });
 
+  it("rejects viewer deletes for trips", async () => {
+    getToken.mockResolvedValue({ sub: "viewer-1", role: "viewer" });
+
+    const trip = await prisma.trip.create({
+      data: {
+        title: "Viewer Blocked",
+        startDate: new Date("2025-06-01"),
+        endDate: new Date("2025-06-02"),
+        ownerId: "creator",
+      },
+    });
+
+    const request = new Request(`http://localhost/api/trips/${trip.id}`, {
+      method: "DELETE",
+    });
+    const response = await del(request, { params: { id: trip.id } });
+    const body = await response.json();
+
+    expect(response.status).toBe(403);
+    expect(body.error.code).toBe("FORBIDDEN");
+  });
+
   it("rejects deleting trips not owned by the creator", async () => {
     getToken.mockResolvedValue({ sub: "creator", role: "creator" });
     const trip = await prisma.trip.create({

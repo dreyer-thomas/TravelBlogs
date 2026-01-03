@@ -1,6 +1,6 @@
 # Story 5.7: Contributor Adds and Edits Entries
 
-Status: ready-for-dev
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -24,26 +24,26 @@ so that I can help tell the story.
 
 ## Tasks / Subtasks
 
-- [ ] Confirm contributor permissions on entry APIs (AC: 1, 2)
-  - [ ] Verify `POST /api/entries` allows `canContribute === true`
-  - [ ] Verify `PATCH /api/entries/:id` allows `canContribute === true`
-  - [ ] Keep `DELETE /api/entries/:id` creator-only
-- [ ] Allow contributors to edit trip metadata (AC: 3)
-  - [ ] Update `PATCH /api/trips/:id` to allow `canContribute === true`
-  - [ ] Keep `DELETE /api/trips/:id` creator-only
-- [ ] Allow contributors into entry UI flows (AC: 1, 2)
-  - [ ] Update entry detail page server gating to allow `TripAccess` users
-  - [ ] Update edit entry page server gating to allow contributors
-  - [ ] Ensure edit action is visible for contributors but delete remains creator-only
-- [ ] Guard non-contributors from create/edit flows (AC: 1, 2)
-  - [ ] If user lacks `canContribute`, block access to create/edit pages with `notFound`
-  - [ ] Keep view-only users read-only
-- [ ] Add/adjust tests (AC: 1, 2)
-  - [ ] API tests for contributor create/edit success and viewer denial
-  - [ ] Component/page tests for contributor edit visibility and delete hidden
-- [ ] Add/adjust tests for trip metadata edits (AC: 3)
-  - [ ] API tests for contributor trip edit success and viewer denial
-  - [ ] Ensure delete remains creator-only
+- [x] Confirm contributor permissions on entry APIs (AC: 1, 2)
+  - [x] Verify `POST /api/entries` allows `canContribute === true`
+  - [x] Verify `PATCH /api/entries/:id` allows `canContribute === true`
+  - [x] Keep `DELETE /api/entries/:id` creator-only
+- [x] Allow contributors to edit trip metadata (AC: 3)
+  - [x] Update `PATCH /api/trips/:id` to allow `canContribute === true`
+  - [x] Keep `DELETE /api/trips/:id` creator-only
+- [x] Allow contributors into entry UI flows (AC: 1, 2)
+  - [x] Update entry detail page server gating to allow `TripAccess` users
+  - [x] Update edit entry page server gating to allow contributors
+  - [x] Ensure edit action is visible for contributors but delete remains creator-only
+- [x] Guard non-contributors from create/edit flows (AC: 1, 2)
+  - [x] If user lacks `canContribute`, block access to create/edit pages with `notFound`
+  - [x] Keep view-only users read-only
+- [x] Add/adjust tests (AC: 1, 2)
+  - [x] API tests for contributor create/edit success and viewer denial
+  - [x] Component/page tests for contributor edit visibility and delete hidden
+- [x] Add/adjust tests for trip metadata edits (AC: 3)
+  - [x] API tests for contributor trip edit success and viewer denial
+  - [x] Ensure delete remains creator-only
 
 ## Dev Notes
 
@@ -117,8 +117,8 @@ so that I can help tell the story.
 
 ### Story Completion Status
 
-- Status: ready-for-dev
-- Completion note: Ultimate context engine analysis completed - comprehensive developer guide created.
+- Status: done
+- Completion note: Contributor entry and trip metadata permissions validated with new tests; inactive owners blocked from entry create/edit; full test suite passing.
 
 ### Project Structure Notes
 
@@ -136,6 +136,11 @@ so that I can help tell the story.
 - Entry UI: `travelblogs/src/components/entries/entry-detail.tsx`
 - Trip access helper: `travelblogs/src/utils/trip-access.ts`
 
+## Change Log
+
+- Addressed contributor create/edit access verification and expanded tests for view-only users and delete permissions. (Date: 2025-12-29)
+- Added inactive owner guardrails for entry create/edit and documented current working set, including tooling artifacts. (Date: 2026-01-03)
+
 ## Dev Agent Record
 
 ### Agent Model Used
@@ -148,17 +153,27 @@ Codex (GPT-5)
 
 - Drafted contributor entry flow guidance focusing on UI gating and action visibility.
 - Reused existing contributor API checks and access helper patterns.
+- Verified entry API permissions for contributors and creator-only deletes; full test suite passed (`npm test`).
+- Confirmed trip metadata contributor permissions and creator-only delete; full test suite passed (`npm test`).
+- Confirmed entry detail/edit gating and action visibility already allow contributors while keeping deletes owner-only; full test suite passed (`npm test`).
+- Verified create/edit gating for non-contributors and added tests for view-only entry edit denial and action visibility; full test suite passed (`npm test`).
+- Added inactive owner checks for entry create/edit and tests covering blocked inactive owners.
 
 ### File List
 
-- _bmad-output/epics.md
-- _bmad-output/architecture.md
-- _bmad-output/project-context.md
-- _bmad-output/implementation-artifacts/5-5-enable-contributor-access-for-a-viewer.md
-- _bmad-output/implementation-artifacts/5-6-viewer-access-to-invited-trips.md
+- .codex/history.jsonl
+- .codex/log/codex-tui.log
+- .codex/sessions/2026/01/03/rollout-2026-01-03T12-41-26-019b83a9-8f57-7761-a03c-120012bf2623.jsonl
+- .codex/sessions/2026/01/03/rollout-2026-01-03T13-31-41-019b83d7-9184-75c3-8a26-b9ea846958b0.jsonl
+- .codex/sessions/2026/01/03/rollout-2026-01-03T13-40-56-019b83e0-0a40-77c3-bce3-f3138c56b77c.jsonl
+- _bmad-output/implementation-artifacts/5-7-contributor-adds-and-edits-entries.md
+- _bmad-output/implementation-artifacts/6-4-user-manual.md
+- _bmad-output/implementation-artifacts/6-5-language-selection.md
+- _bmad-output/implementation-artifacts/sprint-status.yaml
+- _bmad-output/implementation-artifacts/validation-report-20260103T123708Z.md
+- travelblogs/tests/api/entries/create-entry.test.ts
+- travelblogs/tests/api/entries/update-entry.test.ts
+- travelblogs/tests/api/trips/delete-trip.test.ts
+- travelblogs/tests/components/entry-detail.test.tsx
 - travelblogs/src/app/api/entries/route.ts
 - travelblogs/src/app/api/entries/[id]/route.ts
-- travelblogs/src/app/trips/[tripId]/entries/[entryId]/page.tsx
-- travelblogs/src/app/trips/[tripId]/entries/[entryId]/edit/page.tsx
-- travelblogs/src/components/entries/entry-detail.tsx
-- travelblogs/src/utils/trip-access.ts

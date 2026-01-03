@@ -87,16 +87,19 @@ development_status:
   5-4-invite-viewers-to-a-trip: done
   5-5-enable-contributor-access-for-a-viewer: done
   5-6-viewer-access-to-invited-trips: done
-  5-7-contributor-adds-and-edits-entries: ready-for-dev
+  5-7-contributor-adds-and-edits-entries: done
   5-8-admin-deactivates-user: backlog
   5-9-administrator-role-and-admin-safeguards: backlog
   5-10-refine-viewer-invitations-with-custom-selector: done
   5-11-change-password: ready-for-dev
   5-12-shared-view-button: ready-for-dev
+  5-13-active-badge-date-range: ready-for-dev
   epic-5-retrospective: optional
 
   epic-6: backlog
   6-1-trip-map-view: backlog
   6-2-trip-timeline-view: backlog
   6-3-extract-coordinates-from-photo-metadata: backlog
+  6-4-user-manual: ready-for-dev
+  6-5-language-selection: ready-for-dev
   epic-6-retrospective: optional

@@ -240,6 +240,56 @@ describe("POST /api/entries", () => {
     expect(body.data.tripId).toBe(trip.id);
   });
 
+  it("rejects view-only users from creating entries", async () => {
+    getToken.mockResolvedValue({ sub: "viewer-1" });
+
+    const trip = await prisma.trip.create({
+      data: {
+        title: "Read Only Trip",
+        startDate: new Date("2025-05-01"),
+        endDate: new Date("2025-05-10"),
+        ownerId: "creator",
+      },
+    });
+
+    await prisma.user.create({
+      data: {
+        id: "viewer-1",
+        email: "viewer-1@example.com",
+        name: "Viewer One",
+        role: "viewer",
+        passwordHash: "hash",
+      },
+    });
+
+    await prisma.tripAccess.create({
+      data: {
+        tripId: trip.id,
+        userId: "viewer-1",
+        canContribute: false,
+      },
+    });
+
+    const request = new Request("http://localhost/api/entries", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        tripId: trip.id,
+        title: "Denied entry",
+        text: "Denied entry text.",
+        mediaUrls: ["/uploads/entries/rome-1.jpg"],
+      }),
+    });
+
+    const response = await post(request);
+    const body = await response.json();
+
+    expect(response.status).toBe(403);
+    expect(body.error.code).toBe("FORBIDDEN");
+  });
+
   it("rejects inactive contributors from creating entries", async () => {
     getToken.mockResolvedValue({ sub: "viewer-1" });
 
@@ -280,6 +330,49 @@ describe("POST /api/entries", () => {
         tripId: trip.id,
         title: "Contributor entry",
         text: "Contributor entry text.",
+        mediaUrls: ["/uploads/entries/rome-1.jpg"],
+      }),
+    });
+
+    const response = await post(request);
+    const body = await response.json();
+
+    expect(response.status).toBe(403);
+    expect(body.error.code).toBe("FORBIDDEN");
+  });
+
+  it("rejects inactive owners from creating entries", async () => {
+    getToken.mockResolvedValue({ sub: "owner-1" });
+
+    await prisma.user.create({
+      data: {
+        id: "owner-1",
+        email: "owner-1@example.com",
+        name: "Owner One",
+        role: "creator",
+        passwordHash: "hash",
+        isActive: false,
+      },
+    });
+
+    const trip = await prisma.trip.create({
+      data: {
+        title: "Inactive owner trip",
+        startDate: new Date("2025-05-01"),
+        endDate: new Date("2025-05-10"),
+        ownerId: "owner-1",
+      },
+    });
+
+    const request = new Request("http://localhost/api/entries", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        tripId: trip.id,
+        title: "Owner entry",
+        text: "Owner entry text.",
         mediaUrls: ["/uploads/entries/rome-1.jpg"],
       }),
     });

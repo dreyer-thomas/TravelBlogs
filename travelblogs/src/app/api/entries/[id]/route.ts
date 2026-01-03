@@ -31,6 +31,17 @@ const getUserId = async (request: Request) => {
   }
 };
 
+const ensureActiveUser = async (userId: string) => {
+  if (userId === "creator") {
+    return true;
+  }
+  const account = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { isActive: true },
+  });
+  return account?.isActive !== false;
+};
+
 const updateEntrySchema = z
   .object({
     entryDate: z
@@ -179,6 +190,10 @@ export const PATCH = async (
     const userId = await getUserId(request);
     if (!userId) {
       return jsonError(401, "UNAUTHORIZED", "Authentication required.");
+    }
+    const isActive = await ensureActiveUser(userId);
+    if (!isActive) {
+      return jsonError(403, "FORBIDDEN", "Account is inactive.");
     }
     const { id } = await params;
 
