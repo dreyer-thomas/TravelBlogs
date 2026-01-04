@@ -6,6 +6,9 @@ const getServerSession = vi.fn();
 
 vi.mock("next/navigation", () => ({
   redirect,
+  useRouter: () => ({
+    push: vi.fn(),
+  }),
 }));
 
 vi.mock("next-auth", () => ({
@@ -49,6 +52,7 @@ describe("Trips page viewer experience", () => {
               endDate: "2025-05-05T00:00:00.000Z",
               coverImageUrl: null,
               updatedAt: "2025-05-06T00:00:00.000Z",
+              canEditTrip: false,
             },
           ],
           error: null,

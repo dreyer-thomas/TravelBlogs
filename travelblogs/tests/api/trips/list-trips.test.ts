@@ -86,6 +86,7 @@ describe("GET /api/trips", () => {
       endDate: "2025-05-04T00:00:00.000Z",
       coverImageUrl: "https://example.com/cover.jpg",
       updatedAt: trip.updatedAt.toISOString(),
+      canEditTrip: true,
     });
   });
 
@@ -146,6 +147,7 @@ describe("GET /api/trips", () => {
           endDate: "2025-09-03T00:00:00.000Z",
           coverImageUrl: null,
           updatedAt: ownedTrip.updatedAt.toISOString(),
+          canEditTrip: true,
         },
         {
           id: invitedTrip.id,
@@ -154,6 +156,7 @@ describe("GET /api/trips", () => {
           endDate: "2025-10-03T00:00:00.000Z",
           coverImageUrl: null,
           updatedAt: invitedTrip.updatedAt.toISOString(),
+          canEditTrip: false,
         },
       ]),
     );
@@ -229,7 +232,59 @@ describe("GET /api/trips", () => {
       endDate: "2025-07-03T00:00:00.000Z",
       coverImageUrl: "https://example.com/coast.jpg",
       updatedAt: trip.updatedAt.toISOString(),
+      canEditTrip: false,
     });
+  });
+
+  it("flags contributor access for invited trips", async () => {
+    const trip = await prisma.trip.create({
+      data: {
+        title: "Contributor Trip",
+        startDate: new Date("2025-07-10T00:00:00.000Z"),
+        endDate: new Date("2025-07-12T00:00:00.000Z"),
+        ownerId: "creator",
+      },
+    });
+
+    const viewer = await prisma.user.create({
+      data: {
+        email: "contributor@example.com",
+        name: "Contributor",
+        role: "viewer",
+        passwordHash: "hash",
+      },
+    });
+
+    await prisma.tripAccess.create({
+      data: {
+        tripId: trip.id,
+        userId: viewer.id,
+        canContribute: true,
+      },
+    });
+
+    getToken.mockResolvedValue({ sub: viewer.id, role: "viewer" });
+
+    const request = new Request("http://localhost/api/trips", {
+      method: "GET",
+    });
+
+    const response = await get(request);
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.error).toBeNull();
+    expect(body.data).toEqual([
+      {
+        id: trip.id,
+        title: "Contributor Trip",
+        startDate: "2025-07-10T00:00:00.000Z",
+        endDate: "2025-07-12T00:00:00.000Z",
+        coverImageUrl: null,
+        updatedAt: trip.updatedAt.toISOString(),
+        canEditTrip: true,
+      },
+    ]);
   });
 
   it("returns an empty list for viewers with no invites", async () => {

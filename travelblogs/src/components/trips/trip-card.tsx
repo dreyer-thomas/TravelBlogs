@@ -1,5 +1,9 @@
+"use client";
+
+import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 import { isCoverImageUrl } from "../../utils/media";
 
@@ -9,6 +13,7 @@ type TripCardProps = {
   startDate: string;
   endDate: string;
   coverImageUrl: string | null;
+  canEditTrip: boolean;
 };
 
 const formatDate = (value: string) =>
@@ -25,42 +30,133 @@ const TripCard = ({
   startDate,
   endDate,
   coverImageUrl,
+  canEditTrip,
 }: TripCardProps) => {
+  const router = useRouter();
+  const [shareLink, setShareLink] = useState<string | null>(null);
+  const [viewError, setViewError] = useState<string | null>(null);
+  const [viewLoading, setViewLoading] = useState(false);
+
+  const openSharedView = (shareUrl: string) => {
+    if (shareUrl.startsWith("/")) {
+      router.push(shareUrl);
+      return;
+    }
+    try {
+      const url = new URL(shareUrl);
+      router.push(`${url.pathname}${url.search}${url.hash}`);
+    } catch {
+      router.push(shareUrl);
+    }
+  };
+
+  const handleOpenSharedView = async () => {
+    if (viewLoading) {
+      return;
+    }
+
+    setViewError(null);
+
+    if (shareLink) {
+      openSharedView(shareLink);
+      return;
+    }
+
+    setViewLoading(true);
+
+    try {
+      const response = await fetch(`/api/trips/${id}/share-link`, {
+        method: "POST",
+        credentials: "include",
+      });
+      const body = await response.json().catch(() => null);
+
+      if (!response.ok || body?.error) {
+        throw new Error(body?.error?.message ?? "Unable to open shared view.");
+      }
+
+      const shareUrl = body?.data?.shareUrl;
+      if (!shareUrl) {
+        throw new Error("Share link response was incomplete.");
+      }
+
+      setShareLink(shareUrl as string);
+      openSharedView(shareUrl as string);
+    } catch (err) {
+      setViewError(
+        err instanceof Error ? err.message : "Unable to open shared view.",
+      );
+    } finally {
+      setViewLoading(false);
+    }
+  };
+
   return (
-    <Link
-      href={`/trips/${id}`}
-      className="group rounded-2xl border border-black/10 bg-white p-5 transition hover:border-[#1F6F78]/40 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F6F78]/40"
-    >
+    <article className="group rounded-2xl border border-black/10 bg-white p-5 transition hover:border-[#1F6F78]/40 hover:shadow-sm">
       <div className="flex flex-wrap items-center gap-5">
-        <div className="relative h-20 w-28 overflow-hidden rounded-xl bg-[#F2ECE3]">
-          {coverImageUrl && isCoverImageUrl(coverImageUrl) ? (
-            <Image
-              src={coverImageUrl}
-              alt={`Cover for ${title}`}
-              fill
-              sizes="112px"
-              className="object-cover"
-              loading="lazy"
-            />
-          ) : (
-            <div className="flex h-full w-full items-center justify-center text-xs font-semibold uppercase tracking-[0.2em] text-[#6B635B]">
-              Trip
-            </div>
-          )}
+        <button
+          type="button"
+          onClick={handleOpenSharedView}
+          disabled={viewLoading}
+          data-testid={`trip-card-${id}`}
+          aria-label={`Open shared view for ${title}`}
+          className="flex flex-1 items-center gap-5 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F6F78]/40 disabled:cursor-not-allowed"
+        >
+          <div className="relative h-20 w-28 overflow-hidden rounded-xl bg-[#F2ECE3]">
+            {coverImageUrl && isCoverImageUrl(coverImageUrl) ? (
+              <Image
+                src={coverImageUrl}
+                alt={`Cover for ${title}`}
+                fill
+                sizes="112px"
+                className="object-cover"
+                loading="lazy"
+              />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center text-xs font-semibold uppercase tracking-[0.2em] text-[#6B635B]">
+                Trip
+              </div>
+            )}
+          </div>
+          <div className="flex-1">
+            <h2 className="text-lg font-semibold text-[#2D2A26]">
+              {title}
+            </h2>
+            <p className="mt-1 text-sm text-[#6B635B]">
+              {formatDate(startDate)} – {formatDate(endDate)}
+            </p>
+            {viewError ? (
+              <p className="mt-2 text-xs text-[#B34A3C]">{viewError}</p>
+            ) : null}
+          </div>
+        </button>
+        <div className="flex flex-wrap items-center gap-3">
+          <button
+            type="button"
+            onClick={(event) => {
+              event.stopPropagation();
+              handleOpenSharedView();
+            }}
+            disabled={viewLoading}
+            className="rounded-xl bg-[#1F6F78] px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-white transition hover:bg-[#195C63] disabled:cursor-not-allowed disabled:opacity-70"
+          >
+            {viewLoading ? "Opening…" : "View"}
+          </button>
+          {canEditTrip ? (
+            <Link
+              href={`/trips/${id}/edit`}
+              onClick={(event) => event.stopPropagation()}
+              className="rounded-xl border border-[#1F6F78] px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-[#1F6F78] transition hover:bg-[#1F6F78] hover:text-white"
+            >
+              Edit
+            </Link>
+          ) : null}
+          <span className="rounded-full bg-[#F2ECE3] px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-[#6B635B]">
+            Active
+          </span>
         </div>
-        <div className="flex-1">
-          <h2 className="text-lg font-semibold text-[#2D2A26]">
-            {title}
-          </h2>
-          <p className="mt-1 text-sm text-[#6B635B]">
-            {formatDate(startDate)} – {formatDate(endDate)}
-          </p>
-        </div>
-        <span className="rounded-full bg-[#F2ECE3] px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-[#6B635B]">
-          Active
-        </span>
       </div>
-    </Link>
+    </article>
   );
 };
 

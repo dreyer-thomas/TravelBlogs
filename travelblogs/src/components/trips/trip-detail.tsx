@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import DeleteTripModal from "./delete-trip-modal";
 import { isCoverImageUrl } from "../../utils/media";
 import { extractInlineImageUrls, stripInlineImages } from "../../utils/entry-content";
@@ -89,6 +90,7 @@ const TripDetail = ({
   canManageShare,
   canManageViewers,
 }: TripDetailProps) => {
+  const router = useRouter();
   const [trip, setTrip] = useState<TripDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -100,6 +102,8 @@ const TripDetail = ({
   const [shareLoading, setShareLoading] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
   const [shareRevoked, setShareRevoked] = useState(false);
+  const [viewError, setViewError] = useState<string | null>(null);
+  const [viewLoading, setViewLoading] = useState(false);
   const [isSharePanelOpen, setIsSharePanelOpen] = useState(false);
   const [viewers, setViewers] = useState<ViewerAccess[]>([]);
   const [viewersLoading, setViewersLoading] = useState(false);
@@ -208,7 +212,6 @@ const TripDetail = ({
     setShareRevoked(false);
 
     if (!canManageShare) {
-      setShareLink(null);
       setShareLoading(false);
       return () => {
         isActive = false;
@@ -251,6 +254,15 @@ const TripDetail = ({
       isActive = false;
     };
   }, [tripId, canManageShare]);
+
+  useEffect(() => {
+    setShareLink(null);
+    setShareError(null);
+    setShareCopied(false);
+    setShareRevoked(false);
+    setViewError(null);
+    setViewLoading(false);
+  }, [tripId]);
 
   useEffect(() => {
     if (!isSharePanelOpen) {
@@ -718,6 +730,61 @@ const TripDetail = ({
     }
   };
 
+  const openSharedView = (shareUrl: string) => {
+    if (shareUrl.startsWith("/")) {
+      router.push(shareUrl);
+      return;
+    }
+    try {
+      const url = new URL(shareUrl);
+      router.push(`${url.pathname}${url.search}${url.hash}`);
+    } catch {
+      router.push(shareUrl);
+    }
+  };
+
+  const handleOpenSharedView = async () => {
+    if (!trip) {
+      return;
+    }
+
+    setViewError(null);
+
+    if (shareLink) {
+      openSharedView(shareLink);
+      return;
+    }
+
+    setViewLoading(true);
+
+    try {
+      const response = await fetch(`/api/trips/${trip.id}/share-link`, {
+        method: "POST",
+        credentials: "include",
+      });
+      const body = await response.json().catch(() => null);
+
+      if (!response.ok || body?.error) {
+        throw new Error(body?.error?.message ?? "Unable to open shared view.");
+      }
+
+      const shareUrl = body?.data?.shareUrl;
+      if (!shareUrl) {
+        throw new Error("Share link response was incomplete.");
+      }
+
+      setShareLink(shareUrl as string);
+      setShareRevoked(false);
+      openSharedView(shareUrl as string);
+    } catch (err) {
+      setViewError(
+        err instanceof Error ? err.message : "Unable to open shared view.",
+      );
+    } finally {
+      setViewLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#FBF7F1] px-6 py-12">
       <main className="mx-auto w-full max-w-3xl space-y-6">
@@ -1178,40 +1245,53 @@ const TripDetail = ({
           )}
         </section>
 
-        {canEditTrip || canDeleteTrip || (canManageShare && shareLink) ? (
-          <section className="rounded-2xl border border-black/10 bg-white p-6 shadow-sm">
-            <div className="flex flex-wrap items-center justify-between gap-4">
-              <div>
-                <p className="text-xs uppercase tracking-[0.2em] text-[#6B635B]">
-                  Trip actions
-                </p>
-              </div>
-              <div className="flex flex-wrap items-center gap-3">
-                {canEditTrip ? (
-                  <Link
-                    href={`/trips/${trip.id}/edit`}
-                    className="rounded-xl bg-[#1F6F78] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#195C63]"
-                  >
-                    Edit trip
-                  </Link>
-                ) : null}
-                {canDeleteTrip ? (
-                  <DeleteTripModal tripId={trip.id} tripTitle={trip.title} />
-                ) : null}
-                {canManageShare && shareLink ? (
-                  <button
-                    type="button"
-                    onClick={handleOpenRevoke}
-                    className="rounded-xl border border-[#B64A3A] px-4 py-2 text-sm font-semibold text-[#B64A3A] transition hover:bg-[#B64A3A]/10"
-                    disabled={shareLoading || isRevoking}
-                  >
-                    Revoke share link
-                  </button>
-                ) : null}
-              </div>
+        <section className="rounded-2xl border border-black/10 bg-white p-6 shadow-sm">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <p className="text-xs uppercase tracking-[0.2em] text-[#6B635B]">
+                Trip actions
+              </p>
             </div>
-          </section>
-        ) : null}
+            <div className="flex flex-wrap items-center gap-3">
+              <button
+                type="button"
+                onClick={handleOpenSharedView}
+                disabled={viewLoading}
+                className={
+                  canEditTrip
+                    ? "rounded-xl border border-[#1F6F78] px-4 py-2 text-sm font-semibold text-[#1F6F78] transition hover:bg-[#1F6F78] hover:text-white disabled:cursor-not-allowed disabled:opacity-70"
+                    : "rounded-xl bg-[#1F6F78] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#195C63] disabled:cursor-not-allowed disabled:opacity-70"
+                }
+              >
+                {viewLoading ? "Opening…" : "View"}
+              </button>
+              {canEditTrip ? (
+                <Link
+                  href={`/trips/${trip.id}/edit`}
+                  className="rounded-xl bg-[#1F6F78] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#195C63]"
+                >
+                  Edit trip
+                </Link>
+              ) : null}
+              {canDeleteTrip ? (
+                <DeleteTripModal tripId={trip.id} tripTitle={trip.title} />
+              ) : null}
+              {canManageShare && shareLink ? (
+                <button
+                  type="button"
+                  onClick={handleOpenRevoke}
+                  className="rounded-xl border border-[#B64A3A] px-4 py-2 text-sm font-semibold text-[#B64A3A] transition hover:bg-[#B64A3A]/10"
+                  disabled={shareLoading || isRevoking}
+                >
+                  Revoke share link
+                </button>
+              ) : null}
+            </div>
+          </div>
+          {viewError ? (
+            <p className="mt-3 text-sm text-[#B34A3C]">{viewError}</p>
+          ) : null}
+        </section>
       </main>
 
       {isRevokeOpen ? (

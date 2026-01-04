@@ -123,12 +123,15 @@ export const GET = async (request: Request) => {
     };
 
     let tripList: {
-      id: string;
-      title: string;
-      startDate: Date;
-      endDate: Date;
-      coverImageUrl: string | null;
-      updatedAt: Date;
+      trip: {
+        id: string;
+        title: string;
+        startDate: Date;
+        endDate: Date;
+        coverImageUrl: string | null;
+        updatedAt: Date;
+      };
+      canEditTrip: boolean;
     }[] = [];
 
     if (user.role === "creator") {
@@ -150,17 +153,29 @@ export const GET = async (request: Request) => {
             trip: {
               select: tripSelection,
             },
+            canContribute: true,
           },
         }),
       ]);
 
-      const tripsById = new Map<string, (typeof ownedTrips)[number]>();
-      ownedTrips.forEach((trip) => tripsById.set(trip.id, trip));
-      invitedAccess.forEach((access) =>
-        tripsById.set(access.trip.id, access.trip),
+      const tripsById = new Map<
+        string,
+        { trip: (typeof ownedTrips)[number]; canEditTrip: boolean }
+      >();
+      ownedTrips.forEach((trip) =>
+        tripsById.set(trip.id, { trip, canEditTrip: true }),
       );
+      invitedAccess.forEach((access) => {
+        const existing = tripsById.get(access.trip.id);
+        const canEditTrip = Boolean(access.canContribute);
+        if (existing) {
+          existing.canEditTrip = existing.canEditTrip || canEditTrip;
+          return;
+        }
+        tripsById.set(access.trip.id, { trip: access.trip, canEditTrip });
+      });
       tripList = Array.from(tripsById.values()).sort(
-        (a, b) => b.updatedAt.getTime() - a.updatedAt.getTime(),
+        (a, b) => b.trip.updatedAt.getTime() - a.trip.updatedAt.getTime(),
       );
     } else {
       const invitedAccess = await prisma.tripAccess.findMany({
@@ -174,6 +189,7 @@ export const GET = async (request: Request) => {
           trip: {
             select: tripSelection,
           },
+          canContribute: true,
         },
         orderBy: {
           trip: {
@@ -182,18 +198,22 @@ export const GET = async (request: Request) => {
         },
       });
 
-      tripList = invitedAccess.map((access) => access.trip);
+      tripList = invitedAccess.map((access) => ({
+        trip: access.trip,
+        canEditTrip: Boolean(access.canContribute),
+      }));
     }
 
     return NextResponse.json(
       {
-        data: tripList.map((trip) => ({
+        data: tripList.map(({ trip, canEditTrip }) => ({
           id: trip.id,
           title: trip.title,
           startDate: trip.startDate.toISOString(),
           endDate: trip.endDate.toISOString(),
           coverImageUrl: trip.coverImageUrl,
           updatedAt: trip.updatedAt.toISOString(),
+          canEditTrip,
         })),
         error: null,
       },

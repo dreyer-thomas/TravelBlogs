@@ -92,8 +92,12 @@ development_status:
   5-9-administrator-role-and-admin-safeguards: backlog
   5-10-refine-viewer-invitations-with-custom-selector: done
   5-11-change-password: done
-  5-12-shared-view-button: ready-for-dev
+  5-12-shared-view-button: done
   5-13-active-badge-date-range: ready-for-dev
+  5-14-relative_redirects: ready-for-dev
+  5-15-shared-view-hero-image: ready-for-dev
+  5-16-missing-migration-must-change-password: ready-for-dev
+  5-17-shared-view-back-to-overview: ready-for-dev
   epic-5-retrospective: optional
 
   epic-6: backlog

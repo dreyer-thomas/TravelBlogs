@@ -5,6 +5,7 @@ import { Prisma } from "@prisma/client";
 import { z } from "zod";
 
 import { prisma } from "../../../../../utils/db";
+import { hasTripAccess } from "../../../../../utils/trip-access";
 
 export const runtime = "nodejs";
 
@@ -112,7 +113,7 @@ const revokeShareLink = async (tripId: string) => {
   }
 };
 
-const requireCreatorTrip = async (
+const requireTripAccess = async (
   request: Request,
   params: Promise<{ id: string }> | { id: string },
 ) => {
@@ -120,8 +121,54 @@ const requireCreatorTrip = async (
   if (!userId) {
     return { error: jsonError(401, "UNAUTHORIZED", "Authentication required.") };
   }
-  if (userId !== "creator") {
-    return { error: jsonError(403, "FORBIDDEN", "Creator access required.") };
+
+  const { id } = await params;
+  const parsed = tripIdSchema.safeParse({ id });
+  if (!parsed.success) {
+    return {
+      error: jsonError(
+        400,
+        "VALIDATION_ERROR",
+        parsed.error.issues[0]?.message ?? "Trip id is required.",
+      ),
+    };
+  }
+
+  const trip = await prisma.trip.findUnique({
+    where: { id },
+    select: {
+      id: true,
+      ownerId: true,
+    },
+  });
+
+  if (!trip) {
+    return { error: jsonError(404, "NOT_FOUND", "Trip not found.") };
+  }
+
+  if (trip.ownerId !== userId) {
+    const canView = await hasTripAccess(trip.id, userId);
+    if (!canView) {
+      return {
+        error: jsonError(
+          403,
+          "FORBIDDEN",
+          "Not authorized to view this trip.",
+        ),
+      };
+    }
+  }
+
+  return { trip };
+};
+
+const requireOwnerTrip = async (
+  request: Request,
+  params: Promise<{ id: string }> | { id: string },
+) => {
+  const userId = await getUserId(request);
+  if (!userId) {
+    return { error: jsonError(401, "UNAUTHORIZED", "Authentication required.") };
   }
 
   const { id } = await params;
@@ -162,7 +209,7 @@ export const GET = async (
   { params }: { params: Promise<{ id: string }> | { id: string } },
 ) => {
   try {
-    const access = await requireCreatorTrip(request, params);
+    const access = await requireTripAccess(request, params);
     if (access.error) {
       return access.error;
     }
@@ -201,7 +248,7 @@ export const POST = async (
   { params }: { params: Promise<{ id: string }> | { id: string } },
 ) => {
   try {
-    const access = await requireCreatorTrip(request, params);
+    const access = await requireTripAccess(request, params);
     if (access.error) {
       return access.error;
     }
@@ -259,7 +306,7 @@ export const PATCH = async (
   { params }: { params: Promise<{ id: string }> | { id: string } },
 ) => {
   try {
-    const access = await requireCreatorTrip(request, params);
+    const access = await requireOwnerTrip(request, params);
     if (access.error) {
       return access.error;
     }
@@ -307,7 +354,7 @@ export const DELETE = async (
   { params }: { params: Promise<{ id: string }> | { id: string } },
 ) => {
   try {
-    const access = await requireCreatorTrip(request, params);
+    const access = await requireOwnerTrip(request, params);
     if (access.error) {
       return access.error;
     }

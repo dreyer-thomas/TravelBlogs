@@ -17,6 +17,7 @@ type TripListItem = {
   endDate: string;
   coverImageUrl: string | null;
   updatedAt: string;
+  canEditTrip: boolean;
 };
 
 const loadTrips = async (baseUrl: string, cookieHeader: string) => {
@@ -154,6 +155,7 @@ const TripsPage = async () => {
                 startDate={trip.startDate}
                 endDate={trip.endDate}
                 coverImageUrl={trip.coverImageUrl}
+                canEditTrip={trip.canEditTrip}
               />
             ))}
           </section>

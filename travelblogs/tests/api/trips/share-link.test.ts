@@ -43,7 +43,9 @@ describe("POST /api/trips/[id]/share-link", () => {
   beforeEach(async () => {
     getToken.mockReset();
     await prisma.tripShareLink.deleteMany();
+    await prisma.tripAccess.deleteMany();
     await prisma.trip.deleteMany();
+    await prisma.user.deleteMany();
   });
 
   afterAll(async () => {
@@ -119,6 +121,50 @@ describe("POST /api/trips/[id]/share-link", () => {
     expect(shareLinks).toHaveLength(1);
   });
 
+  it("creates a share link for invited viewers", async () => {
+    const trip = await prisma.trip.create({
+      data: {
+        title: "Viewer share",
+        startDate: new Date("2025-08-10"),
+        endDate: new Date("2025-08-12"),
+        ownerId: "creator",
+      },
+    });
+
+    const viewer = await prisma.user.create({
+      data: {
+        email: "viewer@example.com",
+        name: "Viewer",
+        role: "viewer",
+        passwordHash: "hash",
+      },
+    });
+
+    await prisma.tripAccess.create({
+      data: {
+        tripId: trip.id,
+        userId: viewer.id,
+      },
+    });
+
+    getToken.mockResolvedValue({ sub: viewer.id });
+
+    const request = new Request(
+      `http://localhost/api/trips/${trip.id}/share-link`,
+      { method: "POST" },
+    );
+
+    const response = await post(request, { params: { id: trip.id } });
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.error).toBeNull();
+    expect(body.data.tripId).toBe(trip.id);
+    expect(body.data.shareUrl).toBe(
+      `http://localhost/trips/share/${body.data.token}`,
+    );
+  });
+
   it("rejects unauthenticated requests", async () => {
     getToken.mockResolvedValue(null);
 
@@ -143,9 +189,7 @@ describe("POST /api/trips/[id]/share-link", () => {
     expect(body.error.code).toBe("UNAUTHORIZED");
   });
 
-  it("rejects non-creator tokens", async () => {
-    getToken.mockResolvedValue({ sub: "someone-else" });
-
+  it("rejects users without trip access", async () => {
     const trip = await prisma.trip.create({
       data: {
         title: "Wrong user",
@@ -154,6 +198,17 @@ describe("POST /api/trips/[id]/share-link", () => {
         ownerId: "creator",
       },
     });
+
+    const viewer = await prisma.user.create({
+      data: {
+        email: "viewer@example.com",
+        name: "Viewer",
+        role: "viewer",
+        passwordHash: "hash",
+      },
+    });
+
+    getToken.mockResolvedValue({ sub: viewer.id });
 
     const request = new Request(
       `http://localhost/api/trips/${trip.id}/share-link`,
@@ -167,7 +222,7 @@ describe("POST /api/trips/[id]/share-link", () => {
     expect(body.error.code).toBe("FORBIDDEN");
   });
 
-  it("rejects creator access for trips they do not own", async () => {
+  it("rejects access for trips the user does not own or have access to", async () => {
     getToken.mockResolvedValue({ sub: "creator" });
 
     const trip = await prisma.trip.create({
@@ -224,7 +279,9 @@ describe("GET /api/trips/[id]/share-link", () => {
   beforeEach(async () => {
     getToken.mockReset();
     await prisma.tripShareLink.deleteMany();
+    await prisma.tripAccess.deleteMany();
     await prisma.trip.deleteMany();
+    await prisma.user.deleteMany();
   });
 
   afterAll(async () => {
@@ -265,6 +322,56 @@ describe("GET /api/trips/[id]/share-link", () => {
     );
     expect(body.data.token).toBe(shareLink.token);
     expect(body.data.tripId).toBe(trip.id);
+  });
+
+  it("allows invited viewers to read the share link", async () => {
+    const trip = await prisma.trip.create({
+      data: {
+        title: "Viewer share link",
+        startDate: new Date("2025-10-10"),
+        endDate: new Date("2025-10-11"),
+        ownerId: "creator",
+      },
+    });
+
+    const viewer = await prisma.user.create({
+      data: {
+        email: "viewer@example.com",
+        name: "Viewer",
+        role: "viewer",
+        passwordHash: "hash",
+      },
+    });
+
+    await prisma.tripAccess.create({
+      data: {
+        tripId: trip.id,
+        userId: viewer.id,
+      },
+    });
+
+    await prisma.tripShareLink.create({
+      data: {
+        tripId: trip.id,
+        token: "viewer-token",
+      },
+    });
+
+    getToken.mockResolvedValue({ sub: viewer.id });
+
+    const request = new Request(
+      `http://localhost/api/trips/${trip.id}/share-link`,
+      { method: "GET" },
+    );
+
+    const response = await get(request, { params: { id: trip.id } });
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.error).toBeNull();
+    expect(body.data.shareUrl).toBe(
+      `http://localhost/trips/share/${body.data.token}`,
+    );
   });
 
   it("returns 404 when no share link exists", async () => {
@@ -345,7 +452,9 @@ describe("PATCH /api/trips/[id]/share-link", () => {
     await prisma.entryMedia.deleteMany();
     await prisma.entry.deleteMany();
     await prisma.tripShareLink.deleteMany();
+    await prisma.tripAccess.deleteMany();
     await prisma.trip.deleteMany();
+    await prisma.user.deleteMany();
   });
 
   afterAll(async () => {
@@ -539,7 +648,9 @@ describe("DELETE /api/trips/[id]/share-link", () => {
     await prisma.entryMedia.deleteMany();
     await prisma.entry.deleteMany();
     await prisma.tripShareLink.deleteMany();
+    await prisma.tripAccess.deleteMany();
     await prisma.trip.deleteMany();
+    await prisma.user.deleteMany();
   });
 
   afterAll(async () => {
