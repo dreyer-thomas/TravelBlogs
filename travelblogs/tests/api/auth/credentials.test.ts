@@ -73,6 +73,27 @@ describe("validateCredentials", () => {
     });
   });
 
+  it("blocks legacy creator credentials when the default admin is inactive", async () => {
+    const passwordHash = await hash("CreatorPassword1!", 12);
+    await prisma.user.create({
+      data: {
+        id: "creator",
+        email: "creator@example.com",
+        name: "Creator",
+        role: "creator",
+        passwordHash,
+        isActive: false,
+      },
+    });
+
+    const user = await validateCredentials("creator@example.com", "super-secret");
+    expect(user).toEqual({
+      success: false,
+      errorCode: "ACCOUNT_INACTIVE",
+      message: "Your account is inactive. Contact an admin.",
+    });
+  });
+
   it("returns a user when credentials match a stored account", async () => {
     const passwordHash = await hash("Password123!", 12);
     const created = await prisma.user.create({
@@ -143,6 +164,30 @@ describe("validateCredentials", () => {
       success: false,
       errorCode: "ACCOUNT_NOT_FOUND",
       message: "Account not found or has been removed.",
+    });
+  });
+
+  it("returns administrator users with correct role", async () => {
+    const passwordHash = await hash("AdminPassword1!", 12);
+    const admin = await prisma.user.create({
+      data: {
+        email: "admin@example.com",
+        name: "Admin User",
+        role: "administrator",
+        passwordHash,
+      },
+    });
+
+    const user = await validateCredentials("admin@example.com", "AdminPassword1!");
+    expect(user).toEqual({
+      success: true,
+      user: {
+        id: admin.id,
+        email: "admin@example.com",
+        name: "Admin User",
+        role: "administrator",
+        mustChangePassword: false,
+      },
     });
   });
 });

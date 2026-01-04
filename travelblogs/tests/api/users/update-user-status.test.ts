@@ -41,6 +41,8 @@ describe("PATCH /api/users/[id]/status", () => {
   beforeEach(async () => {
     getToken.mockReset();
     await prisma.user.deleteMany();
+    process.env.CREATOR_EMAIL = "";
+    process.env.CREATOR_PASSWORD = "";
   });
 
   afterAll(async () => {
@@ -221,5 +223,117 @@ describe("PATCH /api/users/[id]/status", () => {
 
     expect(response.status).toBe(403);
     expect(body.error.code).toBe("FORBIDDEN");
+  });
+
+  it("blocks deactivating the last active admin", async () => {
+    getToken.mockResolvedValue({ sub: "creator" });
+
+    const admin = await prisma.user.create({
+      data: {
+        email: "last.admin@example.com",
+        name: "Last Admin",
+        role: "administrator",
+        isActive: true,
+        passwordHash: "hash",
+      },
+    });
+
+    const request = new Request(
+      `http://localhost/api/users/${admin.id}/status`,
+      {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          isActive: false,
+        }),
+      },
+    );
+
+    const response = await patch(request, { params: { id: admin.id } });
+    const body = await response.json();
+
+    expect(response.status).toBe(403);
+    expect(body.error.code).toBe("FORBIDDEN");
+  });
+
+  it("allows deactivating the default admin when another admin remains", async () => {
+    getToken.mockResolvedValue({ sub: "admin-user", role: "administrator" });
+
+    await prisma.user.create({
+      data: {
+        id: "creator",
+        email: "creator@example.com",
+        name: "Creator",
+        role: "creator",
+        isActive: true,
+        passwordHash: "hash",
+      },
+    });
+
+    await prisma.user.create({
+      data: {
+        email: "backup.admin@example.com",
+        name: "Backup Admin",
+        role: "administrator",
+        isActive: true,
+        passwordHash: "hash",
+      },
+    });
+
+    const request = new Request(
+      "http://localhost/api/users/creator/status",
+      {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          isActive: false,
+        }),
+      },
+    );
+
+    const response = await patch(request, { params: { id: "creator" } });
+    const body = await response.json();
+    const creator = await prisma.user.findUnique({ where: { id: "creator" } });
+
+    expect(response.status).toBe(200);
+    expect(body.error).toBeNull();
+    expect(creator?.isActive).toBe(false);
+  });
+
+  it("allows administrators to toggle status", async () => {
+    getToken.mockResolvedValue({ sub: "admin-user", role: "administrator" });
+
+    const user = await prisma.user.create({
+      data: {
+        email: "admin.status@example.com",
+        name: "Admin Status",
+        role: "viewer",
+        isActive: true,
+        passwordHash: "hash",
+      },
+    });
+
+    const request = new Request(
+      `http://localhost/api/users/${user.id}/status`,
+      {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          isActive: false,
+        }),
+      },
+    );
+
+    const response = await patch(request, { params: { id: user.id } });
+    const updated = await prisma.user.findUnique({ where: { id: user.id } });
+
+    expect(response.status).toBe(200);
+    expect(updated?.isActive).toBe(false);
   });
 });

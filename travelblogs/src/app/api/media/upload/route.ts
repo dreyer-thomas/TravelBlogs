@@ -10,6 +10,7 @@ import {
   getCoverImageExtension,
   validateCoverImageFile,
 } from "../../../../utils/media";
+import { ensureActiveAccount, isAdminOrCreator } from "../../../../utils/roles";
 
 export const runtime = "nodejs";
 
@@ -23,10 +24,16 @@ const jsonError = (status: number, code: string, message: string) => {
   );
 };
 
-const getUserId = async (request: Request) => {
+const getUser = async (request: Request) => {
   try {
     const token = await getToken({ req: request });
-    return token?.sub ?? null;
+    if (!token?.sub) {
+      return null;
+    }
+    return {
+      id: token.sub,
+      role: typeof token.role === "string" ? token.role : null,
+    };
   } catch {
     return null;
   }
@@ -101,12 +108,16 @@ const uploadFile = async (
 
 export const POST = async (request: Request) => {
   try {
-    const userId = await getUserId(request);
-    if (!userId) {
+    const user = await getUser(request);
+    if (!user) {
       return jsonError(401, "UNAUTHORIZED", "Authentication required.");
     }
-    if (userId !== "creator") {
+    if (!isAdminOrCreator(user.role)) {
       return jsonError(403, "FORBIDDEN", "Creator access required.");
+    }
+    const isActive = await ensureActiveAccount(user.id);
+    if (!isActive) {
+      return jsonError(403, "FORBIDDEN", "Account is inactive.");
     }
 
     let formData: FormData;

@@ -3,6 +3,11 @@ import { getToken } from "next-auth/jwt";
 import { z } from "zod";
 
 import { prisma } from "../../../../../utils/db";
+import {
+  countActiveAdmins,
+  isAdminRole,
+  isAdminUser,
+} from "../../admin-helpers";
 
 export const runtime = "nodejs";
 
@@ -34,24 +39,30 @@ const formatValidationError = (error: z.ZodError) => {
   return messages.join(" ");
 };
 
-const getUserId = async (request: Request) => {
+const getAuthContext = async (request: Request) => {
   try {
     const token = await getToken({ req: request });
-    return token?.sub ?? null;
+    if (!token?.sub) {
+      return null;
+    }
+    return {
+      userId: token.sub,
+      role: typeof token.role === "string" ? token.role : null,
+    };
   } catch {
     return null;
   }
 };
 
 const requireAdmin = async (request: Request) => {
-  const userId = await getUserId(request);
-  if (!userId) {
+  const auth = await getAuthContext(request);
+  if (!auth) {
     return { error: jsonError(401, "UNAUTHORIZED", "Authentication required.") };
   }
-  if (userId !== "creator") {
+  if (!isAdminUser(auth)) {
     return { error: jsonError(403, "FORBIDDEN", "Admin access required.") };
   }
-  return { userId };
+  return { userId: auth.userId };
 };
 
 export const PATCH = async (
@@ -65,9 +76,6 @@ export const PATCH = async (
     }
 
     const { id } = await params;
-    if (id === "creator") {
-      return jsonError(403, "FORBIDDEN", "Cannot update creator status.");
-    }
 
     let body: unknown;
     try {
@@ -91,6 +99,20 @@ export const PATCH = async (
 
     if (!existing) {
       return jsonError(404, "NOT_FOUND", "User not found.");
+    }
+
+    const isTargetAdmin = isAdminRole(existing.role);
+    const isDeactivating =
+      isTargetAdmin && existing.isActive && parsed.data.isActive === false;
+    if (isTargetAdmin && isDeactivating) {
+      const remainingAdmins = await countActiveAdmins(existing.id);
+      if (remainingAdmins < 1) {
+        return jsonError(
+          403,
+          "FORBIDDEN",
+          "Cannot deactivate the last active admin.",
+        );
+      }
     }
 
     const updated = await prisma.user.update({

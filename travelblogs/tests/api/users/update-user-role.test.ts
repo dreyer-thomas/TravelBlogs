@@ -41,6 +41,8 @@ describe("PATCH /api/users/[id]", () => {
   beforeEach(async () => {
     getToken.mockReset();
     await prisma.user.deleteMany();
+    process.env.CREATOR_EMAIL = "";
+    process.env.CREATOR_PASSWORD = "";
   });
 
   afterAll(async () => {
@@ -106,6 +108,95 @@ describe("PATCH /api/users/[id]", () => {
 
     expect(response.status).toBe(400);
     expect(body.error.code).toBe("VALIDATION_ERROR");
+  });
+
+  it("allows administrators to update roles", async () => {
+    getToken.mockResolvedValue({ sub: "admin-user", role: "administrator" });
+
+    const user = await prisma.user.create({
+      data: {
+        email: "admin.updates@example.com",
+        name: "Admin Updates",
+        role: "viewer",
+        passwordHash: "hash",
+      },
+    });
+
+    const request = new Request(`http://localhost/api/users/${user.id}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        role: "creator",
+      }),
+    });
+
+    const response = await patch(request, { params: { id: user.id } });
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.error).toBeNull();
+  });
+
+  it("sets a user's role to administrator", async () => {
+    getToken.mockResolvedValue({ sub: "creator" });
+
+    const user = await prisma.user.create({
+      data: {
+        email: "promote.admin@example.com",
+        name: "Promote Admin",
+        role: "viewer",
+        passwordHash: "hash",
+      },
+    });
+
+    const request = new Request(`http://localhost/api/users/${user.id}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        role: "administrator",
+      }),
+    });
+
+    const response = await patch(request, { params: { id: user.id } });
+    const body = await response.json();
+    const updated = await prisma.user.findUnique({ where: { id: user.id } });
+
+    expect(response.status).toBe(200);
+    expect(body.error).toBeNull();
+    expect(updated?.role).toBe("administrator");
+  });
+
+  it("blocks demoting the last active admin", async () => {
+    getToken.mockResolvedValue({ sub: "creator" });
+
+    const admin = await prisma.user.create({
+      data: {
+        email: "sole.admin@example.com",
+        name: "Sole Admin",
+        role: "administrator",
+        passwordHash: "hash",
+      },
+    });
+
+    const request = new Request(`http://localhost/api/users/${admin.id}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        role: "viewer",
+      }),
+    });
+
+    const response = await patch(request, { params: { id: admin.id } });
+    const body = await response.json();
+
+    expect(response.status).toBe(403);
+    expect(body.error.code).toBe("FORBIDDEN");
   });
 
   it("requires authentication", async () => {

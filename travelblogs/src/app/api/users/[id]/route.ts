@@ -3,12 +3,19 @@ import { getToken } from "next-auth/jwt";
 import { z } from "zod";
 
 import { prisma } from "../../../../utils/db";
+import {
+  countActiveAdmins,
+  isAdminRole,
+  isAdminUser,
+} from "../admin-helpers";
 
 export const runtime = "nodejs";
 
 const updateUserSchema = z.object({
-  role: z.enum(["creator", "viewer"], {
-    errorMap: () => ({ message: "Role must be creator or viewer." }),
+  role: z.enum(["creator", "administrator", "viewer"], {
+    errorMap: () => ({
+      message: "Role must be creator, administrator, or viewer.",
+    }),
   }),
 });
 
@@ -34,24 +41,30 @@ const formatValidationError = (error: z.ZodError) => {
   return messages.join(" ");
 };
 
-const getUserId = async (request: Request) => {
+const getAuthContext = async (request: Request) => {
   try {
     const token = await getToken({ req: request });
-    return token?.sub ?? null;
+    if (!token?.sub) {
+      return null;
+    }
+    return {
+      userId: token.sub,
+      role: typeof token.role === "string" ? token.role : null,
+    };
   } catch {
     return null;
   }
 };
 
 const requireAdmin = async (request: Request) => {
-  const userId = await getUserId(request);
-  if (!userId) {
+  const auth = await getAuthContext(request);
+  if (!auth) {
     return { error: jsonError(401, "UNAUTHORIZED", "Authentication required.") };
   }
-  if (userId !== "creator") {
+  if (!isAdminUser(auth)) {
     return { error: jsonError(403, "FORBIDDEN", "Admin access required.") };
   }
-  return { userId };
+  return { userId: auth.userId };
 };
 
 export const PATCH = async (
@@ -91,6 +104,26 @@ export const PATCH = async (
 
     if (!existing) {
       return jsonError(404, "NOT_FOUND", "User not found.");
+    }
+
+    if (id === "creator") {
+      return jsonError(403, "FORBIDDEN", "Cannot change creator role.");
+    }
+
+    const isTargetAdmin = isAdminRole(existing.role);
+    if (
+      isTargetAdmin &&
+      existing.isActive &&
+      !isAdminRole(parsed.data.role)
+    ) {
+      const remainingAdmins = await countActiveAdmins(existing.id);
+      if (remainingAdmins < 1) {
+        return jsonError(
+          403,
+          "FORBIDDEN",
+          "Cannot remove the last active admin.",
+        );
+      }
     }
 
     const updated = await prisma.user.update({
@@ -138,11 +171,22 @@ export const DELETE = async (
 
     const existing = await prisma.user.findUnique({
       where: { id },
-      select: { id: true },
+      select: { id: true, role: true, isActive: true },
     });
 
     if (!existing) {
       return jsonError(404, "NOT_FOUND", "User not found.");
+    }
+
+    if (isAdminRole(existing.role) && existing.isActive) {
+      const remainingAdmins = await countActiveAdmins(existing.id);
+      if (remainingAdmins < 1) {
+        return jsonError(
+          403,
+          "FORBIDDEN",
+          "Cannot delete the last active admin.",
+        );
+      }
     }
 
     const ownedTrip = await prisma.trip.findFirst({

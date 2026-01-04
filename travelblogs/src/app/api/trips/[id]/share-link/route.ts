@@ -6,6 +6,7 @@ import { z } from "zod";
 
 import { prisma } from "../../../../../utils/db";
 import { hasTripAccess } from "../../../../../utils/trip-access";
+import { ensureActiveAccount, isAdminOrCreator } from "../../../../../utils/roles";
 
 export const runtime = "nodejs";
 
@@ -19,10 +20,16 @@ const jsonError = (status: number, code: string, message: string) => {
   );
 };
 
-const getUserId = async (request: Request) => {
+const getUser = async (request: Request) => {
   try {
     const token = await getToken({ req: request });
-    return token?.sub ?? null;
+    if (!token?.sub) {
+      return null;
+    }
+    return {
+      id: token.sub,
+      role: typeof token.role === "string" ? token.role : null,
+    };
   } catch {
     return null;
   }
@@ -117,9 +124,14 @@ const requireTripAccess = async (
   request: Request,
   params: Promise<{ id: string }> | { id: string },
 ) => {
-  const userId = await getUserId(request);
-  if (!userId) {
+  const user = await getUser(request);
+  if (!user) {
     return { error: jsonError(401, "UNAUTHORIZED", "Authentication required.") };
+  }
+  const isAdmin = user.role === "administrator";
+  const isActive = await ensureActiveAccount(user.id);
+  if (!isActive) {
+    return { error: jsonError(403, "FORBIDDEN", "Account is inactive.") };
   }
 
   const { id } = await params;
@@ -146,8 +158,8 @@ const requireTripAccess = async (
     return { error: jsonError(404, "NOT_FOUND", "Trip not found.") };
   }
 
-  if (trip.ownerId !== userId) {
-    const canView = await hasTripAccess(trip.id, userId);
+  if (!isAdmin && trip.ownerId !== user.id) {
+    const canView = await hasTripAccess(trip.id, user.id);
     if (!canView) {
       return {
         error: jsonError(
@@ -159,16 +171,24 @@ const requireTripAccess = async (
     }
   }
 
-  return { trip };
+  return { trip, user };
 };
 
 const requireOwnerTrip = async (
   request: Request,
   params: Promise<{ id: string }> | { id: string },
 ) => {
-  const userId = await getUserId(request);
-  if (!userId) {
+  const user = await getUser(request);
+  if (!user) {
     return { error: jsonError(401, "UNAUTHORIZED", "Authentication required.") };
+  }
+  const isAdmin = user.role === "administrator";
+  if (!isAdminOrCreator(user.role)) {
+    return { error: jsonError(403, "FORBIDDEN", "Creator access required.") };
+  }
+  const isActive = await ensureActiveAccount(user.id);
+  if (!isActive) {
+    return { error: jsonError(403, "FORBIDDEN", "Account is inactive.") };
   }
 
   const { id } = await params;
@@ -195,13 +215,13 @@ const requireOwnerTrip = async (
     return { error: jsonError(404, "NOT_FOUND", "Trip not found.") };
   }
 
-  if (trip.ownerId !== userId) {
+  if (!isAdmin && trip.ownerId !== user.id) {
     return {
       error: jsonError(403, "FORBIDDEN", "Not authorized to share this trip."),
     };
   }
 
-  return { trip };
+  return { trip, user };
 };
 
 export const GET = async (

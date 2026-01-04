@@ -5,6 +5,7 @@ import { z } from "zod";
 import { prisma } from "../../../utils/db";
 import { extractInlineImageUrls } from "../../../utils/entry-content";
 import { canContributeToTrip, hasTripAccess } from "../../../utils/trip-access";
+import { ensureActiveAccount, isAdminOrCreator } from "../../../utils/roles";
 
 export const runtime = "nodejs";
 
@@ -61,33 +62,28 @@ const jsonError = (status: number, code: string, message: string) => {
   );
 };
 
-const getUserId = async (request: Request) => {
+const getUser = async (request: Request) => {
   try {
     const token = await getToken({ req: request });
-    return token?.sub ?? null;
+    if (!token?.sub) {
+      return null;
+    }
+    return {
+      id: token.sub,
+      role: typeof token.role === "string" ? token.role : null,
+    };
   } catch {
     return null;
   }
 };
 
-const ensureActiveUser = async (userId: string) => {
-  if (userId === "creator") {
-    return true;
-  }
-  const account = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { isActive: true },
-  });
-  return account?.isActive !== false;
-};
-
 export const POST = async (request: Request) => {
   try {
-    const userId = await getUserId(request);
-    if (!userId) {
+    const user = await getUser(request);
+    if (!user) {
       return jsonError(401, "UNAUTHORIZED", "Authentication required.");
     }
-    const isActive = await ensureActiveUser(userId);
+    const isActive = await ensureActiveAccount(user.id);
     if (!isActive) {
       return jsonError(403, "FORBIDDEN", "Account is inactive.");
     }
@@ -118,8 +114,9 @@ export const POST = async (request: Request) => {
       return jsonError(404, "NOT_FOUND", "Trip not found.");
     }
 
-    if (trip.ownerId !== userId) {
-      const canContribute = await canContributeToTrip(trip.id, userId);
+    const isAdmin = user.role === "administrator";
+    if (!isAdmin && trip.ownerId !== user.id) {
+      const canContribute = await canContributeToTrip(trip.id, user.id);
       if (!canContribute) {
         return jsonError(403, "FORBIDDEN", "Not authorized to add entries.");
       }
@@ -177,9 +174,13 @@ export const POST = async (request: Request) => {
 
 export const GET = async (request: Request) => {
   try {
-    const userId = await getUserId(request);
-    if (!userId) {
+    const user = await getUser(request);
+    if (!user) {
       return jsonError(401, "UNAUTHORIZED", "Authentication required.");
+    }
+    const isActive = await ensureActiveAccount(user.id);
+    if (!isActive) {
+      return jsonError(403, "FORBIDDEN", "Account is inactive.");
     }
     const url = new URL(request.url);
     const tripId = url.searchParams.get("tripId")?.trim() ?? "";
@@ -197,8 +198,9 @@ export const GET = async (request: Request) => {
       return jsonError(404, "NOT_FOUND", "Trip not found.");
     }
 
-    if (trip.ownerId !== userId) {
-      const canView = await hasTripAccess(trip.id, userId);
+    const isAdmin = isAdminOrCreator(user.role) && user.role === "administrator";
+    if (!isAdmin && trip.ownerId !== user.id) {
+      const canView = await hasTripAccess(trip.id, user.id);
       if (!canView) {
         return jsonError(403, "FORBIDDEN", "Not authorized to view entries.");
       }

@@ -5,6 +5,7 @@ import { z } from "zod";
 import { prisma } from "../../../../utils/db";
 import { isCoverImageUrl } from "../../../../utils/media";
 import { canContributeToTrip, hasTripAccess } from "../../../../utils/trip-access";
+import { ensureActiveAccount, isAdminOrCreator } from "../../../../utils/roles";
 
 export const runtime = "nodejs";
 
@@ -100,6 +101,11 @@ export const GET = async (
     if (!user) {
       return jsonError(401, "UNAUTHORIZED", "Authentication required.");
     }
+    const isAdmin = user.role === "administrator";
+    const isActive = await ensureActiveAccount(user.id);
+    if (!isActive) {
+      return jsonError(403, "FORBIDDEN", "Account is inactive.");
+    }
     const { id } = await params;
 
     const trip = await prisma.trip.findUnique({
@@ -112,7 +118,7 @@ export const GET = async (
       return jsonError(404, "NOT_FOUND", "Trip not found.");
     }
 
-    if (trip.ownerId !== user.id) {
+    if (!isAdmin && trip.ownerId !== user.id) {
       const canView = await hasTripAccess(trip.id, user.id);
       if (!canView) {
         return jsonError(403, "FORBIDDEN", "Not authorized to view this trip.");
@@ -150,21 +156,13 @@ export const PATCH = async (
     if (!user) {
       return jsonError(401, "UNAUTHORIZED", "Authentication required.");
     }
-    if (user.role !== "creator" && user.role !== "viewer") {
+    const isAdmin = user.role === "administrator";
+    if (!isAdmin && user.role !== "creator" && user.role !== "viewer") {
       return jsonError(403, "FORBIDDEN", "Valid role required.");
     }
-    if (user.id !== "creator") {
-      const account = await prisma.user.findUnique({
-        where: {
-          id: user.id,
-        },
-        select: {
-          isActive: true,
-        },
-      });
-      if (!account?.isActive) {
-        return jsonError(403, "FORBIDDEN", "Account is inactive.");
-      }
+    const isActive = await ensureActiveAccount(user.id);
+    if (!isActive) {
+      return jsonError(403, "FORBIDDEN", "Account is inactive.");
     }
 
     const { id } = await params;
@@ -191,7 +189,7 @@ export const PATCH = async (
       return jsonError(404, "NOT_FOUND", "Trip not found.");
     }
 
-    if (trip.ownerId !== user.id) {
+    if (!isAdmin && trip.ownerId !== user.id) {
       const canContribute = await canContributeToTrip(trip.id, user.id);
       if (!canContribute) {
         return jsonError(
@@ -258,21 +256,12 @@ export const DELETE = async (
     if (!user) {
       return jsonError(401, "UNAUTHORIZED", "Authentication required.");
     }
-    if (user.role !== "creator") {
+    if (!isAdminOrCreator(user.role)) {
       return jsonError(403, "FORBIDDEN", "Creator access required.");
     }
-    if (user.id !== "creator") {
-      const account = await prisma.user.findUnique({
-        where: {
-          id: user.id,
-        },
-        select: {
-          isActive: true,
-        },
-      });
-      if (!account?.isActive) {
-        return jsonError(403, "FORBIDDEN", "Account is inactive.");
-      }
+    const isActive = await ensureActiveAccount(user.id);
+    if (!isActive) {
+      return jsonError(403, "FORBIDDEN", "Account is inactive.");
     }
 
     const { id } = await params;
@@ -287,7 +276,7 @@ export const DELETE = async (
       return jsonError(404, "NOT_FOUND", "Trip not found.");
     }
 
-    if (trip.ownerId !== user.id) {
+    if (!isAdmin && trip.ownerId !== user.id) {
       return jsonError(403, "FORBIDDEN", "Not authorized to delete this trip.");
     }
 

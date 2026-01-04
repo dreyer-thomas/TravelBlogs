@@ -5,6 +5,7 @@ import { z } from "zod";
 import { prisma } from "../../../../utils/db";
 import { extractInlineImageUrls } from "../../../../utils/entry-content";
 import { canContributeToTrip, hasTripAccess } from "../../../../utils/trip-access";
+import { ensureActiveAccount, isAdminOrCreator } from "../../../../utils/roles";
 
 export const runtime = "nodejs";
 
@@ -22,24 +23,19 @@ const entryIdSchema = z.object({
   id: z.string().trim().min(1, "Entry id is required."),
 });
 
-const getUserId = async (request: Request) => {
+const getUser = async (request: Request) => {
   try {
     const token = await getToken({ req: request });
-    return token?.sub ?? null;
+    if (!token?.sub) {
+      return null;
+    }
+    return {
+      id: token.sub,
+      role: typeof token.role === "string" ? token.role : null,
+    };
   } catch {
     return null;
   }
-};
-
-const ensureActiveUser = async (userId: string) => {
-  if (userId === "creator") {
-    return true;
-  }
-  const account = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { isActive: true },
-  });
-  return account?.isActive !== false;
 };
 
 const updateEntrySchema = z
@@ -84,9 +80,13 @@ export const GET = async (
   try {
     const { id } = await params;
 
-    const userId = await getUserId(request);
-    if (!userId) {
+    const user = await getUser(request);
+    if (!user) {
       return jsonError(401, "UNAUTHORIZED", "Authentication required.");
+    }
+    const isActive = await ensureActiveAccount(user.id);
+    if (!isActive) {
+      return jsonError(403, "FORBIDDEN", "Account is inactive.");
     }
     const entry = await prisma.entry.findUnique({
       where: {
@@ -106,8 +106,9 @@ export const GET = async (
       return jsonError(404, "NOT_FOUND", "Entry not found.");
     }
 
-    if (entry.trip.ownerId !== userId) {
-      const canView = await hasTripAccess(entry.tripId, userId);
+    const isAdmin = user.role === "administrator";
+    if (!isAdmin && entry.trip.ownerId !== user.id) {
+      const canView = await hasTripAccess(entry.tripId, user.id);
       if (!canView) {
         return jsonError(403, "FORBIDDEN", "Not authorized to view this entry.");
       }
@@ -187,11 +188,11 @@ export const PATCH = async (
   { params }: { params: Promise<{ id: string }> | { id: string } },
 ) => {
   try {
-    const userId = await getUserId(request);
-    if (!userId) {
+    const user = await getUser(request);
+    if (!user) {
       return jsonError(401, "UNAUTHORIZED", "Authentication required.");
     }
-    const isActive = await ensureActiveUser(userId);
+    const isActive = await ensureActiveAccount(user.id);
     if (!isActive) {
       return jsonError(403, "FORBIDDEN", "Account is inactive.");
     }
@@ -222,8 +223,9 @@ export const PATCH = async (
       return jsonError(404, "NOT_FOUND", "Entry not found.");
     }
 
-    if (entry.trip.ownerId !== userId) {
-      const canContribute = await canContributeToTrip(entry.tripId, userId);
+    const isAdmin = user.role === "administrator";
+    if (!isAdmin && entry.trip.ownerId !== user.id) {
+      const canContribute = await canContributeToTrip(entry.tripId, user.id);
       if (!canContribute) {
         return jsonError(
           403,
@@ -311,12 +313,17 @@ export const DELETE = async (
   { params }: { params: Promise<{ id: string }> | { id: string } },
 ) => {
   try {
-    const userId = await getUserId(request);
-    if (!userId) {
+    const user = await getUser(request);
+    if (!user) {
       return jsonError(401, "UNAUTHORIZED", "Authentication required.");
     }
-    if (userId !== "creator") {
+    if (!isAdminOrCreator(user.role)) {
       return jsonError(403, "FORBIDDEN", "Creator access required.");
+    }
+    const isAdmin = user.role === "administrator";
+    const isActive = await ensureActiveAccount(user.id);
+    if (!isActive) {
+      return jsonError(403, "FORBIDDEN", "Account is inactive.");
     }
 
     const { id } = await params;
@@ -338,7 +345,7 @@ export const DELETE = async (
       return jsonError(404, "NOT_FOUND", "Entry not found.");
     }
 
-    if (entry.trip.ownerId !== userId) {
+    if (!isAdmin && entry.trip.ownerId !== user.id) {
       return jsonError(403, "FORBIDDEN", "Not authorized to delete this entry.");
     }
 

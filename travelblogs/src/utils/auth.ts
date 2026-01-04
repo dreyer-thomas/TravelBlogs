@@ -53,7 +53,30 @@ export const validateCredentials = async (
 
   if (configEmail && config.password) {
     if (normalizedEmail === configEmail && password === config.password) {
-      return { success: true, user: { ...creatorUser, email: configEmail } };
+      const creatorRecord = await prisma.user.findUnique({
+        where: { email: configEmail },
+      });
+
+      if (creatorRecord && !creatorRecord.isActive) {
+        return {
+          success: false,
+          errorCode: "ACCOUNT_INACTIVE",
+          message: "Your account is inactive. Contact an admin.",
+        };
+      }
+
+      return {
+        success: true,
+        user: creatorRecord
+          ? {
+              id: creatorRecord.id,
+              name: creatorRecord.name,
+              email: creatorRecord.email,
+              role: creatorRecord.role,
+              mustChangePassword: creatorRecord.mustChangePassword,
+            }
+          : { ...creatorUser, email: configEmail },
+      };
     }
   }
 

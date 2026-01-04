@@ -70,6 +70,29 @@ describe("POST /api/trips", () => {
     expect(body.data.ownerId).toBe("creator");
   });
 
+  it("allows administrators to create trips", async () => {
+    getToken.mockResolvedValue({ sub: "admin-creator", role: "administrator" });
+
+    const request = new Request("http://localhost/api/trips", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        title: "Admin Trip",
+        startDate: "2025-03-10",
+        endDate: "2025-03-22",
+      }),
+    });
+
+    const response = await post(request);
+    const body = await response.json();
+
+    expect(response.status).toBe(201);
+    expect(body.error).toBeNull();
+    expect(body.data.ownerId).toBe("admin-creator");
+  });
+
   it("returns validation errors for missing fields", async () => {
     getToken.mockResolvedValue({ sub: "creator", role: "creator" });
 

@@ -3,6 +3,7 @@ import { getToken } from "next-auth/jwt";
 import { z } from "zod";
 
 import { prisma } from "../../../../../../utils/db";
+import { ensureActiveAccount, isAdminOrCreator } from "../../../../../../utils/roles";
 
 export const runtime = "nodejs";
 
@@ -48,8 +49,13 @@ const requireCreatorTrip = async (
   if (!user) {
     return { error: jsonError(401, "UNAUTHORIZED", "Authentication required.") };
   }
-  if (user.role !== "creator") {
+  const isAdmin = user.role === "administrator";
+  if (!isAdminOrCreator(user.role)) {
     return { error: jsonError(403, "FORBIDDEN", "Creator access required.") };
+  }
+  const isActive = await ensureActiveAccount(user.id);
+  if (!isActive) {
+    return { error: jsonError(403, "FORBIDDEN", "Account is inactive.") };
   }
 
   const resolved = await params;
@@ -76,7 +82,7 @@ const requireCreatorTrip = async (
     return { error: jsonError(404, "NOT_FOUND", "Trip not found.") };
   }
 
-  if (trip.ownerId !== user.id) {
+  if (!isAdmin && trip.ownerId !== user.id) {
     return {
       error: jsonError(403, "FORBIDDEN", "Not authorized to view this trip."),
     };

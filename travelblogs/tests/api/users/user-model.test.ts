@@ -45,4 +45,17 @@ describe("User model", () => {
     expect(user.role).toBe("viewer");
     expect(user.isActive).toBe(true);
   });
+
+  it("stores administrator role users", async () => {
+    const user = await prisma.user.create({
+      data: {
+        email: "admin@example.com",
+        name: "Admin",
+        role: "administrator",
+        passwordHash: "hash",
+      },
+    });
+
+    expect(user.role).toBe("administrator");
+  });
 });

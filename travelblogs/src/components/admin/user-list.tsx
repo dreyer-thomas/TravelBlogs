@@ -6,7 +6,7 @@ type UserListItem = {
   id: string;
   email: string;
   name: string;
-  role: "creator" | "viewer";
+  role: "creator" | "administrator" | "viewer";
   isActive: boolean;
   createdAt: string;
 };
@@ -15,6 +15,12 @@ type UserListProps = {
   users: UserListItem[];
   currentUserId?: string;
 };
+
+const roleOptions: Array<{ value: UserListItem["role"]; label: string }> = [
+  { value: "creator", label: "Creator" },
+  { value: "administrator", label: "Administrator" },
+  { value: "viewer", label: "Viewer" },
+];
 
 const formatDate = (value: string) => value.slice(0, 10);
 
@@ -222,6 +228,9 @@ const UserList = ({ users, currentUserId }: UserListProps) => {
         const isLocked = Boolean(currentUserId && user.id === currentUserId);
         const isEditing = editingUserId === user.id;
         const isDeleteConfirming = confirmDeleteId === user.id;
+        const roleLabel =
+          roleOptions.find((option) => option.value === user.role)?.label ??
+          user.role;
 
         return (
         <article
@@ -236,7 +245,7 @@ const UserList = ({ users, currentUserId }: UserListProps) => {
           </div>
           <div className="flex flex-wrap items-center gap-3 text-xs text-[#2D2A26]">
             <span className="rounded-full border border-[#1F6F78]/20 bg-[#1F6F78]/10 px-3 py-1 text-[#1F6F78]">
-              {user.role}
+              {roleLabel}
             </span>
             <span className="rounded-full border border-black/10 bg-[#F2ECE3] px-3 py-1 text-[#2D2A26]">
               {user.isActive ? "Active" : "Inactive"}
@@ -278,8 +287,11 @@ const UserList = ({ users, currentUserId }: UserListProps) => {
                       disabled={isLocked || user.saving || user.deleting}
                       className="rounded-full border border-black/10 bg-white px-3 py-1 text-xs focus:border-[#1F6F78] focus:outline-none focus:ring-2 focus:ring-[#1F6F78]/20 disabled:cursor-not-allowed disabled:opacity-60"
                     >
-                      <option value="viewer">viewer</option>
-                      <option value="creator">creator</option>
+                      {roleOptions.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
                     </select>
                   </label>
                   <button

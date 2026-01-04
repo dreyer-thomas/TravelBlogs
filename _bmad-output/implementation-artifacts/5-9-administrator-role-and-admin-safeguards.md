@@ -1,6 +1,6 @@
 # Story 5.9: Administrator Role and Admin Safeguards
 
-Status: ready-for-dev
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -27,21 +27,21 @@ so that trusted users can manage accounts without risking admin lockouts.
 
 ## Tasks / Subtasks
 
-- [ ] Add Administrator role support (AC: 1)
-  - [ ] Extend Prisma `UserRole` enum to include `administrator`
-  - [ ] Update auth/session role checks to treat `administrator` as admin
-  - [ ] Ensure admin-only routes accept `creator` or `administrator`
-- [ ] Enforce admin safeguard rules (AC: 2-4)
-  - [ ] Block admin deactivation/deletion for the last active admin
-  - [ ] Prevent administrators from downgrading their own role
-  - [ ] Preserve current creator admin protections
-- [ ] Update admin UI to show Administrator role (AC: 1)
-  - [ ] Add Administrator option in role selector with clear labeling
-  - [ ] Show inline errors for blocked self-demotion and last-admin guardrails
-- [ ] Add/adjust tests (AC: 1-4)
-  - [ ] API tests for role updates to/from Administrator
-  - [ ] API tests for last-active-admin guardrails
-  - [ ] Component tests for role selector visibility and error messaging
+- [x] Add Administrator role support (AC: 1)
+  - [x] Extend Prisma `UserRole` enum to include `administrator`
+  - [x] Update auth/session role checks to treat `administrator` as admin
+  - [x] Ensure admin-only routes accept `creator` or `administrator`
+- [x] Enforce admin safeguard rules (AC: 2-4)
+  - [x] Block admin deactivation/deletion for the last active admin
+  - [x] Prevent administrators from downgrading their own role
+  - [x] Preserve current creator admin protections
+- [x] Update admin UI to show Administrator role (AC: 1)
+  - [x] Add Administrator option in role selector with clear labeling
+  - [x] Show inline errors for blocked self-demotion and last-admin guardrails
+- [x] Add/adjust tests (AC: 1-4)
+  - [x] API tests for role updates to/from Administrator
+  - [x] API tests for last-active-admin guardrails
+  - [x] Component tests for role selector visibility and error messaging
 
 ## Dev Notes
 
@@ -115,7 +115,7 @@ so that trusted users can manage accounts without risking admin lockouts.
 
 ### Story Completion Status
 
-- Status: ready-for-dev
+- Status: done
 - Completion note: Ultimate context engine analysis completed - comprehensive developer guide created.
 
 ### Project Structure Notes
@@ -142,12 +142,42 @@ Codex (GPT-5)
 
 ### Debug Log References
 
+- npx vitest run tests/api/users/create-user.test.ts tests/api/users/update-user-role.test.ts tests/api/users/update-user-status.test.ts tests/api/users/delete-user.test.ts tests/api/auth/credentials.test.ts tests/api/users/user-model.test.ts
+- npx vitest run
+
 ### Completion Notes List
 
 - Drafted Administrator role story with server-first guardrails against admin lockout.
 - Mapped required schema, auth, API, and UI touchpoints for role expansion.
 - Documented testing expectations for last-admin and self-demotion safeguards.
+- Added administrator role enum, migration scaffold, and regenerated Prisma client.
+- Expanded admin authorization to accept administrator role across user APIs and admin dashboard gating while preserving creator protections.
+- Added API and auth tests validating administrator privileges and role assignments.
+- Aligned TripCard edit links and trips page navigation mocks to keep regression suite green.
+- Added last-admin guardrails for role changes, deactivation, and deletion with shared helpers and env-aware admin counting.
+- Updated admin UI role selectors to include Administrator and surface guardrail errors inline.
 
 ### File List
 
 - _bmad-output/implementation-artifacts/5-9-administrator-role-and-admin-safeguards.md
+- _bmad-output/implementation-artifacts/sprint-status.yaml
+- travelblogs/prisma/schema.prisma
+- travelblogs/prisma/migrations/20260104150003_add_administrator_role/migration.sql
+- travelblogs/src/app/api/users/route.ts
+- travelblogs/src/app/api/users/[id]/route.ts
+- travelblogs/src/app/api/users/[id]/status/route.ts
+- travelblogs/src/app/api/users/admin-helpers.ts
+- travelblogs/src/app/admin/users/page.tsx
+- travelblogs/src/components/admin/users-dashboard.tsx
+- travelblogs/src/components/admin/user-list.tsx
+- travelblogs/src/components/admin/user-form.tsx
+- travelblogs/tests/api/users/create-user.test.ts
+- travelblogs/tests/api/users/update-user-role.test.ts
+- travelblogs/tests/api/users/update-user-status.test.ts
+- travelblogs/tests/api/users/delete-user.test.ts
+- travelblogs/tests/api/auth/credentials.test.ts
+- travelblogs/tests/api/users/user-model.test.ts
+- travelblogs/src/components/trips/trip-card.tsx
+- travelblogs/tests/components/trips-page.test.tsx
+- travelblogs/tests/components/admin/user-list.test.tsx
+- travelblogs/tests/components/admin/user-form.test.tsx

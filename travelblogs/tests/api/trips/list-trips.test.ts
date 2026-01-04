@@ -162,6 +162,58 @@ describe("GET /api/trips", () => {
     );
   });
 
+  it("returns all trips for administrators with edit access", async () => {
+    getToken.mockResolvedValue({ sub: "admin-1", role: "administrator" });
+
+    const tripA = await prisma.trip.create({
+      data: {
+        title: "Admin Trip A",
+        startDate: new Date("2025-02-01T00:00:00.000Z"),
+        endDate: new Date("2025-02-05T00:00:00.000Z"),
+        ownerId: "creator",
+      },
+    });
+
+    const tripB = await prisma.trip.create({
+      data: {
+        title: "Admin Trip B",
+        startDate: new Date("2025-04-01T00:00:00.000Z"),
+        endDate: new Date("2025-04-03T00:00:00.000Z"),
+        ownerId: "someone-else",
+      },
+    });
+
+    const request = new Request("http://localhost/api/trips", {
+      method: "GET",
+    });
+
+    const response = await get(request);
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.error).toBeNull();
+    expect(body.data).toEqual([
+      {
+        id: tripB.id,
+        title: "Admin Trip B",
+        startDate: "2025-04-01T00:00:00.000Z",
+        endDate: "2025-04-03T00:00:00.000Z",
+        coverImageUrl: null,
+        updatedAt: tripB.updatedAt.toISOString(),
+        canEditTrip: true,
+      },
+      {
+        id: tripA.id,
+        title: "Admin Trip A",
+        startDate: "2025-02-01T00:00:00.000Z",
+        endDate: "2025-02-05T00:00:00.000Z",
+        coverImageUrl: null,
+        updatedAt: tripA.updatedAt.toISOString(),
+        canEditTrip: true,
+      },
+    ]);
+  });
+
   it("rejects unauthenticated requests", async () => {
     getToken.mockResolvedValue(null);
 

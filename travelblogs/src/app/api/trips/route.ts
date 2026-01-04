@@ -4,6 +4,7 @@ import { z } from "zod";
 
 import { prisma } from "../../../utils/db";
 import { isCoverImageUrl } from "../../../utils/media";
+import { ensureActiveAccount, isAdminOrCreator } from "../../../utils/roles";
 
 export const runtime = "nodejs";
 
@@ -96,21 +97,17 @@ export const GET = async (request: Request) => {
     if (!user) {
       return jsonError(401, "UNAUTHORIZED", "Authentication required.");
     }
-    if (user.role !== "creator" && user.role !== "viewer") {
+    const isAdmin = user.role === "administrator";
+    const isCreator = user.role === "creator";
+    const isViewer = user.role === "viewer";
+
+    if (!isAdmin && !isCreator && !isViewer) {
       return jsonError(403, "FORBIDDEN", "Valid role required.");
     }
-    if (user.id !== "creator") {
-      const account = await prisma.user.findUnique({
-        where: {
-          id: user.id,
-        },
-        select: {
-          isActive: true,
-        },
-      });
-      if (!account?.isActive) {
-        return jsonError(403, "FORBIDDEN", "Account is inactive.");
-      }
+
+    const isActive = await ensureActiveAccount(user.id);
+    if (!isActive) {
+      return jsonError(403, "FORBIDDEN", "Account is inactive.");
     }
 
     const tripSelection = {
@@ -134,7 +131,17 @@ export const GET = async (request: Request) => {
       canEditTrip: boolean;
     }[] = [];
 
-    if (user.role === "creator") {
+    if (isAdmin) {
+      const trips = await prisma.trip.findMany({
+        select: tripSelection,
+        orderBy: { updatedAt: "desc" },
+      });
+
+      tripList = trips.map((trip) => ({
+        trip,
+        canEditTrip: true,
+      }));
+    } else if (user.role === "creator") {
       const [ownedTrips, invitedAccess] = await Promise.all([
         prisma.trip.findMany({
           where: {
@@ -230,21 +237,12 @@ export const POST = async (request: Request) => {
   if (!user) {
     return jsonError(401, "UNAUTHORIZED", "Authentication required.");
   }
-  if (user.role !== "creator") {
+  if (!isAdminOrCreator(user.role)) {
     return jsonError(403, "FORBIDDEN", "Creator access required.");
   }
-  if (user.id !== "creator") {
-    const account = await prisma.user.findUnique({
-      where: {
-        id: user.id,
-      },
-      select: {
-        isActive: true,
-      },
-    });
-    if (!account?.isActive) {
-      return jsonError(403, "FORBIDDEN", "Account is inactive.");
-    }
+  const isActive = await ensureActiveAccount(user.id);
+  if (!isActive) {
+    return jsonError(403, "FORBIDDEN", "Account is inactive.");
   }
 
   let body: unknown;

@@ -3,6 +3,7 @@ import { getToken } from "next-auth/jwt";
 
 import { prisma } from "../../../../../utils/db";
 import { hasTripAccess } from "../../../../../utils/trip-access";
+import { ensureActiveAccount, isAdminOrCreator } from "../../../../../utils/roles";
 
 export const runtime = "nodejs";
 
@@ -16,10 +17,16 @@ const jsonError = (status: number, code: string, message: string) => {
   );
 };
 
-const getUserId = async (request: Request) => {
+const getUser = async (request: Request) => {
   try {
     const token = await getToken({ req: request });
-    return token?.sub ?? null;
+    if (!token?.sub) {
+      return null;
+    }
+    return {
+      id: token.sub,
+      role: typeof token.role === "string" ? token.role : null,
+    };
   } catch {
     return null;
   }
@@ -31,10 +38,15 @@ export const GET = async (
 ) => {
   try {
     const { id } = await params;
-    const userId = await getUserId(request);
-    if (!userId) {
+    const user = await getUser(request);
+    if (!user) {
       return jsonError(401, "UNAUTHORIZED", "Authentication required.");
     }
+    const isActive = await ensureActiveAccount(user.id);
+    if (!isActive) {
+      return jsonError(403, "FORBIDDEN", "Account is inactive.");
+    }
+    const isAdmin = isAdminOrCreator(user.role) && user.role === "administrator";
 
     const trip = await prisma.trip.findUnique({
       where: {
@@ -74,8 +86,8 @@ export const GET = async (
       return jsonError(404, "NOT_FOUND", "Trip not found.");
     }
 
-    if (trip.ownerId !== userId) {
-      const canView = await hasTripAccess(trip.id, userId);
+    if (!isAdmin && trip.ownerId !== user.id) {
+      const canView = await hasTripAccess(trip.id, user.id);
       if (!canView) {
         return jsonError(403, "FORBIDDEN", "Not authorized to view this trip.");
       }

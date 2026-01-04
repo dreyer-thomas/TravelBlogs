@@ -5,13 +5,14 @@ import { hash } from "bcryptjs";
 import { Prisma } from "@prisma/client";
 
 import { prisma } from "../../../utils/db";
+import { isAdminUser } from "./admin-helpers";
 
 export const runtime = "nodejs";
 
 const createUserSchema = z.object({
   email: z.string().trim().min(1, "Email is required.").email("Email must be valid."),
   name: z.string().trim().min(1, "Name is required."),
-  role: z.enum(["creator", "viewer"]),
+  role: z.enum(["creator", "administrator", "viewer"]),
   password: z.string().trim().min(8, "Password must be at least 8 characters."),
 });
 
@@ -37,24 +38,30 @@ const formatValidationError = (error: z.ZodError) => {
   return messages.join(" ");
 };
 
-const getUserId = async (request: Request) => {
+const getAuthContext = async (request: Request) => {
   try {
     const token = await getToken({ req: request });
-    return token?.sub ?? null;
+    if (!token?.sub) {
+      return null;
+    }
+    return {
+      userId: token.sub,
+      role: typeof token.role === "string" ? token.role : null,
+    };
   } catch {
     return null;
   }
 };
 
 const requireAdmin = async (request: Request) => {
-  const userId = await getUserId(request);
-  if (!userId) {
+  const auth = await getAuthContext(request);
+  if (!auth) {
     return { error: jsonError(401, "UNAUTHORIZED", "Authentication required.") };
   }
-  if (userId !== "creator") {
+  if (!isAdminUser(auth)) {
     return { error: jsonError(403, "FORBIDDEN", "Admin access required.") };
   }
-  return { userId };
+  return { userId: auth.userId, role: auth.role };
 };
 
 export const GET = async (request: Request) => {

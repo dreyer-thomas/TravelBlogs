@@ -43,6 +43,8 @@ describe("DELETE /api/users/[id]", () => {
     await prisma.tripAccess.deleteMany();
     await prisma.trip.deleteMany();
     await prisma.user.deleteMany();
+    process.env.CREATOR_EMAIL = "";
+    process.env.CREATOR_PASSWORD = "";
   });
 
   afterAll(async () => {
@@ -143,6 +145,56 @@ describe("DELETE /api/users/[id]", () => {
 
     expect(response.status).toBe(409);
     expect(body.error.code).toBe("USER_HAS_TRIPS");
+  });
+
+  it("allows administrators to delete users", async () => {
+    getToken.mockResolvedValue({ sub: "admin-user", role: "administrator" });
+
+    const user = await prisma.user.create({
+      data: {
+        email: "admin.delete@example.com",
+        name: "Admin Delete",
+        role: "viewer",
+        passwordHash: "hash",
+      },
+    });
+
+    const request = new Request(`http://localhost/api/users/${user.id}`, {
+      method: "DELETE",
+    });
+
+    const response = await del(request, { params: { id: user.id } });
+    const body = await response.json();
+    const remaining = await prisma.user.findUnique({ where: { id: user.id } });
+
+    expect(response.status).toBe(200);
+    expect(body.error).toBeNull();
+    expect(remaining).toBeNull();
+  });
+
+  it("blocks deleting the last active admin", async () => {
+    getToken.mockResolvedValue({ sub: "creator" });
+
+    const admin = await prisma.user.create({
+      data: {
+        email: "last.admin@example.com",
+        name: "Last Admin",
+        role: "administrator",
+        passwordHash: "hash",
+      },
+    });
+
+    const request = new Request(`http://localhost/api/users/${admin.id}`, {
+      method: "DELETE",
+    });
+
+    const response = await del(request, { params: { id: admin.id } });
+    const body = await response.json();
+    const remaining = await prisma.user.findUnique({ where: { id: admin.id } });
+
+    expect(response.status).toBe(403);
+    expect(body.error.code).toBe("FORBIDDEN");
+    expect(remaining).not.toBeNull();
   });
 
   it("requires authentication", async () => {

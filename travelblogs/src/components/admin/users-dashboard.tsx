@@ -9,7 +9,7 @@ type UserListItem = {
   id: string;
   email: string;
   name: string;
-  role: "creator" | "viewer";
+  role: "creator" | "administrator" | "viewer";
   isActive: boolean;
   createdAt: string;
 };
@@ -28,7 +28,7 @@ const UsersDashboard = ({ users, currentUserId }: UsersDashboardProps) => {
         <div>
           <h2 className="text-lg font-semibold text-[#2D2A26]">Users</h2>
           <p className="mt-1 text-sm text-[#6B635B]">
-            Manage creator and viewer accounts.
+            Manage administrator, creator, and viewer accounts.
           </p>
         </div>
         <button

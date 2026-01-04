@@ -14,9 +14,15 @@ type FieldErrors = {
 type FormValues = {
   email: string;
   name: string;
-  role: "creator" | "viewer";
+  role: "creator" | "administrator" | "viewer";
   password: string;
 };
+
+const roleOptions: Array<{ value: FormValues["role"]; label: string }> = [
+  { value: "creator", label: "Creator" },
+  { value: "administrator", label: "Administrator" },
+  { value: "viewer", label: "Viewer" },
+];
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -179,8 +185,11 @@ const UserForm = () => {
           }}
           className="mt-2 w-full rounded-xl border border-black/10 bg-white px-3 py-2 text-sm focus:border-[#1F6F78] focus:outline-none focus:ring-2 focus:ring-[#1F6F78]/20"
         >
-          <option value="viewer">Viewer</option>
-          <option value="creator">Creator</option>
+          {roleOptions.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
         </select>
         {errors.role ? (
           <p className="mt-2 text-xs text-[#B34A3C]">{errors.role}</p>

@@ -25,4 +25,12 @@ describe("UserForm", () => {
     expect(await screen.findByText("Name is required.")).toBeInTheDocument();
     expect(await screen.findByText("Password is required.")).toBeInTheDocument();
   });
+
+  it("includes an Administrator option", () => {
+    render(<UserForm />);
+
+    expect(
+      screen.getByRole("option", { name: "Administrator" }),
+    ).toBeInTheDocument();
+  });
 });

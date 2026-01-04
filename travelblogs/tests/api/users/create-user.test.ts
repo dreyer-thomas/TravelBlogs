@@ -79,6 +79,36 @@ describe("/api/users", () => {
     expect(created).toMatchObject({ mustChangePassword: true });
   });
 
+  it("allows administrators to create and list users", async () => {
+    getToken.mockResolvedValue({ sub: "admin-1", role: "administrator" });
+
+    const request = new Request("http://localhost/api/users", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        email: "admin.created@example.com",
+        name: "Admin Created",
+        role: "viewer",
+        password: "Password123!",
+      }),
+    });
+
+    const createResponse = await post(request);
+    const createdBody = await createResponse.json();
+
+    expect(createResponse.status).toBe(201);
+    expect(createdBody.error).toBeNull();
+
+    const listResponse = await get(new Request("http://localhost/api/users", { method: "GET" }));
+    const listBody = await listResponse.json();
+
+    expect(listResponse.status).toBe(200);
+    expect(listBody.error).toBeNull();
+    expect(listBody.data.some((user: { email: string }) => user.email === "admin.created@example.com")).toBe(true);
+  });
+
   it("lists users for admins", async () => {
     getToken.mockResolvedValue({ sub: "creator" });
 

@@ -13,7 +13,7 @@ type UserListItem = {
   id: string;
   email: string;
   name: string;
-  role: "creator" | "viewer";
+  role: "creator" | "administrator" | "viewer";
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
@@ -44,7 +44,9 @@ const AdminUsersPage = async () => {
     return null;
   }
 
-  if (session.user.id !== "creator") {
+  const isAdmin =
+    session.user.role === "creator" || session.user.role === "administrator";
+  if (!isAdmin) {
     redirect("/trips");
     return null;
   }
@@ -73,7 +75,7 @@ const AdminUsersPage = async () => {
               Manage users
             </h1>
             <p className="mt-2 text-sm text-[#6B635B]">
-              Create accounts for creators and viewers.
+              Create accounts for administrators, creators, and viewers.
             </p>
           </div>
           <Link

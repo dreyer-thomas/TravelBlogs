@@ -46,10 +46,11 @@ const TripsPage = async () => {
 
   const role = session.user.role ?? null;
   const isCreator = role === "creator";
+  const isAdmin = role === "administrator";
   const isViewer = role === "viewer";
   const userEmail = session.user.email ?? "";
 
-  if (!isCreator && !isViewer) {
+  if (!isCreator && !isViewer && !isAdmin) {
     return (
       <div className="min-h-screen bg-[#FBF7F1] px-6 py-12">
         <main className="mx-auto w-full max-w-4xl space-y-8">
@@ -98,7 +99,7 @@ const TripsPage = async () => {
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-3">
-            {isCreator ? (
+            {isCreator || isAdmin ? (
               <>
                 <Link
                   href="/admin/users"
@@ -138,7 +139,7 @@ const TripsPage = async () => {
                 ? "When someone invites you to a trip, it will show up here."
                 : "No trips yet. Create your first trip to start capturing your journey."}
             </p>
-            {isCreator ? (
+            {isCreator || isAdmin ? (
               <Link
                 href="/trips/new"
                 className="mt-4 inline-flex rounded-xl bg-[#1F6F78] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#195C63] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F6F78]/40"
