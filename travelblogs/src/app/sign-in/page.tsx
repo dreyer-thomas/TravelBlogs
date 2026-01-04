@@ -11,11 +11,20 @@ const SignInPage = () => {
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl") ?? "/trips";
   const authError = searchParams.get("error");
-  const authErrorMessage = authError
-    ? authError === "CredentialsSignin"
-      ? "Invalid email or password."
-      : "Unable to sign in. Please try again."
-    : null;
+  const formatAuthError = (code?: string | null) => {
+    switch (code) {
+      case "INVALID_CREDENTIALS":
+      case "CredentialsSignin":
+        return "Invalid email or password.";
+      case "ACCOUNT_INACTIVE":
+        return "Your account is inactive. Contact an admin.";
+      case "ACCOUNT_NOT_FOUND":
+        return "Account not found or has been removed.";
+      default:
+        return code ? "Unable to sign in. Please try again." : null;
+    }
+  };
+  const authErrorMessage = formatAuthError(authError);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -46,11 +55,7 @@ const SignInPage = () => {
     }
 
     if (result.error) {
-      setError(
-        result.error === "CredentialsSignin"
-          ? "Invalid email or password."
-          : "Unable to sign in. Please try again.",
-      );
+      setError(formatAuthError(result.error));
       setSubmitting(false);
       return;
     }

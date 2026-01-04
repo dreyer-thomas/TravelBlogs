@@ -1267,7 +1267,7 @@ const TripDetail = ({
               </button>
               {canEditTrip ? (
                 <Link
-                  href={`/trips/${trip.id}/edit`}
+                  href="/trips"
                   className="rounded-xl bg-[#1F6F78] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#195C63]"
                 >
                   Edit trip

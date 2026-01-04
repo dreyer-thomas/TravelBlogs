@@ -51,7 +51,7 @@ describe("SignInPage", () => {
 
   it("shows auth error messages from signIn", async () => {
     signIn.mockResolvedValue({
-      error: "CredentialsSignin",
+      error: "INVALID_CREDENTIALS",
       url: null,
     });
 
@@ -98,14 +98,13 @@ describe("SignInPage", () => {
   });
 
   it("shows auth error messages from query params", async () => {
-    authErrorValue = "CredentialsSignin";
+    authErrorValue = "INVALID_CREDENTIALS";
 
     render(<SignInPage />);
 
     expect(
       await screen.findByText("Invalid email or password."),
     ).toBeInTheDocument();
-
   });
 
   it("shows a generic error for unexpected auth errors", async () => {
@@ -154,6 +153,37 @@ describe("SignInPage", () => {
 
     expect(
       await screen.findByText("Unable to sign in. Please try again."),
+    ).toBeInTheDocument();
+  });
+
+  it("shows an inactive account error from auth", async () => {
+    signIn.mockResolvedValue({
+      error: "ACCOUNT_INACTIVE",
+      url: null,
+    });
+
+    render(<SignInPage />);
+
+    fireEvent.change(screen.getByLabelText("Email"), {
+      target: { value: "user@example.com" },
+    });
+    fireEvent.change(screen.getByLabelText("Password"), {
+      target: { value: "Password123!" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Sign in" }));
+
+    expect(
+      await screen.findByText("Your account is inactive. Contact an admin."),
+    ).toBeInTheDocument();
+  });
+
+  it("shows a not found message from query params", async () => {
+    authErrorValue = "ACCOUNT_NOT_FOUND";
+
+    render(<SignInPage />);
+
+    expect(
+      await screen.findByText("Account not found or has been removed."),
     ).toBeInTheDocument();
   });
 });

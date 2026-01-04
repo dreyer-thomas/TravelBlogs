@@ -120,3 +120,58 @@ export const PATCH = async (
     return jsonError(500, "INTERNAL_SERVER_ERROR", "Unable to update user.");
   }
 };
+
+export const DELETE = async (
+  request: Request,
+  { params }: { params: Promise<{ id: string }> | { id: string } },
+) => {
+  try {
+    const auth = await requireAdmin(request);
+    if (auth.error) {
+      return auth.error;
+    }
+
+    const { id } = await params;
+    if (id === "creator") {
+      return jsonError(403, "FORBIDDEN", "Cannot delete creator account.");
+    }
+
+    const existing = await prisma.user.findUnique({
+      where: { id },
+      select: { id: true },
+    });
+
+    if (!existing) {
+      return jsonError(404, "NOT_FOUND", "User not found.");
+    }
+
+    const ownedTrip = await prisma.trip.findFirst({
+      where: { ownerId: id },
+      select: { id: true },
+    });
+
+    if (ownedTrip) {
+      return jsonError(
+        409,
+        "USER_HAS_TRIPS",
+        "User owns trips. Reassign trips before deleting.",
+      );
+    }
+
+    const deleted = await prisma.user.delete({
+      where: { id },
+      select: { id: true },
+    });
+
+    return NextResponse.json(
+      {
+        data: { id: deleted.id },
+        error: null,
+      },
+      { status: 200 },
+    );
+  } catch (error) {
+    console.error("Failed to delete user", error);
+    return jsonError(500, "INTERNAL_SERVER_ERROR", "Unable to delete user.");
+  }
+};

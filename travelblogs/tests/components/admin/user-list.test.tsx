@@ -83,3 +83,105 @@ describe("UserList role controls", () => {
     ).toBeInTheDocument();
   });
 });
+
+describe("UserList status controls", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("toggles active status from the edit panel", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          data: {
+            ...baseUser,
+            isActive: false,
+            updatedAt: "2025-01-02T00:00:00.000Z",
+          },
+          error: null,
+        }),
+        { status: 200 },
+      ),
+    );
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<UserList users={[baseUser]} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Edit User" }));
+    fireEvent.click(screen.getByRole("button", { name: "Deactivate" }));
+
+    expect(fetchMock).toHaveBeenCalledWith("/api/users/user-1/status", {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ isActive: false }),
+    });
+
+    expect(await screen.findByText("Inactive")).toBeInTheDocument();
+  });
+
+  it("shows an error when status update fails", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          data: null,
+          error: { code: "FORBIDDEN", message: "Account is locked." },
+        }),
+        { status: 403 },
+      ),
+    );
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<UserList users={[baseUser]} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Edit User" }));
+    fireEvent.click(screen.getByRole("button", { name: "Deactivate" }));
+
+    expect(await screen.findByText("Account is locked.")).toBeInTheDocument();
+    expect(await screen.findByText("Active")).toBeInTheDocument();
+  });
+
+  it("only shows the action relevant to the current status", () => {
+    render(<UserList users={[baseUser]} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Edit User" }));
+
+    expect(screen.getByRole("button", { name: "Deactivate" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Activate" })).toBeNull();
+  });
+});
+
+describe("UserList delete controls", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("requires confirmation and surfaces delete errors", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          data: null,
+          error: { code: "USER_HAS_TRIPS", message: "Reassign trips first." },
+        }),
+        { status: 409 },
+      ),
+    );
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<UserList users={[baseUser]} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Edit User" }));
+    fireEvent.click(screen.getByRole("button", { name: "Delete user" }));
+    fireEvent.click(screen.getByRole("button", { name: "Confirm delete" }));
+
+    expect(fetchMock).toHaveBeenCalledWith("/api/users/user-1", {
+      method: "DELETE",
+    });
+    expect(await screen.findByText("Reassign trips first.")).toBeInTheDocument();
+    expect(screen.getByText("Viewer User")).toBeInTheDocument();
+  });
+});

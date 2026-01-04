@@ -8,13 +8,26 @@ const testDatabaseUrl = "file:./prisma/test-auth.db";
 
 describe("validateCredentials", () => {
   let prisma: PrismaClient;
-  let validateCredentials: (email: string, password: string) => Promise<{
-    id: string;
-    email: string;
-    name: string;
-    role: string;
-    mustChangePassword?: boolean;
-  } | null>;
+  let validateCredentials: (
+    email: string,
+    password: string,
+  ) => Promise<
+    | {
+        success: true;
+        user: {
+          id: string;
+          email: string;
+          name: string;
+          role: string;
+          mustChangePassword?: boolean;
+        };
+      }
+    | {
+        success: false;
+        errorCode: string;
+        message: string;
+      }
+  >;
 
   beforeAll(async () => {
     process.env.DATABASE_URL = testDatabaseUrl;
@@ -50,10 +63,13 @@ describe("validateCredentials", () => {
   it("returns a creator user when legacy credentials match", async () => {
     const user = await validateCredentials("creator@example.com", "super-secret");
     expect(user).toEqual({
-      id: "creator",
-      email: "creator@example.com",
-      name: "Creator",
-      role: "creator",
+      success: true,
+      user: {
+        id: "creator",
+        email: "creator@example.com",
+        name: "Creator",
+        role: "creator",
+      },
     });
   });
 
@@ -71,11 +87,14 @@ describe("validateCredentials", () => {
 
     const user = await validateCredentials(" Viewer@Example.com ", "Password123!");
     expect(user).toEqual({
-      id: created.id,
-      email: "viewer@example.com",
-      name: "Viewer",
-      role: "viewer",
-      mustChangePassword: true,
+      success: true,
+      user: {
+        id: created.id,
+        email: "viewer@example.com",
+        name: "Viewer",
+        role: "viewer",
+        mustChangePassword: true,
+      },
     });
   });
 
@@ -91,10 +110,14 @@ describe("validateCredentials", () => {
     });
 
     const user = await validateCredentials("viewer@example.com", "wrong");
-    expect(user).toBeNull();
+    expect(user).toEqual({
+      success: false,
+      errorCode: "INVALID_CREDENTIALS",
+      message: "Invalid email or password.",
+    });
   });
 
-  it("returns null when the user is inactive", async () => {
+  it("returns an inactive error when the user is inactive", async () => {
     const passwordHash = await hash("Password123!", 12);
     await prisma.user.create({
       data: {
@@ -107,6 +130,19 @@ describe("validateCredentials", () => {
     });
 
     const user = await validateCredentials("inactive@example.com", "Password123!");
-    expect(user).toBeNull();
+    expect(user).toEqual({
+      success: false,
+      errorCode: "ACCOUNT_INACTIVE",
+      message: "Your account is inactive. Contact an admin.",
+    });
+  });
+
+  it("returns not found when the account does not exist", async () => {
+    const user = await validateCredentials("missing@example.com", "Password123!");
+    expect(user).toEqual({
+      success: false,
+      errorCode: "ACCOUNT_NOT_FOUND",
+      message: "Account not found or has been removed.",
+    });
   });
 });

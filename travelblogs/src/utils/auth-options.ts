@@ -16,15 +16,16 @@ export const authOptions: NextAuthOptions = {
           throw new Error("Email and password are required.");
         }
 
-        const user = await validateCredentials(
+        const result = await validateCredentials(
           credentials.email,
           credentials.password,
         );
-        if (!user) {
-          throw new Error("Invalid email or password.");
+
+        if (!result.success) {
+          throw new Error(result.errorCode);
         }
 
-        return user;
+        return result.user;
       },
     }),
   ],

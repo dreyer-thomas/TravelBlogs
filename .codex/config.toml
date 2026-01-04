@@ -1,3 +1,5 @@
+model = "gpt-5.1-codex-max"
+model_reasoning_effort = "medium"
 [projects."/Users/tommy/Development/TravelBlogs"]
 trust_level = "trusted"
 

@@ -1,6 +1,6 @@
 # Story 5.8: Admin Deactivates or Deletes User
 
-Status: ready-for-dev
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -28,22 +28,23 @@ so that removed users can no longer access the system and I can permanently remo
 
 ## Tasks / Subtasks
 
-- [ ] Add admin API for user activation status (AC: 1, 2)
-  - [ ] Create `PATCH /api/users/[id]/status` to set `isActive` true/false
-  - [ ] Reuse admin auth gate and JSON error format
-  - [ ] Block updates for `creator` admin account
-- [ ] Add admin API for deleting users (AC: 3, 4)
-  - [ ] Implement `DELETE /api/users/[id]` in the existing user route
-  - [ ] Block deletion for `creator` admin account
-  - [ ] Block deletion when user owns trips (require reassignment first)
+- [x] Add admin API for user activation status (AC: 1, 2)
+  - [x] Create `PATCH /api/users/[id]/status` to set `isActive` true/false
+  - [x] Reuse admin auth gate and JSON error format
+  - [x] Block updates for `creator` admin account
+- [x] Add admin API for deleting users (AC: 3, 4)
+  - [x] Implement `DELETE /api/users/[id]` in the existing user route
+  - [x] Block deletion for `creator` admin account
+  - [x] Block deletion when user owns trips (require reassignment first)
 - [ ] Update admin UI to manage status and deletion (AC: 1, 3)
-  - [ ] Add Activate/Deactivate control in `UserList` edit panel
-  - [ ] Add Delete action with confirmation and safe error handling
-  - [ ] Disable destructive actions for the current admin user
-- [ ] Add/adjust tests (AC: 1-4)
-  - [ ] API tests for status toggle (admin only, invalid payload, not found)
-  - [ ] API tests for delete (admin only, blocked for creator, blocked for owner)
-  - [ ] Component tests for status toggle and delete confirmation handling
+- [x] Update admin UI to manage status and deletion (AC: 1, 3)
+  - [x] Add Activate/Deactivate control in `UserList` edit panel
+  - [x] Add Delete action with confirmation and safe error handling
+  - [x] Disable destructive actions for the current admin user
+- [x] Add/adjust tests (AC: 1-4)
+  - [x] API tests for status toggle (admin only, invalid payload, not found)
+  - [x] API tests for delete (admin only, blocked for creator, blocked for owner)
+  - [x] Component tests for status toggle and delete confirmation handling
 
 ## Dev Notes
 
@@ -151,7 +152,28 @@ Codex (GPT-5)
 - Drafted admin deactivation/delete story with API, UI, and testing guardrails.
 - Mapped user management routes and admin dashboard components for targeted edits.
 - Documented constraints for creator admin and trip owner deletion safety.
+- Implemented admin status toggle API with validation, admin guard, and creator protection.
+- Added API coverage for status toggling and error cases.
+- Implemented admin user deletion endpoint with creator and owner safeguards.
+- Added API coverage for delete authorization, owner blocking, and cascade cleanup.
+- Added status toggle and delete controls to the admin user list with confirmations.
+- Added component coverage for status toggle and delete error handling.
+- Validated API and UI test coverage for deactivation and deletion flows.
+- Full test suite run: `npm test`.
+- Clarified sign-in errors for inactive or deleted accounts and wired them to NextAuth error codes.
+- Added auth credential and sign-in UI tests covering inactive/deleted account messaging.
 
 ### File List
 
 - _bmad-output/implementation-artifacts/5-8-admin-deactivates-user.md
+- travelblogs/src/app/api/users/[id]/status/route.ts
+- travelblogs/src/app/api/users/[id]/route.ts
+- travelblogs/tests/api/users/update-user-status.test.ts
+- travelblogs/tests/api/users/delete-user.test.ts
+- travelblogs/src/components/admin/user-list.tsx
+- travelblogs/tests/components/admin/user-list.test.tsx
+- travelblogs/src/utils/auth.ts
+- travelblogs/src/utils/auth-options.ts
+- travelblogs/src/app/sign-in/page.tsx
+- travelblogs/tests/api/auth/credentials.test.ts
+- travelblogs/tests/components/sign-in-page.test.tsx

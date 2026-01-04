@@ -184,7 +184,7 @@ const TripCard = ({
           </button>
           {canEditTrip ? (
             <Link
-              href={`/trips/${id}/edit`}
+              href={`/trips/${id}`}
               onClick={(event) => event.stopPropagation()}
               className="rounded-xl border border-[#1F6F78] px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-[#1F6F78] transition hover:bg-[#1F6F78] hover:text-white"
             >
