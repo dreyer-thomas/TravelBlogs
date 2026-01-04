@@ -1,6 +1,6 @@
 # Story 5.13: Active Badge Date Range
 
-Status: ready-for-dev
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -24,11 +24,11 @@ so that past and future trips are not labeled active.
 
 ## Tasks / Subtasks
 
-- [ ] Add date-range logic to trip card badge (AC: 1-3)
-  - [ ] Compare current date (UTC) to trip start/end dates (UTC)
-  - [ ] Render "Active" badge only when `startDate <= today <= endDate`
-- [ ] Add/adjust tests (AC: 1-3)
-  - [ ] Component tests for past, current, and future trip badge visibility
+- [x] Add date-range logic to trip card badge (AC: 1-3)
+  - [x] Compare current date (UTC) to trip start/end dates (UTC)
+  - [x] Render "Active" badge only when `startDate <= today <= endDate`
+- [x] Add/adjust tests (AC: 1-3)
+  - [x] Component tests for past, current, and future trip badge visibility
 
 ## Dev Notes
 
@@ -89,7 +89,7 @@ so that past and future trips are not labeled active.
 
 ### Story Completion Status
 
-- Status: ready-for-dev
+- Status: done
 - Completion note: Ultimate context engine analysis completed - comprehensive developer guide created.
 
 ### Project Structure Notes
@@ -113,15 +113,28 @@ Codex (GPT-5)
 
 ### Debug Log References
 
+### Implementation Plan
+
+- Compute active status using UTC date-only comparisons aligned with display formatting.
+- Gate badge rendering on inclusive start/end range.
+- Add component tests for past, future, and current date cases with fixed system time.
+
 ### Completion Notes List
 
-- Drafted date-range active badge behavior aligned to UTC date display.
-- Added test coverage expectations for past/current/future trips.
+- Added UTC date-only active-range check to `TripCard`, rendering the badge only when today is within start/end dates.
+- Added component tests for past, future, and current trip badge visibility with fixed system time.
+- Guarded active badge logic against invalid/ambiguous date strings by normalizing to UTC before comparison.
+- Added boundary and invalid-date component tests for active badge visibility.
+- Tests: `npm test`.
 
 ### File List
 
-- _bmad-output/epics.md
-- _bmad-output/architecture.md
-- _bmad-output/project-context.md
+- _bmad-output/implementation-artifacts/5-13-active-badge-date-range.md
+- _bmad-output/implementation-artifacts/sprint-status.yaml
 - travelblogs/src/components/trips/trip-card.tsx
-- travelblogs/src/app/trips/page.tsx
+- travelblogs/tests/components/trip-card.test.tsx
+
+## Change Log
+
+- 2026-01-04: Implemented UTC active badge logic and added trip card badge visibility tests.
+- 2026-01-04: Normalized UTC date parsing for active badge checks and expanded boundary/invalid-date tests.

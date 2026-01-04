@@ -88,16 +88,17 @@ development_status:
   5-5-enable-contributor-access-for-a-viewer: done
   5-6-viewer-access-to-invited-trips: done
   5-7-contributor-adds-and-edits-entries: done
-  5-8-admin-deactivates-user: backlog
-  5-9-administrator-role-and-admin-safeguards: backlog
+  5-8-admin-deactivates-user: ready-for-dev
+  5-9-administrator-role-and-admin-safeguards: ready-for-dev
   5-10-refine-viewer-invitations-with-custom-selector: done
   5-11-change-password: done
   5-12-shared-view-button: done
-  5-13-active-badge-date-range: ready-for-dev
+  5-13-active-badge-date-range: done
   5-14-relative_redirects: ready-for-dev
   5-15-shared-view-hero-image: ready-for-dev
   5-16-missing-migration-must-change-password: ready-for-dev
   5-17-shared-view-back-to-overview: ready-for-dev
+  5-18-manage-trips-view-edit-gating: ready-for-dev
   epic-5-retrospective: optional
 
   epic-6: backlog

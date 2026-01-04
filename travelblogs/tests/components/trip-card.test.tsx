@@ -22,6 +22,7 @@ describe("TripCard", () => {
   afterEach(() => {
     vi.unstubAllGlobals();
     vi.restoreAllMocks();
+    vi.useRealTimers();
     pushMock.mockReset();
   });
 
@@ -125,5 +126,113 @@ describe("TripCard", () => {
     await waitFor(() => {
       expect(pushMock).toHaveBeenCalledWith("/trips/share/card-token");
     });
+  });
+
+  it("hides the active badge for trips in the past", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2025-05-03T12:00:00.000Z"));
+
+    render(
+      <TripCard
+        id="trip-4"
+        title="Past Trip"
+        startDate="2025-04-01T00:00:00.000Z"
+        endDate="2025-04-10T00:00:00.000Z"
+        coverImageUrl={null}
+        canEditTrip={false}
+      />,
+    );
+
+    expect(screen.queryByText("Active")).not.toBeInTheDocument();
+  });
+
+  it("hides the active badge for trips in the future", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2025-05-03T12:00:00.000Z"));
+
+    render(
+      <TripCard
+        id="trip-5"
+        title="Future Trip"
+        startDate="2025-06-01T00:00:00.000Z"
+        endDate="2025-06-10T00:00:00.000Z"
+        coverImageUrl={null}
+        canEditTrip={false}
+      />,
+    );
+
+    expect(screen.queryByText("Active")).not.toBeInTheDocument();
+  });
+
+  it("shows the active badge when today is within the trip dates", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2025-05-03T12:00:00.000Z"));
+
+    render(
+      <TripCard
+        id="trip-6"
+        title="Current Trip"
+        startDate="2025-05-01T00:00:00.000Z"
+        endDate="2025-05-05T00:00:00.000Z"
+        coverImageUrl={null}
+        canEditTrip={false}
+      />,
+    );
+
+    expect(screen.getByText("Active")).toBeInTheDocument();
+  });
+
+  it("shows the active badge when today matches the start date", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2025-05-01T09:00:00.000Z"));
+
+    render(
+      <TripCard
+        id="trip-7"
+        title="Start Boundary Trip"
+        startDate="2025-05-01T00:00:00.000Z"
+        endDate="2025-05-05T00:00:00.000Z"
+        coverImageUrl={null}
+        canEditTrip={false}
+      />,
+    );
+
+    expect(screen.getByText("Active")).toBeInTheDocument();
+  });
+
+  it("shows the active badge when today matches the end date", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2025-05-05T23:59:00.000Z"));
+
+    render(
+      <TripCard
+        id="trip-8"
+        title="End Boundary Trip"
+        startDate="2025-05-01T00:00:00.000Z"
+        endDate="2025-05-05T00:00:00.000Z"
+        coverImageUrl={null}
+        canEditTrip={false}
+      />,
+    );
+
+    expect(screen.getByText("Active")).toBeInTheDocument();
+  });
+
+  it("hides the active badge when dates are invalid", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2025-05-03T12:00:00.000Z"));
+
+    render(
+      <TripCard
+        id="trip-9"
+        title="Invalid Trip"
+        startDate="not-a-date"
+        endDate="2025-05-05T00:00:00.000Z"
+        coverImageUrl={null}
+        canEditTrip={false}
+      />,
+    );
+
+    expect(screen.queryByText("Active")).not.toBeInTheDocument();
   });
 });

@@ -836,6 +836,27 @@ so that inviting viewers is faster and mistakes are easy to undo.
 **When** I interact with the selector  
 **Then** the selector matches the application's custom share panel styling
 
+### Story 5.18: Provide Edit Button Only for Editors
+
+As a user,
+I want the Edit button shown only to users who can edit a trip,
+so that view-only users cannot access trip edit flows.
+
+**Acceptance Criteria:**
+
+**Given** I view the Manage Trips list for a trip I own  
+**When** the trip row renders  
+**Then** I see the Edit button alongside View  
+
+**Given** I view the Manage Trips list for a trip where I am a contributor  
+**When** the trip row renders  
+**Then** I see the Edit button alongside View  
+
+**Given** I view the Manage Trips list for a trip where I am a viewer only  
+**When** the trip row renders  
+**Then** the Edit button is hidden  
+**And** I cannot open the trip edit flow from the list
+
 ## Epic 6: Map & Timeline Storytelling (Phase 3)
 
 Add spatial storytelling with maps, timelines, and optional location extraction.

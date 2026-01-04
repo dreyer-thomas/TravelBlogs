@@ -24,6 +24,45 @@ const formatDate = (value: string) =>
     timeZone: "UTC",
   });
 
+const toUtcDateOnly = (value: Date) =>
+  Date.UTC(value.getUTCFullYear(), value.getUTCMonth(), value.getUTCDate());
+
+const parseUtcDate = (value: string) => {
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return null;
+  }
+
+  const hasTimeZone = /[zZ]|[+-]\d{2}:\d{2}$/.test(trimmed);
+  const normalized = hasTimeZone
+    ? trimmed
+    : trimmed.includes("T")
+      ? `${trimmed}Z`
+      : `${trimmed}T00:00:00Z`;
+  const date = new Date(normalized);
+
+  return Number.isNaN(date.getTime()) ? null : date;
+};
+
+const isTripActiveToday = (
+  startDate: string,
+  endDate: string,
+  now: Date = new Date(),
+) => {
+  const start = parseUtcDate(startDate);
+  const end = parseUtcDate(endDate);
+
+  if (!start || !end) {
+    return false;
+  }
+
+  const todayUtc = toUtcDateOnly(now);
+  const startUtc = toUtcDateOnly(start);
+  const endUtc = toUtcDateOnly(end);
+
+  return todayUtc >= startUtc && todayUtc <= endUtc;
+};
+
 const TripCard = ({
   id,
   title,
@@ -36,6 +75,7 @@ const TripCard = ({
   const [shareLink, setShareLink] = useState<string | null>(null);
   const [viewError, setViewError] = useState<string | null>(null);
   const [viewLoading, setViewLoading] = useState(false);
+  const isActive = isTripActiveToday(startDate, endDate);
 
   const openSharedView = (shareUrl: string) => {
     if (shareUrl.startsWith("/")) {
@@ -151,9 +191,11 @@ const TripCard = ({
               Edit
             </Link>
           ) : null}
-          <span className="rounded-full bg-[#F2ECE3] px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-[#6B635B]">
-            Active
-          </span>
+          {isActive ? (
+            <span className="rounded-full bg-[#F2ECE3] px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-[#6B635B]">
+              Active
+            </span>
+          ) : null}
         </div>
       </div>
     </article>
