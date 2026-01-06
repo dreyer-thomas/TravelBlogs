@@ -63,9 +63,7 @@ const buildRelativeRedirect = (pathname: string, request: NextRequest) => {
   const redirectPath = `${pathname}?callbackUrl=${encodeURIComponent(callbackUrl)}`;
   const absoluteRedirectUrl = new URL(pathname, request.nextUrl.origin);
   absoluteRedirectUrl.searchParams.set("callbackUrl", callbackUrl);
-  const response = NextResponse.redirect(absoluteRedirectUrl);
-  response.headers.set("location", redirectPath);
-  return response;
+  return NextResponse.redirect(absoluteRedirectUrl);
 };
 
 const isAllowedMustChangeApi = (pathname: string) => {
