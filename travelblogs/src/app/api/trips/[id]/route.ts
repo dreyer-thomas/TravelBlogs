@@ -1,7 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
 import { z } from "zod";
-import type { Prisma } from "@prisma/client";
 
 import { prisma } from "../../../../utils/db";
 import { isCoverImageUrl } from "../../../../utils/media";
@@ -287,62 +286,36 @@ export const DELETE = async (
       return jsonError(403, "FORBIDDEN", "Not authorized to delete this trip.");
     }
 
-    const prismaAny = prisma as unknown as {
-      entry?: {
-        deleteMany: (args: {
-          where: { tripId: string };
-        }) => Prisma.PrismaPromise<unknown>;
-      };
-      shareLink?: {
-        deleteMany: (args: {
-          where: { tripId: string };
-        }) => Prisma.PrismaPromise<unknown>;
-      };
-      tripShareLink?: {
-        deleteMany: (args: {
-          where: { tripId: string };
-        }) => Prisma.PrismaPromise<unknown>;
-      };
-    };
-
-    const cleanupOperations: Prisma.PrismaPromise<unknown>[] = [];
-
-    if (prismaAny.entry?.deleteMany) {
-      cleanupOperations.push(
-        prismaAny.entry.deleteMany({ where: { tripId: id } }),
-      );
-    }
-
-    if (prismaAny.shareLink?.deleteMany) {
-      cleanupOperations.push(
-        prismaAny.shareLink.deleteMany({ where: { tripId: id } }),
-      );
-    }
-
-    if (prismaAny.tripShareLink?.deleteMany) {
-      cleanupOperations.push(
-        prismaAny.tripShareLink.deleteMany({ where: { tripId: id } }),
-      );
-    }
-
     let deletedTrip: { id: string };
 
-    if (cleanupOperations.length > 0) {
-      const results = await prisma.$transaction([
-        ...cleanupOperations,
-        prisma.trip.delete({
-          where: {
-            id,
-          },
-        }),
-      ]);
-      deletedTrip = results[results.length - 1] as { id: string };
-    } else {
-      deletedTrip = await prisma.trip.delete({
-        where: {
-          id,
-        },
+    const prismaAny = prisma as unknown as {
+      entry?: { deleteMany: (args: { where: { tripId: string } }) => Promise<unknown> };
+      shareLink?: { deleteMany: (args: { where: { tripId: string } }) => Promise<unknown> };
+      tripShareLink?: { deleteMany: (args: { where: { tripId: string } }) => Promise<unknown> };
+      trip: { delete: (args: { where: { id: string } }) => Promise<{ id: string }> };
+    };
+
+    const hasCleanup =
+      Boolean(prismaAny.entry?.deleteMany) ||
+      Boolean(prismaAny.shareLink?.deleteMany) ||
+      Boolean(prismaAny.tripShareLink?.deleteMany);
+
+    if (hasCleanup) {
+      deletedTrip = await prisma.$transaction(async (tx) => {
+        const txAny = tx as typeof prismaAny;
+        if (txAny.entry?.deleteMany) {
+          await txAny.entry.deleteMany({ where: { tripId: id } });
+        }
+        if (txAny.shareLink?.deleteMany) {
+          await txAny.shareLink.deleteMany({ where: { tripId: id } });
+        }
+        if (txAny.tripShareLink?.deleteMany) {
+          await txAny.tripShareLink.deleteMany({ where: { tripId: id } });
+        }
+        return txAny.trip.delete({ where: { id } });
       });
+    } else {
+      deletedTrip = await prismaAny.trip.delete({ where: { id } });
     }
 
     return NextResponse.json(
