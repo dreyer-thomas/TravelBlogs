@@ -253,8 +253,12 @@ export const PATCH = async (
     }
     if (
       parsed.data.coverImageUrl &&
-      ![...inlineImages, ...((nextMediaUrls ?? entry.media.map((item) => item.url)))]
-        .includes(parsed.data.coverImageUrl)
+        ![
+          ...inlineImages,
+          ...((nextMediaUrls ??
+            entry.media.map((item: { url: string }) => item.url))),
+        ]
+          .includes(parsed.data.coverImageUrl)
     ) {
       return jsonError(
         400,
