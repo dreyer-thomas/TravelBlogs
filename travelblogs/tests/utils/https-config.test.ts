@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import { mkdtempSync, rmSync, writeFileSync } from "fs";
 import { tmpdir } from "os";
 import { join } from "path";
-import { loadTlsConfigFromEnv } from "../../server";
+import { loadTlsConfigFromEnv } from "../../server.js";
 
 const originalEnv = { ...process.env };
 
@@ -39,21 +39,23 @@ describe("loadTlsConfigFromEnv", () => {
     const keyPath = join(dir, "key.pem");
     const caPath = join(dir, "ca.pem");
 
-    writeFileSync(certPath, "cert");
-    writeFileSync(keyPath, "key");
-    writeFileSync(caPath, "ca");
+    try {
+      writeFileSync(certPath, "cert");
+      writeFileSync(keyPath, "key");
+      writeFileSync(caPath, "ca");
 
-    setEnv({
-      TLS_CERT_PATH: certPath,
-      TLS_KEY_PATH: keyPath,
-      TLS_CA_PATH: caPath,
-    });
+      setEnv({
+        TLS_CERT_PATH: certPath,
+        TLS_KEY_PATH: keyPath,
+        TLS_CA_PATH: caPath,
+      });
 
-    const config = loadTlsConfigFromEnv();
-    expect(config.cert.toString()).toBe("cert");
-    expect(config.key.toString()).toBe("key");
-    expect(config.ca?.toString()).toBe("ca");
-
-    rmSync(dir, { recursive: true, force: true });
+      const config = loadTlsConfigFromEnv();
+      expect(config.cert.toString()).toBe("cert");
+      expect(config.key.toString()).toBe("key");
+      expect(config.ca?.toString()).toBe("ca");
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
   });
 });

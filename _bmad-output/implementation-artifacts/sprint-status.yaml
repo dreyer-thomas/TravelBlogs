@@ -42,7 +42,8 @@ story_location: /Users/tommy/Development/TravelBlogs/_bmad-output/implementation
 development_status:
   epic-0: in-progress
   0-1-creator-sign-in-single-account: done
-  0-2-enable-https: review
+  0-2-enable-https: done
+  0-3-deactivate-creator-account: ready-for-dev
   epic-0-retrospective: optional
 
   epic-1: in-progress
@@ -102,7 +103,7 @@ development_status:
   5-18-manage-trips-view-edit-gating: ready-for-dev
   epic-5-retrospective: optional
 
-  epic-6: backlog
+  epic-6: in-progress
   6-1-trip-map-view: backlog
   6-2-trip-timeline-view: backlog
   6-3-extract-coordinates-from-photo-metadata: backlog

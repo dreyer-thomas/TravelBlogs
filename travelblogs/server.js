@@ -1,3 +1,4 @@
+require("dotenv/config");
 const { createServer } = require("https");
 const { readFileSync } = require("fs");
 const { parse } = require("url");

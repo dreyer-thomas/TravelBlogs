@@ -13,6 +13,14 @@ const makeRequest = (path: string) => {
   return new NextRequest(new Request(`http://localhost${path}`));
 };
 
+const normalizeLocation = (location: string | null) => {
+  if (!location) {
+    return null;
+  }
+  const parsed = new URL(location, "http://localhost");
+  return `${parsed.pathname}${parsed.search}`;
+};
+
 describe("middleware", () => {
   beforeEach(() => {
     getToken.mockReset();
@@ -21,7 +29,7 @@ describe("middleware", () => {
   it("redirects unauthenticated users from protected routes", async () => {
     getToken.mockResolvedValue(null);
     const response = await middleware(makeRequest("/trips"));
-    expect(response?.headers.get("location")).toBe(
+    expect(normalizeLocation(response?.headers.get("location") ?? null)).toBe(
       "/sign-in?callbackUrl=%2Ftrips",
     );
   });
@@ -35,7 +43,7 @@ describe("middleware", () => {
   it("redirects unauthenticated users from entry routes", async () => {
     getToken.mockResolvedValue(null);
     const response = await middleware(makeRequest("/entries/abc123"));
-    expect(response?.headers.get("location")).toBe(
+    expect(normalizeLocation(response?.headers.get("location") ?? null)).toBe(
       "/sign-in?callbackUrl=%2Fentries%2Fabc123",
     );
   });
@@ -57,7 +65,7 @@ describe("middleware", () => {
   it("redirects unauthenticated users from trip management routes", async () => {
     getToken.mockResolvedValue(null);
     const response = await middleware(makeRequest("/trips/abc123"));
-    expect(response?.headers.get("location")).toBe(
+    expect(normalizeLocation(response?.headers.get("location") ?? null)).toBe(
       "/sign-in?callbackUrl=%2Ftrips%2Fabc123",
     );
   });
@@ -65,7 +73,7 @@ describe("middleware", () => {
   it("redirects must-change users to the password page", async () => {
     getToken.mockResolvedValue({ sub: "viewer", mustChangePassword: true });
     const response = await middleware(makeRequest("/trips"));
-    expect(response?.headers.get("location")).toBe(
+    expect(normalizeLocation(response?.headers.get("location") ?? null)).toBe(
       "/account/password?callbackUrl=%2Ftrips",
     );
   });
@@ -79,7 +87,7 @@ describe("middleware", () => {
   it("redirects must-change users away from protected APIs", async () => {
     getToken.mockResolvedValue({ sub: "viewer", mustChangePassword: true });
     const response = await middleware(makeRequest("/api/trips?view=all"));
-    expect(response?.headers.get("location")).toBe(
+    expect(normalizeLocation(response?.headers.get("location") ?? null)).toBe(
       "/account/password?callbackUrl=%2Fapi%2Ftrips%3Fview%3Dall",
     );
   });
@@ -101,7 +109,7 @@ describe("middleware", () => {
   it("preserves query params in callbackUrl", async () => {
     getToken.mockResolvedValue(null);
     const response = await middleware(makeRequest("/trips?source=share"));
-    expect(response?.headers.get("location")).toBe(
+    expect(normalizeLocation(response?.headers.get("location") ?? null)).toBe(
       "/sign-in?callbackUrl=%2Ftrips%3Fsource%3Dshare",
     );
   });

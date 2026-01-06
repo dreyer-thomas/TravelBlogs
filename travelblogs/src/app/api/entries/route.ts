@@ -82,6 +82,13 @@ const getUser = async (request: NextRequest) => {
   }
 };
 
+const getRequestUrl = (request: NextRequest | Request) => {
+  if ("nextUrl" in request && request.nextUrl) {
+    return request.nextUrl;
+  }
+  return new URL(request.url);
+};
+
 export const POST = async (request: NextRequest) => {
   try {
     const user = await getUser(request);
@@ -189,7 +196,8 @@ export const GET = async (request: NextRequest) => {
     if (!isActive) {
       return jsonError(403, "FORBIDDEN", "Account is inactive.");
     }
-    const tripId = request.nextUrl.searchParams.get("tripId")?.trim() ?? "";
+    const requestUrl = getRequestUrl(request);
+    const tripId = requestUrl.searchParams.get("tripId")?.trim() ?? "";
     if (!tripId) {
       return jsonError(400, "VALIDATION_ERROR", "Trip id is required.");
     }

@@ -34,7 +34,7 @@ TravelBlogs runs over HTTPS in production using a custom Node HTTPS entrypoint.
    - `TLS_CA_PATH=/volume1/certs/travelblogs/chain.pem` (optional)
 4. Build and run the HTTPS server:
    - `npm run build`
-   - `npm run start:https`
+   - `npm run start` (alias: `npm run start:https`)
 
 Lets Encrypt certificates expire every 90 days. Plan regular renewals and update the files in place so the server can be restarted with fresh certs.
 

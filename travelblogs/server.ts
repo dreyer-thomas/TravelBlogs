@@ -1,3 +1,4 @@
+import "dotenv/config";
 import { createServer } from "https";
 import { readFileSync } from "fs";
 import { parse } from "url";

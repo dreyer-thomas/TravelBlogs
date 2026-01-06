@@ -43,17 +43,26 @@ const tripIdSchema = z.object({
   id: z.string().trim().min(1, "Trip id is required."),
 });
 
-const getRequestOrigin = (request: NextRequest) => {
+const getRequestUrl = (request: NextRequest | Request) => {
+  if ("nextUrl" in request && request.nextUrl) {
+    return request.nextUrl;
+  }
+  return new URL(request.url);
+};
+
+const getRequestOrigin = (request: NextRequest | Request) => {
   const forwardedHost = request.headers.get("x-forwarded-host");
   const host = forwardedHost ?? request.headers.get("host");
-  const proto = request.headers.get("x-forwarded-proto") ?? "http";
+  const requestUrl = getRequestUrl(request);
+  const proto =
+    request.headers.get("x-forwarded-proto") ?? requestUrl.protocol.slice(0, -1);
   if (host) {
     return `${proto}://${host}`;
   }
-  return request.nextUrl.origin;
+  return requestUrl.origin;
 };
 
-const buildShareUrl = (request: NextRequest, token: string) => {
+const buildShareUrl = (request: NextRequest | Request, token: string) => {
   return `${getRequestOrigin(request)}/trips/share/${token}`;
 };
 

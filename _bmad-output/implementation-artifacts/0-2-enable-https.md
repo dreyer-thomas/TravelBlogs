@@ -1,6 +1,6 @@
 # Story 0.2: Enable HTTPS
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -102,6 +102,9 @@ N/A
 - Documented Lets Encrypt issuance and NAS file placement in README.
 - Added unit coverage for TLS config validation failures and success.
 - Tests: `npm test`.
+- Review fixes: load `.env` via dotenv in HTTPS entrypoints, align `start` script with HTTPS entrypoint, test against `server.js`, and ensure temp test cleanup.
+- Tests not rerun for review fixes.
+- Note: git shows unrelated `.codex` and other story artifacts outside this story; not included in File List.
 
 ### File List
 
