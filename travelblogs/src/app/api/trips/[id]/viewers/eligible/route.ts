@@ -167,7 +167,9 @@ export const GET = async (
 
     return NextResponse.json(
       {
-        data: eligibleUsers.map((user) => formatInvitee(user)),
+        data: eligibleUsers.map((user: Parameters<typeof formatInvitee>[0]) =>
+          formatInvitee(user),
+        ),
         error: null,
       },
       { status: 200 },
