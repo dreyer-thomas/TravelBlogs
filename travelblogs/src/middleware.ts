@@ -61,7 +61,7 @@ const getCallbackUrl = (request: NextRequest) =>
 const buildRelativeRedirect = (pathname: string, request: NextRequest) => {
   const callbackUrl = getCallbackUrl(request);
   const redirectPath = `${pathname}?callbackUrl=${encodeURIComponent(callbackUrl)}`;
-  const absoluteRedirectUrl = new URL(pathname, request.url);
+  const absoluteRedirectUrl = new URL(pathname, request.nextUrl.origin);
   absoluteRedirectUrl.searchParams.set("callbackUrl", callbackUrl);
   const response = NextResponse.redirect(absoluteRedirectUrl);
   response.headers.set("location", redirectPath);

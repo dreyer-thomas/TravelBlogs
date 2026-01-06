@@ -187,8 +187,7 @@ export const GET = async (request: NextRequest) => {
     if (!isActive) {
       return jsonError(403, "FORBIDDEN", "Account is inactive.");
     }
-    const url = new URL(request.url);
-    const tripId = url.searchParams.get("tripId")?.trim() ?? "";
+    const tripId = request.nextUrl.searchParams.get("tripId")?.trim() ?? "";
     if (!tripId) {
       return jsonError(400, "VALIDATION_ERROR", "Trip id is required.");
     }

@@ -51,8 +51,7 @@ const getRequestOrigin = (request: NextRequest) => {
   if (host) {
     return `${proto}://${host}`;
   }
-  const requestUrl = new URL(request.url);
-  return requestUrl.origin;
+  return request.nextUrl.origin;
 };
 
 const buildShareUrl = (request: NextRequest, token: string) => {
