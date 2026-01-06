@@ -2,7 +2,6 @@ import { NextResponse, type NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
 import { z } from "zod";
 import { hash } from "bcryptjs";
-import { Prisma } from "@prisma/client";
 
 import { prisma } from "../../../utils/db";
 import { isAdminUser } from "./admin-helpers";
@@ -165,7 +164,7 @@ export const POST = async (request: NextRequest) => {
       { status: 201 },
     );
   } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+    if (error && typeof error === "object" && "code" in error) {
       if (error.code === "P2002") {
         return jsonError(409, "DUPLICATE_USER", "Email already exists.");
       }

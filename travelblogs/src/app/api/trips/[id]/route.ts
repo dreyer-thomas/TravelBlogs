@@ -305,7 +305,7 @@ export const DELETE = async (
         $transaction: (fn: (tx: typeof prisma) => Promise<{ id: string }>) => Promise<{ id: string }>;
       };
       deletedTrip = await prismaTransaction.$transaction(async (tx) => {
-        const txAny = tx as typeof prismaAny;
+        const txAny = tx as unknown as typeof prismaAny;
         if (txAny.entry?.deleteMany) {
           await txAny.entry.deleteMany({ where: { tripId: id } });
         }
