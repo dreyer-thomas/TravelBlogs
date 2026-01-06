@@ -154,7 +154,9 @@ export const GET = async (
 
     return NextResponse.json(
       {
-        data: viewers.map((viewer) => formatAccess(viewer)),
+        data: viewers.map((viewer: Parameters<typeof formatAccess>[0]) =>
+          formatAccess(viewer),
+        ),
         error: null,
       },
       { status: 200 },
