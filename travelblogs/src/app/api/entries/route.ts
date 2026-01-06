@@ -157,11 +157,13 @@ export const POST = async (request: NextRequest) => {
           text: entry.text,
           createdAt: entry.createdAt.toISOString(),
           updatedAt: entry.updatedAt.toISOString(),
-          media: entry.media.map((item) => ({
+          media: entry.media.map(
+            (item: { id: string; url: string; createdAt: Date }) => ({
             id: item.id,
             url: item.url,
             createdAt: item.createdAt.toISOString(),
-          })),
+          }),
+          ),
         },
         error: null,
       },
