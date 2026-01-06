@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
 import { z } from "zod";
 
@@ -13,9 +13,7 @@ export const runtime = "nodejs";
 
 const updateUserSchema = z.object({
   role: z.enum(["creator", "administrator", "viewer"], {
-    errorMap: () => ({
-      message: "Role must be creator, administrator, or viewer.",
-    }),
+    message: "Role must be creator, administrator, or viewer.",
   }),
 });
 
@@ -41,7 +39,7 @@ const formatValidationError = (error: z.ZodError) => {
   return messages.join(" ");
 };
 
-const getAuthContext = async (request: Request) => {
+const getAuthContext = async (request: NextRequest) => {
   try {
     const token = await getToken({ req: request });
     if (!token?.sub) {
@@ -56,7 +54,7 @@ const getAuthContext = async (request: Request) => {
   }
 };
 
-const requireAdmin = async (request: Request) => {
+const requireAdmin = async (request: NextRequest) => {
   const auth = await getAuthContext(request);
   if (!auth) {
     return { error: jsonError(401, "UNAUTHORIZED", "Authentication required.") };
@@ -68,7 +66,7 @@ const requireAdmin = async (request: Request) => {
 };
 
 export const PATCH = async (
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> | { id: string } },
 ) => {
   try {
@@ -155,7 +153,7 @@ export const PATCH = async (
 };
 
 export const DELETE = async (
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> | { id: string } },
 ) => {
   try {

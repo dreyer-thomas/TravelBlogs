@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
 import crypto from "node:crypto";
 import path from "node:path";
@@ -24,7 +24,7 @@ const jsonError = (status: number, code: string, message: string) => {
   );
 };
 
-const getUser = async (request: Request) => {
+const getUser = async (request: NextRequest) => {
   try {
     const token = await getToken({ req: request });
     if (!token?.sub) {
@@ -111,7 +111,7 @@ const uploadFile = async (
   }
 };
 
-export const POST = async (request: Request) => {
+export const POST = async (request: NextRequest) => {
   try {
     const user = await getUser(request);
     if (!user) {

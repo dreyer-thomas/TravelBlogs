@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
 import { z } from "zod";
 
@@ -17,7 +17,7 @@ const jsonError = (status: number, code: string, message: string) => {
   );
 };
 
-const getUser = async (request: Request) => {
+const getUser = async (request: NextRequest) => {
   try {
     const token = await getToken({ req: request });
     if (!token?.sub) {
@@ -47,7 +47,7 @@ const contributorSchema = z.object({
 });
 
 const requireCreatorTrip = async (
-  request: Request,
+  request: NextRequest,
   params: Promise<{ id: string; userId: string }> | { id: string; userId: string },
 ) => {
   const user = await getUser(request);
@@ -117,7 +117,7 @@ const formatAccess = (access: {
 });
 
 export const DELETE = async (
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string; userId: string }> | { id: string; userId: string } },
 ) => {
   try {
@@ -176,7 +176,7 @@ export const DELETE = async (
 };
 
 export const PATCH = async (
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string; userId: string }> | { id: string; userId: string } },
 ) => {
   try {

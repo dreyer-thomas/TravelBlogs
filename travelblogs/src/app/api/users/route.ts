@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
 import { z } from "zod";
 import { hash } from "bcryptjs";
@@ -38,7 +38,7 @@ const formatValidationError = (error: z.ZodError) => {
   return messages.join(" ");
 };
 
-const getAuthContext = async (request: Request) => {
+const getAuthContext = async (request: NextRequest) => {
   try {
     const token = await getToken({ req: request });
     if (!token?.sub) {
@@ -53,7 +53,7 @@ const getAuthContext = async (request: Request) => {
   }
 };
 
-const requireAdmin = async (request: Request) => {
+const requireAdmin = async (request: NextRequest) => {
   const auth = await getAuthContext(request);
   if (!auth) {
     return { error: jsonError(401, "UNAUTHORIZED", "Authentication required.") };
@@ -64,7 +64,7 @@ const requireAdmin = async (request: Request) => {
   return { userId: auth.userId, role: auth.role };
 };
 
-export const GET = async (request: Request) => {
+export const GET = async (request: NextRequest) => {
   try {
     const auth = await requireAdmin(request);
     if (auth.error) {
@@ -107,7 +107,7 @@ export const GET = async (request: Request) => {
   }
 };
 
-export const POST = async (request: Request) => {
+export const POST = async (request: NextRequest) => {
   try {
     const auth = await requireAdmin(request);
     if (auth.error) {

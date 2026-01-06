@@ -1,6 +1,6 @@
 "use client";
 
-import type { KeyboardEvent, TouchEvent } from "react";
+import type { KeyboardEvent as ReactKeyboardEvent, TouchEvent } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import Image from "next/image";
@@ -18,6 +18,16 @@ type FullScreenPhotoViewerProps = {
   mode?: "viewer" | "slideshow";
 };
 
+type TouchLike = {
+  clientX: number;
+  clientY: number;
+};
+
+type TouchListLike = {
+  length: number;
+  [index: number]: TouchLike | undefined;
+};
+
 const clampIndex = (index: number, length: number) => {
   if (length <= 0) {
     return 0;
@@ -27,7 +37,7 @@ const clampIndex = (index: number, length: number) => {
 
 const isOptimizedImage = (url: string) => url.startsWith("/");
 
-const getTouchDistance = (touches: TouchList) => {
+const getTouchDistance = (touches: TouchListLike) => {
   const [first, second] = [touches[0], touches[1]];
   if (!first || !second) {
     return 0;
@@ -93,7 +103,7 @@ const FullScreenPhotoViewer = ({
     if (!isOpen) {
       return;
     }
-    const handleKeyDown = (event: KeyboardEvent) => {
+    const handleKeyDown = (event: globalThis.KeyboardEvent) => {
       if (event.key === "Escape") {
         event.preventDefault();
         onClose();
@@ -217,7 +227,7 @@ const FullScreenPhotoViewer = ({
       return;
     }
 
-    const [touch] = event.touches;
+    const touch = event.touches[0];
     if (touch) {
       touchStartRef.current = { x: touch.clientX, y: touch.clientY };
       pinchStartRef.current = null;
@@ -243,7 +253,7 @@ const FullScreenPhotoViewer = ({
     if (!touchStartRef.current) {
       return;
     }
-    const [touch] = event.changedTouches;
+    const touch = event.changedTouches[0];
     if (!touch) {
       return;
     }
@@ -264,7 +274,9 @@ const FullScreenPhotoViewer = ({
     }
   };
 
-  const handleDialogKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+  const handleDialogKeyDown = (
+    event: ReactKeyboardEvent<HTMLDivElement>,
+  ) => {
     if (event.key !== "Tab") {
       return;
     }

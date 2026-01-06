@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
 import { z } from "zod";
 
@@ -62,7 +62,7 @@ const jsonError = (status: number, code: string, message: string) => {
   );
 };
 
-const getUser = async (request: Request) => {
+const getUser = async (request: NextRequest) => {
   try {
     const token = await getToken({ req: request });
     if (!token?.sub) {
@@ -82,7 +82,7 @@ const getUser = async (request: Request) => {
   }
 };
 
-export const POST = async (request: Request) => {
+export const POST = async (request: NextRequest) => {
   try {
     const user = await getUser(request);
     if (!user) {
@@ -177,7 +177,7 @@ export const POST = async (request: Request) => {
   }
 };
 
-export const GET = async (request: Request) => {
+export const GET = async (request: NextRequest) => {
   try {
     const user = await getUser(request);
     if (!user) {

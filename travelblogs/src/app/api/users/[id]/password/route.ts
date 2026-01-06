@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
 import { z } from "zod";
 import { compare, hash } from "bcryptjs";
@@ -40,7 +40,7 @@ const formatValidationError = (error: z.ZodError) => {
   return messages.join(" ");
 };
 
-const getUserId = async (request: Request) => {
+const getUserId = async (request: NextRequest) => {
   try {
     const token = await getToken({ req: request });
     return token?.sub ?? null;
@@ -50,7 +50,7 @@ const getUserId = async (request: Request) => {
 };
 
 export const PATCH = async (
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> | { id: string } },
 ) => {
   try {

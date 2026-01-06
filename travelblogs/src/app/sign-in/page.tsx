@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 
@@ -28,7 +28,7 @@ const toRelative = (url: string | null) => {
   }
 };
 
-const SignInPage = () => {
+const SignInContent = () => {
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const router = useRouter();
@@ -140,6 +140,22 @@ const SignInPage = () => {
         </form>
       </main>
     </div>
+  );
+};
+
+const SignInPage = () => {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center bg-[#FBF7F1] px-6">
+          <main className="w-full max-w-md rounded-2xl border border-black/10 bg-white p-8 shadow-sm">
+            <p className="text-center text-sm text-[#6B635B]">Loading…</p>
+          </main>
+        </div>
+      }
+    >
+      <SignInContent />
+    </Suspense>
   );
 };
 

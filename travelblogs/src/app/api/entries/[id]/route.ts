@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
 import { z } from "zod";
 
@@ -23,7 +23,7 @@ const entryIdSchema = z.object({
   id: z.string().trim().min(1, "Entry id is required."),
 });
 
-const getUser = async (request: Request) => {
+const getUser = async (request: NextRequest) => {
   try {
     const token = await getToken({ req: request });
     if (!token?.sub) {
@@ -79,7 +79,7 @@ const updateEntrySchema = z
   });
 
 export const GET = async (
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> | { id: string } },
 ) => {
   try {
@@ -189,7 +189,7 @@ export const GET = async (
 };
 
 export const PATCH = async (
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> | { id: string } },
 ) => {
   try {
@@ -314,7 +314,7 @@ export const PATCH = async (
 };
 
 export const DELETE = async (
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> | { id: string } },
 ) => {
   try {

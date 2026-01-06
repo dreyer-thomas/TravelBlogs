@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
 import { z } from "zod";
 
@@ -17,7 +17,7 @@ const jsonError = (status: number, code: string, message: string) => {
   );
 };
 
-const getUser = async (request: Request) => {
+const getUser = async (request: NextRequest) => {
   try {
     const token = await getToken({ req: request });
     if (!token?.sub) {
@@ -42,7 +42,7 @@ const tripIdSchema = z.object({
 });
 
 const requireCreatorTrip = async (
-  request: Request,
+  request: NextRequest,
   params: Promise<{ id: string }> | { id: string },
 ) => {
   const user = await getUser(request);
@@ -108,7 +108,7 @@ const formatInvitee = (user: {
 });
 
 export const GET = async (
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> | { id: string } },
 ) => {
   try {

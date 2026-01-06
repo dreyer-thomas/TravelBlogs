@@ -1,6 +1,7 @@
-import { NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
 import { z } from "zod";
+import type { Prisma } from "@prisma/client";
 
 import { prisma } from "../../../../utils/db";
 import { isCoverImageUrl } from "../../../../utils/media";
@@ -77,7 +78,7 @@ const updateTripSchema = z
     { message: "Start date must be before end date." },
   );
 
-const getUser = async (request: Request) => {
+const getUser = async (request: NextRequest) => {
   try {
     const token = await getToken({ req: request });
     if (!token?.sub) {
@@ -98,7 +99,7 @@ const getUser = async (request: Request) => {
 };
 
 export const GET = async (
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> | { id: string } },
 ) => {
   try {
@@ -153,7 +154,7 @@ export const GET = async (
 };
 
 export const PATCH = async (
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> | { id: string } },
 ) => {
   try {
@@ -253,7 +254,7 @@ export const PATCH = async (
 };
 
 export const DELETE = async (
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> | { id: string } },
 ) => {
   try {
@@ -287,12 +288,24 @@ export const DELETE = async (
     }
 
     const prismaAny = prisma as unknown as {
-      entry?: { deleteMany: (args: { where: { tripId: string } }) => Promise<unknown> };
-      shareLink?: { deleteMany: (args: { where: { tripId: string } }) => Promise<unknown> };
-      tripShareLink?: { deleteMany: (args: { where: { tripId: string } }) => Promise<unknown> };
+      entry?: {
+        deleteMany: (args: {
+          where: { tripId: string };
+        }) => Prisma.PrismaPromise<unknown>;
+      };
+      shareLink?: {
+        deleteMany: (args: {
+          where: { tripId: string };
+        }) => Prisma.PrismaPromise<unknown>;
+      };
+      tripShareLink?: {
+        deleteMany: (args: {
+          where: { tripId: string };
+        }) => Prisma.PrismaPromise<unknown>;
+      };
     };
 
-    const cleanupOperations: Promise<unknown>[] = [];
+    const cleanupOperations: Prisma.PrismaPromise<unknown>[] = [];
 
     if (prismaAny.entry?.deleteMany) {
       cleanupOperations.push(

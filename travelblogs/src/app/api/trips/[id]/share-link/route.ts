@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
 import { randomBytes } from "node:crypto";
 import { Prisma } from "@prisma/client";
@@ -20,7 +20,7 @@ const jsonError = (status: number, code: string, message: string) => {
   );
 };
 
-const getUser = async (request: Request) => {
+const getUser = async (request: NextRequest) => {
   try {
     const token = await getToken({ req: request });
     if (!token?.sub) {
@@ -44,7 +44,7 @@ const tripIdSchema = z.object({
   id: z.string().trim().min(1, "Trip id is required."),
 });
 
-const getRequestOrigin = (request: Request) => {
+const getRequestOrigin = (request: NextRequest) => {
   const forwardedHost = request.headers.get("x-forwarded-host");
   const host = forwardedHost ?? request.headers.get("host");
   const proto = request.headers.get("x-forwarded-proto") ?? "http";
@@ -55,7 +55,7 @@ const getRequestOrigin = (request: Request) => {
   return requestUrl.origin;
 };
 
-const buildShareUrl = (request: Request, token: string) => {
+const buildShareUrl = (request: NextRequest, token: string) => {
   return `${getRequestOrigin(request)}/trips/share/${token}`;
 };
 
@@ -126,7 +126,7 @@ const revokeShareLink = async (tripId: string) => {
 };
 
 const requireTripAccess = async (
-  request: Request,
+  request: NextRequest,
   params: Promise<{ id: string }> | { id: string },
 ) => {
   const user = await getUser(request);
@@ -180,7 +180,7 @@ const requireTripAccess = async (
 };
 
 const requireOwnerTrip = async (
-  request: Request,
+  request: NextRequest,
   params: Promise<{ id: string }> | { id: string },
 ) => {
   const user = await getUser(request);
@@ -230,7 +230,7 @@ const requireOwnerTrip = async (
 };
 
 export const GET = async (
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> | { id: string } },
 ) => {
   try {
@@ -269,7 +269,7 @@ export const GET = async (
 };
 
 export const POST = async (
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> | { id: string } },
 ) => {
   try {
@@ -327,7 +327,7 @@ export const POST = async (
 };
 
 export const PATCH = async (
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> | { id: string } },
 ) => {
   try {
@@ -375,7 +375,7 @@ export const PATCH = async (
 };
 
 export const DELETE = async (
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> | { id: string } },
 ) => {
   try {

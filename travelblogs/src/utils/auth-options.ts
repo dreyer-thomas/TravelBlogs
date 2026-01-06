@@ -36,7 +36,7 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, user }) {
       if (user) {
         token.sub = user.id;
-        token.email = user.email;
+        token.email = user.email ?? undefined;
         token.role = user.role;
         token.mustChangePassword = user.mustChangePassword ?? false;
       }

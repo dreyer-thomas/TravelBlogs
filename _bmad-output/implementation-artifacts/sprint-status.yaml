@@ -42,6 +42,7 @@ story_location: /Users/tommy/Development/TravelBlogs/_bmad-output/implementation
 development_status:
   epic-0: in-progress
   0-1-creator-sign-in-single-account: done
+  0-2-enable-https: review
   epic-0-retrospective: optional
 
   epic-1: in-progress

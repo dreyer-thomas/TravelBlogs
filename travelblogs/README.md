@@ -20,6 +20,24 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
+## HTTPS (Production)
+
+TravelBlogs runs over HTTPS in production using a custom Node HTTPS entrypoint.
+
+1. Obtain certificates from a free provider like Lets Encrypt.
+2. Place the files on your NAS, for example:
+   - `/volume1/certs/travelblogs/fullchain.pem`
+   - `/volume1/certs/travelblogs/privkey.pem`
+3. Set the env vars in `.env`:
+   - `TLS_CERT_PATH=/volume1/certs/travelblogs/fullchain.pem`
+   - `TLS_KEY_PATH=/volume1/certs/travelblogs/privkey.pem`
+   - `TLS_CA_PATH=/volume1/certs/travelblogs/chain.pem` (optional)
+4. Build and run the HTTPS server:
+   - `npm run build`
+   - `npm run start:https`
+
+Lets Encrypt certificates expire every 90 days. Plan regular renewals and update the files in place so the server can be restarted with fresh certs.
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:

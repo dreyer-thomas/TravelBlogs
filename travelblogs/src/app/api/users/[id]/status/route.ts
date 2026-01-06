@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
 import { z } from "zod";
 
@@ -13,7 +13,7 @@ export const runtime = "nodejs";
 
 const updateStatusSchema = z.object({
   isActive: z.boolean({
-    errorMap: () => ({ message: "Active status must be true or false." }),
+    message: "Active status must be true or false.",
   }),
 });
 
@@ -39,7 +39,7 @@ const formatValidationError = (error: z.ZodError) => {
   return messages.join(" ");
 };
 
-const getAuthContext = async (request: Request) => {
+const getAuthContext = async (request: NextRequest) => {
   try {
     const token = await getToken({ req: request });
     if (!token?.sub) {
@@ -54,7 +54,7 @@ const getAuthContext = async (request: Request) => {
   }
 };
 
-const requireAdmin = async (request: Request) => {
+const requireAdmin = async (request: NextRequest) => {
   const auth = await getAuthContext(request);
   if (!auth) {
     return { error: jsonError(401, "UNAUTHORIZED", "Authentication required.") };
@@ -66,7 +66,7 @@ const requireAdmin = async (request: Request) => {
 };
 
 export const PATCH = async (
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> | { id: string } },
 ) => {
   try {
