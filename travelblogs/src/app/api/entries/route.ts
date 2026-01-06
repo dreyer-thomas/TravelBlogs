@@ -226,7 +226,17 @@ export const GET = async (request: NextRequest) => {
 
     return NextResponse.json(
       {
-        data: entries.map((entry) => ({
+        data: entries.map(
+          (entry: {
+            id: string;
+            tripId: string;
+            title: string;
+            coverImageUrl: string | null;
+            text: string;
+            createdAt: Date;
+            updatedAt: Date;
+            media: { id: string; url: string; createdAt: Date }[];
+          }) => ({
           id: entry.id,
           tripId: entry.tripId,
           title: entry.title,
@@ -239,7 +249,8 @@ export const GET = async (request: NextRequest) => {
             url: item.url,
             createdAt: item.createdAt.toISOString(),
           })),
-        })),
+        }),
+        ),
         error: null,
       },
       { status: 200 },
