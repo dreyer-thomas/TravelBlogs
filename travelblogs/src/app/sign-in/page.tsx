@@ -4,12 +4,36 @@ import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 
+const toRelative = (url: string | null) => {
+  if (!url) {
+    return null;
+  }
+
+  const trimmed = url.trim();
+  if (!trimmed || trimmed.startsWith("//")) {
+    return null;
+  }
+
+  const hasScheme = /^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(trimmed);
+  if (hasScheme && !/^https?:/i.test(trimmed)) {
+    return null;
+  }
+
+  try {
+    const parsed = new URL(trimmed, "http://localhost");
+    const relative = `${parsed.pathname}${parsed.search}${parsed.hash}`;
+    return relative.startsWith("/") ? relative : `/${relative}`;
+  } catch (_error) {
+    return null;
+  }
+};
+
 const SignInPage = () => {
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get("callbackUrl") ?? "/trips";
+  const callbackUrl = toRelative(searchParams.get("callbackUrl")) ?? "/trips";
   const authError = searchParams.get("error");
   const formatAuthError = (code?: string | null) => {
     switch (code) {
@@ -60,7 +84,8 @@ const SignInPage = () => {
       return;
     }
 
-    router.push(result.url ?? callbackUrl);
+    const targetUrl = toRelative(result.url) ?? callbackUrl;
+    router.push(targetUrl);
   };
 
   return (

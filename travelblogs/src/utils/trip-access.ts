@@ -18,8 +18,16 @@ export const hasTripAccess = async (tripId: string, userId: string) => {
     return false;
   }
 
-  if (isAdminOrCreator(user.role)) {
+  if (user.role === "administrator") {
     return true;
+  }
+
+  if (user.role === "creator") {
+    const trip = await prisma.trip.findUnique({
+      where: { id: tripId },
+      select: { ownerId: true },
+    });
+    return trip?.ownerId === user.id;
   }
 
   const access = await prisma.tripAccess.findUnique({
@@ -48,8 +56,16 @@ export const canContributeToTrip = async (tripId: string, userId: string) => {
     return false;
   }
 
-  if (isAdminOrCreator(user.role)) {
+  if (user.role === "administrator") {
     return true;
+  }
+
+  if (user.role === "creator") {
+    const trip = await prisma.trip.findUnique({
+      where: { id: tripId },
+      select: { ownerId: true },
+    });
+    return trip?.ownerId === user.id;
   }
 
   const access = await prisma.tripAccess.findUnique({

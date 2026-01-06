@@ -58,6 +58,16 @@ const isProtectedPath = (pathname: string) => {
 const getCallbackUrl = (request: NextRequest) =>
   `${request.nextUrl.pathname}${request.nextUrl.search}`;
 
+const buildRelativeRedirect = (pathname: string, request: NextRequest) => {
+  const callbackUrl = getCallbackUrl(request);
+  const redirectPath = `${pathname}?callbackUrl=${encodeURIComponent(callbackUrl)}`;
+  const absoluteRedirectUrl = new URL(pathname, request.url);
+  absoluteRedirectUrl.searchParams.set("callbackUrl", callbackUrl);
+  const response = NextResponse.redirect(absoluteRedirectUrl);
+  response.headers.set("location", redirectPath);
+  return response;
+};
+
 const isAllowedMustChangeApi = (pathname: string) => {
   if (pathname.startsWith("/api/auth")) {
     return true;
@@ -80,9 +90,7 @@ export const middleware = async (request: NextRequest) => {
       pathname !== "/sign-in" &&
       !isAllowedMustChangeApi(pathname)
     ) {
-      const passwordUrl = new URL("/account/password", request.url);
-      passwordUrl.searchParams.set("callbackUrl", getCallbackUrl(request));
-      return NextResponse.redirect(passwordUrl);
+      return buildRelativeRedirect("/account/password", request);
     }
   }
 
@@ -94,9 +102,7 @@ export const middleware = async (request: NextRequest) => {
     return NextResponse.next();
   }
 
-  const signInUrl = new URL("/sign-in", request.url);
-  signInUrl.searchParams.set("callbackUrl", getCallbackUrl(request));
-  return NextResponse.redirect(signInUrl);
+  return buildRelativeRedirect("/sign-in", request);
 };
 
 export const config = {

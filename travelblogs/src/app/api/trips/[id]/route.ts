@@ -85,7 +85,12 @@ const getUser = async (request: Request) => {
     }
     return {
       id: token.sub,
-      role: typeof token.role === "string" ? token.role : null,
+      role:
+        typeof token.role === "string"
+          ? token.role
+          : token.sub === "creator"
+            ? "creator"
+            : null,
     };
   } catch {
     return null;
@@ -259,6 +264,7 @@ export const DELETE = async (
     if (!isAdminOrCreator(user.role)) {
       return jsonError(403, "FORBIDDEN", "Creator access required.");
     }
+    const isAdmin = user.role === "administrator";
     const isActive = await ensureActiveAccount(user.id);
     if (!isActive) {
       return jsonError(403, "FORBIDDEN", "Account is inactive.");

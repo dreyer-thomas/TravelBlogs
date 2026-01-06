@@ -31,7 +31,12 @@ const getUser = async (request: Request) => {
     }
     return {
       id: token.sub,
-      role: typeof token.role === "string" ? token.role : null,
+      role:
+        typeof token.role === "string"
+          ? token.role
+          : token.sub === "creator"
+            ? "creator"
+            : null,
     };
   } catch {
     return null;

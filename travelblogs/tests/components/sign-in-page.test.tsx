@@ -74,7 +74,7 @@ describe("SignInPage", () => {
     searchValue = "/trips?from=signin";
     signIn.mockResolvedValue({
       error: null,
-      url: "/trips?from=signin",
+      url: "http://localhost:3000/trips?from=signin",
     });
 
     render(<SignInPage />);
@@ -95,6 +95,60 @@ describe("SignInPage", () => {
     });
     await screen.findByRole("button", { name: "Signing in..." });
     expect(push).toHaveBeenCalledWith("/trips?from=signin");
+  });
+
+  it("falls back when callbackUrl is protocol-relative", async () => {
+    searchValue = "//evil.com";
+    signIn.mockResolvedValue({
+      error: null,
+      url: "//evil.com",
+    });
+
+    render(<SignInPage />);
+
+    fireEvent.change(screen.getByLabelText("Email"), {
+      target: { value: "user@example.com" },
+    });
+    fireEvent.change(screen.getByLabelText("Password"), {
+      target: { value: "Password123!" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Sign in" }));
+
+    expect(signIn).toHaveBeenCalledWith("credentials", {
+      redirect: false,
+      email: "user@example.com",
+      password: "Password123!",
+      callbackUrl: "/trips",
+    });
+    await screen.findByRole("button", { name: "Signing in..." });
+    expect(push).toHaveBeenCalledWith("/trips");
+  });
+
+  it("falls back when callbackUrl uses a non-http scheme", async () => {
+    searchValue = "mailto:user@example.com";
+    signIn.mockResolvedValue({
+      error: null,
+      url: "mailto:user@example.com",
+    });
+
+    render(<SignInPage />);
+
+    fireEvent.change(screen.getByLabelText("Email"), {
+      target: { value: "user@example.com" },
+    });
+    fireEvent.change(screen.getByLabelText("Password"), {
+      target: { value: "Password123!" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Sign in" }));
+
+    expect(signIn).toHaveBeenCalledWith("credentials", {
+      redirect: false,
+      email: "user@example.com",
+      password: "Password123!",
+      callbackUrl: "/trips",
+    });
+    await screen.findByRole("button", { name: "Signing in..." });
+    expect(push).toHaveBeenCalledWith("/trips");
   });
 
   it("shows auth error messages from query params", async () => {

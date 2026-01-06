@@ -22,7 +22,7 @@ describe("middleware", () => {
     getToken.mockResolvedValue(null);
     const response = await middleware(makeRequest("/trips"));
     expect(response?.headers.get("location")).toBe(
-      "http://localhost/sign-in?callbackUrl=%2Ftrips",
+      "/sign-in?callbackUrl=%2Ftrips",
     );
   });
 
@@ -36,7 +36,7 @@ describe("middleware", () => {
     getToken.mockResolvedValue(null);
     const response = await middleware(makeRequest("/entries/abc123"));
     expect(response?.headers.get("location")).toBe(
-      "http://localhost/sign-in?callbackUrl=%2Fentries%2Fabc123",
+      "/sign-in?callbackUrl=%2Fentries%2Fabc123",
     );
   });
 
@@ -58,7 +58,7 @@ describe("middleware", () => {
     getToken.mockResolvedValue(null);
     const response = await middleware(makeRequest("/trips/abc123"));
     expect(response?.headers.get("location")).toBe(
-      "http://localhost/sign-in?callbackUrl=%2Ftrips%2Fabc123",
+      "/sign-in?callbackUrl=%2Ftrips%2Fabc123",
     );
   });
 
@@ -66,7 +66,7 @@ describe("middleware", () => {
     getToken.mockResolvedValue({ sub: "viewer", mustChangePassword: true });
     const response = await middleware(makeRequest("/trips"));
     expect(response?.headers.get("location")).toBe(
-      "http://localhost/account/password?callbackUrl=%2Ftrips",
+      "/account/password?callbackUrl=%2Ftrips",
     );
   });
 
@@ -80,7 +80,7 @@ describe("middleware", () => {
     getToken.mockResolvedValue({ sub: "viewer", mustChangePassword: true });
     const response = await middleware(makeRequest("/api/trips?view=all"));
     expect(response?.headers.get("location")).toBe(
-      "http://localhost/account/password?callbackUrl=%2Fapi%2Ftrips%3Fview%3Dall",
+      "/account/password?callbackUrl=%2Fapi%2Ftrips%3Fview%3Dall",
     );
   });
 
@@ -102,7 +102,7 @@ describe("middleware", () => {
     getToken.mockResolvedValue(null);
     const response = await middleware(makeRequest("/trips?source=share"));
     expect(response?.headers.get("location")).toBe(
-      "http://localhost/sign-in?callbackUrl=%2Ftrips%3Fsource%3Dshare",
+      "/sign-in?callbackUrl=%2Ftrips%3Fsource%3Dshare",
     );
   });
 });

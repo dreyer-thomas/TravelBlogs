@@ -94,7 +94,7 @@ development_status:
   5-11-change-password: done
   5-12-shared-view-button: done
   5-13-active-badge-date-range: done
-  5-14-relative_redirects: ready-for-dev
+  5-14-relative_redirects: done
   5-15-shared-view-hero-image: ready-for-dev
   5-16-missing-migration-must-change-password: ready-for-dev
   5-17-shared-view-back-to-overview: ready-for-dev
