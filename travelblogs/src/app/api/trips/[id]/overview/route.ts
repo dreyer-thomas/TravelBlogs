@@ -108,14 +108,23 @@ export const GET = async (
             endDate: trip.endDate.toISOString(),
             coverImageUrl: trip.coverImageUrl,
           },
-          entries: trip.entries.map((entry) => ({
+          entries: trip.entries.map(
+            (entry: {
+              id: string;
+              tripId: string;
+              title: string;
+              createdAt: Date;
+              coverImageUrl: string | null;
+              media: { url: string }[];
+            }) => ({
             id: entry.id,
             tripId: entry.tripId,
             title: entry.title,
             createdAt: entry.createdAt.toISOString(),
             coverImageUrl: entry.coverImageUrl,
             media: entry.media.map((item) => ({ url: item.url })),
-          })),
+          }),
+          ),
         },
         error: null,
       },
