@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
 import { z } from "zod";
+import type { EntryMedia } from "@prisma/client";
 
 import { prisma } from "../../../../utils/db";
 import { extractInlineImageUrls } from "../../../../utils/entry-content";
@@ -164,7 +165,7 @@ export const GET = async (
           text: entry.text,
           createdAt: entry.createdAt.toISOString(),
           updatedAt: entry.updatedAt.toISOString(),
-          media: entry.media.map((item) => ({
+          media: entry.media.map((item: EntryMedia) => ({
             id: item.id,
             url: item.url,
             createdAt: item.createdAt.toISOString(),
