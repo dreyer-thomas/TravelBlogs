@@ -128,7 +128,7 @@ export const GET = async (
 
     const excludedIds = new Set<string>([
       access.trip.ownerId,
-      ...existingAccess.map((entry) => entry.userId),
+      ...existingAccess.map((entry: { userId: string }) => entry.userId),
     ]);
 
     const excludedList = Array.from(excludedIds);
