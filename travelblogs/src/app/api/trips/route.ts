@@ -142,7 +142,7 @@ export const GET = async (request: NextRequest) => {
         orderBy: { updatedAt: "desc" },
       });
 
-      tripList = trips.map((trip) => ({
+      tripList = trips.map((trip: (typeof trips)[number]) => ({
         trip,
         canEditTrip: true,
       }));
