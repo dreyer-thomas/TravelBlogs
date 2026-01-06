@@ -1,5 +1,6 @@
 require("dotenv/config");
 const { createServer } = require("https");
+const { createServer: createHttpServer } = require("http");
 const { readFileSync } = require("fs");
 const { parse } = require("url");
 const next = require("next");
@@ -36,6 +37,14 @@ const loadTlsConfigFromEnv = () => {
   return { cert, key, ca };
 };
 
+const isHttpsEnabled = () => {
+  const raw = process.env.HTTPS_ENABLED?.trim().toLowerCase();
+  if (!raw) {
+    return true;
+  }
+  return !["0", "false", "no", "off"].includes(raw);
+};
+
 const startHttpsServer = async () => {
   const port = Number.parseInt(process.env.PORT ?? "3000", 10);
   const hostname = process.env.HOSTNAME ?? "0.0.0.0";
@@ -43,13 +52,24 @@ const startHttpsServer = async () => {
   const handle = app.getRequestHandler();
 
   await app.prepare();
-  const tlsConfig = loadTlsConfigFromEnv();
 
-  createServer(tlsConfig, (req, res) => {
+  if (isHttpsEnabled()) {
+    const tlsConfig = loadTlsConfigFromEnv();
+    createServer(tlsConfig, (req, res) => {
+      const parsedUrl = parse(req.url ?? "", true);
+      handle(req, res, parsedUrl);
+    }).listen(port, hostname, () => {
+      console.log(`HTTPS server running at https://${hostname}:${port}`);
+    });
+    return;
+  }
+
+  console.warn("HTTPS is disabled; starting HTTP server.");
+  createHttpServer((req, res) => {
     const parsedUrl = parse(req.url ?? "", true);
     handle(req, res, parsedUrl);
   }).listen(port, hostname, () => {
-    console.log(`HTTPS server running at https://${hostname}:${port}`);
+    console.log(`HTTP server running at http://${hostname}:${port}`);
   });
 };
 
