@@ -303,11 +303,13 @@ export const PATCH = async (
           text: updated.text,
           createdAt: updated.createdAt.toISOString(),
           updatedAt: updated.updatedAt.toISOString(),
-          media: updated.media.map((item) => ({
+          media: updated.media.map(
+            (item: { id: string; url: string; createdAt: Date }) => ({
             id: item.id,
             url: item.url,
             createdAt: item.createdAt.toISOString(),
-          })),
+          }),
+          ),
         },
         error: null,
       },
