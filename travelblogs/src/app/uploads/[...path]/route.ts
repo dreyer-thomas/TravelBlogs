@@ -42,9 +42,9 @@ const resolveSafePath = (segments: string[]) => {
 
 export const GET = async (
   _request: NextRequest,
-  { params }: { params: { path?: string[] } },
+  { params }: { params: Promise<{ path: string[] }> },
 ) => {
-  const segments = params.path ?? [];
+  const { path: segments } = await params;
   if (segments.length === 0) {
     return NextResponse.json(
       { data: null, error: { code: "NOT_FOUND", message: "File not found." } },
@@ -78,8 +78,11 @@ export const GET = async (
 
 export const HEAD = async (
   request: NextRequest,
-  context: { params: { path?: string[] } },
+  context: { params: Promise<{ path: string[] }> },
 ) => {
   const response = await GET(request, context);
-  return new NextResponse(null, { status: response.status, headers: response.headers });
+  return new NextResponse(null, {
+    status: response.status,
+    headers: response.headers,
+  });
 };
