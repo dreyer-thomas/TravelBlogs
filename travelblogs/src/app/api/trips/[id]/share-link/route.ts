@@ -1,7 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
 import { randomBytes } from "node:crypto";
-import { Prisma } from "@prisma/client";
 import { z } from "zod";
 
 import { prisma } from "../../../../../utils/db";
@@ -69,11 +68,10 @@ const createShareLink = async (tripId: string) => {
         },
       });
     } catch (error) {
-      if (
-        error instanceof Prisma.PrismaClientKnownRequestError &&
-        error.code === "P2002"
-      ) {
-        continue;
+      if (error && typeof error === "object" && "code" in error) {
+        if (error.code === "P2002") {
+          continue;
+        }
       }
       throw error;
     }
@@ -93,7 +91,7 @@ const rotateShareLink = async (tripId: string) => {
         },
       });
     } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error && typeof error === "object" && "code" in error) {
         if (error.code === "P2002") {
           continue;
         }
@@ -114,11 +112,10 @@ const revokeShareLink = async (tripId: string) => {
     });
     return true;
   } catch (error) {
-    if (
-      error instanceof Prisma.PrismaClientKnownRequestError &&
-      error.code === "P2025"
-    ) {
-      return false;
+    if (error && typeof error === "object" && "code" in error) {
+      if (error.code === "P2025") {
+        return false;
+      }
     }
     throw error;
   }
