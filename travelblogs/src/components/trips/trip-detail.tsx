@@ -14,6 +14,7 @@ type TripDetail = {
   startDate: string;
   endDate: string;
   coverImageUrl: string | null;
+  ownerName?: string | null;
 };
 
 type TripDetailProps = {
@@ -23,6 +24,7 @@ type TripDetailProps = {
   canDeleteTrip: boolean;
   canManageShare: boolean;
   canManageViewers: boolean;
+  canTransferOwnership: boolean;
 };
 
 type EntryMedia = {
@@ -51,6 +53,15 @@ type Invitee = {
   name: string;
   email: string;
   role: "creator" | "viewer";
+  createdAt: string;
+  updatedAt: string;
+};
+
+type TransferCandidate = {
+  id: string;
+  name: string;
+  email: string;
+  role: "creator" | "administrator" | "viewer";
   createdAt: string;
   updatedAt: string;
 };
@@ -89,6 +100,7 @@ const TripDetail = ({
   canDeleteTrip,
   canManageShare,
   canManageViewers,
+  canTransferOwnership,
 }: TripDetailProps) => {
   const router = useRouter();
   const [trip, setTrip] = useState<TripDetail | null>(null);
@@ -120,6 +132,14 @@ const TripDetail = ({
   const [removingUserId, setRemovingUserId] = useState<string | null>(null);
   const [toggleError, setToggleError] = useState<string | null>(null);
   const [togglingUserId, setTogglingUserId] = useState<string | null>(null);
+  const [isTransferOpen, setIsTransferOpen] = useState(false);
+  const [transferCandidates, setTransferCandidates] = useState<
+    TransferCandidate[]
+  >([]);
+  const [transferLoading, setTransferLoading] = useState(false);
+  const [transferError, setTransferError] = useState<string | null>(null);
+  const [selectedTransferId, setSelectedTransferId] = useState("");
+  const [transferSaving, setTransferSaving] = useState(false);
   const [isRevokeOpen, setIsRevokeOpen] = useState(false);
   const [isRevoking, setIsRevoking] = useState(false);
   const [revokeError, setRevokeError] = useState<string | null>(null);
@@ -400,6 +420,67 @@ const TripDetail = ({
     }
   }, [isSharePanelOpen]);
 
+  useEffect(() => {
+    if (!isTransferOpen) {
+      setTransferCandidates([]);
+      setTransferError(null);
+      setSelectedTransferId("");
+      return;
+    }
+
+    if (!canTransferOwnership) {
+      setIsTransferOpen(false);
+      return;
+    }
+
+    let isActive = true;
+    setTransferLoading(true);
+    setTransferError(null);
+
+    const loadTransferCandidates = async () => {
+      try {
+        const response = await fetch(
+          `/api/trips/${tripId}/transfer-ownership`,
+          {
+            method: "GET",
+            credentials: "include",
+            cache: "no-store",
+          },
+        );
+        const body = await response.json().catch(() => null);
+
+        if (!response.ok || body?.error) {
+          throw new Error(
+            body?.error?.message ?? "Unable to load transfer candidates.",
+          );
+        }
+
+        if (isActive) {
+          setTransferCandidates(
+            (body?.data as TransferCandidate[]) ?? [],
+          );
+          setTransferLoading(false);
+        }
+      } catch (err) {
+        if (isActive) {
+          setTransferCandidates([]);
+          setTransferError(
+            err instanceof Error
+              ? err.message
+              : "Unable to load transfer candidates.",
+          );
+          setTransferLoading(false);
+        }
+      }
+    };
+
+    loadTransferCandidates();
+
+    return () => {
+      isActive = false;
+    };
+  }, [isTransferOpen, tripId, canTransferOwnership]);
+
   const filteredInvitees = useMemo(() => {
     if (eligibleInvitees.length === 0) {
       return eligibleInvitees;
@@ -411,6 +492,12 @@ const TripDetail = ({
   const selectedInvitee = useMemo(() => {
     return eligibleInvitees.find((invitee) => invitee.id === selectedInviteeId);
   }, [eligibleInvitees, selectedInviteeId]);
+
+  const eligibleTransferCandidates = useMemo(() => {
+    return transferCandidates.filter((candidate) =>
+      ["creator", "administrator"].includes(candidate.role),
+    );
+  }, [transferCandidates]);
 
   useEffect(() => {
     if (!selectedInviteeId) {
@@ -672,6 +759,67 @@ const TripDetail = ({
     }
   };
 
+  const handleOpenTransfer = () => {
+    setTransferError(null);
+    setIsTransferOpen(true);
+  };
+
+  const handleCloseTransfer = () => {
+    setIsTransferOpen(false);
+    setTransferError(null);
+    setSelectedTransferId("");
+  };
+
+  const handleTransferOwnership = async () => {
+    if (!selectedTransferId) {
+      setTransferError("Select a new owner.");
+      return;
+    }
+
+    const isEligible = eligibleTransferCandidates.some(
+      (candidate) => candidate.id === selectedTransferId,
+    );
+    if (!isEligible) {
+      setTransferError("Selected user is no longer eligible.");
+      setSelectedTransferId("");
+      return;
+    }
+
+    setTransferSaving(true);
+    setTransferError(null);
+
+    try {
+      const response = await fetch(
+        `/api/trips/${trip.id}/transfer-ownership`,
+        {
+          method: "POST",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ userId: selectedTransferId }),
+        },
+      );
+      const body = await response.json().catch(() => null);
+
+      if (!response.ok || body?.error) {
+        throw new Error(
+          body?.error?.message ?? "Unable to transfer ownership.",
+        );
+      }
+
+      setIsTransferOpen(false);
+      setSelectedTransferId("");
+      router.refresh();
+    } catch (err) {
+      setTransferError(
+        err instanceof Error ? err.message : "Unable to transfer ownership.",
+      );
+    } finally {
+      setTransferSaving(false);
+    }
+  };
+
   const handleOpenRevoke = () => {
     setIsRevokeOpen(true);
     setRevokeError(null);
@@ -823,7 +971,7 @@ const TripDetail = ({
           <div className="mt-6 flex flex-wrap items-center gap-3 text-sm text-[#6B635B]">
             <div className="flex items-center gap-2">
               <span className="font-semibold text-[#2D2A26]">Owner:</span>
-              <span>Creator</span>
+              <span>{trip.ownerName ?? "Creator"}</span>
             </div>
             {canManageShare ? (
               <button
@@ -1273,6 +1421,15 @@ const TripDetail = ({
                   Edit trip
                 </Link>
               ) : null}
+              {canTransferOwnership ? (
+                <button
+                  type="button"
+                  onClick={handleOpenTransfer}
+                  className="rounded-xl border border-[#1F6F78] px-4 py-2 text-sm font-semibold text-[#1F6F78] transition hover:bg-[#1F6F78] hover:text-white"
+                >
+                  Transfer ownership
+                </button>
+              ) : null}
               {canDeleteTrip ? (
                 <DeleteTripModal tripId={trip.id} tripTitle={trip.title} />
               ) : null}
@@ -1293,6 +1450,92 @@ const TripDetail = ({
           ) : null}
         </section>
       </main>
+
+      {isTransferOpen ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="transfer-ownership-title"
+            aria-describedby="transfer-ownership-description"
+            className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl"
+          >
+            <h2
+              id="transfer-ownership-title"
+              className="text-lg font-semibold text-[#2D2A26]"
+            >
+              Transfer ownership
+            </h2>
+            <p
+              id="transfer-ownership-description"
+              className="mt-2 text-sm text-[#6B635B]"
+            >
+              Select a new owner. Only active creators and administrators are
+              eligible.
+            </p>
+
+            {transferError ? (
+              <p className="mt-3 text-sm text-[#B64A3A]">{transferError}</p>
+            ) : null}
+
+            {transferLoading ? (
+              <p className="mt-3 text-sm text-[#6B635B]">
+                Loading eligible owners…
+              </p>
+            ) : eligibleTransferCandidates.length === 0 ? (
+              <p className="mt-3 text-sm text-[#6B635B]">
+                No eligible owners available.
+              </p>
+            ) : (
+              <div className="mt-4">
+                <label
+                  htmlFor="transfer-owner-select"
+                  className="text-xs uppercase tracking-[0.2em] text-[#6B635B]"
+                >
+                  New owner
+                </label>
+                <select
+                  id="transfer-owner-select"
+                  value={selectedTransferId}
+                  onChange={(event) =>
+                    setSelectedTransferId(event.target.value)
+                  }
+                  className="mt-2 w-full rounded-xl border border-black/10 bg-white px-3 py-2 text-sm text-[#2D2A26]"
+                >
+                  <option value="">Select a user</option>
+                  {eligibleTransferCandidates.map((candidate) => (
+                    <option key={candidate.id} value={candidate.id}>
+                      {candidate.name} ({candidate.role})
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            <div className="mt-6 flex flex-wrap gap-3">
+              <button
+                type="button"
+                onClick={handleCloseTransfer}
+                className="min-h-[44px] rounded-xl border border-[#D5CDC4] px-4 py-2 text-sm font-semibold text-[#2D2A26] transition hover:bg-[#F6F1EB] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2D2A26]"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleTransferOwnership}
+                disabled={
+                  transferSaving ||
+                  transferLoading ||
+                  eligibleTransferCandidates.length === 0
+                }
+                className="min-h-[44px] rounded-xl bg-[#1F6F78] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#195C63] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1F6F78] disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {transferSaving ? "Transferring..." : "Transfer ownership"}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       {isRevokeOpen ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">

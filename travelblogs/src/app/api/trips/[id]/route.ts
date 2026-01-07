@@ -130,6 +130,11 @@ export const GET = async (
       }
     }
 
+    const owner = await prisma.user.findUnique({
+      where: { id: trip.ownerId },
+      select: { name: true },
+    });
+
     return NextResponse.json(
       {
         data: {
@@ -139,6 +144,8 @@ export const GET = async (
           endDate: trip.endDate.toISOString(),
           coverImageUrl: trip.coverImageUrl,
           ownerId: trip.ownerId,
+          ownerName:
+            owner?.name ?? (trip.ownerId === "creator" ? "Creator" : null),
           createdAt: trip.createdAt.toISOString(),
           updatedAt: trip.updatedAt.toISOString(),
         },
@@ -230,6 +237,11 @@ export const PATCH = async (
       },
     });
 
+    const owner = await prisma.user.findUnique({
+      where: { id: updatedTrip.ownerId },
+      select: { name: true },
+    });
+
     return NextResponse.json(
       {
         data: {
@@ -239,6 +251,9 @@ export const PATCH = async (
           endDate: updatedTrip.endDate.toISOString(),
           coverImageUrl: updatedTrip.coverImageUrl,
           ownerId: updatedTrip.ownerId,
+          ownerName:
+            owner?.name ??
+            (updatedTrip.ownerId === "creator" ? "Creator" : null),
           createdAt: updatedTrip.createdAt.toISOString(),
           updatedAt: updatedTrip.updatedAt.toISOString(),
         },

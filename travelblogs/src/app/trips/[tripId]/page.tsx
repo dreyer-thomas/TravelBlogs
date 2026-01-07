@@ -5,6 +5,7 @@ import { unstable_noStore as noStore } from "next/cache";
 import { authOptions } from "../../../utils/auth-options";
 import TripDetail from "../../../components/trips/trip-detail";
 import { prisma } from "../../../utils/db";
+import { ensureActiveAccount } from "../../../utils/roles";
 import { canContributeToTrip, hasTripAccess } from "../../../utils/trip-access";
 
 export const dynamic = "force-dynamic";
@@ -24,6 +25,11 @@ const TripDetailPage = async ({ params }: TripDetailPageProps) => {
     redirect(`/sign-in?callbackUrl=/trips/${tripId}`);
   }
 
+  const isActive = await ensureActiveAccount(session.user.id);
+  if (!isActive) {
+    redirect(`/sign-in?callbackUrl=/trips/${tripId}`);
+  }
+
   const trip = await prisma.trip.findUnique({
     where: {
       id: tripId,
@@ -38,7 +44,8 @@ const TripDetailPage = async ({ params }: TripDetailPageProps) => {
   }
 
   const isOwner = trip.ownerId === session.user.id;
-  if (!isOwner) {
+  const isAdmin = session.user.role === "administrator";
+  if (!isOwner && !isAdmin) {
     const canView = await hasTripAccess(tripId, session.user.id);
     if (!canView) {
       notFound();
@@ -57,6 +64,7 @@ const TripDetailPage = async ({ params }: TripDetailPageProps) => {
       canDeleteTrip={isOwner}
       canManageShare={isOwner}
       canManageViewers={isOwner}
+      canTransferOwnership={isOwner || isAdmin}
     />
   );
 };

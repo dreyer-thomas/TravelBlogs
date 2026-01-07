@@ -12,6 +12,7 @@ export type EntryApiData = {
   title: string;
   text: string;
   createdAt: string;
+  coverImageUrl?: string | null;
   media: EntryApiMedia[];
   navigation?: EntryApiNavigation;
 };
@@ -70,12 +71,27 @@ const inferMediaType = (url: string): "image" | "video" | null => {
 };
 
 export const mapEntryToReader = (entry: EntryApiData): EntryReaderData => {
+  const coverUrl = entry.coverImageUrl?.trim();
+  const remainingMedia = entry.media.filter(
+    (item) => item.url !== coverUrl,
+  );
+  const orderedMedia = coverUrl
+    ? [
+        {
+          id: entry.media.find((item) => item.url === coverUrl)?.id ?? `cover-${entry.id}`,
+          url: coverUrl,
+          createdAt: entry.media.find((item) => item.url === coverUrl)?.createdAt,
+        },
+        ...remainingMedia,
+      ]
+    : entry.media;
+
   return {
     id: entry.id,
     title: entry.title,
     body: entry.text,
     createdAt: entry.createdAt,
-    media: entry.media.map((item) => ({
+    media: orderedMedia.map((item) => ({
       id: item.id,
       url: item.url,
       type: inferMediaType(item.url),

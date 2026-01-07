@@ -539,6 +539,35 @@ So that I can focus on the photos without UI clutter.
 **Then** a horizontal progress bar is shown with one segment per image  
 **And** the progress bar advances in order and loops after the last image
 
+### Story 3.5: Transfer Trip Ownership
+
+As a trip owner or administrator,  
+I want to transfer ownership of a trip to another active creator or administrator,  
+so that trip stewardship can move to the right person.
+
+**Acceptance Criteria:**
+
+**Given** I am the trip owner or an administrator  
+**When** I open Trip Actions  
+**Then** I see a "Transfer ownership" action  
+
+**Given** I open the transfer action  
+**When** I view the selection list  
+**Then** I can only select active users with role `creator` or `administrator`  
+
+**Given** I select an eligible user and confirm  
+**When** the transfer completes  
+**Then** the trip owner is updated to the selected user  
+**And** the trip remains accessible to the new owner  
+
+**Given** I am not the trip owner and not an administrator  
+**When** I attempt to transfer ownership  
+**Then** the action is forbidden with an owner-or-admin error  
+
+**Given** the target user is inactive or not a creator/administrator  
+**When** I attempt to transfer ownership  
+**Then** the action is blocked with a clear validation error
+
 ## Epic 4: Simple Sharing (MVP)
 
 Creators can generate a shareable link so others can view trips without friction.

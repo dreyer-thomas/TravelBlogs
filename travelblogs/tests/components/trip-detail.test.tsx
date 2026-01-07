@@ -44,6 +44,7 @@ describe("TripDetail", () => {
               startDate: "2025-05-01T00:00:00.000Z",
               endDate: "2025-05-10T00:00:00.000Z",
               coverImageUrl: null,
+              ownerName: "Alex Owner",
             },
             error: null,
           }),
@@ -73,9 +74,20 @@ describe("TripDetail", () => {
 
     vi.stubGlobal("fetch", fetchMock);
 
-    render(<TripDetail tripId="trip-1" canAddEntry canEditTrip canDeleteTrip canManageShare canManageViewers />);
+    render(
+      <TripDetail
+        tripId="trip-1"
+        canAddEntry
+        canEditTrip
+        canDeleteTrip
+        canManageShare
+        canManageViewers
+        canTransferOwnership={false}
+      />,
+    );
 
     expect(await screen.findByText("Roman morning")).toBeInTheDocument();
+    expect(await screen.findByText("Alex Owner")).toBeInTheDocument();
   });
 
   it("shows edit trip without delete when delete access is missing", async () => {
@@ -116,6 +128,7 @@ describe("TripDetail", () => {
         canDeleteTrip={false}
         canManageShare={false}
         canManageViewers={false}
+        canTransferOwnership={false}
       />,
     );
 
@@ -174,6 +187,7 @@ describe("TripDetail", () => {
         canDeleteTrip={false}
         canManageShare={false}
         canManageViewers={false}
+        canTransferOwnership={false}
       />,
     );
 
@@ -197,5 +211,101 @@ describe("TripDetail", () => {
     await waitFor(() => {
       expect(pushMock).toHaveBeenCalledWith("/trips/share/shared-token");
     });
+  });
+
+  it("lists only eligible users in the transfer ownership selector", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            data: {
+              id: "trip-4",
+              title: "Transfer Trip",
+              startDate: "2025-06-01T00:00:00.000Z",
+              endDate: "2025-06-05T00:00:00.000Z",
+              coverImageUrl: null,
+            },
+            error: null,
+          }),
+          { status: 200 },
+        ),
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            data: [],
+            error: null,
+          }),
+          { status: 200 },
+        ),
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            data: [
+              {
+                id: "admin-1",
+                name: "Admin",
+                email: "admin@example.com",
+                role: "administrator",
+                createdAt: "2025-06-01T00:00:00.000Z",
+                updatedAt: "2025-06-01T00:00:00.000Z",
+              },
+              {
+                id: "viewer-1",
+                name: "Viewer",
+                email: "viewer@example.com",
+                role: "viewer",
+                createdAt: "2025-06-01T00:00:00.000Z",
+                updatedAt: "2025-06-01T00:00:00.000Z",
+              },
+            ],
+            error: null,
+          }),
+          { status: 200 },
+        ),
+      );
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(
+      <TripDetail
+        tripId="trip-4"
+        canAddEntry
+        canEditTrip
+        canDeleteTrip
+        canManageShare={false}
+        canManageViewers={false}
+        canTransferOwnership
+      />,
+    );
+
+    const transferButton = await screen.findByRole("button", {
+      name: "Transfer ownership",
+    });
+
+    fireEvent.click(transferButton);
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenLastCalledWith(
+        "/api/trips/trip-4/transfer-ownership",
+        {
+          method: "GET",
+          credentials: "include",
+          cache: "no-store",
+        },
+      );
+    });
+
+    const select = await screen.findByLabelText("New owner");
+
+    expect(select).toBeInTheDocument();
+    expect(
+      screen.getByRole("option", { name: "Admin (administrator)" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("option", { name: "Viewer (viewer)" }),
+    ).not.toBeInTheDocument();
   });
 });

@@ -120,4 +120,37 @@ describe("GET /api/trips/[id] access", () => {
     expect(response.status).toBe(403);
     expect(body.error.code).toBe("FORBIDDEN");
   });
+
+  it("includes the owner name in the trip detail response", async () => {
+    const owner = await prisma.user.create({
+      data: {
+        email: "owner@example.com",
+        name: "Owner Name",
+        role: "creator",
+        passwordHash: "hash",
+      },
+    });
+
+    const trip = await prisma.trip.create({
+      data: {
+        title: "Owner Trip",
+        startDate: new Date("2025-05-01"),
+        endDate: new Date("2025-05-10"),
+        ownerId: owner.id,
+      },
+    });
+
+    getToken.mockResolvedValue({ sub: owner.id, role: "creator" });
+
+    const request = new Request(`http://localhost/api/trips/${trip.id}`, {
+      method: "GET",
+    });
+
+    const response = await get(request, { params: { id: trip.id } });
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.error).toBeNull();
+    expect(body.data.ownerName).toBe("Owner Name");
+  });
 });

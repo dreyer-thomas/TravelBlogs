@@ -1,6 +1,6 @@
 # Story 5.15: Shared View Hero Image Uses Selected Cover
 
-Status: ready-for-dev
+Status: review
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -21,12 +21,12 @@ so that the shared view reflects the intended cover photo.
 
 ## Tasks / Subtasks
 
-- [ ] Update shared entry mapping to respect cover image (AC: 1, 2)
-  - [ ] Ensure `EntryReader` receives the selected cover image URL when present
-  - [ ] Preserve existing fallback behavior when no cover image is set
-- [ ] Add/adjust tests (AC: 1, 2)
-  - [ ] Component test for shared entry hero image using cover image
-  - [ ] Component test for fallback to first photo when no cover image
+- [x] Update shared entry mapping to respect cover image (AC: 1, 2)
+  - [x] Ensure `EntryReader` receives the selected cover image URL when present
+  - [x] Preserve existing fallback behavior when no cover image is set
+- [x] Add/adjust tests (AC: 1, 2)
+  - [x] Component test for shared entry hero image using cover image
+  - [x] Component test for fallback to first photo when no cover image
 
 ## Dev Notes
 
@@ -86,7 +86,7 @@ so that the shared view reflects the intended cover photo.
 
 ### Story Completion Status
 
-- Status: ready-for-dev
+- Status: review
 - Completion note: Ultimate context engine analysis completed - comprehensive developer guide created.
 
 ### Project Structure Notes
@@ -110,10 +110,12 @@ Codex (GPT-5)
 
 ### Debug Log References
 
+- N/A
+
 ### Completion Notes List
 
-- Drafted shared-view hero image behavior using cover image preference and fallback.
-- Added test coverage expectations for hero image selection.
+- ✅ Preferred cover image in shared entry mapping, falling back to first media item.
+- ✅ Tests: `tests/components/shared-entry-page.test.tsx`.
 
 ### File List
 
@@ -122,3 +124,10 @@ Codex (GPT-5)
 - _bmad-output/project-context.md
 - travelblogs/src/app/trips/share/[token]/entries/[entryId]/page.tsx
 - travelblogs/src/utils/entry-reader.ts
+- travelblogs/tests/components/shared-entry-page.test.tsx
+- _bmad-output/implementation-artifacts/sprint-status.yaml
+- _bmad-output/implementation-artifacts/5-15-shared-view-hero-image.md
+
+### Change Log
+
+- 2026-01-07: Prefer cover image for shared entry hero with fallback; added component tests; status set to review.
