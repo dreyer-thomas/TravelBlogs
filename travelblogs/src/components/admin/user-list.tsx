@@ -225,9 +225,14 @@ const UserList = ({ users, currentUserId }: UserListProps) => {
   return (
     <section className="space-y-3">
       {rows.map((user) => {
-        const isLocked = Boolean(currentUserId && user.id === currentUserId);
+        const isSelf = Boolean(currentUserId && user.id === currentUserId);
+        const isDefaultCreator = user.id === "creator";
+        const isLocked = isSelf;
+        const isEditDisabled = isSelf && !isDefaultCreator;
+        const isStatusLocked = isSelf && isDefaultCreator;
         const isEditing = editingUserId === user.id;
         const isDeleteConfirming = confirmDeleteId === user.id;
+        const displayName = isDefaultCreator ? "Default creator" : user.name;
         const roleLabel =
           roleOptions.find((option) => option.value === user.role)?.label ??
           user.role;
@@ -239,7 +244,7 @@ const UserList = ({ users, currentUserId }: UserListProps) => {
         >
           <div>
             <h3 className="text-base font-semibold text-[#2D2A26]">
-              {user.name}
+              {displayName}
             </h3>
             <p className="text-sm text-[#6B635B]">{user.email}</p>
           </div>
@@ -255,7 +260,7 @@ const UserList = ({ users, currentUserId }: UserListProps) => {
             </span>
             <button
               type="button"
-              disabled={isLocked}
+              disabled={isEditDisabled}
               aria-expanded={isEditing}
               onClick={() => {
                 setEditingUserId((current) =>
@@ -274,9 +279,9 @@ const UserList = ({ users, currentUserId }: UserListProps) => {
               <div className="space-y-3">
                 <div className="flex flex-wrap items-center gap-3">
                   <label className="flex items-center gap-2 text-xs text-[#2D2A26]">
-                    <span className="sr-only">{`Role for ${user.name}`}</span>
+                    <span className="sr-only">{`Role for ${displayName}`}</span>
                     <select
-                      aria-label={`Role for ${user.name}`}
+                      aria-label={`Role for ${displayName}`}
                       value={user.pendingRole}
                       onChange={(event) =>
                         handleRoleChange(
@@ -312,7 +317,7 @@ const UserList = ({ users, currentUserId }: UserListProps) => {
                   {user.isActive ? (
                     <button
                       type="button"
-                      disabled={isLocked || user.saving || user.deleting}
+                      disabled={isStatusLocked || user.saving || user.deleting}
                       onClick={() => handleStatusToggle(user, false)}
                       className="rounded-full border border-black/10 bg-white px-3 py-1 text-xs font-semibold text-[#2D2A26] transition hover:bg-black/5 disabled:cursor-not-allowed disabled:opacity-60"
                     >
@@ -321,7 +326,7 @@ const UserList = ({ users, currentUserId }: UserListProps) => {
                   ) : (
                     <button
                       type="button"
-                      disabled={isLocked || user.saving || user.deleting}
+                      disabled={isStatusLocked || user.saving || user.deleting}
                       onClick={() => handleStatusToggle(user, true)}
                       className="rounded-full border border-black/10 bg-white px-3 py-1 text-xs font-semibold text-[#2D2A26] transition hover:bg-black/5 disabled:cursor-not-allowed disabled:opacity-60"
                     >

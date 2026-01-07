@@ -43,7 +43,7 @@ development_status:
   epic-0: in-progress
   0-1-creator-sign-in-single-account: done
   0-2-enable-https: done
-  0-3-deactivate-creator-account: ready-for-dev
+  0-3-deactivate-creator-account: done
   epic-0-retrospective: optional
 
   epic-1: in-progress

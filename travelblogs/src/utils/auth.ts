@@ -53,9 +53,11 @@ export const validateCredentials = async (
 
   if (configEmail && config.password) {
     if (normalizedEmail === configEmail && password === config.password) {
-      const creatorRecord = await prisma.user.findUnique({
-        where: { email: configEmail },
-      });
+      const creatorRecord =
+        (await prisma.user.findUnique({ where: { id: "creator" } })) ??
+        (await prisma.user.findUnique({
+          where: { email: configEmail },
+        }));
 
       if (creatorRecord && !creatorRecord.isActive) {
         return {

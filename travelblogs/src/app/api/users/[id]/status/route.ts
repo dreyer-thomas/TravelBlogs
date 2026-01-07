@@ -3,11 +3,7 @@ import { getToken } from "next-auth/jwt";
 import { z } from "zod";
 
 import { prisma } from "../../../../../utils/db";
-import {
-  countActiveAdmins,
-  isAdminRole,
-  isAdminUser,
-} from "../../admin-helpers";
+import { countActiveAdmins, isAdminRole } from "../../admin-helpers";
 
 export const runtime = "nodejs";
 
@@ -54,15 +50,15 @@ const getAuthContext = async (request: NextRequest) => {
   }
 };
 
-const requireAdmin = async (request: NextRequest) => {
+const requireAdministrator = async (request: NextRequest) => {
   const auth = await getAuthContext(request);
   if (!auth) {
     return { error: jsonError(401, "UNAUTHORIZED", "Authentication required.") };
   }
-  if (!isAdminUser(auth)) {
+  if (auth.role !== "administrator") {
     return { error: jsonError(403, "FORBIDDEN", "Admin access required.") };
   }
-  return { userId: auth.userId };
+  return { userId: auth.userId, role: auth.role };
 };
 
 export const PATCH = async (
@@ -70,7 +66,7 @@ export const PATCH = async (
   { params }: { params: Promise<{ id: string }> | { id: string } },
 ) => {
   try {
-    const auth = await requireAdmin(request);
+    const auth = await requireAdministrator(request);
     if (auth.error) {
       return auth.error;
     }
@@ -101,7 +97,7 @@ export const PATCH = async (
       return jsonError(404, "NOT_FOUND", "User not found.");
     }
 
-    const isTargetAdmin = isAdminRole(existing.role);
+    const isTargetAdmin = isAdminRole(existing.role) || existing.id === "creator";
     const isDeactivating =
       isTargetAdmin && existing.isActive && parsed.data.isActive === false;
     if (isTargetAdmin && isDeactivating) {

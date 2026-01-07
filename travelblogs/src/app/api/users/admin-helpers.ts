@@ -7,9 +7,7 @@ const hasDefaultCreatorAccount = () =>
 export const countActiveAdmins = async (excludeUserId?: string) => {
   const admins = await prisma.user.findMany({
     where: {
-      role: {
-        in: ["creator", "administrator"],
-      },
+      role: "administrator",
       isActive: true,
       ...(excludeUserId ? { id: { not: excludeUserId } } : {}),
     },
@@ -40,7 +38,7 @@ type AuthContext = {
 };
 
 export const isAdminRole = (role: string | null | undefined) =>
-  isAdminOrCreator(role);
+  role === "administrator";
 
 export const isAdminUser = (auth: AuthContext | null) =>
   Boolean(auth && (auth.userId === "creator" || isAdminOrCreator(auth.role)));

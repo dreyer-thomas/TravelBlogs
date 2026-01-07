@@ -198,6 +198,22 @@ describe("UserList status controls", () => {
     expect(screen.getByRole("button", { name: "Deactivate" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Activate" })).toBeNull();
   });
+
+  it("disables the status toggle for the default creator when viewing self", () => {
+    const creatorUser = {
+      ...baseUser,
+      id: "creator",
+      email: "creator@example.com",
+      name: "Creator",
+      role: "creator" as const,
+    };
+
+    render(<UserList users={[creatorUser]} currentUserId="creator" />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Edit User" }));
+
+    expect(screen.getByRole("button", { name: "Deactivate" })).toBeDisabled();
+  });
 });
 
 describe("UserList delete controls", () => {

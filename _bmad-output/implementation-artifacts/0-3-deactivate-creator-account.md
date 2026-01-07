@@ -1,6 +1,6 @@
 # Story 0.3: Deactivate Creator Account
 
-Status: ready-for-dev
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -34,22 +34,22 @@ so that access can be suspended or restored without removing the configured cred
 
 ## Tasks / Subtasks
 
-- [ ] Ensure the default creator exists as a managed user (AC: 1)
-  - [ ] On GET `/api/users`, insert or synthesize a creator row when `.env` is configured
-  - [ ] Ensure the creator record uses id `creator`, role `creator`, and tracks `isActive`
-- [ ] Restrict status changes to administrator role only (AC: 2, 3, 6)
-  - [ ] Enforce admin-only access for creator status changes in the status endpoint
-  - [ ] Keep responses wrapped `{ data, error }` with `{ error: { code, message } }`
-- [ ] Add activation/deactivation control for the default creator (AC: 1, 2, 3, 5)
-  - [ ] Keep the existing status toggle pattern but label the row as "Default creator"
-  - [ ] Disable the toggle when the current user is the creator
-- [ ] Enforce admin safety guardrails (AC: 4)
-  - [ ] Reuse existing "last active admin" protection for deactivation attempts
-- [ ] Update auth behavior to respect creator status (AC: 2, 3)
-  - [ ] Ensure creator login checks the DB record (by email or id) and blocks if inactive
-- [ ] Add tests (AC: 1-6)
-  - [ ] API tests for admin-only toggle, creator self-toggle blocked, and last-admin protection
-  - [ ] UI test or component test confirming the toggle is disabled for self
+- [x] Ensure the default creator exists as a managed user (AC: 1)
+  - [x] On GET `/api/users`, insert or synthesize a creator row when `.env` is configured
+  - [x] Ensure the creator record uses id `creator`, role `creator`, and tracks `isActive`
+- [x] Restrict status changes to administrator role only (AC: 2, 3, 6)
+  - [x] Enforce admin-only access for creator status changes in the status endpoint
+  - [x] Keep responses wrapped `{ data, error }` with `{ error: { code, message } }`
+- [x] Add activation/deactivation control for the default creator (AC: 1, 2, 3, 5)
+  - [x] Keep the existing status toggle pattern but label the row as "Default creator"
+  - [x] Disable the toggle when the current user is the creator
+- [x] Enforce admin safety guardrails (AC: 4)
+  - [x] Reuse existing "last active admin" protection for deactivation attempts
+- [x] Update auth behavior to respect creator status (AC: 2, 3)
+  - [x] Ensure creator login checks the DB record (by email or id) and blocks if inactive
+- [x] Add tests (AC: 1-6)
+  - [x] API tests for admin-only toggle, creator self-toggle blocked, and last-admin protection
+  - [x] UI test or component test confirming the toggle is disabled for self
 
 ## Dev Notes
 
@@ -100,10 +100,33 @@ GPT-5 (Codex CLI)
 
 ### Debug Log References
 
+- `npm test -- tests/api/users/create-user.test.ts tests/api/users/update-user-status.test.ts tests/components/admin/user-list.test.tsx`
+- `npm test`
+
 ### Completion Notes List
 
 - Ultimate context engine analysis completed - comprehensive developer guide created.
 - Status set to ready-for-dev.
+- Implemented default creator row creation in `/api/users` with id/role enforcement and config-synced name/email.
+- Restricted default creator status changes to administrator role; retained last-admin guardrail.
+- Updated auth lookup to check creator by id or email and block inactive creator logins.
+- Labeled default creator row in user list and disabled self-toggle.
+- Tests: added API coverage for creator listing and status guardrails; UI test for self-toggle disabled.
+- Code review fixes: admin-only status updates, corrected last-admin counting, updated status tests for administrator-only access.
 ### File List
 
 - `_bmad-output/implementation-artifacts/0-3-deactivate-creator-account.md`
+- `_bmad-output/implementation-artifacts/sprint-status.yaml`
+- `travelblogs/src/app/api/users/admin-helpers.ts`
+- `travelblogs/src/app/api/users/route.ts`
+- `travelblogs/src/app/api/users/[id]/status/route.ts`
+- `travelblogs/src/components/admin/user-list.tsx`
+- `travelblogs/src/utils/auth.ts`
+- `travelblogs/tests/api/users/create-user.test.ts`
+- `travelblogs/tests/api/users/update-user-status.test.ts`
+- `travelblogs/tests/components/admin/user-list.test.tsx`
+
+### Change Log
+
+- 2026-01-07: Added default creator management, admin-only creator status toggles, and coverage for creator guardrails.
+- 2026-01-07: Enforced administrator-only status updates, corrected last-admin counting, and aligned status tests.

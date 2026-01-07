@@ -40,6 +40,8 @@ describe("/api/users", () => {
   beforeEach(async () => {
     getToken.mockReset();
     await prisma.user.deleteMany();
+    process.env.CREATOR_EMAIL = "";
+    process.env.CREATOR_PASSWORD = "";
   });
 
   afterAll(async () => {
@@ -133,6 +135,39 @@ describe("/api/users", () => {
     expect(body.data).toHaveLength(1);
     expect(body.data[0].email).toBe("creator@example.com");
     expect(body.data[0].createdAt).toMatch(/Z$/);
+  });
+
+  it("adds the default creator to the list when configured", async () => {
+    getToken.mockResolvedValue({ sub: "admin-1", role: "administrator" });
+    process.env.CREATOR_EMAIL = "default.creator@example.com";
+    process.env.CREATOR_PASSWORD = "CreatorPassword123!";
+
+    const request = new Request("http://localhost/api/users", {
+      method: "GET",
+    });
+
+    const response = await get(request);
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.error).toBeNull();
+
+    const creatorRow = body.data.find(
+      (user: { id: string }) => user.id === "creator",
+    );
+
+    expect(creatorRow).toMatchObject({
+      id: "creator",
+      email: "default.creator@example.com",
+      role: "creator",
+      isActive: true,
+      name: "Default creator",
+    });
+
+    const creatorRecord = await prisma.user.findUnique({
+      where: { id: "creator" },
+    });
+    expect(creatorRecord).not.toBeNull();
   });
 
   it("rejects invalid payloads", async () => {

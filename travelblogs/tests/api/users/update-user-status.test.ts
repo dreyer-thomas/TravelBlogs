@@ -50,7 +50,7 @@ describe("PATCH /api/users/[id]/status", () => {
   });
 
   it("allows admins to toggle user active status", async () => {
-    getToken.mockResolvedValue({ sub: "creator" });
+    getToken.mockResolvedValue({ sub: "admin-user", role: "administrator" });
 
     const user = await prisma.user.create({
       data: {
@@ -110,7 +110,7 @@ describe("PATCH /api/users/[id]/status", () => {
   });
 
   it("rejects invalid payloads", async () => {
-    getToken.mockResolvedValue({ sub: "creator" });
+    getToken.mockResolvedValue({ sub: "admin-user", role: "administrator" });
 
     const user = await prisma.user.create({
       data: {
@@ -142,7 +142,7 @@ describe("PATCH /api/users/[id]/status", () => {
   });
 
   it("returns not found for missing users", async () => {
-    getToken.mockResolvedValue({ sub: "creator" });
+    getToken.mockResolvedValue({ sub: "admin-user", role: "administrator" });
 
     const request = new Request("http://localhost/api/users/missing/status", {
       method: "PATCH",
@@ -194,7 +194,7 @@ describe("PATCH /api/users/[id]/status", () => {
   });
 
   it("blocks non-admin users", async () => {
-    getToken.mockResolvedValue({ sub: "viewer" });
+    getToken.mockResolvedValue({ sub: "creator-user", role: "creator" });
 
     const user = await prisma.user.create({
       data: {
@@ -226,7 +226,7 @@ describe("PATCH /api/users/[id]/status", () => {
   });
 
   it("blocks deactivating the last active admin", async () => {
-    getToken.mockResolvedValue({ sub: "creator" });
+    getToken.mockResolvedValue({ sub: "admin-user", role: "administrator" });
 
     const admin = await prisma.user.create({
       data: {
@@ -256,6 +256,69 @@ describe("PATCH /api/users/[id]/status", () => {
 
     expect(response.status).toBe(403);
     expect(body.error.code).toBe("FORBIDDEN");
+  });
+
+  it("blocks creators from changing the default creator status", async () => {
+    getToken.mockResolvedValue({ sub: "creator", role: "creator" });
+
+    await prisma.user.create({
+      data: {
+        id: "creator",
+        email: "creator@example.com",
+        name: "Creator",
+        role: "creator",
+        isActive: true,
+        passwordHash: "hash",
+      },
+    });
+
+    const request = new Request("http://localhost/api/users/creator/status", {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        isActive: false,
+      }),
+    });
+
+    const response = await patch(request, { params: { id: "creator" } });
+    const body = await response.json();
+
+    expect(response.status).toBe(403);
+    expect(body.error.code).toBe("FORBIDDEN");
+  });
+
+  it("blocks deactivating the default creator when no other admins remain", async () => {
+    getToken.mockResolvedValue({ sub: "admin-user", role: "administrator" });
+
+    await prisma.user.create({
+      data: {
+        id: "creator",
+        email: "creator@example.com",
+        name: "Creator",
+        role: "creator",
+        isActive: true,
+        passwordHash: "hash",
+      },
+    });
+
+    const request = new Request("http://localhost/api/users/creator/status", {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        isActive: false,
+      }),
+    });
+
+    const response = await patch(request, { params: { id: "creator" } });
+    const body = await response.json();
+
+    expect(response.status).toBe(403);
+    expect(body.error.code).toBe("FORBIDDEN");
+    expect(body.error.message).toBe("Cannot deactivate the last active admin.");
   });
 
   it("allows deactivating the default admin when another admin remains", async () => {

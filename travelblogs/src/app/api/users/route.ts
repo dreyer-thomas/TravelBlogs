@@ -52,6 +52,58 @@ const getAuthContext = async (request: NextRequest) => {
   }
 };
 
+const readCreatorConfig = () => {
+  const email = process.env.CREATOR_EMAIL?.trim() ?? "";
+  const password = process.env.CREATOR_PASSWORD?.trim() ?? "";
+
+  if (!email || !password) {
+    return null;
+  }
+
+  return { email, password };
+};
+
+const ensureDefaultCreator = async () => {
+  const creatorConfig = readCreatorConfig();
+  if (!creatorConfig) {
+    return null;
+  }
+
+  const existing = await prisma.user.findUnique({
+    where: { id: "creator" },
+  });
+
+  if (!existing) {
+    const passwordHash = await hash(creatorConfig.password, 12);
+    return prisma.user.create({
+      data: {
+        id: "creator",
+        email: creatorConfig.email,
+        name: "Default creator",
+        role: "creator",
+        passwordHash,
+      },
+    });
+  }
+
+  if (
+    existing.email !== creatorConfig.email ||
+    existing.name !== "Default creator" ||
+    existing.role !== "creator"
+  ) {
+    return prisma.user.update({
+      where: { id: "creator" },
+      data: {
+        email: creatorConfig.email,
+        name: "Default creator",
+        role: "creator",
+      },
+    });
+  }
+
+  return existing;
+};
+
 const requireAdmin = async (request: NextRequest) => {
   const auth = await getAuthContext(request);
   if (!auth) {
@@ -69,6 +121,8 @@ export const GET = async (request: NextRequest) => {
     if (auth.error) {
       return auth.error;
     }
+
+    await ensureDefaultCreator();
 
     const users = await prisma.user.findMany({
       orderBy: {
