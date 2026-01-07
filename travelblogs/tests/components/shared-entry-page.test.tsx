@@ -1,16 +1,27 @@
 // @vitest-environment jsdom
-import type { ReactNode } from "react";
-import type { EntryReaderData } from "../../src/utils/entry-reader";
+/* eslint-disable @next/next/no-img-element, jsx-a11y/alt-text */
+import type { ImgHTMLAttributes, ReactNode } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { render } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 
-let capturedEntry: EntryReaderData | null = null;
-
-vi.mock("../../src/components/entries/entry-reader", () => ({
-  default: ({ entry }: { entry: EntryReaderData }) => {
-    capturedEntry = entry;
-    return <div data-testid="entry-reader" />;
+vi.mock("next/image", () => ({
+  default: (props: ImgHTMLAttributes<HTMLImageElement>) => {
+    const { priority, unoptimized, fill, ...rest } = props;
+    return (
+      <img
+        {...rest}
+        data-priority={priority ? "true" : undefined}
+        data-unoptimized={unoptimized ? "true" : undefined}
+        data-fill={fill ? "true" : undefined}
+      />
+    );
   },
+}));
+
+vi.mock("next/link", () => ({
+  default: ({ href, children }: { href: string; children: ReactNode }) => (
+    <a href={href}>{children}</a>
+  ),
 }));
 
 vi.mock("../../src/components/trips/shared-trip-guard", () => ({
@@ -43,7 +54,6 @@ describe("SharedEntryPage", () => {
   afterEach(() => {
     vi.unstubAllGlobals();
     notFoundMock.mockClear();
-    capturedEntry = null;
   });
 
   it("calls notFound when the shared entry token is revoked", async () => {
@@ -112,7 +122,9 @@ describe("SharedEntryPage", () => {
 
     render(element);
 
-    expect(capturedEntry?.media[0]?.url).toBe("https://example.com/cover.jpg");
+    expect(
+      screen.getByRole("img", { name: /entry hero media/i }),
+    ).toHaveAttribute("src", "https://example.com/cover.jpg");
   });
 
   it("falls back to the first media item when no cover image exists", async () => {
@@ -156,6 +168,8 @@ describe("SharedEntryPage", () => {
 
     render(element);
 
-    expect(capturedEntry?.media[0]?.url).toBe("https://example.com/first.jpg");
+    expect(
+      screen.getByRole("img", { name: /entry hero media/i }),
+    ).toHaveAttribute("src", "https://example.com/first.jpg");
   });
 });

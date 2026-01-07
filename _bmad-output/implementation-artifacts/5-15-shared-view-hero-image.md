@@ -1,6 +1,6 @@
 # Story 5.15: Shared View Hero Image Uses Selected Cover
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -116,6 +116,7 @@ Codex (GPT-5)
 
 - ✅ Preferred cover image in shared entry mapping, falling back to first media item.
 - ✅ Tests: `tests/components/shared-entry-page.test.tsx`.
+- ✅ Shared entry API now returns cover image, tests validate hero image rendering.
 
 ### File List
 
@@ -123,6 +124,7 @@ Codex (GPT-5)
 - _bmad-output/architecture.md
 - _bmad-output/project-context.md
 - travelblogs/src/app/trips/share/[token]/entries/[entryId]/page.tsx
+- travelblogs/src/app/api/trips/share/[token]/entries/[entryId]/route.ts
 - travelblogs/src/utils/entry-reader.ts
 - travelblogs/tests/components/shared-entry-page.test.tsx
 - _bmad-output/implementation-artifacts/sprint-status.yaml
@@ -131,3 +133,4 @@ Codex (GPT-5)
 ### Change Log
 
 - 2026-01-07: Prefer cover image for shared entry hero with fallback; added component tests; status set to review.
+- 2026-01-07: Return cover image in shared entry API; render hero in shared entry tests; status set to done.

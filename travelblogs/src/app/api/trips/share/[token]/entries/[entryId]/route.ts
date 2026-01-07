@@ -108,6 +108,7 @@ export const GET = async (
           title: entry.title,
           text: entry.text,
           createdAt: entry.createdAt.toISOString(),
+          coverImageUrl: entry.coverImageUrl ?? null,
           media: entry.media.map((item) => ({
             id: item.id,
             url: item.url,

@@ -72,15 +72,18 @@ const inferMediaType = (url: string): "image" | "video" | null => {
 
 export const mapEntryToReader = (entry: EntryApiData): EntryReaderData => {
   const coverUrl = entry.coverImageUrl?.trim();
+  const coverItem = coverUrl
+    ? entry.media.find((item) => item.url === coverUrl)
+    : undefined;
   const remainingMedia = entry.media.filter(
     (item) => item.url !== coverUrl,
   );
   const orderedMedia = coverUrl
     ? [
         {
-          id: entry.media.find((item) => item.url === coverUrl)?.id ?? `cover-${entry.id}`,
+          id: coverItem?.id ?? `cover-${entry.id}`,
           url: coverUrl,
-          createdAt: entry.media.find((item) => item.url === coverUrl)?.createdAt,
+          createdAt: coverItem?.createdAt,
         },
         ...remainingMedia,
       ]
