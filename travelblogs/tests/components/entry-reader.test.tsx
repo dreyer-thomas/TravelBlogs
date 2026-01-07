@@ -142,6 +142,7 @@ describe("EntryReader", () => {
     render(
       <EntryReader
         entryLinkBase="/trips/share/token-1/entries"
+        backToTripHref="/trips/share/token-1"
         entry={{
           id: "entry-4",
           title: "Village walk",
@@ -174,5 +175,57 @@ describe("EntryReader", () => {
       "href",
       "/trips/share/token-1/entries/entry-5",
     );
+  });
+
+  it("shows a back to trip action when provided", () => {
+    render(
+      <EntryReader
+        backToTripHref="/trips/share/token-2"
+        entry={{
+          id: "entry-5",
+          title: "Canal walk",
+          body: "Reflections at dusk.",
+          createdAt: "2025-05-06T00:00:00.000Z",
+          media: [
+            {
+              id: "media-30",
+              url: "https://example.com/hero-canal.jpg",
+              width: 1600,
+              height: 1000,
+            },
+          ],
+        }}
+      />,
+    );
+
+    expect(
+      screen.getByRole("link", { name: /back to trip/i }),
+    ).toBeInTheDocument();
+  });
+
+  it("links the back to trip action to the shared overview", () => {
+    render(
+      <EntryReader
+        backToTripHref="/trips/share/token-3"
+        entry={{
+          id: "entry-6",
+          title: "Harbor view",
+          body: "Salt air.",
+          createdAt: "2025-05-07T00:00:00.000Z",
+          media: [
+            {
+              id: "media-31",
+              url: "https://example.com/hero-harbor.jpg",
+              width: 1600,
+              height: 1000,
+            },
+          ],
+        }}
+      />,
+    );
+
+    expect(
+      screen.getByRole("link", { name: /back to trip/i }),
+    ).toHaveAttribute("href", "/trips/share/token-3");
   });
 });

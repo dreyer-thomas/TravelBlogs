@@ -105,6 +105,7 @@ const SharedEntryPage = async ({ params }: SharedEntryPageProps) => {
       <EntryReader
         entry={mapEntryToReader(data)}
         entryLinkBase={`/trips/share/${token}/entries`}
+        backToTripHref={`/trips/share/${token}`}
       />
     </SharedTripGuard>
   );

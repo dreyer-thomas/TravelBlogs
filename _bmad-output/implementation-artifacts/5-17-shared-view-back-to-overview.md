@@ -1,6 +1,6 @@
 # Story 5.17: Shared View Link Back to Trip Overview
 
-Status: ready-for-dev
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -21,12 +21,12 @@ so that I can navigate the trip without using the browser back button.
 
 ## Tasks / Subtasks
 
-- [ ] Add shared entry navigation to overview (AC: 1, 2)
-  - [ ] Add a "Back to trip" link or button on the shared entry page
-  - [ ] Place it either in the top header or alongside the prev/next controls, matching existing UI patterns
-- [ ] Add/adjust tests (AC: 1, 2)
-  - [ ] Component test for presence of "Back to trip" action
-  - [ ] Component test for correct link target
+- [x] Add shared entry navigation to overview (AC: 1, 2)
+  - [x] Add a "Back to trip" link or button on the shared entry page
+  - [x] Place it either in the top header or alongside the prev/next controls, matching existing UI patterns
+- [x] Add/adjust tests (AC: 1, 2)
+  - [x] Component test for presence of "Back to trip" action
+  - [x] Component test for correct link target
 
 ## Dev Notes
 
@@ -85,8 +85,8 @@ so that I can navigate the trip without using the browser back button.
 
 ### Story Completion Status
 
-- Status: ready-for-dev
-- Completion note: Ultimate context engine analysis completed - comprehensive developer guide created.
+- Status: done
+- Completion note: Back-to-trip link verified with shared entry page coverage; story marked complete.
 
 ### Project Structure Notes
 
@@ -109,15 +109,36 @@ Codex (GPT-5)
 
 ### Debug Log References
 
+- Implementation Plan: Add optional back-to-trip link support in `EntryReader`, pass shared overview href from shared entry page, and add component coverage in `tests/components/entry-reader.test.tsx`.
+
 ### Completion Notes List
 
-- Drafted shared-view back-to-overview navigation requirements and UI placement options.
-- Added test coverage expectations for link rendering and target.
+- ✅ Added shared entry back-to-trip link support in `travelblogs/src/components/entries/entry-reader.tsx` and wired the shared entry page.
+- ✅ Tests: `travelblogs/tests/components/entry-reader.test.tsx`.
+- ✅ Full test run: `npm test`.
+- ✅ Added shared entry page coverage for back-to-trip link wiring.
+- ✅ Synced sprint status and updated story file list to match current changes.
+- ✅ Stabilized admin trip list ordering for deterministic tests.
 
 ### File List
 
-- _bmad-output/epics.md
-- _bmad-output/architecture.md
-- _bmad-output/project-context.md
+- .codex/history.jsonl
+- .codex/log/codex-tui.log
+- .codex/sessions/2026/01/07/rollout-2026-01-07T23-26-54-019b9a91-f1a2-7713-9256-a776ed2e610a.jsonl
+- .codex/sessions/2026/01/07/rollout-2026-01-07T23-52-30-019b9aa9-614e-76e2-83c3-8ae0595212a7.jsonl
+- .codex/sessions/2026/01/07/rollout-2026-01-07T23-58-14-019b9aae-a1cf-7011-ae50-c020e9cfe20a.jsonl
+- _bmad-output/implementation-artifacts/5-16-missing-migration-must-change-password.md
+- _bmad-output/implementation-artifacts/5-19-fix-edit-navigation.md
+- _bmad-output/implementation-artifacts/sprint-status.yaml
+- _bmad-output/implementation-artifacts/5-17-shared-view-back-to-overview.md
+- travelblogs/src/app/api/trips/route.ts
 - travelblogs/src/app/trips/share/[token]/entries/[entryId]/page.tsx
 - travelblogs/src/components/entries/entry-reader.tsx
+- travelblogs/tests/components/entry-reader.test.tsx
+- travelblogs/tests/components/shared-entry-page.test.tsx
+
+### Change Log
+
+- 2026-01-07: Added back-to-trip navigation for shared entry reader, added component tests, and marked story ready for review.
+- 2026-01-07: Added shared entry page back-to-trip link coverage, synced sprint status, and aligned file list.
+- 2026-01-07: Stabilized admin trip list ordering for deterministic tests.

@@ -172,4 +172,46 @@ describe("SharedEntryPage", () => {
       screen.getByRole("img", { name: /entry hero media/i }),
     ).toHaveAttribute("src", "https://example.com/first.jpg");
   });
+
+  it("links back to the shared trip overview for the current token", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          data: {
+            id: "entry-3",
+            tripId: "trip-2",
+            title: "Harbor stroll",
+            text: "Evening breeze.",
+            createdAt: "2025-05-04T00:00:00.000Z",
+            coverImageUrl: "https://example.com/cover.jpg",
+            media: [
+              {
+                id: "media-1",
+                url: "https://example.com/cover.jpg",
+                createdAt: "2025-05-04T00:00:00.000Z",
+              },
+            ],
+          },
+          error: null,
+        }),
+        { status: 200 },
+      ),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { default: SharedEntryPage } = await import(
+      "../../src/app/trips/share/[token]/entries/[entryId]/page"
+    );
+
+    const element = await SharedEntryPage({
+      params: { token: "token-9", entryId: "entry-3" },
+    });
+
+    render(element);
+
+    expect(screen.getByRole("link", { name: /back to trip/i })).toHaveAttribute(
+      "href",
+      "/trips/share/token-9",
+    );
+  });
 });

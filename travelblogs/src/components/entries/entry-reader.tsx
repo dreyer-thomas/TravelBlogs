@@ -12,6 +12,7 @@ import FullScreenPhotoViewer from "./full-screen-photo-viewer";
 type EntryReaderProps = {
   entry: EntryReaderData;
   entryLinkBase?: string;
+  backToTripHref?: string;
 };
 
 const formatDate = (value: string) =>
@@ -33,7 +34,11 @@ const getNavLabel = (title?: string | null, date?: string | null) => {
   return "Daily entry";
 };
 
-const EntryReader = ({ entry, entryLinkBase }: EntryReaderProps) => {
+const EntryReader = ({
+  entry,
+  entryLinkBase,
+  backToTripHref,
+}: EntryReaderProps) => {
   const heroMedia = entry.media[0];
   const galleryItems = entry.media;
   const contentBlocks = useMemo(
@@ -121,6 +126,14 @@ const EntryReader = ({ entry, entryLinkBase }: EntryReaderProps) => {
   return (
     <div className="min-h-screen bg-[#FBF7F1]">
       <main className="mx-auto flex w-full max-w-5xl flex-col gap-10 px-6 py-12">
+        {backToTripHref ? (
+          <Link
+            href={backToTripHref}
+            className="text-sm text-[#1F6F78] hover:underline"
+          >
+            ← Back to trip
+          </Link>
+        ) : null}
         <header className="space-y-3">
           <p className="text-xs uppercase tracking-[0.2em] text-[#6B635B]">
             {formatDate(entry.createdAt)}

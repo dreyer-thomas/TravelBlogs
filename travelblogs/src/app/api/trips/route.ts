@@ -139,7 +139,7 @@ export const GET = async (request: NextRequest) => {
     if (isAdmin) {
       const trips = await prisma.trip.findMany({
         select: tripSelection,
-        orderBy: { updatedAt: "desc" },
+        orderBy: [{ updatedAt: "desc" }, { startDate: "desc" }, { id: "desc" }],
       });
 
       tripList = trips.map((trip: (typeof trips)[number]) => ({
