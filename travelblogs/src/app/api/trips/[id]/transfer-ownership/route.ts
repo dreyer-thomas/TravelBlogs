@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import type { UserRole } from "@prisma/client";
 import { getToken } from "next-auth/jwt";
 import { z } from "zod";
 
@@ -101,7 +102,7 @@ const formatEligibleOwner = (user: {
   id: string;
   name: string;
   email: string;
-  role: "creator" | "administrator";
+  role: UserRole;
   createdAt: Date;
   updatedAt: Date;
 }) => ({
@@ -149,10 +150,7 @@ export const GET = async (
 
     return NextResponse.json(
       {
-        data: eligibleOwners.map(
-          (user: Parameters<typeof formatEligibleOwner>[0]) =>
-            formatEligibleOwner(user),
-        ),
+        data: eligibleOwners.map(formatEligibleOwner),
         error: null,
       },
       { status: 200 },
