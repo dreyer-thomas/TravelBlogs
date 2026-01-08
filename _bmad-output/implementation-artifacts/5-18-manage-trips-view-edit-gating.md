@@ -1,6 +1,6 @@
 # Story 5.18: Provide Edit Button Only for Editors
 
-Status: ready-for-dev
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -25,16 +25,16 @@ so that view-only users cannot access trip edit flows.
 
 ## Tasks / Subtasks
 
-- [ ] Ensure edit permissions are computed correctly (AC: 1-3)
-  - [ ] Confirm list API sets `canEditTrip` for owners and contributors only
-  - [ ] Ensure view-only access never sets `canEditTrip` true
-- [ ] Update Manage Trips UI gating (AC: 1-3)
-  - [ ] Show Edit button only when `canEditTrip === true`
-  - [ ] Keep View button available for all with trip access
-  - [ ] Prevent any list interaction from opening edit for view-only users
-- [ ] Add/adjust tests (AC: 1-3)
-  - [ ] Component tests for Edit visibility in trip cards
-  - [ ] API test verifying `canEditTrip` mapping for contributors vs viewers
+- [x] Ensure edit permissions are computed correctly (AC: 1-3)
+  - [x] Confirm list API sets `canEditTrip` for owners and contributors only
+  - [x] Ensure view-only access never sets `canEditTrip` true
+- [x] Update Manage Trips UI gating (AC: 1-3)
+  - [x] Show Edit button only when `canEditTrip === true`
+  - [x] Keep View button available for all with trip access
+  - [x] Prevent any list interaction from opening edit for view-only users
+- [x] Add/adjust tests (AC: 1-3)
+  - [x] Component tests for Edit visibility in trip cards
+  - [x] API test verifying `canEditTrip` mapping for contributors vs viewers
 
 ## Dev Notes
 
@@ -102,8 +102,8 @@ so that view-only users cannot access trip edit flows.
 
 ### Story Completion Status
 
-- Status: ready-for-dev
-- Completion note: Ultimate context engine analysis completed - comprehensive developer guide created.
+- Status: done
+- Completion note: All acceptance criteria verified. Code review fixed accessibility and test coverage gaps. All tests passing (334/334).
 
 ### Project Structure Notes
 
@@ -133,7 +133,22 @@ Codex (GPT-5)
 - Drafted manage-trips edit gating story with owner/contributor permissions.
 - Anchored UI gating to `canEditTrip` from list API and mapped test coverage.
 - Referenced existing trip list and card components for implementation scope.
+- 2026-01-08: Verified all acceptance criteria already met by existing implementation. Edit button gating confirmed in travelblogs/src/components/trips/trip-card.tsx:185-193. API `canEditTrip` logic validated in travelblogs/src/app/api/trips/route.ts:182-215. All tests passing (333/333).
+- 2026-01-08 20:22 (Code Review): Fixed 5 issues found in adversarial review:
+  - Added aria-label to Edit link for accessibility (MEDIUM severity)
+  - Added edge case test for creator+contributor merge logic (MEDIUM severity)
+  - Updated test to match new aria-label (test fix)
+  - Clarified File List to distinguish verification vs implementation work
+  - All tests passing (334/334)
 
 ### File List
 
-- _bmad-output/implementation-artifacts/5-18-manage-trips-view-edit-gating.md
+**Modified Files (Code Review Fixes):**
+- travelblogs/src/components/trips/trip-card.tsx (added aria-label to Edit link for accessibility)
+- travelblogs/tests/api/trips/list-trips.test.ts (added edge case test for creator+contributor merge)
+- _bmad-output/implementation-artifacts/5-18-manage-trips-view-edit-gating.md (updated with review findings)
+
+**Verified Files (Original Implementation - No Changes Required):**
+- travelblogs/src/app/api/trips/route.ts (canEditTrip logic already correct)
+- travelblogs/src/app/trips/page.tsx (passes canEditTrip prop correctly)
+- travelblogs/tests/components/trip-card.test.tsx (basic gating tests already present)

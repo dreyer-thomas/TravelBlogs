@@ -414,4 +414,55 @@ describe("GET /api/trips", () => {
     expect(response.status).toBe(403);
     expect(body.error.code).toBe("FORBIDDEN");
   });
+
+  it("merges canEditTrip when creator owns trip and is also invited as contributor", async () => {
+    await prisma.user.create({
+      data: {
+        id: "creator",
+        email: "creator@example.com",
+        name: "Creator",
+        role: "creator",
+        passwordHash: "hash",
+      },
+    });
+
+    const trip = await prisma.trip.create({
+      data: {
+        title: "Owned and Invited Trip",
+        startDate: new Date("2025-11-01T00:00:00.000Z"),
+        endDate: new Date("2025-11-03T00:00:00.000Z"),
+        ownerId: "creator",
+      },
+    });
+
+    await prisma.tripAccess.create({
+      data: {
+        tripId: trip.id,
+        userId: "creator",
+        canContribute: false,
+      },
+    });
+
+    getToken.mockResolvedValue({ sub: "creator", role: "creator" });
+
+    const request = new Request("http://localhost/api/trips", {
+      method: "GET",
+    });
+
+    const response = await get(request);
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.error).toBeNull();
+    expect(body.data).toHaveLength(1);
+    expect(body.data[0]).toEqual({
+      id: trip.id,
+      title: "Owned and Invited Trip",
+      startDate: "2025-11-01T00:00:00.000Z",
+      endDate: "2025-11-03T00:00:00.000Z",
+      coverImageUrl: null,
+      updatedAt: trip.updatedAt.toISOString(),
+      canEditTrip: true,
+    });
+  });
 });

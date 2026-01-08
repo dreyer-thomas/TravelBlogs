@@ -88,7 +88,7 @@ describe("TripCard", () => {
       />,
     );
 
-    const editLink = screen.getByRole("link", { name: "Edit" });
+    const editLink = screen.getByRole("link", { name: "Edit Contributor Trip" });
     expect(editLink).toHaveAttribute("href", "/trips/trip-2/edit");
   });
 
