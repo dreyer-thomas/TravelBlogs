@@ -76,7 +76,7 @@ describe("TripCard", () => {
     });
   });
 
-  it("links to trip overview when edit access is available", () => {
+  it("links to trip detail page when edit access is available", () => {
     render(
       <TripCard
         id="trip-2"
@@ -89,7 +89,7 @@ describe("TripCard", () => {
     );
 
     const editLink = screen.getByRole("link", { name: "Edit Contributor Trip" });
-    expect(editLink).toHaveAttribute("href", "/trips/trip-2/overview");
+    expect(editLink).toHaveAttribute("href", "/trips/trip-2");
   });
 
   it("opens the shared view when the card is clicked", async () => {
