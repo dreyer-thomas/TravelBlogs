@@ -109,6 +109,6 @@ development_status:
   6-1-trip-map-view: backlog
   6-2-trip-timeline-view: backlog
   6-3-extract-coordinates-from-photo-metadata: backlog
-  6-4-user-manual: ready-for-dev
+  6-4-user-manual: done
   6-5-language-selection: ready-for-dev
   epic-6-retrospective: optional

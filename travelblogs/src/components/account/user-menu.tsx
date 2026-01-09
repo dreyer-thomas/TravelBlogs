@@ -64,6 +64,11 @@ const UserMenu = ({ name, email, className }: UserMenuProps) => {
     router.push(`/account/password${callbackUrl}`);
   };
 
+  const handleManual = () => {
+    setOpen(false);
+    router.push("/manual");
+  };
+
   return (
     <div ref={menuRef} className={className ?? ""}>
       <button
@@ -81,6 +86,13 @@ const UserMenu = ({ name, email, className }: UserMenuProps) => {
           <div className="px-3 py-2 text-xs uppercase tracking-[0.2em] text-[#6B635B]">
             Account
           </div>
+          <button
+            type="button"
+            onClick={handleManual}
+            className="w-full rounded-xl px-3 py-2 text-left text-sm font-semibold text-[#2D2A26] transition hover:bg-black/5"
+          >
+            User Manual
+          </button>
           <button
             type="button"
             onClick={handleChangePassword}

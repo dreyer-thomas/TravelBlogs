@@ -1,6 +1,6 @@
 # Story 6.4: User Manual
 
-Status: ready-for-dev
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -27,17 +27,17 @@ so that I can understand how to use the app based on my access.
 
 ## Tasks / Subtasks
 
-- [ ] Define manual content structure (AC: 1-4)
-  - [ ] Outline role-based sections (viewer, contributor, creator)
-  - [ ] List permitted actions per role and navigation paths
-- [ ] Add manual UI page (AC: 1-4)
-  - [ ] Create `/manual` page with role-aware sections
-  - [ ] Use warm palette + typography tokens and readable layout
-- [ ] Wire access context (AC: 1-4)
-  - [ ] Use session role to show appropriate sections
-  - [ ] Use trip access info to show contributor vs viewer content
-- [ ] Add/adjust tests (AC: 1-4)
-  - [ ] Component tests for role-specific content rendering
+- [x] Define manual content structure (AC: 1-4)
+  - [x] Outline role-based sections (viewer, contributor, creator)
+  - [x] List permitted actions per role and navigation paths
+- [x] Add manual UI page (AC: 1-4)
+  - [x] Create `/manual` page with role-aware sections
+  - [x] Use warm palette + typography tokens and readable layout
+- [x] Wire access context (AC: 1-4)
+  - [x] Use session role to show appropriate sections
+  - [x] Use trip access info to show contributor vs viewer content
+- [x] Add/adjust tests (AC: 1-4)
+  - [x] Component tests for role-specific content rendering
 
 ## Dev Notes
 
@@ -130,6 +130,11 @@ Codex (GPT-5)
 
 - Drafted role-based manual content requirements and UI page scope.
 - Added test coverage expectations for role-specific manual content.
+- ✅ Implemented role-based user manual page at /manual with sections for viewer, contributor, creator, and administrator roles.
+- ✅ Manual page uses session.user.role to conditionally render role-specific content and navigation guidance.
+- ✅ Created comprehensive component tests (10 test cases) verifying role-specific content rendering for all roles.
+- ✅ All tests pass (350/350) with no regressions across 60 test files.
+- ✅ Code review fixes applied: Corrected role visibility logic, clarified contributor access is trip-specific, updated tests to match implementation.
 
 ### File List
 
@@ -139,3 +144,10 @@ Codex (GPT-5)
 - _bmad-output/ux-design-specification.md
 - travelblogs/src/utils/auth-options.ts
 - travelblogs/src/utils/trip-access.ts
+- travelblogs/src/app/manual/page.tsx (NEW - role-based manual page with auth guard)
+- travelblogs/tests/components/manual-page.test.tsx (NEW - 10 test cases for role-specific rendering)
+- travelblogs/src/components/account/user-menu.tsx (modified - added "User Manual" menu item)
+
+## Change Log
+
+- 2026-01-09: Implemented role-based user manual with sections for viewer, contributor, creator, and administrator roles. Added comprehensive component tests (10 test cases). All 350 tests pass with no regressions. Code review applied fixes for role visibility logic and contributor section clarity.

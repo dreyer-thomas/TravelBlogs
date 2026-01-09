@@ -50,6 +50,19 @@ describe("UserMenu", () => {
     );
   });
 
+  it("navigates to user manual when selecting User Manual", () => {
+    render(
+      <div className="relative">
+        <UserMenu name="Chris" email="chris@example.com" />
+      </div>,
+    );
+
+    fireEvent.click(screen.getByRole("button"));
+    fireEvent.click(screen.getByRole("button", { name: "User Manual" }));
+
+    expect(push).toHaveBeenCalledWith("/manual");
+  });
+
   it("signs out when selecting check out", async () => {
     signOut.mockResolvedValue(undefined);
 
