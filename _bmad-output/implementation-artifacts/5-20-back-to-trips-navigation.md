@@ -1,6 +1,6 @@
 # Story 5.20: Add Back to Trips Navigation from Trip Views
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -116,8 +116,8 @@ so that I can return to my trips list without relying on the browser back button
 
 ### Story Completion Status
 
-- Status: review
-- Completion note: Implementation complete. All acceptance criteria satisfied. All tests passing (339/339).
+- Status: done
+- Completion note: Code review complete. All acceptance criteria satisfied. All tests passing (339/339).
 
 ### Project Structure Notes
 
