@@ -136,6 +136,52 @@ describe("TripDetail", () => {
     expect(screen.queryByText("Delete trip")).not.toBeInTheDocument();
   });
 
+  it("links to edit trip details page from trip overview when canEditTrip is true", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            data: {
+              id: "trip-5",
+              title: "Edit Navigation Trip",
+              startDate: "2025-06-01T00:00:00.000Z",
+              endDate: "2025-06-05T00:00:00.000Z",
+              coverImageUrl: null,
+            },
+            error: null,
+          }),
+          { status: 200 },
+        ),
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            data: [],
+            error: null,
+          }),
+          { status: 200 },
+        ),
+      );
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(
+      <TripDetail
+        tripId="trip-5"
+        canAddEntry
+        canEditTrip
+        canDeleteTrip={false}
+        canManageShare={false}
+        canManageViewers={false}
+        canTransferOwnership={false}
+      />,
+    );
+
+    const editLink = await screen.findByRole("link", { name: "Edit trip" });
+    expect(editLink).toHaveAttribute("href", "/trips/trip-5/edit");
+  });
+
   it("shows the view button for read-only users and opens the shared view", async () => {
     const fetchMock = vi
       .fn()
