@@ -116,6 +116,7 @@ const SharedTripPage = async ({
         trip={data.trip}
         entries={data.entries}
         entryLinkBase={`/trips/share/${token}/entries`}
+        backToTripsHref="/trips"
       />
     </SharedTripGuard>
   );

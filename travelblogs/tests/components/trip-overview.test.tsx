@@ -107,4 +107,43 @@ describe("TripOverview", () => {
       "/trips/share/shared-token/entries/entry-9",
     );
   });
+
+  it("renders back to trips link when backToTripsHref is provided", () => {
+    render(
+      <TripOverview
+        trip={{
+          id: "trip-4",
+          title: "Trip with back link",
+          startDate: "2025-06-01T00:00:00.000Z",
+          endDate: "2025-06-08T00:00:00.000Z",
+          coverImageUrl: null,
+        }}
+        entries={[]}
+        backToTripsHref="/trips"
+      />,
+    );
+
+    const backLink = screen.getByRole("link", { name: /back to trips/i });
+    expect(backLink).toBeInTheDocument();
+    expect(backLink).toHaveAttribute("href", "/trips");
+  });
+
+  it("does not render back link when backToTripsHref is not provided", () => {
+    render(
+      <TripOverview
+        trip={{
+          id: "trip-5",
+          title: "Trip without back link",
+          startDate: "2025-06-01T00:00:00.000Z",
+          endDate: "2025-06-08T00:00:00.000Z",
+          coverImageUrl: null,
+        }}
+        entries={[]}
+      />,
+    );
+
+    expect(
+      screen.queryByRole("link", { name: /back to trips/i }),
+    ).not.toBeInTheDocument();
+  });
 });

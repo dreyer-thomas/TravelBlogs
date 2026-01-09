@@ -111,7 +111,13 @@ const TripOverviewPage = async ({
     );
   }
 
-  return <TripOverview trip={data.trip} entries={data.entries} />;
+  return (
+    <TripOverview
+      trip={data.trip}
+      entries={data.entries}
+      backToTripsHref="/trips"
+    />
+  );
 };
 
 export default TripOverviewPage;
