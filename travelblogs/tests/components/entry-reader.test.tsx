@@ -36,7 +36,7 @@ describe("EntryReader", () => {
           id: "entry-1",
           title: "Morning in Kyoto",
           body: "Temple walks and tea breaks.",
-          createdAt: "2025-05-03T00:00:00.000Z",
+          createdAt: "2025-05-03T12:00:00.000Z",
           media: [
             {
               id: "media-1",
@@ -72,6 +72,7 @@ describe("EntryReader", () => {
     expect(images[0]).toHaveAttribute("height", "1000");
     expect(images[0]).toHaveAttribute("loading", "lazy");
 
+    expect(screen.getByText("May 3rd, 2025")).toBeInTheDocument();
     expect(
       screen.getByRole("heading", { name: "More moments" }),
     ).toBeInTheDocument();

@@ -939,3 +939,27 @@ So that entries can be placed on the map automatically.
 **Given** I upload photos without GPS metadata  
 **When** the upload completes  
 **Then** the system leaves location empty and does not error
+
+### Story 6.6: Date Formatting Consistency
+
+As a user,
+I want all dates displayed in a consistent, locale-aware format,
+so that dates are clear and uniform across the app.
+
+**Acceptance Criteria:**
+
+**Given** my language is English  
+**When** a date is displayed anywhere in the UI  
+**Then** it follows the format "May 16th, 2024" (full month name, ordinal day, comma, year)
+
+**Given** my language is German  
+**When** a date is displayed anywhere in the UI  
+**Then** it follows the format "16. Mai 2024"
+
+**Given** any date-only display (trip dates, entry dates, admin created dates, shared views)  
+**When** the UI renders  
+**Then** all date-only rendering uses the same shared formatting utility
+
+**Given** date/time displays still exist  
+**When** the UI renders date+time values  
+**Then** they remain locale-aware and consistent with existing date-time formatting utilities

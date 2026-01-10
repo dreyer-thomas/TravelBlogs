@@ -840,9 +840,49 @@ export function getTranslation(key: string, locale: Locale): string {
  * @param locale - Target locale ('en' or 'de')
  * @returns Formatted date string
  */
+const getEnglishOrdinalSuffix = (day: number): string => {
+  const remainder = day % 100;
+  if (remainder >= 11 && remainder <= 13) {
+    return 'th';
+  }
+  switch (day % 10) {
+    case 1:
+      return 'st';
+    case 2:
+      return 'nd';
+    case 3:
+      return 'rd';
+    default:
+      return 'th';
+  }
+};
+
 export function formatDate(date: Date, locale: Locale): string {
-  const localeStr = locale === 'en' ? 'en-US' : 'de-DE';
-  return date.toLocaleDateString(localeStr);
+  if (Number.isNaN(date.getTime())) {
+    return '';
+  }
+  if (locale === 'en') {
+    const formatter = new Intl.DateTimeFormat('en-US', {
+      month: 'long',
+      day: 'numeric',
+      year: 'numeric',
+    });
+    const parts = formatter.formatToParts(date);
+    const month = parts.find((part) => part.type === 'month')?.value ?? '';
+    const dayValue = parts.find((part) => part.type === 'day')?.value ?? '';
+    const year = parts.find((part) => part.type === 'year')?.value ?? '';
+    const dayNumber = Number(dayValue);
+    const suffix = Number.isNaN(dayNumber)
+      ? ''
+      : getEnglishOrdinalSuffix(dayNumber);
+    return `${month} ${dayValue}${suffix}, ${year}`.trim();
+  }
+
+  return new Intl.DateTimeFormat('de-DE', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  }).format(date);
 }
 
 /**

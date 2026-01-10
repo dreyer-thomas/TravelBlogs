@@ -12,7 +12,7 @@ const baseUser = {
   name: "Viewer User",
   role: "viewer" as const,
   isActive: true,
-  createdAt: "2025-01-01T00:00:00.000Z",
+  createdAt: "2025-01-01T12:00:00.000Z",
 };
 
 const adminUser = {
@@ -29,6 +29,14 @@ const renderWithProvider = (component: React.ReactElement) =>
 describe("UserList role controls", () => {
   afterEach(() => {
     vi.unstubAllGlobals();
+  });
+
+  it("renders the created date with the shared formatter", () => {
+    renderWithProvider(<UserList users={[baseUser]} />);
+
+    expect(
+      screen.getByText("Created January 1st, 2025"),
+    ).toBeInTheDocument();
   });
 
   it("saves a role change from the edit panel", async () => {

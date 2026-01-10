@@ -5,6 +5,7 @@ import { describe, expect, it, vi } from "vitest";
 import { act, fireEvent, render, screen, within } from "@testing-library/react";
 
 import EntryDetail from "../../src/components/entries/entry-detail";
+import { LocaleProvider } from "../../src/utils/locale-context";
 
 vi.mock("next/image", () => ({
   default: (props: ImgHTMLAttributes<HTMLImageElement>) => {
@@ -32,9 +33,12 @@ vi.mock("next/link", () => ({
   ),
 }));
 
+const renderWithProvider = (component: JSX.Element) =>
+  render(<LocaleProvider>{component}</LocaleProvider>);
+
 describe("EntryDetail", () => {
   it("renders the entry title in the header", async () => {
-    render(
+    renderWithProvider(
       <EntryDetail
         entry={{
           id: "entry-1",
@@ -42,7 +46,7 @@ describe("EntryDetail", () => {
           title: "Sunset in Positano",
           coverImageUrl: null,
           text: "Golden hour on the cliffs.",
-          createdAt: "2025-05-03T00:00:00.000Z",
+          createdAt: "2025-05-03T12:00:00.000Z",
           updatedAt: "2025-05-03T00:00:00.000Z",
           media: [],
         }}
@@ -54,10 +58,11 @@ describe("EntryDetail", () => {
     expect(
       screen.getByRole("heading", { name: "Sunset in Positano" }),
     ).toBeInTheDocument();
+    expect(screen.getByText("May 3rd, 2025")).toBeInTheDocument();
   });
 
   it("opens and closes the photo viewer from inline content", async () => {
-    render(
+    renderWithProvider(
       <EntryDetail
         entry={{
           id: "entry-2",
@@ -96,7 +101,7 @@ describe("EntryDetail", () => {
   });
 
   it("supports keyboard navigation in the photo viewer", async () => {
-    render(
+    renderWithProvider(
       <EntryDetail
         entry={{
           id: "entry-3",
@@ -139,7 +144,7 @@ describe("EntryDetail", () => {
   });
 
   it("opens the viewer from the media grid at the correct index", async () => {
-    render(
+    renderWithProvider(
       <EntryDetail
         entry={{
           id: "entry-4",
@@ -176,7 +181,7 @@ describe("EntryDetail", () => {
     vi.useFakeTimers();
 
     try {
-      render(
+      renderWithProvider(
         <EntryDetail
           entry={{
             id: "entry-5",
@@ -236,7 +241,7 @@ describe("EntryDetail", () => {
   });
 
   it("exits the slideshow on click", async () => {
-    render(
+    renderWithProvider(
       <EntryDetail
         entry={{
           id: "entry-6",
@@ -276,7 +281,7 @@ describe("EntryDetail", () => {
   });
 
   it("hides delete actions for contributors without delete access", () => {
-    render(
+    renderWithProvider(
       <EntryDetail
         entry={{
           id: "entry-7",
@@ -293,12 +298,12 @@ describe("EntryDetail", () => {
       />,
     );
 
-    expect(screen.getByText("Edit entry")).toBeInTheDocument();
-    expect(screen.queryByText("Delete entry")).not.toBeInTheDocument();
+    expect(screen.getByText("Edit Entry")).toBeInTheDocument();
+    expect(screen.queryByText("Delete Entry")).not.toBeInTheDocument();
   });
 
   it("hides entry actions for view-only users", () => {
-    render(
+    renderWithProvider(
       <EntryDetail
         entry={{
           id: "entry-8",

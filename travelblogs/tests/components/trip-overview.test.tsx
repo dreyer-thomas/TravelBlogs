@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 /* eslint-disable @next/next/no-img-element, jsx-a11y/alt-text */
 import type { ImgHTMLAttributes, ReactNode } from "react";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 
 import TripOverview from "../../src/components/trips/trip-overview";
@@ -28,6 +28,10 @@ vi.mock("next/link", () => ({
 }));
 
 describe("TripOverview", () => {
+  afterEach(() => {
+    localStorage.clear();
+  });
+
   it("renders entry cards with title, date, and preview image", () => {
     render(
       <LocaleProvider>
@@ -54,12 +58,42 @@ describe("TripOverview", () => {
     );
 
     expect(screen.getByText("Day two")).toBeInTheDocument();
-    expect(screen.getByText("Jun 3, 2025")).toBeInTheDocument();
+    expect(screen.getByText("June 3rd, 2025")).toBeInTheDocument();
     expect(screen.getByAltText("Preview for Day two")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /day two/i })).toHaveAttribute(
       "href",
       "/entries/entry-2",
     );
+  });
+
+  it("renders German dates when locale is de", async () => {
+    localStorage.setItem("travelblogs_locale", "de");
+
+    render(
+      <LocaleProvider>
+        <TripOverview
+          trip={{
+            id: "trip-de",
+            title: "Berlin days",
+            startDate: "2025-06-01T12:00:00.000",
+            endDate: "2025-06-08T12:00:00.000",
+            coverImageUrl: null,
+          }}
+          entries={[
+            {
+              id: "entry-de",
+              tripId: "trip-de",
+              title: "Day drei",
+              createdAt: "2025-06-03T12:00:00.000",
+              coverImageUrl: "/uploads/entries/day-three.jpg",
+              media: [{ url: "/uploads/entries/day-three-media.jpg" }],
+            },
+          ]}
+        />
+      </LocaleProvider>,
+    );
+
+    expect(await screen.findByText("3. Juni 2025")).toBeInTheDocument();
   });
 
   it("renders an empty state when there are no entries", () => {

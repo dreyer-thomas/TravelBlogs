@@ -23,8 +23,6 @@ const getRoleOptions = (t: (key: string) => string): Array<{ value: UserListItem
   { value: "viewer", label: t('admin.viewer') },
 ];
 
-const formatDate = (value: string) => value.slice(0, 10);
-
 type UserListRow = UserListItem & {
   pendingRole: UserListItem["role"];
   pendingIsActive: boolean;
@@ -44,7 +42,7 @@ const buildRows = (users: UserListItem[]): UserListRow[] =>
   }));
 
 const UserList = ({ users, currentUserId }: UserListProps) => {
-  const { t } = useTranslation();
+  const { t, formatDate } = useTranslation();
   const roleOptions = getRoleOptions(t);
   const [rows, setRows] = useState<UserListRow[]>(() => buildRows(users));
   const [editingUserId, setEditingUserId] = useState<string | null>(null);
@@ -261,7 +259,7 @@ const UserList = ({ users, currentUserId }: UserListProps) => {
               {user.isActive ? t('admin.active') : t('admin.inactive')}
             </span>
             <span className="text-[#6B635B]">
-              {t('admin.created')} {formatDate(user.createdAt)}
+              {t('admin.created')} {formatDate(new Date(user.createdAt))}
             </span>
             <button
               type="button"

@@ -46,14 +46,7 @@ const TripOverview = ({
   entryLinkBase,
   backToTripsHref,
 }: TripOverviewProps) => {
-  const { t, locale } = useTranslation();
-
-  const formatDate = (value: string) =>
-    new Date(value).toLocaleDateString(locale, {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    });
+  const { t, formatDate } = useTranslation();
 
   return (
     <div className="min-h-screen bg-[#FBF7F1] px-6 py-12">
@@ -75,7 +68,8 @@ const TripOverview = ({
               {trip.title}
             </h1>
             <p className="text-sm text-[#6B635B]">
-              {formatDate(trip.startDate)} – {formatDate(trip.endDate)}
+              {formatDate(new Date(trip.startDate))} –{" "}
+              {formatDate(new Date(trip.endDate))}
             </p>
           </header>
 
@@ -129,7 +123,7 @@ const TripOverview = ({
                     </div>
                     <div className="min-w-0 flex-1">
                       <p className="text-xs uppercase tracking-[0.2em] text-[#6B635B]">
-                        {formatDate(entry.createdAt)}
+                        {formatDate(new Date(entry.createdAt))}
                       </p>
                       <p className="mt-1 text-base font-semibold text-[#2D2A26]">
                         {entry.title}
