@@ -1,11 +1,13 @@
 import Link from "next/link";
 import { getServerSession } from "next-auth";
 import { notFound, redirect } from "next/navigation";
+import { headers } from "next/headers";
 
 import EditEntryForm from "../../../../../../components/entries/edit-entry-form";
 import { prisma } from "../../../../../../utils/db";
 import { authOptions } from "../../../../../../utils/auth-options";
 import { canContributeToTrip } from "../../../../../../utils/trip-access";
+import { getLocaleFromAcceptLanguage, getTranslation } from "../../../../../../utils/i18n";
 
 type EditEntryPageProps = {
   params: {
@@ -17,6 +19,11 @@ type EditEntryPageProps = {
 const EditEntryPage = async ({ params }: EditEntryPageProps) => {
   const { tripId, entryId } = await params;
   const session = await getServerSession(authOptions);
+  const headersList = await headers();
+  const locale = getLocaleFromAcceptLanguage(
+    headersList.get("accept-language"),
+  );
+  const t = (key: string) => getTranslation(key, locale);
 
   if (!session?.user?.id) {
     redirect(`/sign-in?callbackUrl=/trips/${tripId}/entries/${entryId}/edit`);
@@ -55,10 +62,10 @@ const EditEntryPage = async ({ params }: EditEntryPageProps) => {
             href={`/trips/${tripId}/entries/${entryId}`}
             className="text-sm text-[#1F6F78] hover:underline"
           >
-            ← Back to entry
+            ← {t("entries.backToEntry")}
           </Link>
           <h1 className="text-3xl font-semibold text-[#2D2A26]">
-            Edit story
+            {t("entries.editStory")}
           </h1>
         </header>
 

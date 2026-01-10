@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useTranslation } from "../../utils/use-translation";
 
 type DeleteTripModalProps = {
   tripId: string;
@@ -10,6 +11,7 @@ type DeleteTripModalProps = {
 
 const DeleteTripModal = ({ tripId, tripTitle }: DeleteTripModalProps) => {
   const router = useRouter();
+  const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -38,7 +40,7 @@ const DeleteTripModal = ({ tripId, tripTitle }: DeleteTripModalProps) => {
       const body = await response.json().catch(() => null);
 
       if (!response.ok || body?.error) {
-        setErrorMessage(body?.error?.message ?? "Unable to delete the trip.");
+        setErrorMessage(body?.error?.message ?? t("trips.deleteTripError"));
         setIsDeleting(false);
         return;
       }
@@ -46,7 +48,7 @@ const DeleteTripModal = ({ tripId, tripTitle }: DeleteTripModalProps) => {
       router.replace("/trips");
       router.refresh();
     } catch {
-      setErrorMessage("Unable to delete the trip.");
+      setErrorMessage(t("trips.deleteTripError"));
       setIsDeleting(false);
     }
   };
@@ -58,7 +60,7 @@ const DeleteTripModal = ({ tripId, tripTitle }: DeleteTripModalProps) => {
         onClick={handleOpen}
         className="min-h-[44px] rounded-xl border border-[#B64A3A] px-4 py-2 text-sm font-semibold text-[#B64A3A] transition hover:bg-[#B64A3A]/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#B64A3A]"
       >
-        Delete trip
+        {t("trips.deleteTrip")}
       </button>
 
       {isOpen ? (
@@ -74,17 +76,17 @@ const DeleteTripModal = ({ tripId, tripTitle }: DeleteTripModalProps) => {
               id="delete-trip-title"
               className="text-lg font-semibold text-[#2D2A26]"
             >
-              Delete this trip?
+              {t("trips.deleteTripTitle")}
             </h2>
             <p
               id="delete-trip-description"
               className="mt-2 text-sm text-[#6B635B]"
             >
-              This will permanently remove{" "}
+              {t("trips.deleteTripDescriptionPrefix")}{" "}
               <span className="font-semibold text-[#2D2A26]">
                 {tripTitle}
               </span>{" "}
-              and all of its entries.
+              {t("trips.deleteTripDescriptionSuffix")}
             </p>
 
             {errorMessage ? (
@@ -97,7 +99,7 @@ const DeleteTripModal = ({ tripId, tripTitle }: DeleteTripModalProps) => {
                 onClick={handleClose}
                 className="min-h-[44px] rounded-xl border border-[#D5CDC4] px-4 py-2 text-sm font-semibold text-[#2D2A26] transition hover:bg-[#F6F1EB] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2D2A26]"
               >
-                Keep trip
+                {t("trips.keepTrip")}
               </button>
               <button
                 type="button"
@@ -105,7 +107,9 @@ const DeleteTripModal = ({ tripId, tripTitle }: DeleteTripModalProps) => {
                 disabled={isDeleting}
                 className="min-h-[44px] rounded-xl bg-[#B64A3A] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#9E3F31] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#B64A3A] disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {isDeleting ? "Deleting..." : "Yes, delete"}
+                {isDeleting
+                  ? t("trips.deletingTrip")
+                  : t("trips.confirmDeleteTrip")}
               </button>
             </div>
           </div>

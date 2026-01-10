@@ -1,8 +1,10 @@
 // @vitest-environment jsdom
+import React from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/react";
 
 import UserList from "../../../src/components/admin/user-list";
+import { LocaleProvider } from "../../../src/utils/locale-context";
 
 const baseUser = {
   id: "user-1",
@@ -20,6 +22,9 @@ const adminUser = {
   name: "Admin User",
   role: "administrator" as const,
 };
+
+const renderWithProvider = (component: React.ReactElement) =>
+  render(<LocaleProvider>{component}</LocaleProvider>);
 
 describe("UserList role controls", () => {
   afterEach(() => {
@@ -43,9 +48,9 @@ describe("UserList role controls", () => {
 
     vi.stubGlobal("fetch", fetchMock);
 
-    render(<UserList users={[baseUser]} />);
+    renderWithProvider(<UserList users={[baseUser]} />);
 
-    fireEvent.click(screen.getByRole("button", { name: "Edit User" }));
+    fireEvent.click(screen.getByRole("button", { name: "Edit user" }));
     fireEvent.change(screen.getByLabelText("Role for Viewer User"), {
       target: { value: "creator" },
     });
@@ -75,9 +80,9 @@ describe("UserList role controls", () => {
 
     vi.stubGlobal("fetch", fetchMock);
 
-    render(<UserList users={[baseUser]} />);
+    renderWithProvider(<UserList users={[baseUser]} />);
 
-    fireEvent.click(screen.getByRole("button", { name: "Edit User" }));
+    fireEvent.click(screen.getByRole("button", { name: "Edit user" }));
     fireEvent.change(screen.getByLabelText("Role for Viewer User"), {
       target: { value: "creator" },
     });
@@ -88,9 +93,9 @@ describe("UserList role controls", () => {
   });
 
   it("shows Administrator in the role selector", () => {
-    render(<UserList users={[baseUser]} />);
+    renderWithProvider(<UserList users={[baseUser]} />);
 
-    fireEvent.click(screen.getByRole("button", { name: "Edit User" }));
+    fireEvent.click(screen.getByRole("button", { name: "Edit user" }));
 
     expect(
       screen.getByRole("option", { name: "Administrator" }),
@@ -113,9 +118,9 @@ describe("UserList role controls", () => {
 
     vi.stubGlobal("fetch", fetchMock);
 
-    render(<UserList users={[adminUser]} />);
+    renderWithProvider(<UserList users={[adminUser]} />);
 
-    fireEvent.click(screen.getByRole("button", { name: "Edit User" }));
+    fireEvent.click(screen.getByRole("button", { name: "Edit user" }));
     fireEvent.change(screen.getByLabelText("Role for Admin User"), {
       target: { value: "viewer" },
     });
@@ -152,9 +157,9 @@ describe("UserList status controls", () => {
 
     vi.stubGlobal("fetch", fetchMock);
 
-    render(<UserList users={[baseUser]} />);
+    renderWithProvider(<UserList users={[baseUser]} />);
 
-    fireEvent.click(screen.getByRole("button", { name: "Edit User" }));
+    fireEvent.click(screen.getByRole("button", { name: "Edit user" }));
     fireEvent.click(screen.getByRole("button", { name: "Deactivate" }));
 
     expect(fetchMock).toHaveBeenCalledWith("/api/users/user-1/status", {
@@ -181,9 +186,9 @@ describe("UserList status controls", () => {
 
     vi.stubGlobal("fetch", fetchMock);
 
-    render(<UserList users={[baseUser]} />);
+    renderWithProvider(<UserList users={[baseUser]} />);
 
-    fireEvent.click(screen.getByRole("button", { name: "Edit User" }));
+    fireEvent.click(screen.getByRole("button", { name: "Edit user" }));
     fireEvent.click(screen.getByRole("button", { name: "Deactivate" }));
 
     expect(await screen.findByText("Account is locked.")).toBeInTheDocument();
@@ -191,9 +196,9 @@ describe("UserList status controls", () => {
   });
 
   it("only shows the action relevant to the current status", () => {
-    render(<UserList users={[baseUser]} />);
+    renderWithProvider(<UserList users={[baseUser]} />);
 
-    fireEvent.click(screen.getByRole("button", { name: "Edit User" }));
+    fireEvent.click(screen.getByRole("button", { name: "Edit user" }));
 
     expect(screen.getByRole("button", { name: "Deactivate" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Activate" })).toBeNull();
@@ -208,9 +213,9 @@ describe("UserList status controls", () => {
       role: "creator" as const,
     };
 
-    render(<UserList users={[creatorUser]} currentUserId="creator" />);
+    renderWithProvider(<UserList users={[creatorUser]} currentUserId="creator" />);
 
-    fireEvent.click(screen.getByRole("button", { name: "Edit User" }));
+    fireEvent.click(screen.getByRole("button", { name: "Edit user" }));
 
     expect(screen.getByRole("button", { name: "Deactivate" })).toBeDisabled();
   });
@@ -234,9 +239,9 @@ describe("UserList delete controls", () => {
 
     vi.stubGlobal("fetch", fetchMock);
 
-    render(<UserList users={[baseUser]} />);
+    renderWithProvider(<UserList users={[baseUser]} />);
 
-    fireEvent.click(screen.getByRole("button", { name: "Edit User" }));
+    fireEvent.click(screen.getByRole("button", { name: "Edit user" }));
     fireEvent.click(screen.getByRole("button", { name: "Delete user" }));
     fireEvent.click(screen.getByRole("button", { name: "Confirm delete" }));
 

@@ -1,5 +1,8 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
+import { useTranslation } from "../../utils/use-translation";
 
 type TripOverviewTrip = {
   id: string;
@@ -26,13 +29,6 @@ type TripOverviewProps = {
   backToTripsHref?: string;
 };
 
-const formatDate = (value: string) =>
-  new Date(value).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-
 const isOptimizedImage = (url: string) => url.startsWith("/");
 
 const getPreviewImage = (entry: TripOverviewEntry) => {
@@ -50,6 +46,15 @@ const TripOverview = ({
   entryLinkBase,
   backToTripsHref,
 }: TripOverviewProps) => {
+  const { t, locale } = useTranslation();
+
+  const formatDate = (value: string) =>
+    new Date(value).toLocaleDateString(locale, {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+
   return (
     <div className="min-h-screen bg-[#FBF7F1] px-6 py-12">
       <main className="mx-auto w-full max-w-4xl space-y-8">
@@ -58,13 +63,13 @@ const TripOverview = ({
             href={backToTripsHref}
             className="text-sm text-[#1F6F78] hover:underline"
           >
-            ← Back to trips
+            ← {t('trips.backToTrips')}
           </Link>
         ) : null}
         <section className="rounded-2xl border border-black/10 bg-white p-8 shadow-sm">
           <header className="space-y-3">
             <p className="text-xs uppercase tracking-[0.2em] text-[#6B635B]">
-              Trip overview
+              {t('trips.tripOverview')}
             </p>
             <h1 className="text-3xl font-semibold text-[#2D2A26]">
               {trip.title}
@@ -78,7 +83,7 @@ const TripOverview = ({
             <div className="relative mt-6 h-64 w-full overflow-hidden rounded-2xl bg-[#F2ECE3]">
               <Image
                 src={trip.coverImageUrl}
-                alt={`Cover for ${trip.title}`}
+                alt={`${t('trips.coverFor')} ${trip.title}`}
                 fill
                 sizes="(min-width: 768px) 768px, 100vw"
                 className="object-cover"
@@ -93,14 +98,14 @@ const TripOverview = ({
           <div className="flex items-center justify-between gap-4">
             <div>
               <p className="text-xs uppercase tracking-[0.2em] text-[#6B635B]">
-                Latest entries
+                {t('trips.latestEntries')}
               </p>
             </div>
           </div>
 
           {entries.length === 0 ? (
             <p className="mt-4 text-sm text-[#6B635B]">
-              No entries yet. Check back soon.
+              {t('trips.noEntriesYet')}
             </p>
           ) : (
             <div className="mt-4 space-y-4">
@@ -114,7 +119,7 @@ const TripOverview = ({
                     >
                       <Image
                         src={previewImage}
-                        alt={`Preview for ${entry.title}`}
+                        alt={`${t('trips.previewFor')} ${entry.title}`}
                         fill
                         sizes="140px"
                         className="object-cover"
@@ -131,7 +136,7 @@ const TripOverview = ({
                       </p>
                     </div>
                     <span className="text-xs font-semibold uppercase tracking-[0.2em] text-[#1F6F78]">
-                      Read
+                      {t('trips.read')}
                     </span>
                   </>
                 );

@@ -5,6 +5,7 @@ import { headers } from "next/headers";
 import EntryReader from "../../../components/entries/entry-reader";
 import type { EntryApiData } from "../../../utils/entry-reader";
 import { mapEntryToReader } from "../../../utils/entry-reader";
+import { getLocaleFromAcceptLanguage, getTranslation } from "../../../utils/i18n";
 
 export const dynamic = "force-dynamic";
 
@@ -26,6 +27,7 @@ const loadEntry = async (
   baseUrl: string,
   cookieHeader: string,
   id: string,
+  t: (key: string) => string,
 ): Promise<ApiResponse> => {
   const response = await fetch(`${baseUrl}/api/entries/${id}`, {
     method: "GET",
@@ -40,7 +42,7 @@ const loadEntry = async (
       data: null,
       error: {
         code: body?.error?.code ?? "UNKNOWN_ERROR",
-        message: body?.error?.message ?? "Unable to load entry.",
+        message: body?.error?.message ?? t("entries.unableLoadEntry"),
       },
     };
   }
@@ -57,13 +59,17 @@ const EntryPage = async ({ params }: EntryPageProps) => {
   const { id } = await params;
 
   const headersList = await headers();
+  const locale = getLocaleFromAcceptLanguage(
+    headersList.get("accept-language"),
+  );
+  const t = (key: string) => getTranslation(key, locale);
   const cookieHeader = headersList.get("cookie") ?? "";
   const forwardedHost = headersList.get("x-forwarded-host");
   const host = forwardedHost ?? headersList.get("host") ?? "localhost:3000";
   const protocol = headersList.get("x-forwarded-proto") ?? "http";
   const baseUrl = `${protocol}://${host}`;
 
-  const { data, error } = await loadEntry(baseUrl, cookieHeader, id);
+  const { data, error } = await loadEntry(baseUrl, cookieHeader, id, t);
 
   if (error?.code === "NOT_FOUND") {
     notFound();
@@ -75,7 +81,7 @@ const EntryPage = async ({ params }: EntryPageProps) => {
         <main className="mx-auto w-full max-w-3xl">
           <section className="rounded-2xl border border-black/10 bg-white p-8 text-center">
             <p className="text-sm text-[#B34A3C]">
-              {error?.message ?? "Unable to load this entry."}
+              {error?.message ?? t("entries.unableLoadEntry")}
             </p>
           </section>
         </main>

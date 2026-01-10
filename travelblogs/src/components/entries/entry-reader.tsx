@@ -5,9 +5,10 @@ import Image from "next/image";
 import Link from "next/link";
 
 import MediaGallery from "../media/media-gallery";
-import { parseEntryContent } from "../../utils/entry-content";
+import { DEFAULT_INLINE_ALT, parseEntryContent } from "../../utils/entry-content";
 import type { EntryReaderData } from "../../utils/entry-reader";
 import FullScreenPhotoViewer from "./full-screen-photo-viewer";
+import { useTranslation } from "../../utils/use-translation";
 
 type EntryReaderProps = {
   entry: EntryReaderData;
@@ -15,30 +16,33 @@ type EntryReaderProps = {
   backToTripHref?: string;
 };
 
-const formatDate = (value: string) =>
-  new Date(value).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-
 const isOptimizedImage = (url: string) => url.startsWith("/");
-
-const getNavLabel = (title?: string | null, date?: string | null) => {
-  if (title && title.trim()) {
-    return title;
-  }
-  if (date) {
-    return formatDate(date);
-  }
-  return "Daily entry";
-};
 
 const EntryReader = ({
   entry,
   entryLinkBase,
   backToTripHref,
 }: EntryReaderProps) => {
+  const { t, formatDate } = useTranslation();
+  const resolveAltText = (alt?: string | null) => {
+    if (!alt) {
+      return null;
+    }
+    if (alt === DEFAULT_INLINE_ALT) {
+      return t("entries.entryPhoto");
+    }
+    return alt;
+  };
+
+  const getNavLabel = (title?: string | null, date?: string | null) => {
+    if (title && title.trim()) {
+      return title;
+    }
+    if (date) {
+      return formatDate(new Date(date));
+    }
+    return t('entries.dailyEntry');
+  };
   const heroMedia = entry.media[0];
   const galleryItems = entry.media;
   const contentBlocks = useMemo(
@@ -49,9 +53,10 @@ const EntryReader = ({
     const images = new Map<string, { url: string; alt: string }>();
 
     entry.media.forEach((media) => {
+      const resolvedAlt = resolveAltText(media.alt?.trim());
       images.set(media.url, {
         url: media.url,
-        alt: media.alt?.trim() || entry.title || "Trip photo",
+        alt: resolvedAlt || entry.title || t("entries.tripPhoto"),
       });
     });
 
@@ -62,13 +67,16 @@ const EntryReader = ({
       if (!images.has(block.url)) {
         images.set(block.url, {
           url: block.url,
-          alt: block.alt?.trim() || entry.title || "Trip photo",
+          alt:
+            resolveAltText(block.alt?.trim()) ||
+            entry.title ||
+            t("entries.tripPhoto"),
         });
       }
     });
 
     return Array.from(images.values());
-  }, [contentBlocks, entry.media, entry.title]);
+  }, [contentBlocks, entry.media, entry.title, t]);
   const hasBodyContent =
     contentBlocks.some(
       (block) => block.type === "text" && block.value.trim(),
@@ -131,15 +139,15 @@ const EntryReader = ({
             href={backToTripHref}
             className="text-sm text-[#1F6F78] hover:underline"
           >
-            ← Back to trip
+            ← {t('entries.backToTrip')}
           </Link>
         ) : null}
         <header className="space-y-3">
           <p className="text-xs uppercase tracking-[0.2em] text-[#6B635B]">
-            {formatDate(entry.createdAt)}
+            {formatDate(new Date(entry.createdAt))}
           </p>
           <h1 className="text-4xl font-semibold text-[#2D2A26] sm:text-5xl">
-            {entry.title || "Daily entry"}
+            {entry.title || t('entries.dailyEntry')}
           </h1>
         </header>
 
@@ -149,11 +157,11 @@ const EntryReader = ({
               type="button"
               onClick={() => openViewerAtUrl(heroMedia.url)}
               className="block w-full focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2D2A26]"
-              aria-label="Open hero photo"
+              aria-label={t('entries.openHeroPhoto')}
             >
               <Image
                 src={heroMedia.url}
-                alt={heroMedia.alt ?? "Entry hero media"}
+                alt={heroMedia.alt ?? t('entries.entryHeroMedia')}
                 width={heroMedia.width ?? 1600}
                 height={heroMedia.height ?? 1000}
                 sizes="(min-width: 1024px) 960px, 100vw"
@@ -164,7 +172,7 @@ const EntryReader = ({
             </button>
           ) : (
             <div className="flex min-h-[320px] items-center justify-center bg-[#F2ECE3] text-sm text-[#6B635B]">
-              No media available for this entry yet.
+              {t('entries.noMediaAvailable')}
             </div>
           )}
         </section>
@@ -183,11 +191,11 @@ const EntryReader = ({
                         type="button"
                         onClick={() => openViewerAtUrl(block.url)}
                         className="block h-full w-full focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2D2A26]"
-                        aria-label="Open photo"
+                        aria-label={t('entries.openPhoto')}
                       >
                         <Image
                           src={block.url}
-                          alt={block.alt || "Entry photo"}
+                          alt={resolveAltText(block.alt) || t("entries.entryPhoto")}
                           width={1200}
                           height={800}
                           sizes="100vw"
@@ -215,7 +223,7 @@ const EntryReader = ({
               })
             ) : (
               <p className="text-[17px] leading-7 text-[#6B635B]">
-                No entry text yet.
+                {t('entries.noEntryText')}
               </p>
             )}
           </div>
@@ -239,11 +247,11 @@ const EntryReader = ({
                   ? `${entryLinkBase}/${navigation.previousEntryId}`
                   : `/entries/${navigation.previousEntryId}`
               }
-              aria-label="Previous entry"
+              aria-label={t('entries.previousEntry')}
               className="group rounded-2xl border border-black/10 bg-white px-5 py-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
             >
               <p className="text-xs uppercase tracking-[0.2em] text-[#6B635B]">
-                Previous
+                {t('entries.previous')}
               </p>
               <p className="mt-2 text-lg font-semibold text-[#2D2A26]">
                 {previousLabel}
@@ -251,12 +259,12 @@ const EntryReader = ({
             </Link>
           ) : (
             <div
-              aria-label="Previous entry"
+              aria-label={t('entries.previousEntry')}
               data-disabled="true"
               className="rounded-2xl border border-black/5 bg-white/60 px-5 py-4 text-left text-[#6B635B] opacity-70"
             >
-              <p className="text-xs uppercase tracking-[0.2em]">Previous</p>
-              <p className="mt-2 text-lg font-semibold">Start of trip</p>
+              <p className="text-xs uppercase tracking-[0.2em]">{t('entries.previous')}</p>
+              <p className="mt-2 text-lg font-semibold">{t('entries.startOfTrip')}</p>
             </div>
           )}
 
@@ -267,11 +275,11 @@ const EntryReader = ({
                   ? `${entryLinkBase}/${navigation.nextEntryId}`
                   : `/entries/${navigation.nextEntryId}`
               }
-              aria-label="Next entry"
+              aria-label={t('entries.nextEntry')}
               className="group rounded-2xl border border-black/10 bg-white px-5 py-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
             >
               <p className="text-xs uppercase tracking-[0.2em] text-[#6B635B]">
-                Next
+                {t('entries.next')}
               </p>
               <p className="mt-2 text-lg font-semibold text-[#2D2A26]">
                 {nextLabel}
@@ -279,12 +287,12 @@ const EntryReader = ({
             </Link>
           ) : (
             <div
-              aria-label="Next entry"
+              aria-label={t('entries.nextEntry')}
               data-disabled="true"
               className="rounded-2xl border border-black/5 bg-white/60 px-5 py-4 text-left text-[#6B635B] opacity-70"
             >
-              <p className="text-xs uppercase tracking-[0.2em]">Next</p>
-              <p className="mt-2 text-lg font-semibold">End of trip</p>
+              <p className="text-xs uppercase tracking-[0.2em]">{t('entries.next')}</p>
+              <p className="mt-2 text-lg font-semibold">{t('entries.endOfTrip')}</p>
             </div>
           )}
         </nav>

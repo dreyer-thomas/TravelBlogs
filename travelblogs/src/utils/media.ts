@@ -25,12 +25,19 @@ export const getCoverImageExtension = (mimeType: string) => {
   return null;
 };
 
-export const validateCoverImageFile = (file: File) => {
+export const validateCoverImageFile = (
+  file: File,
+  translate?: (key: string) => string,
+) => {
   if (!COVER_IMAGE_ALLOWED_TYPE_SET.has(file.type)) {
-    return "Cover image must be a JPG, PNG, or WebP file.";
+    return translate
+      ? translate("trips.coverImageTypeError")
+      : "Cover image must be a JPG, PNG, or WebP file.";
   }
   if (file.size > COVER_IMAGE_MAX_BYTES) {
-    return "Cover image must be 5MB or less.";
+    return translate
+      ? translate("trips.coverImageSizeError")
+      : "Cover image must be 5MB or less.";
   }
   return null;
 };

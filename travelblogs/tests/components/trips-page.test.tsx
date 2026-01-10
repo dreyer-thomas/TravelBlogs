@@ -27,6 +27,37 @@ vi.mock("next/headers", () => ({
     }),
 }));
 
+const mockTranslations: Record<string, string> = {
+  'common.trips': 'Trips',
+  'trips.yourTrips': 'Your trips',
+  'trips.manageTrips': 'Manage trips',
+  'trips.tripsInvitedMessage': 'Trips you have been invited to will appear here.',
+  'trips.startNewTrip': 'Start a new trip or revisit your existing plans.',
+  'trips.manageUsers': 'Manage users',
+  'trips.createTrip': 'Create trip',
+  'trips.noInvitedTripsYet': 'No invited trips yet',
+  'trips.noTrips': 'No trips yet',
+  'trips.whenInvited': 'When someone invites you to a trip, it will show up here.',
+  'trips.noTripsYet': 'No trips yet. Create your first trip to start capturing your journey.',
+  'trips.createATrip': 'Create a trip',
+  'trips.noAccess': 'Your account does not have access to trips.',
+  'trips.accessRestricted': 'Access to this area is restricted.',
+  'common.view': 'View',
+  'common.edit': 'Edit',
+  'common.loading': 'Loading...',
+  'common.active': 'Active',
+};
+
+vi.mock("../../src/utils/use-translation", () => ({
+  useTranslation: () => ({
+    t: (key: string) => mockTranslations[key] || key,
+    formatDate: (date: Date) => date.toLocaleDateString(),
+    formatDateTime: (date: Date) => date.toLocaleString(),
+    locale: 'en',
+    setLocale: vi.fn(),
+  }),
+}));
+
 describe("Trips page viewer experience", () => {
   beforeEach(() => {
     redirect.mockReset();

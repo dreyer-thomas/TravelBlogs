@@ -10,6 +10,7 @@ import {
   validateCoverImageFile,
 } from "../../utils/media";
 import { uploadCoverImage } from "../../utils/cover-upload";
+import { useTranslation } from "../../utils/use-translation";
 
 type FieldErrors = {
   title?: string;
@@ -26,26 +27,26 @@ type FormValues = {
   coverImageUrl: string;
 };
 
-const getErrors = (values: FormValues) => {
+const getErrors = (values: FormValues, t: (key: string) => string) => {
   const nextErrors: FieldErrors = {};
 
   if (!values.title.trim()) {
-    nextErrors.title = "Title is required.";
+    nextErrors.title = t('trips.titleRequired');
   }
 
   if (!values.startDate) {
-    nextErrors.startDate = "Start date is required.";
+    nextErrors.startDate = t('trips.startDateRequired');
   }
 
   if (!values.endDate) {
-    nextErrors.endDate = "End date is required.";
+    nextErrors.endDate = t('trips.endDateRequired');
   }
 
   if (values.startDate && values.endDate) {
     const start = new Date(values.startDate);
     const end = new Date(values.endDate);
     if (start > end) {
-      nextErrors.endDate = "End date must be after the start date.";
+      nextErrors.endDate = t('trips.endDateAfterStart');
     }
   }
 
@@ -54,6 +55,7 @@ const getErrors = (values: FormValues) => {
 
 const CreateTripForm = () => {
   const router = useRouter();
+  const { t } = useTranslation();
   const [title, setTitle] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
@@ -80,7 +82,7 @@ const CreateTripForm = () => {
       coverImageUrl: field === "coverImageUrl" ? value : coverImageUrl,
     };
 
-    setErrors({ ...getErrors(nextValues) });
+    setErrors({ ...getErrors(nextValues, t) });
   };
 
   const handleCoverChange = async (
@@ -95,7 +97,7 @@ const CreateTripForm = () => {
       return;
     }
 
-    const validationError = validateCoverImageFile(file);
+    const validationError = validateCoverImageFile(file, t);
     if (validationError) {
       setErrors((prev) => ({ ...prev, coverImageUrl: validationError }));
       return;
@@ -108,6 +110,7 @@ const CreateTripForm = () => {
     try {
       const uploadedUrl = await uploadCoverImage(file, {
         onProgress: setCoverUploadProgress,
+        translate: t,
       });
       setCoverImageUrl(uploadedUrl);
       setCoverUploadProgress(100);
@@ -117,7 +120,7 @@ const CreateTripForm = () => {
         coverImageUrl:
           error instanceof Error
             ? error.message
-            : "Unable to upload cover image.",
+            : t('trips.coverUploadError'),
       }));
       setCoverUploadProgress(0);
     } finally {
@@ -143,7 +146,7 @@ const CreateTripForm = () => {
     event.preventDefault();
     setErrors({});
 
-    const nextErrors = getErrors({ title, startDate, endDate, coverImageUrl });
+    const nextErrors = getErrors({ title, startDate, endDate, coverImageUrl }, t);
     if (Object.keys(nextErrors).length > 0) {
       setErrors(nextErrors);
       return;
@@ -171,7 +174,7 @@ const CreateTripForm = () => {
 
       if (!response.ok || result.error) {
         setErrors({
-          form: result.error?.message ?? "Unable to create trip. Please try again.",
+          form: result.error?.message ?? t('trips.createTripError'),
         });
         setSubmitting(false);
         return;
@@ -181,7 +184,7 @@ const CreateTripForm = () => {
       router.refresh();
     } catch {
       setErrors({
-        form: "Unable to create trip. Please try again.",
+        form: t('trips.createTripError'),
       });
       setSubmitting(false);
     }
@@ -190,7 +193,7 @@ const CreateTripForm = () => {
   return (
     <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
       <label className="block text-sm text-[#2D2A26]">
-        Trip title
+        {t('trips.tripTitle')}
         <input
           name="title"
           type="text"
@@ -201,7 +204,7 @@ const CreateTripForm = () => {
             updateField("title", nextValue);
           }}
           className="mt-2 w-full rounded-xl border border-black/10 px-3 py-2 text-sm focus:border-[#1F6F78] focus:outline-none focus:ring-2 focus:ring-[#1F6F78]/20"
-          placeholder="Spring in Kyoto"
+          placeholder={t('trips.placeholderTitle')}
         />
         {errors.title ? (
           <p className="mt-2 text-xs text-[#B34A3C]">{errors.title}</p>
@@ -209,7 +212,7 @@ const CreateTripForm = () => {
       </label>
 
       <label className="block text-sm text-[#2D2A26]">
-        Start date
+        {t('trips.startDate')}
         <input
           name="startDate"
           type="date"
@@ -227,7 +230,7 @@ const CreateTripForm = () => {
       </label>
 
       <label className="block text-sm text-[#2D2A26]">
-        End date
+        {t('trips.endDate')}
         <input
           name="endDate"
           type="date"
@@ -245,7 +248,7 @@ const CreateTripForm = () => {
       </label>
 
       <label className="block text-sm text-[#2D2A26]">
-        Cover image (optional)
+        {t('trips.coverImageOptional')}
         <input
           name="coverImage"
           type="file"
@@ -254,13 +257,13 @@ const CreateTripForm = () => {
           className="mt-2 w-full rounded-xl border border-black/10 px-3 py-2 text-sm focus:border-[#1F6F78] focus:outline-none focus:ring-2 focus:ring-[#1F6F78]/20"
         />
         <p className="mt-2 text-xs text-[#6B635B]">
-          JPG, PNG, or WebP up to 5MB.
+          {t('trips.fileFormatHint')}
         </p>
         {coverPreviewUrl ? (
           <div className="mt-3 overflow-hidden rounded-xl border border-black/10 bg-[#F2ECE3]">
             <Image
               src={coverPreviewUrl}
-              alt="Cover preview"
+              alt={t('trips.coverPreviewAlt')}
               width={1200}
               height={720}
               className="h-40 w-full object-cover"
@@ -270,7 +273,7 @@ const CreateTripForm = () => {
         ) : null}
         {coverUploading ? (
           <div className="mt-2 text-xs text-[#6B635B]">
-            Uploading… {coverUploadProgress}%
+            {t('trips.uploading')} {coverUploadProgress}%
           </div>
         ) : null}
         {errors.coverImageUrl ? (
@@ -291,7 +294,7 @@ const CreateTripForm = () => {
         disabled={!canSubmit}
         className="w-full rounded-xl bg-[#1F6F78] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#195C63] disabled:cursor-not-allowed disabled:opacity-70"
       >
-        {submitting ? "Creating trip..." : "Create trip"}
+        {submitting ? t('trips.creatingTrip') : t('trips.createTrip')}
       </button>
     </form>
   );

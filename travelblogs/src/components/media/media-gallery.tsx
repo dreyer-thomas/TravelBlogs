@@ -2,6 +2,8 @@
 
 import { useRef } from "react";
 import Image from "next/image";
+import { DEFAULT_INLINE_ALT } from "../../utils/entry-content";
+import { useTranslation } from "../../utils/use-translation";
 
 export type MediaGalleryItem = {
   id?: string | null;
@@ -27,6 +29,7 @@ const MediaGallery = ({
   onStartSlideshow,
 }: MediaGalleryProps) => {
   const scrollerRef = useRef<HTMLDivElement | null>(null);
+  const { t } = useTranslation();
 
   if (items.length === 0) {
     return null;
@@ -42,10 +45,10 @@ const MediaGallery = ({
       <header className="flex flex-wrap items-center justify-between gap-4">
         <div className="space-y-2">
           <p className="text-xs uppercase tracking-[0.2em] text-[#6B635B]">
-            Gallery
+            {t("entries.galleryLabel")}
           </p>
           <h2 className="text-2xl font-semibold text-[#2D2A26]">
-            More moments
+            {t("entries.moreMoments")}
           </h2>
         </div>
         <div className="flex items-center gap-2">
@@ -55,13 +58,13 @@ const MediaGallery = ({
               onClick={onStartSlideshow}
               className="rounded-xl border border-[#2D2A26]/20 bg-[#F2ECE3] px-3 py-2 text-sm font-semibold text-[#2D2A26] transition hover:bg-[#E8E0D4] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2D2A26]"
             >
-              Start slideshow
+              {t("entries.startSlideshow")}
             </button>
           ) : null}
           <button
             type="button"
             onClick={() => handleScroll("prev")}
-            aria-label="Scroll gallery backward"
+            aria-label={t("entries.scrollGalleryBackward")}
             className="flex h-11 w-11 items-center justify-center rounded-full border border-[#2D2A26]/15 bg-white text-lg text-[#2D2A26] shadow-sm transition hover:-translate-y-0.5 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2D2A26]"
           >
             ←
@@ -69,7 +72,7 @@ const MediaGallery = ({
           <button
             type="button"
             onClick={() => handleScroll("next")}
-            aria-label="Scroll gallery forward"
+            aria-label={t("entries.scrollGalleryForward")}
             className="flex h-11 w-11 items-center justify-center rounded-full border border-[#2D2A26]/15 bg-white text-lg text-[#2D2A26] shadow-sm transition hover:-translate-y-0.5 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2D2A26]"
           >
             →
@@ -84,12 +87,16 @@ const MediaGallery = ({
       >
         {items.map((item) => {
           const caption = item.alt?.trim();
-          const showCaption = Boolean(caption && caption !== "Entry photo");
+          const isDefaultCaption = caption === DEFAULT_INLINE_ALT;
+          const showCaption = Boolean(caption && !isDefaultCaption);
+          const resolvedAlt = isDefaultCaption || !caption
+            ? t("entries.entryMedia")
+            : caption;
 
           const image = (
             <Image
               src={item.url}
-              alt={item.alt ?? "Entry media"}
+              alt={resolvedAlt}
               width={item.width ?? 1200}
               height={item.height ?? 900}
               sizes="(min-width: 1024px) 320px, 70vw"
@@ -104,7 +111,7 @@ const MediaGallery = ({
               type="button"
               onClick={() => onItemClick(item.url)}
               className="block h-full w-full focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2D2A26]"
-              aria-label="Open photo"
+              aria-label={t("entries.openPhoto")}
             >
               {image}
             </button>

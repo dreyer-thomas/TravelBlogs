@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { signOut } from "next-auth/react";
+import LanguageSelector from "./language-selector";
+import { useTranslation } from "@/utils/use-translation";
 
 type UserMenuProps = {
   name?: string | null;
@@ -29,6 +31,7 @@ const getInitials = (name: string, email: string) => {
 const UserMenu = ({ name, email, className }: UserMenuProps) => {
   const router = useRouter();
   const pathname = usePathname();
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
   const initials = useMemo(() => getInitials(name ?? "", email), [name, email]);
@@ -84,28 +87,31 @@ const UserMenu = ({ name, email, className }: UserMenuProps) => {
       {open ? (
         <div className="absolute right-0 top-12 w-48 rounded-2xl border border-black/10 bg-white p-2 shadow-lg">
           <div className="px-3 py-2 text-xs uppercase tracking-[0.2em] text-[#6B635B]">
-            Account
+            {t('account.account')}
+          </div>
+          <div className="px-3 py-2">
+            <LanguageSelector />
           </div>
           <button
             type="button"
             onClick={handleManual}
             className="w-full rounded-xl px-3 py-2 text-left text-sm font-semibold text-[#2D2A26] transition hover:bg-black/5"
           >
-            User Manual
+            {t('account.userManual')}
           </button>
           <button
             type="button"
             onClick={handleChangePassword}
             className="w-full rounded-xl px-3 py-2 text-left text-sm font-semibold text-[#2D2A26] transition hover:bg-black/5"
           >
-            Change password
+            {t('account.changePassword')}
           </button>
           <button
             type="button"
             onClick={handleSignOut}
             className="mt-1 w-full rounded-xl px-3 py-2 text-left text-sm font-semibold text-[#B34A3C] transition hover:bg-[#B34A3C]/10"
           >
-            Check out
+            {t('account.checkOut')}
           </button>
         </div>
       ) : null}

@@ -5,6 +5,7 @@ import { describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 
 import EntryReader from "../../../src/components/entries/entry-reader";
+import { LocaleProvider } from "../../../src/utils/locale-context";
 
 vi.mock("next/image", () => ({
   default: (props: ImgHTMLAttributes<HTMLImageElement>) => {
@@ -38,8 +39,9 @@ vi.mock("next/link", () => ({
 describe("EntryReader navigation", () => {
   it("renders previous and next navigation links when available", () => {
     render(
-      <EntryReader
-        entry={{
+      <LocaleProvider>
+        <EntryReader
+          entry={{
           id: "entry-1",
           title: "Morning in Kyoto",
           body: "Temple walks and tea breaks.",
@@ -62,7 +64,8 @@ describe("EntryReader navigation", () => {
             nextEntryDate: null,
           },
         }}
-      />,
+        />
+      </LocaleProvider>,
     );
 
     const previousLink = screen.getByLabelText("Previous entry");
@@ -76,7 +79,8 @@ describe("EntryReader navigation", () => {
 
   it("marks navigation controls as disabled at the bounds", () => {
     render(
-      <EntryReader
+      <LocaleProvider>
+        <EntryReader
         entry={{
           id: "entry-3",
           title: "Solo day",
@@ -92,7 +96,8 @@ describe("EntryReader navigation", () => {
             nextEntryDate: null,
           },
         }}
-      />,
+        />
+      </LocaleProvider>,
     );
 
     const previousControl = screen.getByLabelText("Previous entry");
@@ -106,23 +111,25 @@ describe("EntryReader navigation", () => {
 
   it("updates reader content when a new entry is rendered", () => {
     const { rerender } = render(
-      <EntryReader
-        entry={{
-          id: "entry-10",
-          title: "Morning in Oslo",
-          body: "Cold air and warm coffee.",
-          createdAt: "2025-05-03T00:00:00.000Z",
-          media: [],
-          navigation: {
-            previousEntryId: null,
-            nextEntryId: "entry-11",
-            previousEntryTitle: null,
-            nextEntryTitle: "Late-night harbor",
-            previousEntryDate: null,
-            nextEntryDate: null,
-          },
-        }}
-      />,
+      <LocaleProvider>
+        <EntryReader
+          entry={{
+            id: "entry-10",
+            title: "Morning in Oslo",
+            body: "Cold air and warm coffee.",
+            createdAt: "2025-05-03T00:00:00.000Z",
+            media: [],
+            navigation: {
+              previousEntryId: null,
+              nextEntryId: "entry-11",
+              previousEntryTitle: null,
+              nextEntryTitle: "Late-night harbor",
+              previousEntryDate: null,
+              nextEntryDate: null,
+            },
+          }}
+          />
+      </LocaleProvider>,
     );
 
     expect(
@@ -133,23 +140,25 @@ describe("EntryReader navigation", () => {
     );
 
     rerender(
-      <EntryReader
-        entry={{
-          id: "entry-11",
-          title: "Late-night harbor",
-          body: "City lights over the water.",
-          createdAt: "2025-05-04T00:00:00.000Z",
-          media: [],
-          navigation: {
-            previousEntryId: "entry-10",
-            nextEntryId: null,
-            previousEntryTitle: "Morning in Oslo",
-            nextEntryTitle: null,
-            previousEntryDate: null,
-            nextEntryDate: null,
-          },
-        }}
-      />,
+      <LocaleProvider>
+        <EntryReader
+          entry={{
+            id: "entry-11",
+            title: "Late-night harbor",
+            body: "City lights over the water.",
+            createdAt: "2025-05-04T00:00:00.000Z",
+            media: [],
+            navigation: {
+              previousEntryId: "entry-10",
+              nextEntryId: null,
+              previousEntryTitle: "Morning in Oslo",
+              nextEntryTitle: null,
+              previousEntryDate: null,
+              nextEntryDate: null,
+            },
+          }}
+          />
+      </LocaleProvider>,
     );
 
     expect(

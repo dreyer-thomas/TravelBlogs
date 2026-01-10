@@ -2,16 +2,17 @@
 
 import type { ReactNode } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useTranslation } from "../../utils/use-translation";
 
 type SharedTripGuardProps = {
   token: string;
   children: ReactNode;
 };
 
-const INVALID_MESSAGE = "This share link is no longer valid.";
 const CHECK_INTERVAL_MS = 10000;
 
 const SharedTripGuard = ({ token, children }: SharedTripGuardProps) => {
+  const { t } = useTranslation();
   const [invalid, setInvalid] = useState(false);
   const [isChecking, setIsChecking] = useState(true);
   const hasCheckedRef = useRef(false);
@@ -96,7 +97,7 @@ const SharedTripGuard = ({ token, children }: SharedTripGuardProps) => {
       <div className="min-h-screen bg-[#FBF7F1] px-6 py-12">
         <main className="mx-auto w-full max-w-3xl">
           <section className="rounded-2xl border border-black/10 bg-white p-8 text-center">
-            <p className="text-sm text-[#B34A3C]">{INVALID_MESSAGE}</p>
+            <p className="text-sm text-[#B34A3C]">{t('trips.shareLinkNoLongerValid')}</p>
           </section>
         </main>
       </div>
@@ -109,7 +110,7 @@ const SharedTripGuard = ({ token, children }: SharedTripGuardProps) => {
         <main className="mx-auto w-full max-w-3xl">
           <section className="rounded-2xl border border-black/10 bg-white p-8 text-center">
             <p className="text-sm text-[#6B635B]">
-              Validating share link...
+              {t('trips.validatingShareLink')}
             </p>
           </section>
         </main>

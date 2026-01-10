@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useTranslation } from "../../utils/use-translation";
 
 type UserListItem = {
   id: string;
@@ -16,10 +17,10 @@ type UserListProps = {
   currentUserId?: string;
 };
 
-const roleOptions: Array<{ value: UserListItem["role"]; label: string }> = [
-  { value: "creator", label: "Creator" },
-  { value: "administrator", label: "Administrator" },
-  { value: "viewer", label: "Viewer" },
+const getRoleOptions = (t: (key: string) => string): Array<{ value: UserListItem["role"]; label: string }> => [
+  { value: "creator", label: t('admin.creator') },
+  { value: "administrator", label: t('admin.administrator') },
+  { value: "viewer", label: t('admin.viewer') },
 ];
 
 const formatDate = (value: string) => value.slice(0, 10);
@@ -43,6 +44,8 @@ const buildRows = (users: UserListItem[]): UserListRow[] =>
   }));
 
 const UserList = ({ users, currentUserId }: UserListProps) => {
+  const { t } = useTranslation();
+  const roleOptions = getRoleOptions(t);
   const [rows, setRows] = useState<UserListRow[]>(() => buildRows(users));
   const [editingUserId, setEditingUserId] = useState<string | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
@@ -100,7 +103,7 @@ const UserList = ({ users, currentUserId }: UserListProps) => {
       const result = await response.json().catch(() => null);
 
       if (!response.ok || result?.error) {
-        throw new Error(result?.error?.message ?? "Unable to update role.");
+        throw new Error(result?.error?.message ?? t("admin.updateRoleError"));
       }
 
       updateRow(row.id, (current) => ({
@@ -112,7 +115,7 @@ const UserList = ({ users, currentUserId }: UserListProps) => {
       setEditingUserId(null);
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : "Unable to update role.";
+        error instanceof Error ? error.message : t("admin.updateRoleError");
 
       updateRow(row.id, (current) => ({
         ...current,
@@ -151,7 +154,9 @@ const UserList = ({ users, currentUserId }: UserListProps) => {
       const result = await response.json().catch(() => null);
 
       if (!response.ok || result?.error) {
-        throw new Error(result?.error?.message ?? "Unable to update status.");
+        throw new Error(
+          result?.error?.message ?? t("admin.updateStatusError"),
+        );
       }
 
       updateRow(row.id, (current) => ({
@@ -162,7 +167,7 @@ const UserList = ({ users, currentUserId }: UserListProps) => {
       }));
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : "Unable to update status.";
+        error instanceof Error ? error.message : t("admin.updateStatusError");
 
       updateRow(row.id, (current) => ({
         ...current,
@@ -193,7 +198,7 @@ const UserList = ({ users, currentUserId }: UserListProps) => {
       const result = await response.json().catch(() => null);
 
       if (!response.ok || result?.error) {
-        throw new Error(result?.error?.message ?? "Unable to delete user.");
+        throw new Error(result?.error?.message ?? t("admin.deleteUserError"));
       }
 
       setRows((prev) => prev.filter((item) => item.id !== row.id));
@@ -201,7 +206,7 @@ const UserList = ({ users, currentUserId }: UserListProps) => {
       setConfirmDeleteId(null);
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : "Unable to delete user.";
+        error instanceof Error ? error.message : t("admin.deleteUserError");
 
       updateRow(row.id, (current) => ({
         ...current,
@@ -214,9 +219,9 @@ const UserList = ({ users, currentUserId }: UserListProps) => {
   if (users.length === 0) {
     return (
       <section className="rounded-2xl border border-dashed border-black/10 bg-white p-8 text-center">
-        <h2 className="text-lg font-semibold text-[#2D2A26]">No users yet</h2>
+        <h2 className="text-lg font-semibold text-[#2D2A26]">{t('admin.noUsersYet')}</h2>
         <p className="mt-2 text-sm text-[#6B635B]">
-          Create the first account to invite someone into TravelBlogs.
+          {t("admin.noUsersDescription")}
         </p>
       </section>
     );
@@ -232,7 +237,7 @@ const UserList = ({ users, currentUserId }: UserListProps) => {
         const isStatusLocked = isSelf && isDefaultCreator;
         const isEditing = editingUserId === user.id;
         const isDeleteConfirming = confirmDeleteId === user.id;
-        const displayName = isDefaultCreator ? "Default creator" : user.name;
+        const displayName = isDefaultCreator ? t("admin.defaultCreator") : user.name;
         const roleLabel =
           roleOptions.find((option) => option.value === user.role)?.label ??
           user.role;
@@ -253,10 +258,10 @@ const UserList = ({ users, currentUserId }: UserListProps) => {
               {roleLabel}
             </span>
             <span className="rounded-full border border-black/10 bg-[#F2ECE3] px-3 py-1 text-[#2D2A26]">
-              {user.isActive ? "Active" : "Inactive"}
+              {user.isActive ? t('admin.active') : t('admin.inactive')}
             </span>
             <span className="text-[#6B635B]">
-              Added {formatDate(user.createdAt)}
+              {t('admin.created')} {formatDate(user.createdAt)}
             </span>
             <button
               type="button"
@@ -271,7 +276,7 @@ const UserList = ({ users, currentUserId }: UserListProps) => {
               }}
               className="rounded-full border border-[#1F6F78]/20 bg-[#1F6F78]/10 px-3 py-1 text-xs font-semibold text-[#1F6F78] transition hover:bg-[#1F6F78]/20 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              Edit User
+              {t('admin.editUser')}
             </button>
           </div>
           {isEditing ? (
@@ -279,9 +284,9 @@ const UserList = ({ users, currentUserId }: UserListProps) => {
               <div className="space-y-3">
                 <div className="flex flex-wrap items-center gap-3">
                   <label className="flex items-center gap-2 text-xs text-[#2D2A26]">
-                    <span className="sr-only">{`Role for ${displayName}`}</span>
+                    <span className="sr-only">{`${t("admin.roleFor")} ${displayName}`}</span>
                     <select
-                      aria-label={`Role for ${displayName}`}
+                      aria-label={`${t("admin.roleFor")} ${displayName}`}
                       value={user.pendingRole}
                       onChange={(event) =>
                         handleRoleChange(
@@ -310,7 +315,7 @@ const UserList = ({ users, currentUserId }: UserListProps) => {
                     onClick={() => handleSave(user)}
                     className="rounded-full border border-[#1F6F78]/20 bg-[#1F6F78] px-3 py-1 text-xs font-semibold text-white transition hover:bg-[#195C63] disabled:cursor-not-allowed disabled:opacity-60"
                   >
-                    {user.saving ? "Saving..." : "Save role"}
+                    {user.saving ? t('admin.saving') : t('admin.saveRole')}
                   </button>
                 </div>
                 <div className="flex flex-wrap items-center gap-3 text-xs">
@@ -321,7 +326,7 @@ const UserList = ({ users, currentUserId }: UserListProps) => {
                       onClick={() => handleStatusToggle(user, false)}
                       className="rounded-full border border-black/10 bg-white px-3 py-1 text-xs font-semibold text-[#2D2A26] transition hover:bg-black/5 disabled:cursor-not-allowed disabled:opacity-60"
                     >
-                      Deactivate
+                      {t('admin.deactivate')}
                     </button>
                   ) : (
                     <button
@@ -330,7 +335,7 @@ const UserList = ({ users, currentUserId }: UserListProps) => {
                       onClick={() => handleStatusToggle(user, true)}
                       className="rounded-full border border-black/10 bg-white px-3 py-1 text-xs font-semibold text-[#2D2A26] transition hover:bg-black/5 disabled:cursor-not-allowed disabled:opacity-60"
                     >
-                      Activate
+                      {t('admin.activate')}
                     </button>
                   )}
                 </div>
@@ -338,7 +343,7 @@ const UserList = ({ users, currentUserId }: UserListProps) => {
                   {isDeleteConfirming ? (
                     <>
                       <span className="text-[#B34A3C]">
-                        Delete this user? This cannot be undone.
+                        {t("admin.deleteUserWarning")}
                       </span>
                       <button
                         type="button"
@@ -346,7 +351,7 @@ const UserList = ({ users, currentUserId }: UserListProps) => {
                         onClick={() => handleDelete(user)}
                         className="rounded-full border border-[#B34A3C]/20 bg-[#B34A3C] px-3 py-1 text-xs font-semibold text-white transition hover:bg-[#9C3E32] disabled:cursor-not-allowed disabled:opacity-60"
                       >
-                        {user.deleting ? "Deleting..." : "Confirm delete"}
+                        {user.deleting ? t('admin.deleting') : t('admin.confirmDelete')}
                       </button>
                       <button
                         type="button"
@@ -354,7 +359,7 @@ const UserList = ({ users, currentUserId }: UserListProps) => {
                         onClick={() => setConfirmDeleteId(null)}
                         className="rounded-full border border-black/10 bg-white px-3 py-1 text-xs font-semibold text-[#6B635B] transition hover:bg-black/5 disabled:cursor-not-allowed disabled:opacity-60"
                       >
-                        Cancel
+                        {t('admin.cancel')}
                       </button>
                     </>
                   ) : (
@@ -364,7 +369,7 @@ const UserList = ({ users, currentUserId }: UserListProps) => {
                       onClick={() => setConfirmDeleteId(user.id)}
                       className="rounded-full border border-[#B34A3C]/20 bg-[#FCEDEA] px-3 py-1 text-xs font-semibold text-[#B34A3C] transition hover:bg-[#F7DCD7] disabled:cursor-not-allowed disabled:opacity-60"
                     >
-                      Delete user
+                      {t('admin.deleteUser')}
                     </button>
                   )}
                 </div>
@@ -383,7 +388,7 @@ const UserList = ({ users, currentUserId }: UserListProps) => {
                     }}
                     className="rounded-full border border-black/10 bg-white px-3 py-1 text-xs font-semibold text-[#6B635B] transition hover:bg-black/5 disabled:cursor-not-allowed disabled:opacity-60"
                   >
-                    Cancel
+                    {t("admin.cancel")}
                   </button>
                 </div>
               </div>

@@ -12,6 +12,7 @@ const ENTRY_MEDIA_ALLOWED_TYPE_SET = new Set<string>(
 
 type UploadOptions = {
   onProgress?: (progress: number) => void;
+  translate?: (key: string) => string;
 };
 
 type BatchUploadOptions = {
@@ -19,6 +20,7 @@ type BatchUploadOptions = {
   uploadFn?: (file: File, options?: UploadOptions) => Promise<string>;
   strategy?: "sequential" | "parallel";
   getFileId?: (file: File) => string;
+  translate?: (key: string) => string;
 };
 
 type BatchUploadResult = {
@@ -26,12 +28,19 @@ type BatchUploadResult = {
   failures: { fileId: string; fileName: string; message: string }[];
 };
 
-export const validateEntryMediaFile = (file: File) => {
+export const validateEntryMediaFile = (
+  file: File,
+  translate?: (key: string) => string,
+) => {
   if (!ENTRY_MEDIA_ALLOWED_TYPE_SET.has(file.type)) {
-    return "Media files must be a JPG, PNG, or WebP file.";
+    return translate
+      ? translate("entries.mediaTypeError")
+      : "Media files must be a JPG, PNG, or WebP file.";
   }
   if (file.size > COVER_IMAGE_MAX_BYTES) {
-    return "Media files must be 5MB or less.";
+    return translate
+      ? translate("entries.mediaSizeError")
+      : "Media files must be 5MB or less.";
   }
   return null;
 };
@@ -41,6 +50,7 @@ export const createEntryPreviewUrl = (file: File) => {
 };
 
 export const uploadEntryMedia = (file: File, options: UploadOptions = {}) => {
+  const translate = options.translate;
   return new Promise<string>((resolve, reject) => {
     const request = new XMLHttpRequest();
     const formData = new FormData();
@@ -61,11 +71,23 @@ export const uploadEntryMedia = (file: File, options: UploadOptions = {}) => {
     }
 
     request.onerror = () => {
-      reject(new Error("Unable to upload media file."));
+      reject(
+        new Error(
+          translate
+            ? translate("entries.mediaUploadError")
+            : "Unable to upload media file.",
+        ),
+      );
     };
 
     request.onabort = () => {
-      reject(new Error("Media upload was cancelled."));
+      reject(
+        new Error(
+          translate
+            ? translate("entries.mediaUploadCancelled")
+            : "Media upload was cancelled.",
+        ),
+      );
     };
 
     request.onload = () => {
@@ -81,7 +103,9 @@ export const uploadEntryMedia = (file: File, options: UploadOptions = {}) => {
 
       const message =
         response?.error?.message ??
-        "Unable to upload media file. Please try again.";
+        (translate
+          ? translate("entries.mediaUploadRetryError")
+          : "Unable to upload media file. Please try again.");
       reject(new Error(message));
     };
 
@@ -103,6 +127,7 @@ export const uploadEntryMediaBatch = async (
     try {
       const url = await uploadFn(file, {
         onProgress: (progress) => options.onFileProgress?.(file, progress),
+        translate: options.translate,
       });
       uploads.push({ fileId, fileName: file.name, url });
     } catch (error) {
@@ -112,7 +137,9 @@ export const uploadEntryMediaBatch = async (
         message:
           error instanceof Error
             ? error.message
-            : "Unable to upload media file.",
+            : options.translate
+              ? options.translate("entries.mediaUploadError")
+              : "Unable to upload media file.",
       });
     }
   };

@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Source_Sans_3 } from "next/font/google";
 import "./globals.css";
+import { LocaleProvider } from "@/utils/locale-context";
+import { LocaleHtmlUpdater } from "@/components/layout/locale-html-updater";
 
 const sourceSans = Source_Sans_3({
   variable: "--font-source-sans-3",
@@ -21,7 +23,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${sourceSans.variable} antialiased`}>
-        {children}
+        <LocaleProvider>
+          <LocaleHtmlUpdater />
+          {children}
+        </LocaleProvider>
       </body>
     </html>
   );

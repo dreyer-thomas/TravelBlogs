@@ -2,9 +2,11 @@ import { COVER_IMAGE_FIELD_NAME } from "./media";
 
 type UploadOptions = {
   onProgress?: (progress: number) => void;
+  translate?: (key: string) => string;
 };
 
 export const uploadCoverImage = (file: File, options: UploadOptions = {}) => {
+  const translate = options.translate;
   return new Promise<string>((resolve, reject) => {
     const request = new XMLHttpRequest();
     const formData = new FormData();
@@ -25,11 +27,23 @@ export const uploadCoverImage = (file: File, options: UploadOptions = {}) => {
     }
 
     request.onerror = () => {
-      reject(new Error("Unable to upload cover image."));
+      reject(
+        new Error(
+          translate
+            ? translate("trips.coverUploadError")
+            : "Unable to upload cover image.",
+        ),
+      );
     };
 
     request.onabort = () => {
-      reject(new Error("Cover image upload was cancelled."));
+      reject(
+        new Error(
+          translate
+            ? translate("trips.coverUploadCancelled")
+            : "Cover image upload was cancelled.",
+        ),
+      );
     };
 
     request.onload = () => {
@@ -45,7 +59,9 @@ export const uploadCoverImage = (file: File, options: UploadOptions = {}) => {
 
       const message =
         response?.error?.message ??
-        "Unable to upload cover image. Please try again.";
+        (translate
+          ? translate("trips.coverUploadRetryError")
+          : "Unable to upload cover image. Please try again.");
       reject(new Error(message));
     };
 

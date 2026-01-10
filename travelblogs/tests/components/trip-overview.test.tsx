@@ -5,6 +5,7 @@ import { describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 
 import TripOverview from "../../src/components/trips/trip-overview";
+import { LocaleProvider } from "../../src/utils/locale-context";
 
 vi.mock("next/image", () => ({
   default: (props: ImgHTMLAttributes<HTMLImageElement>) => {
@@ -29,25 +30,27 @@ vi.mock("next/link", () => ({
 describe("TripOverview", () => {
   it("renders entry cards with title, date, and preview image", () => {
     render(
-      <TripOverview
-        trip={{
-          id: "trip-1",
-          title: "Atlas Adventure",
-          startDate: "2025-06-01T00:00:00.000Z",
-          endDate: "2025-06-08T00:00:00.000Z",
-          coverImageUrl: null,
-        }}
-        entries={[
-          {
-            id: "entry-2",
-            tripId: "trip-1",
-            title: "Day two",
-            createdAt: "2025-06-03T12:00:00.000Z",
-            coverImageUrl: "/uploads/entries/day-two.jpg",
-            media: [{ url: "/uploads/entries/day-two-media.jpg" }],
-          },
-        ]}
-      />,
+      <LocaleProvider>
+        <TripOverview
+          trip={{
+            id: "trip-1",
+            title: "Atlas Adventure",
+            startDate: "2025-06-01T00:00:00.000Z",
+            endDate: "2025-06-08T00:00:00.000Z",
+            coverImageUrl: null,
+          }}
+          entries={[
+            {
+              id: "entry-2",
+              tripId: "trip-1",
+              title: "Day two",
+              createdAt: "2025-06-03T12:00:00.000Z",
+              coverImageUrl: "/uploads/entries/day-two.jpg",
+              media: [{ url: "/uploads/entries/day-two-media.jpg" }],
+            },
+          ]}
+        />
+      </LocaleProvider>,
     );
 
     expect(screen.getByText("Day two")).toBeInTheDocument();
@@ -61,16 +64,18 @@ describe("TripOverview", () => {
 
   it("renders an empty state when there are no entries", () => {
     render(
-      <TripOverview
-        trip={{
-          id: "trip-2",
-          title: "Quiet Escape",
-          startDate: "2025-07-01T00:00:00.000Z",
-          endDate: "2025-07-05T00:00:00.000Z",
-          coverImageUrl: null,
-        }}
-        entries={[]}
-      />,
+      <LocaleProvider>
+        <TripOverview
+          trip={{
+            id: "trip-2",
+            title: "Quiet Escape",
+            startDate: "2025-07-01T00:00:00.000Z",
+            endDate: "2025-07-05T00:00:00.000Z",
+            coverImageUrl: null,
+          }}
+          entries={[]}
+        />
+      </LocaleProvider>,
     );
 
     expect(
@@ -80,26 +85,28 @@ describe("TripOverview", () => {
 
   it("uses a custom entry link base when provided", () => {
     render(
-      <TripOverview
-        trip={{
-          id: "trip-3",
-          title: "Shared trip",
-          startDate: "2025-06-01T00:00:00.000Z",
-          endDate: "2025-06-08T00:00:00.000Z",
-          coverImageUrl: null,
-        }}
-        entries={[
-          {
-            id: "entry-9",
-            tripId: "trip-3",
-            title: "Day nine",
-            createdAt: "2025-06-09T12:00:00.000Z",
-            coverImageUrl: "/uploads/entries/day-nine.jpg",
-            media: [{ url: "/uploads/entries/day-nine-media.jpg" }],
-          },
-        ]}
-        entryLinkBase="/trips/share/shared-token/entries"
-      />,
+      <LocaleProvider>
+        <TripOverview
+          trip={{
+            id: "trip-3",
+            title: "Shared trip",
+            startDate: "2025-06-01T00:00:00.000Z",
+            endDate: "2025-06-08T00:00:00.000Z",
+            coverImageUrl: null,
+          }}
+          entries={[
+            {
+              id: "entry-9",
+              tripId: "trip-3",
+              title: "Day nine",
+              createdAt: "2025-06-09T12:00:00.000Z",
+              coverImageUrl: "/uploads/entries/day-nine.jpg",
+              media: [{ url: "/uploads/entries/day-nine-media.jpg" }],
+            },
+          ]}
+          entryLinkBase="/trips/share/shared-token/entries"
+        />
+      </LocaleProvider>,
     );
 
     expect(screen.getByRole("link", { name: /day nine/i })).toHaveAttribute(
@@ -110,40 +117,44 @@ describe("TripOverview", () => {
 
   it("renders back to trips link when backToTripsHref is provided", () => {
     render(
-      <TripOverview
-        trip={{
-          id: "trip-4",
-          title: "Trip with back link",
-          startDate: "2025-06-01T00:00:00.000Z",
-          endDate: "2025-06-08T00:00:00.000Z",
-          coverImageUrl: null,
-        }}
-        entries={[]}
-        backToTripsHref="/trips"
-      />,
+      <LocaleProvider>
+        <TripOverview
+          trip={{
+            id: "trip-4",
+            title: "Trip with back link",
+            startDate: "2025-06-01T00:00:00.000Z",
+            endDate: "2025-06-08T00:00:00.000Z",
+            coverImageUrl: null,
+          }}
+          entries={[]}
+          backToTripsHref="/trips"
+        />
+      </LocaleProvider>,
     );
 
-    const backLink = screen.getByRole("link", { name: /back to trips/i });
+    const backLink = screen.getByRole("link", { name: /trips/i });
     expect(backLink).toBeInTheDocument();
     expect(backLink).toHaveAttribute("href", "/trips");
   });
 
   it("does not render back link when backToTripsHref is not provided", () => {
     render(
-      <TripOverview
-        trip={{
-          id: "trip-5",
-          title: "Trip without back link",
-          startDate: "2025-06-01T00:00:00.000Z",
-          endDate: "2025-06-08T00:00:00.000Z",
-          coverImageUrl: null,
-        }}
-        entries={[]}
-      />,
+      <LocaleProvider>
+        <TripOverview
+          trip={{
+            id: "trip-5",
+            title: "Trip without back link",
+            startDate: "2025-06-01T00:00:00.000Z",
+            endDate: "2025-06-08T00:00:00.000Z",
+            coverImageUrl: null,
+          }}
+          entries={[]}
+        />
+      </LocaleProvider>,
     );
 
     expect(
-      screen.queryByRole("link", { name: /back to trips/i }),
+      screen.queryByRole("link", { name: /trips/i }),
     ).not.toBeInTheDocument();
   });
 });

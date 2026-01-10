@@ -5,6 +5,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 
 import TripCard from "../../src/components/trips/trip-card";
+import { LocaleProvider } from "../../src/utils/locale-context";
 
 const pushMock = vi.hoisted(() => vi.fn());
 
@@ -17,6 +18,10 @@ vi.mock("next/navigation", () => ({
 vi.mock("next/image", () => ({
   default: (props: ImgHTMLAttributes<HTMLImageElement>) => <img {...props} />,
 }));
+
+const renderWithProvider = (component: React.ReactElement) => {
+  return render(<LocaleProvider>{component}</LocaleProvider>);
+};
 
 describe("TripCard", () => {
   afterEach(() => {
@@ -43,7 +48,7 @@ describe("TripCard", () => {
 
     vi.stubGlobal("fetch", fetchMock);
 
-    render(
+    renderWithProvider(
       <TripCard
         id="trip-1"
         title="Viewer Trip"
@@ -77,7 +82,7 @@ describe("TripCard", () => {
   });
 
   it("links to trip detail page when edit access is available", () => {
-    render(
+    renderWithProvider(
       <TripCard
         id="trip-2"
         title="Contributor Trip"
@@ -109,7 +114,7 @@ describe("TripCard", () => {
 
     vi.stubGlobal("fetch", fetchMock);
 
-    render(
+    renderWithProvider(
       <TripCard
         id="trip-3"
         title="Clickable Trip"
@@ -132,7 +137,7 @@ describe("TripCard", () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2025-05-03T12:00:00.000Z"));
 
-    render(
+    renderWithProvider(
       <TripCard
         id="trip-4"
         title="Past Trip"
@@ -150,7 +155,7 @@ describe("TripCard", () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2025-05-03T12:00:00.000Z"));
 
-    render(
+    renderWithProvider(
       <TripCard
         id="trip-5"
         title="Future Trip"
@@ -168,7 +173,7 @@ describe("TripCard", () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2025-05-03T12:00:00.000Z"));
 
-    render(
+    renderWithProvider(
       <TripCard
         id="trip-6"
         title="Current Trip"
@@ -186,7 +191,7 @@ describe("TripCard", () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2025-05-01T09:00:00.000Z"));
 
-    render(
+    renderWithProvider(
       <TripCard
         id="trip-7"
         title="Start Boundary Trip"
@@ -204,7 +209,7 @@ describe("TripCard", () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2025-05-05T23:59:00.000Z"));
 
-    render(
+    renderWithProvider(
       <TripCard
         id="trip-8"
         title="End Boundary Trip"
@@ -222,7 +227,7 @@ describe("TripCard", () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2025-05-03T12:00:00.000Z"));
 
-    render(
+    renderWithProvider(
       <TripCard
         id="trip-9"
         title="Invalid Trip"

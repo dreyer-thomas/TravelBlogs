@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/react";
 
 import ChangePasswordForm from "../../src/components/account/change-password-form";
+import { LocaleProvider } from "../../src/utils/locale-context";
 
 const push = vi.fn();
 const signIn = vi.fn();
@@ -28,12 +29,14 @@ describe("ChangePasswordForm", () => {
 
   it("shows validation errors when fields are missing", async () => {
     render(
-      <ChangePasswordForm
-        userId="user-1"
-        userEmail="user@example.com"
-        callbackUrl="/trips"
-        mustChangePassword
-      />,
+      <LocaleProvider>
+        <ChangePasswordForm
+          userId="user-1"
+          userEmail="user@example.com"
+          callbackUrl="/trips"
+          mustChangePassword
+        />
+      </LocaleProvider>,
     );
 
     fireEvent.click(screen.getByRole("button", { name: "Change password" }));
@@ -54,12 +57,14 @@ describe("ChangePasswordForm", () => {
     signIn.mockResolvedValue({ error: null, url: "/trips" });
 
     render(
-      <ChangePasswordForm
-        userId="user-1"
-        userEmail="user@example.com"
-        callbackUrl="/trips"
-        mustChangePassword={false}
-      />,
+      <LocaleProvider>
+        <ChangePasswordForm
+          userId="user-1"
+          userEmail="user@example.com"
+          callbackUrl="/trips"
+          mustChangePassword={false}
+        />
+      </LocaleProvider>,
     );
 
     fireEvent.change(screen.getByLabelText(/current password/i), {
@@ -98,12 +103,14 @@ describe("ChangePasswordForm", () => {
     });
 
     render(
-      <ChangePasswordForm
-        userId="user-1"
-        userEmail="user@example.com"
-        callbackUrl="/trips"
-        mustChangePassword={false}
-      />,
+      <LocaleProvider>
+        <ChangePasswordForm
+          userId="user-1"
+          userEmail="user@example.com"
+          callbackUrl="/trips"
+          mustChangePassword={false}
+        />
+      </LocaleProvider>,
     );
 
     fireEvent.change(screen.getByLabelText(/current password/i), {

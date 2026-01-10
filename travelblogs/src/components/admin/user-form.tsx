@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslation } from "../../utils/use-translation";
 
 type FieldErrors = {
   email?: string;
@@ -18,35 +19,35 @@ type FormValues = {
   password: string;
 };
 
-const roleOptions: Array<{ value: FormValues["role"]; label: string }> = [
-  { value: "creator", label: "Creator" },
-  { value: "administrator", label: "Administrator" },
-  { value: "viewer", label: "Viewer" },
+const getRoleOptions = (t: (key: string) => string): Array<{ value: FormValues["role"]; label: string }> => [
+  { value: "creator", label: t('admin.creator') },
+  { value: "administrator", label: t('admin.administrator') },
+  { value: "viewer", label: t('admin.viewer') },
 ];
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-const getErrors = (values: FormValues) => {
+const getErrors = (values: FormValues, t: (key: string) => string) => {
   const nextErrors: FieldErrors = {};
 
   if (!values.email.trim()) {
-    nextErrors.email = "Email is required.";
+    nextErrors.email = t("admin.emailRequired");
   } else if (!emailPattern.test(values.email.trim())) {
-    nextErrors.email = "Email must be valid.";
+    nextErrors.email = t("admin.emailValid");
   }
 
   if (!values.name.trim()) {
-    nextErrors.name = "Name is required.";
+    nextErrors.name = t("admin.nameRequired");
   }
 
   if (!values.role) {
-    nextErrors.role = "Role is required.";
+    nextErrors.role = t("admin.roleRequired");
   }
 
   if (!values.password.trim()) {
-    nextErrors.password = "Password is required.";
+    nextErrors.password = t("admin.passwordRequired");
   } else if (values.password.trim().length < 8) {
-    nextErrors.password = "Password must be at least 8 characters.";
+    nextErrors.password = t("admin.passwordMinLength");
   }
 
   return nextErrors;
@@ -54,12 +55,15 @@ const getErrors = (values: FormValues) => {
 
 const UserForm = () => {
   const router = useRouter();
+  const { t } = useTranslation();
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
   const [role, setRole] = useState<FormValues["role"]>("viewer");
   const [password, setPassword] = useState("");
   const [errors, setErrors] = useState<FieldErrors>({});
   const [submitting, setSubmitting] = useState(false);
+
+  const roleOptions = getRoleOptions(t);
 
   const updateField = (field: keyof FormValues, value: string) => {
     const nextValues: FormValues = {
@@ -69,7 +73,7 @@ const UserForm = () => {
       password: field === "password" ? value : password,
     };
 
-    setErrors({ ...getErrors(nextValues) });
+    setErrors({ ...getErrors(nextValues, t) });
   };
 
   const hasFieldErrors = Boolean(
@@ -87,7 +91,7 @@ const UserForm = () => {
     event.preventDefault();
     setErrors({});
 
-    const nextErrors = getErrors({ email, name, role, password });
+    const nextErrors = getErrors({ email, name, role, password }, t);
     if (Object.keys(nextErrors).length > 0) {
       setErrors(nextErrors);
       return;
@@ -113,7 +117,7 @@ const UserForm = () => {
 
       if (!response.ok || result.error) {
         setErrors({
-          form: result.error?.message ?? "Unable to create the user.",
+          form: result.error?.message ?? t("admin.createUserError"),
         });
         setSubmitting(false);
         return;
@@ -126,7 +130,7 @@ const UserForm = () => {
       router.refresh();
     } catch {
       setErrors({
-        form: "Unable to create the user.",
+        form: t("admin.createUserError"),
       });
     } finally {
       setSubmitting(false);
@@ -136,7 +140,7 @@ const UserForm = () => {
   return (
     <form className="space-y-4" onSubmit={handleSubmit}>
       <label className="block text-sm text-[#2D2A26]">
-        Email address
+        {t('admin.emailAddress')}
         <input
           name="email"
           type="email"
@@ -147,7 +151,7 @@ const UserForm = () => {
             updateField("email", nextValue);
           }}
           className="mt-2 w-full rounded-xl border border-black/10 px-3 py-2 text-sm focus:border-[#1F6F78] focus:outline-none focus:ring-2 focus:ring-[#1F6F78]/20"
-          placeholder="viewer@example.com"
+          placeholder={t("admin.placeholderEmail")}
         />
         {errors.email ? (
           <p className="mt-2 text-xs text-[#B34A3C]">{errors.email}</p>
@@ -155,7 +159,7 @@ const UserForm = () => {
       </label>
 
       <label className="block text-sm text-[#2D2A26]">
-        Full name
+        {t('admin.fullName')}
         <input
           name="name"
           type="text"
@@ -166,7 +170,7 @@ const UserForm = () => {
             updateField("name", nextValue);
           }}
           className="mt-2 w-full rounded-xl border border-black/10 px-3 py-2 text-sm focus:border-[#1F6F78] focus:outline-none focus:ring-2 focus:ring-[#1F6F78]/20"
-          placeholder="Avery Chen"
+          placeholder={t("admin.placeholderName")}
         />
         {errors.name ? (
           <p className="mt-2 text-xs text-[#B34A3C]">{errors.name}</p>
@@ -174,7 +178,7 @@ const UserForm = () => {
       </label>
 
       <label className="block text-sm text-[#2D2A26]">
-        Role
+        {t('admin.role')}
         <select
           name="role"
           value={role}
@@ -197,7 +201,7 @@ const UserForm = () => {
       </label>
 
       <label className="block text-sm text-[#2D2A26]">
-        Temporary password
+        {t('admin.temporaryPassword')}
         <input
           name="password"
           type="password"
@@ -208,7 +212,7 @@ const UserForm = () => {
             updateField("password", nextValue);
           }}
           className="mt-2 w-full rounded-xl border border-black/10 px-3 py-2 text-sm focus:border-[#1F6F78] focus:outline-none focus:ring-2 focus:ring-[#1F6F78]/20"
-          placeholder="At least 8 characters"
+          placeholder={t('admin.atLeast8Characters')}
         />
         {errors.password ? (
           <p className="mt-2 text-xs text-[#B34A3C]">{errors.password}</p>
@@ -226,7 +230,7 @@ const UserForm = () => {
         disabled={!canSubmit}
         className="w-full rounded-xl bg-[#1F6F78] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#195C63] disabled:cursor-not-allowed disabled:opacity-70"
       >
-        {submitting ? "Creating user..." : "Create user"}
+        {submitting ? t('admin.creatingUser') : t('admin.createUser')}
       </button>
     </form>
   );

@@ -7,11 +7,13 @@ import Link from "next/link";
 import DeleteEntryModal from "./delete-entry-modal";
 import FullScreenPhotoViewer from "./full-screen-photo-viewer";
 import {
+  DEFAULT_INLINE_ALT,
   extractInlineImageUrls,
   findInlineImageAlt,
   getPhotoTimestamp,
   parseEntryContent,
 } from "../../utils/entry-content";
+import { useTranslation } from "../../utils/use-translation";
 
 type EntryMedia = {
   id: string;
@@ -36,21 +38,21 @@ type EntryDetailProps = {
   canDelete: boolean;
 };
 
-const formatDate = (value: string) =>
-  new Date(value).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-
 const isOptimizedImage = (url: string) => url.startsWith("/");
 
 const EntryDetail = ({ entry, canEdit, canDelete }: EntryDetailProps) => {
+  const { t, formatDate } = useTranslation();
   const [viewerIndex, setViewerIndex] = useState(0);
   const [isViewerOpen, setIsViewerOpen] = useState(false);
   const [viewerMode, setViewerMode] = useState<"viewer" | "slideshow">(
     "viewer",
   );
+  const resolveAltText = (alt?: string | null) => {
+    if (!alt || alt === DEFAULT_INLINE_ALT) {
+      return t("entries.entryPhoto");
+    }
+    return alt;
+  };
 
   const contentBlocks = useMemo(
     () => (entry ? parseEntryContent(entry.text) : []),
@@ -96,9 +98,9 @@ const EntryDetail = ({ entry, canEdit, canDelete }: EntryDetailProps) => {
     }
     return galleryItems.map((item) => ({
       url: item.url,
-      alt: findInlineImageAlt(entry.text, item.url) ?? "Entry photo",
+      alt: resolveAltText(findInlineImageAlt(entry.text, item.url)),
     }));
-  }, [entry, galleryItems]);
+  }, [entry, galleryItems, t]);
 
   const openViewerAtUrl = useCallback(
     (url: string) => {
@@ -133,17 +135,17 @@ const EntryDetail = ({ entry, canEdit, canDelete }: EntryDetailProps) => {
           href={`/trips/${entry.tripId}`}
           className="text-sm text-[#1F6F78] hover:underline"
         >
-          ← Back to trip
+          ← {t("entries.backToTrip")}
         </Link>
 
         <section className="rounded-2xl border border-black/10 bg-white p-8 shadow-sm">
           <header className="flex flex-wrap items-start justify-between gap-4">
             <div className="space-y-2">
               <p className="text-xs uppercase tracking-[0.2em] text-[#6B635B]">
-                {formatDate(entry.createdAt)}
+                {formatDate(new Date(entry.createdAt))}
               </p>
               <h1 className="text-3xl font-semibold text-[#2D2A26]">
-                {entry.title || "Daily entry"}
+                {entry.title || t("entries.dailyEntry")}
               </h1>
             </div>
           </header>
@@ -173,7 +175,7 @@ const EntryDetail = ({ entry, canEdit, canDelete }: EntryDetailProps) => {
                     type="button"
                     onClick={() => openViewerAtUrl(block.url)}
                     className="block h-full w-full focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2D2A26]"
-                    aria-label={`Open photo ${
+                    aria-label={`${t("entries.openPhoto")} ${
                       viewerImages.findIndex(
                         (item) => item.url === block.url,
                       ) + 1
@@ -181,7 +183,7 @@ const EntryDetail = ({ entry, canEdit, canDelete }: EntryDetailProps) => {
                   >
                     <Image
                       src={block.url}
-                      alt={block.alt || "Entry photo"}
+                      alt={resolveAltText(block.alt)}
                       width={1200}
                       height={800}
                       sizes="100vw"
@@ -201,10 +203,10 @@ const EntryDetail = ({ entry, canEdit, canDelete }: EntryDetailProps) => {
           <header className="flex flex-wrap items-start justify-between gap-4">
             <div className="space-y-2">
               <p className="text-xs uppercase tracking-[0.2em] text-[#6B635B]">
-                Media
+                {t("entries.mediaLabel")}
               </p>
               <h2 className="text-2xl font-semibold text-[#2D2A26]">
-                Photos & moments
+                {t("entries.photosMoments")}
               </h2>
             </div>
             {galleryItems.length > 0 ? (
@@ -213,13 +215,13 @@ const EntryDetail = ({ entry, canEdit, canDelete }: EntryDetailProps) => {
                 onClick={startSlideshow}
                 className="rounded-xl border border-[#2D2A26]/20 bg-[#F2ECE3] px-4 py-2 text-sm font-semibold text-[#2D2A26] transition hover:bg-[#E8E0D4] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2D2A26]"
               >
-                Start slideshow
+                {t("entries.startSlideshow")}
               </button>
             ) : null}
           </header>
           {galleryItems.length === 0 ? (
             <p className="mt-4 text-sm text-[#6B635B]">
-              No media attached to this entry.
+              {t("entries.noMediaAttached")}
             </p>
           ) : (
             <div className="mt-4 grid gap-3 md:grid-cols-2">
@@ -232,7 +234,7 @@ const EntryDetail = ({ entry, canEdit, canDelete }: EntryDetailProps) => {
                     type="button"
                     onClick={() => openViewerAtUrl(item.url)}
                     className="relative h-full w-full focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2D2A26]"
-                    aria-label={`Open photo ${
+                    aria-label={`${t("entries.openPhoto")} ${
                       viewerImages.findIndex(
                         (photo) => photo.url === item.url,
                       ) + 1
@@ -240,7 +242,7 @@ const EntryDetail = ({ entry, canEdit, canDelete }: EntryDetailProps) => {
                   >
                     <Image
                       src={item.url}
-                      alt="Entry media"
+                      alt={t("entries.entryMedia")}
                       fill
                       sizes="(min-width: 768px) 50vw, 100vw"
                       className="object-cover"
@@ -258,7 +260,7 @@ const EntryDetail = ({ entry, canEdit, canDelete }: EntryDetailProps) => {
             <div className="flex flex-wrap items-center justify-between gap-4">
               <div>
                 <p className="text-xs uppercase tracking-[0.2em] text-[#6B635B]">
-                  Entry actions
+                  {t("entries.entryActions")}
                 </p>
               </div>
               <div className="flex flex-wrap items-center gap-3">
@@ -267,7 +269,7 @@ const EntryDetail = ({ entry, canEdit, canDelete }: EntryDetailProps) => {
                     href={`/trips/${entry.tripId}/entries/${entry.id}/edit`}
                     className="rounded-xl bg-[#1F6F78] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#195C63]"
                   >
-                    Edit entry
+                    {t("entries.edit")}
                   </Link>
                 ) : null}
                 {canDelete ? (

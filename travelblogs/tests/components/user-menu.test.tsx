@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/react";
 
 import UserMenu from "../../src/components/account/user-menu";
+import { LocaleProvider } from "../../src/utils/locale-context";
 
 const push = vi.fn();
 const signOut = vi.fn();
@@ -28,18 +29,22 @@ describe("UserMenu", () => {
 
   it("renders initials from the user name", () => {
     render(
-      <div className="relative">
-        <UserMenu name="Alex Doe" email="alex@example.com" />
-      </div>,
+      <LocaleProvider>
+        <div className="relative">
+          <UserMenu name="Alex Doe" email="alex@example.com" />
+        </div>
+      </LocaleProvider>,
     );
     expect(screen.getByRole("button")).toHaveTextContent("AD");
   });
 
   it("opens the menu and navigates to change password", () => {
     render(
-      <div className="relative">
-        <UserMenu name={null} email="sam.bee@example.com" />
-      </div>,
+      <LocaleProvider>
+        <div className="relative">
+          <UserMenu name={null} email="sam.bee@example.com" />
+        </div>
+      </LocaleProvider>,
     );
 
     fireEvent.click(screen.getByRole("button"));
@@ -52,9 +57,11 @@ describe("UserMenu", () => {
 
   it("navigates to user manual when selecting User Manual", () => {
     render(
-      <div className="relative">
-        <UserMenu name="Chris" email="chris@example.com" />
-      </div>,
+      <LocaleProvider>
+        <div className="relative">
+          <UserMenu name="Chris" email="chris@example.com" />
+        </div>
+      </LocaleProvider>,
     );
 
     fireEvent.click(screen.getByRole("button"));
@@ -67,9 +74,11 @@ describe("UserMenu", () => {
     signOut.mockResolvedValue(undefined);
 
     render(
-      <div className="relative">
-        <UserMenu name="Jane" email="jane@example.com" />
-      </div>,
+      <LocaleProvider>
+        <div className="relative">
+          <UserMenu name="Jane" email="jane@example.com" />
+        </div>
+      </LocaleProvider>,
     );
 
     fireEvent.click(screen.getByRole("button"));

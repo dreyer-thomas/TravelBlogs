@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 import { isCoverImageUrl } from "../../utils/media";
+import { useTranslation } from "../../utils/use-translation";
 
 type TripCardProps = {
   id: string;
@@ -15,14 +16,6 @@ type TripCardProps = {
   coverImageUrl: string | null;
   canEditTrip: boolean;
 };
-
-const formatDate = (value: string) =>
-  new Date(value).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    timeZone: "UTC",
-  });
 
 const toUtcDateOnly = (value: Date) =>
   Date.UTC(value.getUTCFullYear(), value.getUTCMonth(), value.getUTCDate());
@@ -72,6 +65,7 @@ const TripCard = ({
   canEditTrip,
 }: TripCardProps) => {
   const router = useRouter();
+  const { t, formatDate: formatDateLocalized } = useTranslation();
   const [shareLink, setShareLink] = useState<string | null>(null);
   const [viewError, setViewError] = useState<string | null>(null);
   const [viewLoading, setViewLoading] = useState(false);
@@ -163,7 +157,7 @@ const TripCard = ({
               {title}
             </h2>
             <p className="mt-1 text-sm text-[#6B635B]">
-              {formatDate(startDate)} – {formatDate(endDate)}
+              {formatDateLocalized(new Date(startDate))} – {formatDateLocalized(new Date(endDate))}
             </p>
             {viewError ? (
               <p className="mt-2 text-xs text-[#B34A3C]">{viewError}</p>
@@ -180,7 +174,7 @@ const TripCard = ({
             disabled={viewLoading}
             className="rounded-xl bg-[#1F6F78] px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-white transition hover:bg-[#195C63] disabled:cursor-not-allowed disabled:opacity-70"
           >
-            {viewLoading ? "Opening…" : "View"}
+            {viewLoading ? t('common.loading') : t('common.view')}
           </button>
           {canEditTrip ? (
             <Link
@@ -189,12 +183,12 @@ const TripCard = ({
               aria-label={`Edit ${title}`}
               className="rounded-xl border border-[#1F6F78] px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-[#1F6F78] transition hover:bg-[#1F6F78] hover:text-white"
             >
-              Edit
+              {t('common.edit')}
             </Link>
           ) : null}
           {isActive ? (
             <span className="rounded-full bg-[#F2ECE3] px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-[#6B635B]">
-              Active
+              {t('common.active')}
             </span>
           ) : null}
         </div>

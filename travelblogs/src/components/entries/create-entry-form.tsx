@@ -14,6 +14,7 @@ import {
   insertInlineImageAtCursor,
   removeInlineImageByUrl,
 } from "../../utils/entry-content";
+import { useTranslation } from "../../utils/use-translation";
 
 type FieldErrors = {
   date?: string;
@@ -69,24 +70,24 @@ const getErrors = (
   text: string,
   mediaUrls: string[],
   inlineImageUrls: string[],
+  t: (key: string) => string,
 ) => {
   const nextErrors: FieldErrors = {};
 
   if (!isValidEntryDate(entryDate)) {
-    nextErrors.date = "Entry date is required.";
+    nextErrors.date = t("entries.entryDateRequired");
   }
 
   if (!title.trim()) {
-    nextErrors.title = "Entry title is required.";
+    nextErrors.title = t("entries.entryTitleRequired");
   }
 
   if (!text.trim()) {
-    nextErrors.text = "Entry text is required.";
+    nextErrors.text = t("entries.entryTextRequired");
   }
 
   if (mediaUrls.length === 0 && inlineImageUrls.length === 0) {
-    nextErrors.media =
-      "Add at least one photo in the library or inline text.";
+    nextErrors.media = t("entries.entryMediaRequired");
   }
 
   return nextErrors;
@@ -96,6 +97,7 @@ const createFileId = (file: File, index: number, batchId: string) =>
   `${batchId}-${file.name}-${file.size}-${file.lastModified}-${index}`;
 
 const CreateEntryForm = ({ tripId, onEntryCreated }: CreateEntryFormProps) => {
+  const { t } = useTranslation();
   const [entryDate, setEntryDate] = useState(
     new Date().toISOString().slice(0, 10),
   );
@@ -176,7 +178,7 @@ const CreateEntryForm = ({ tripId, onEntryCreated }: CreateEntryFormProps) => {
     setText(value);
     setErrors((prev) => ({
       ...prev,
-      text: value.trim() ? undefined : "Entry text is required.",
+      text: value.trim() ? undefined : t("entries.entryTextRequired"),
       media:
         value.trim() && extractInlineImageUrls(value).length > 0
           ? undefined
@@ -193,7 +195,7 @@ const CreateEntryForm = ({ tripId, onEntryCreated }: CreateEntryFormProps) => {
     if (!title.trim()) {
       setErrors((prev) => ({
         ...prev,
-        title: "Entry title is required.",
+        title: t("entries.entryTitleRequired"),
       }));
     }
   };
@@ -202,7 +204,9 @@ const CreateEntryForm = ({ tripId, onEntryCreated }: CreateEntryFormProps) => {
     setEntryDate(value);
     setErrors((prev) => ({
       ...prev,
-      date: isValidEntryDate(value) ? undefined : "Entry date is required.",
+      date: isValidEntryDate(value)
+        ? undefined
+        : t("entries.entryDateRequired"),
     }));
   };
 
@@ -210,7 +214,7 @@ const CreateEntryForm = ({ tripId, onEntryCreated }: CreateEntryFormProps) => {
     if (!isValidEntryDate(entryDate)) {
       setErrors((prev) => ({
         ...prev,
-        date: "Entry date is required.",
+        date: t("entries.entryDateRequired"),
       }));
     }
   };
@@ -219,7 +223,7 @@ const CreateEntryForm = ({ tripId, onEntryCreated }: CreateEntryFormProps) => {
     if (!text.trim()) {
       setErrors((prev) => ({
         ...prev,
-        text: "Entry text is required.",
+        text: t("entries.entryTextRequired"),
       }));
     }
   };
@@ -256,7 +260,7 @@ const CreateEntryForm = ({ tripId, onEntryCreated }: CreateEntryFormProps) => {
     files.forEach((file, index) => {
       const fileId = createFileId(file, index, batchId);
       fileIdMap.set(file, fileId);
-      const validationError = validateEntryMediaFile(file);
+      const validationError = validateEntryMediaFile(file, t);
       if (validationError) {
         invalidItems.push({
           id: fileId,
@@ -304,6 +308,7 @@ const CreateEntryForm = ({ tripId, onEntryCreated }: CreateEntryFormProps) => {
           ),
         );
       },
+      translate: t,
     });
 
     if (result.uploads.length > 0) {
@@ -372,7 +377,7 @@ const CreateEntryForm = ({ tripId, onEntryCreated }: CreateEntryFormProps) => {
     if (mediaUrls.length === 0 && inlineImageUrls.length === 0) {
       setErrors((prev) => ({
         ...prev,
-        media: "Add at least one photo in the library or inline text.",
+        media: t("entries.entryMediaRequired"),
       }));
     }
   };
@@ -426,18 +431,31 @@ const CreateEntryForm = ({ tripId, onEntryCreated }: CreateEntryFormProps) => {
       !submitting &&
       !mediaUploading,
   );
+  const maxCharactersLabel = `${t("entries.maxCharacters")} ${maxTitleLength} ${t("entries.characters")}`;
 
   const previewLabel = useMemo(() => {
     if (mediaPreviews.length === 0) {
       return "";
     }
     if (mediaPreviews.length === 1) {
-      return "1 media preview";
+      return `1 ${t("entries.mediaPreview")}`;
     }
-    return `${mediaPreviews.length} media previews`;
-  }, [mediaPreviews.length]);
+    return `${mediaPreviews.length} ${t("entries.mediaPreviews")}`;
+  }, [mediaPreviews.length, t]);
 
   const isOptimizedImage = (url: string) => url.startsWith("/");
+  const formatUploadStatus = (item: UploadItem) => {
+    if (item.status === "uploading") {
+      return `${t("entries.uploading")} ${item.progress}%`;
+    }
+    if (item.status === "success") {
+      return t("entries.uploaded");
+    }
+    if (item.status === "failed") {
+      return `${t("entries.failed")}${item.message ? `: ${item.message}` : ""}`;
+    }
+    return "";
+  };
 
   const renderUploadItems = (
     items: UploadItem[],
@@ -456,15 +474,7 @@ const CreateEntryForm = ({ tripId, onEntryCreated }: CreateEntryFormProps) => {
             className={`flex flex-wrap items-center justify-between gap-2 ${item.status === "failed" ? "text-[#B34A3C]" : ""}`}
           >
             <span className="min-w-0 flex-1 truncate">{item.file.name}</span>
-            <span>
-              {item.status === "uploading"
-                ? `Uploading ${item.progress}%`
-                : null}
-              {item.status === "success" ? "Uploaded" : null}
-              {item.status === "failed"
-                ? `Failed${item.message ? `: ${item.message}` : ""}`
-                : null}
-            </span>
+            <span>{formatUploadStatus(item)}</span>
             {item.status === "failed" ? (
               <div className="flex items-center gap-2">
                 {item.canRetry ? (
@@ -473,7 +483,7 @@ const CreateEntryForm = ({ tripId, onEntryCreated }: CreateEntryFormProps) => {
                     onClick={() => onRetry(item)}
                     className="rounded-full border border-[#B34A3C]/40 px-2 py-0.5 text-[11px] font-semibold text-[#B34A3C] transition hover:bg-[#B34A3C]/10"
                   >
-                    Retry
+                    {t("entries.retry")}
                   </button>
                 ) : null}
                 <button
@@ -481,7 +491,7 @@ const CreateEntryForm = ({ tripId, onEntryCreated }: CreateEntryFormProps) => {
                   onClick={() => onRemove(item)}
                   className="rounded-full border border-black/20 px-2 py-0.5 text-[11px] font-semibold text-[#2D2A26] transition hover:bg-black/5"
                 >
-                  Remove
+                  {t("entries.remove")}
                 </button>
               </div>
             ) : null}
@@ -512,6 +522,7 @@ const CreateEntryForm = ({ tripId, onEntryCreated }: CreateEntryFormProps) => {
           ),
         );
       },
+      translate: t,
     });
 
     if (result.uploads.length > 0) {
@@ -556,6 +567,27 @@ const CreateEntryForm = ({ tripId, onEntryCreated }: CreateEntryFormProps) => {
     }
   };
 
+  const resolveValidationError = (message: string): FieldErrors => {
+    if (message === "Entry date is required.") {
+      return { date: t("entries.entryDateRequired") };
+    }
+    if (message === "Entry title is required.") {
+      return { title: t("entries.entryTitleRequired") };
+    }
+    if (message === "Entry title must be 80 characters or fewer.") {
+      return { title: t("entries.entryTitleMaxLength") };
+    }
+    if (message === "Entry text is required.") {
+      return { text: t("entries.entryTextRequired") };
+    }
+    if (
+      message === "At least one photo is required." ||
+      message === "Media URL is required."
+    ) {
+      return { media: t("entries.entryMediaRequired") };
+    }
+    return { form: message };
+  };
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -567,6 +599,7 @@ const CreateEntryForm = ({ tripId, onEntryCreated }: CreateEntryFormProps) => {
       text,
       mediaUrls,
       inlineImageUrls,
+      t,
     );
     if (Object.keys(nextErrors).length > 0) {
       setErrors(nextErrors);
@@ -599,22 +632,9 @@ const CreateEntryForm = ({ tripId, onEntryCreated }: CreateEntryFormProps) => {
       const result = await response.json().catch(() => null);
       if (!response.ok || result?.error) {
         const message =
-          result?.error?.message ?? "Unable to create entry. Please try again.";
+          result?.error?.message ?? t("entries.entryCreateError");
         if (result?.error?.code === "VALIDATION_ERROR") {
-          if (message === "Entry title is required.") {
-            setErrors({ title: message });
-          } else if (message === "Entry title must be 80 characters or fewer.") {
-            setErrors({ title: message });
-          } else if (message === "Entry text is required.") {
-            setErrors({ text: message });
-          } else if (
-            message === "At least one photo is required." ||
-            message === "Media URL is required."
-          ) {
-            setErrors({ media: message });
-          } else {
-            setErrors({ form: message });
-          }
+          setErrors(resolveValidationError(message));
         } else {
           setErrors({ form: message });
         }
@@ -632,7 +652,7 @@ const CreateEntryForm = ({ tripId, onEntryCreated }: CreateEntryFormProps) => {
       setSubmitting(false);
     } catch {
       setErrors({
-        form: "Unable to create entry. Please try again.",
+        form: t("entries.entryCreateError"),
       });
       setSubmitting(false);
     }
@@ -641,7 +661,7 @@ const CreateEntryForm = ({ tripId, onEntryCreated }: CreateEntryFormProps) => {
   return (
     <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
       <label className="block text-sm text-[#2D2A26]">
-        Entry date
+        {t("entries.entryDate")}
         <input
           type="date"
           name="entryDate"
@@ -656,7 +676,7 @@ const CreateEntryForm = ({ tripId, onEntryCreated }: CreateEntryFormProps) => {
       </label>
 
       <label className="block text-sm text-[#2D2A26]">
-        Entry title
+        {t("entries.entryTitle")}
         <input
           type="text"
           name="title"
@@ -664,10 +684,10 @@ const CreateEntryForm = ({ tripId, onEntryCreated }: CreateEntryFormProps) => {
           onChange={(event) => updateTitle(event.target.value)}
           onBlur={handleTitleBlur}
           className="mt-2 w-full rounded-xl border border-black/10 px-3 py-2 text-sm focus:border-[#1F6F78] focus:outline-none focus:ring-2 focus:ring-[#1F6F78]/20"
-          placeholder="Give the day a headline..."
+          placeholder={t("entries.headlinePlaceholder")}
         />
         <p className="mt-2 text-xs text-[#6B635B]">
-          Max {maxTitleLength} characters.
+          {maxCharactersLabel}
         </p>
         {errors.title ? (
           <p className="mt-2 text-xs text-[#B34A3C]">{errors.title}</p>
@@ -675,7 +695,7 @@ const CreateEntryForm = ({ tripId, onEntryCreated }: CreateEntryFormProps) => {
       </label>
 
       <label className="block text-sm text-[#2D2A26]">
-        Entry text
+        {t("entries.entryText")}
         <textarea
           name="text"
           rows={4}
@@ -688,7 +708,7 @@ const CreateEntryForm = ({ tripId, onEntryCreated }: CreateEntryFormProps) => {
           onClick={updateCursorSelection}
           ref={textAreaRef}
           className="mt-2 w-full rounded-xl border border-black/10 px-3 py-2 text-sm focus:border-[#1F6F78] focus:outline-none focus:ring-2 focus:ring-[#1F6F78]/20"
-          placeholder="Share what happened today..."
+          placeholder={t("entries.storyPlaceholder")}
         />
         {errors.text ? (
           <p className="mt-2 text-xs text-[#B34A3C]">{errors.text}</p>
@@ -698,13 +718,13 @@ const CreateEntryForm = ({ tripId, onEntryCreated }: CreateEntryFormProps) => {
       <div className="space-y-2 rounded-xl border border-dashed border-black/10 bg-[#F9F5EF] p-3">
         <div className="space-y-2">
           <div className="text-xs font-semibold uppercase tracking-[0.2em] text-[#6B635B]">
-            Entry image library
+            {t("entries.imageLibrary")}
           </div>
           <input
             id="entry-media-upload"
             name="media"
             type="file"
-            aria-label="Entry image library"
+            aria-label={t("entries.imageLibrary")}
             accept={ENTRY_MEDIA_ALLOWED_MIME_TYPES.join(",")}
             multiple
             onChange={handleMediaChange}
@@ -715,11 +735,13 @@ const CreateEntryForm = ({ tripId, onEntryCreated }: CreateEntryFormProps) => {
             htmlFor="entry-media-upload"
             className="inline-flex w-full cursor-pointer items-center justify-center rounded-xl border border-black/10 bg-white px-3 py-2 text-sm text-[#2D2A26] transition hover:bg-black/5 focus-within:border-[#1F6F78] focus-within:ring-2 focus-within:ring-[#1F6F78]/20"
           >
-            Choose photos
+            {t("entries.choosePhotos")}
           </label>
         </div>
         {mediaUploading ? (
-          <div className="text-xs text-[#6B635B]">Uploading photos…</div>
+          <div className="text-xs text-[#6B635B]">
+            {t("entries.uploadingPhotos")}
+          </div>
         ) : null}
         {renderUploadItems(
           mediaUploadItems,
@@ -746,7 +768,7 @@ const CreateEntryForm = ({ tripId, onEntryCreated }: CreateEntryFormProps) => {
                 >
                   <Image
                     src={url}
-                    alt={`Library image ${index + 1}`}
+                    alt={`${t("entries.libraryImage")} ${index + 1}`}
                     fill
                     sizes="(min-width: 768px) 25vw, 50vw"
                     className="object-cover"
@@ -770,7 +792,9 @@ const CreateEntryForm = ({ tripId, onEntryCreated }: CreateEntryFormProps) => {
                       }
                       aria-pressed={isSelected}
                       aria-label={
-                        isSelected ? "Clear story image" : "Set as story image"
+                        isSelected
+                          ? t("entries.clearStoryImage")
+                          : t("entries.setStoryImage")
                       }
                       disabled={!canSelect}
                       className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-[#1F6F78] shadow transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-70"
@@ -792,7 +816,7 @@ const CreateEntryForm = ({ tripId, onEntryCreated }: CreateEntryFormProps) => {
                     <button
                       type="button"
                       onClick={() => handleInsertInlineImage(url)}
-                      aria-label="Insert inline"
+                      aria-label={t("entries.insertInline")}
                       disabled={!canSelect}
                       className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-[#2D2A26] shadow transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-70"
                     >
@@ -813,7 +837,7 @@ const CreateEntryForm = ({ tripId, onEntryCreated }: CreateEntryFormProps) => {
                     <button
                       type="button"
                       onClick={() => handleRemoveLibraryImage(url)}
-                      aria-label="Remove"
+                      aria-label={t("entries.remove")}
                       className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-[#B34A3C] shadow transition hover:bg-white"
                     >
                       <svg
@@ -839,7 +863,7 @@ const CreateEntryForm = ({ tripId, onEntryCreated }: CreateEntryFormProps) => {
                       className="absolute z-10 rounded-full bg-white/90 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-[#1F6F78] shadow"
                       style={{ bottom: "0.5rem", left: "0.5rem" }}
                     >
-                      Selected
+                      {t("entries.selected")}
                     </div>
                   ) : null}
                 </div>
@@ -866,7 +890,7 @@ const CreateEntryForm = ({ tripId, onEntryCreated }: CreateEntryFormProps) => {
         disabled={!canSubmit}
         className="w-full rounded-xl bg-[#1F6F78] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#195C63] disabled:cursor-not-allowed disabled:opacity-70"
       >
-        {submitting ? "Adding entry..." : "Add entry"}
+        {submitting ? t("entries.addingEntry") : t("entries.addEntry")}
       </button>
     </form>
   );

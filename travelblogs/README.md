@@ -1,5 +1,9 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## Localization
+
+All user-facing UI text must be translatable and shipped in both English and German. Use the translation utilities and add keys for both locales whenever new UI copy is introduced.
+
 ## Getting Started
 
 First, run the development server:

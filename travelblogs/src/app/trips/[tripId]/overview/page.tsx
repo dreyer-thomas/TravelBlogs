@@ -3,6 +3,7 @@ import { unstable_noStore as noStore } from "next/cache";
 import { headers } from "next/headers";
 
 import TripOverview from "../../../../components/trips/trip-overview";
+import { getLocaleFromAcceptLanguage, getTranslation } from "../../../../utils/i18n";
 
 export const dynamic = "force-dynamic";
 
@@ -39,6 +40,7 @@ type ApiResponse = {
 const loadOverview = async (
   baseUrl: string,
   tripId: string,
+  t: (key: string) => string,
 ): Promise<ApiResponse> => {
   const response = await fetch(`${baseUrl}/api/trips/${tripId}/overview`, {
     method: "GET",
@@ -52,7 +54,7 @@ const loadOverview = async (
       data: null,
       error: {
         code: body?.error?.code ?? "UNKNOWN_ERROR",
-        message: body?.error?.message ?? "Unable to load trip overview.",
+        message: body?.error?.message ?? t("trips.unableLoadTripOverview"),
       },
     };
   }
@@ -72,6 +74,10 @@ const TripOverviewPage = async ({
 
   const { tripId } = await params;
   const headersList = await headers();
+  const locale = getLocaleFromAcceptLanguage(
+    headersList.get("accept-language"),
+  );
+  const t = (key: string) => getTranslation(key, locale);
   const forwardedHost = headersList.get("x-forwarded-host");
   const host = forwardedHost ?? headersList.get("host");
   const protocol = headersList.get("x-forwarded-proto") ?? "http";
@@ -83,7 +89,7 @@ const TripOverviewPage = async ({
         <main className="mx-auto w-full max-w-3xl">
           <section className="rounded-2xl border border-black/10 bg-white p-8 text-center">
             <p className="text-sm text-[#B34A3C]">
-              Unable to determine the host for this request.
+              {t("trips.unableDetermineHost")}
             </p>
           </section>
         </main>
@@ -91,7 +97,7 @@ const TripOverviewPage = async ({
     );
   }
 
-  const { data, error } = await loadOverview(baseUrl, tripId);
+  const { data, error } = await loadOverview(baseUrl, tripId, t);
 
   if (error?.code === "NOT_FOUND") {
     notFound();
@@ -103,7 +109,7 @@ const TripOverviewPage = async ({
         <main className="mx-auto w-full max-w-3xl">
           <section className="rounded-2xl border border-black/10 bg-white p-8 text-center">
             <p className="text-sm text-[#B34A3C]">
-              {error?.message ?? "Unable to load this trip."}
+              {error?.message ?? t("trips.unableLoadTrip")}
             </p>
           </section>
         </main>

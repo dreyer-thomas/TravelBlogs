@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import DeleteTripModal from "./delete-trip-modal";
 import { isCoverImageUrl } from "../../utils/media";
 import { extractInlineImageUrls, stripInlineImages } from "../../utils/entry-content";
+import { useTranslation } from "../../utils/use-translation";
 
 type TripDetail = {
   id: string;
@@ -77,20 +78,6 @@ type EntrySummary = {
   media: EntryMedia[];
 };
 
-const formatDate = (value: string) =>
-  new Date(value).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-
-const formatEntryDate = (value: string) =>
-  new Date(value).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-
 const isOptimizedImage = (url: string) => url.startsWith("/");
 
 const TripDetail = ({
@@ -103,6 +90,7 @@ const TripDetail = ({
   canTransferOwnership,
 }: TripDetailProps) => {
   const router = useRouter();
+  const { t, formatDate: formatDateLocalized } = useTranslation();
   const [trip, setTrip] = useState<TripDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -160,7 +148,7 @@ const TripDetail = ({
         const body = await response.json().catch(() => null);
 
         if (!response.ok || body?.error) {
-          throw new Error(body?.error?.message ?? "Unable to load trip.");
+          throw new Error(body?.error?.message ?? t("trips.unableLoadTrip"));
         }
 
         if (isActive) {
@@ -171,7 +159,7 @@ const TripDetail = ({
         if (isActive) {
           setTrip(null);
           setError(
-            err instanceof Error ? err.message : "Unable to load trip.",
+            err instanceof Error ? err.message : t("trips.unableLoadTrip"),
           );
           setIsLoading(false);
         }
@@ -200,7 +188,7 @@ const TripDetail = ({
         const body = await response.json().catch(() => null);
 
         if (!response.ok || body?.error) {
-          throw new Error(body?.error?.message ?? "Unable to load entries.");
+          throw new Error(body?.error?.message ?? t("trips.unableLoadEntries"));
         }
 
         if (isActive) {
@@ -211,7 +199,7 @@ const TripDetail = ({
         if (isActive) {
           setEntries([]);
           setEntriesError(
-            err instanceof Error ? err.message : "Unable to load entries.",
+            err instanceof Error ? err.message : t("trips.unableLoadEntries"),
           );
           setEntriesLoading(false);
         }
@@ -253,7 +241,9 @@ const TripDetail = ({
         }
         const body = await response.json().catch(() => null);
         if (!response.ok || body?.error) {
-          throw new Error(body?.error?.message ?? "Unable to load share link.");
+          throw new Error(
+            body?.error?.message ?? t("trips.unableLoadShareLink"),
+          );
         }
         const shareUrl = body?.data?.shareUrl;
         if (isActive) {
@@ -262,7 +252,7 @@ const TripDetail = ({
       } catch (err) {
         if (isActive) {
           setShareError(
-            err instanceof Error ? err.message : "Unable to load share link.",
+            err instanceof Error ? err.message : t("trips.unableLoadShareLink"),
           );
         }
       }
@@ -310,7 +300,7 @@ const TripDetail = ({
 
         if (!response.ok || body?.error) {
           throw new Error(
-            body?.error?.message ?? "Unable to load invited viewers.",
+            body?.error?.message ?? t("trips.unableLoadViewers"),
           );
         }
 
@@ -322,9 +312,7 @@ const TripDetail = ({
         if (isActive) {
           setViewers([]);
           setViewersError(
-            err instanceof Error
-              ? err.message
-              : "Unable to load invited viewers.",
+            err instanceof Error ? err.message : t("trips.unableLoadViewers"),
           );
           setViewersLoading(false);
         }
@@ -342,7 +330,7 @@ const TripDetail = ({
 
         if (!response.ok || body?.error) {
           throw new Error(
-            body?.error?.message ?? "Unable to load eligible invitees.",
+            body?.error?.message ?? t("trips.unableLoadEligibleInvitees"),
           );
         }
 
@@ -356,7 +344,7 @@ const TripDetail = ({
           setEligibleError(
             err instanceof Error
               ? err.message
-              : "Unable to load eligible invitees.",
+              : t("trips.unableLoadEligibleInvitees"),
           );
           setEligibleLoading(false);
         }
@@ -449,11 +437,11 @@ const TripDetail = ({
         );
         const body = await response.json().catch(() => null);
 
-        if (!response.ok || body?.error) {
-          throw new Error(
-            body?.error?.message ?? "Unable to load transfer candidates.",
-          );
-        }
+            if (!response.ok || body?.error) {
+              throw new Error(
+                body?.error?.message ?? t("trips.unableLoadTransferCandidates"),
+              );
+            }
 
         if (isActive) {
           setTransferCandidates(
@@ -464,11 +452,11 @@ const TripDetail = ({
       } catch (err) {
         if (isActive) {
           setTransferCandidates([]);
-          setTransferError(
-            err instanceof Error
-              ? err.message
-              : "Unable to load transfer candidates.",
-          );
+            setTransferError(
+              err instanceof Error
+                ? err.message
+                : t("trips.unableLoadTransferCandidates"),
+            );
           setTransferLoading(false);
         }
       }
@@ -527,10 +515,12 @@ const TripDetail = ({
             href="/trips"
             className="text-sm text-[#1F6F78] hover:underline"
           >
-            ← Back to trips
+            ← {t("trips.backToTrips")}
           </Link>
           <section className="rounded-2xl border border-black/10 bg-white p-8 shadow-sm">
-            <p className="text-sm text-[#6B635B]">Loading trip…</p>
+            <p className="text-sm text-[#6B635B]">
+              {t("trips.loadingTrip")}
+            </p>
           </section>
         </main>
       </div>
@@ -545,7 +535,7 @@ const TripDetail = ({
             href="/trips"
             className="text-sm text-[#1F6F78] hover:underline"
           >
-            ← Back to trips
+            ← {t("trips.backToTrips")}
           </Link>
           <section className="rounded-2xl border border-black/10 bg-white p-8 shadow-sm">
             <p className="text-sm text-[#B34A3C]">{error}</p>
@@ -573,18 +563,20 @@ const TripDetail = ({
       const body = await response.json().catch(() => null);
 
       if (!response.ok || body?.error) {
-        throw new Error(body?.error?.message ?? "Unable to create share link.");
+        throw new Error(
+          body?.error?.message ?? t("trips.shareLinkCreateError"),
+        );
       }
 
       const shareUrl = body?.data?.shareUrl;
       if (!shareUrl) {
-        throw new Error("Share link response was incomplete.");
+        throw new Error(t("trips.shareLinkIncomplete"));
       }
 
       setShareLink(shareUrl as string);
     } catch (err) {
       setShareError(
-        err instanceof Error ? err.message : "Unable to create share link.",
+        err instanceof Error ? err.message : t("trips.shareLinkCreateError"),
       );
     } finally {
       setShareLoading(false);
@@ -593,7 +585,7 @@ const TripDetail = ({
 
   const handleInviteViewer = async () => {
     if (!selectedInviteeId) {
-      setInviteError("Select a user to invite.");
+      setInviteError(t("trips.selectUserToInvite"));
       return;
     }
 
@@ -601,7 +593,7 @@ const TripDetail = ({
       (invitee) => invitee.id === selectedInviteeId,
     );
     if (!isEligible) {
-      setInviteError("Selected user is no longer eligible.");
+      setInviteError(t("trips.selectedUserNoLongerEligible"));
       setSelectedInviteeId("");
       setIsInviteeMenuOpen(false);
       return;
@@ -622,7 +614,7 @@ const TripDetail = ({
       const body = await response.json().catch(() => null);
 
       if (!response.ok || body?.error) {
-        throw new Error(body?.error?.message ?? "Unable to invite viewer.");
+        throw new Error(body?.error?.message ?? t("trips.inviteViewerError"));
       }
 
       const created = body?.data as ViewerAccess | undefined;
@@ -645,7 +637,7 @@ const TripDetail = ({
       setIsInviteeMenuOpen(false);
     } catch (err) {
       setInviteError(
-        err instanceof Error ? err.message : "Unable to invite viewer.",
+        err instanceof Error ? err.message : t("trips.inviteViewerError"),
       );
     } finally {
       setInviteSending(false);
@@ -667,7 +659,7 @@ const TripDetail = ({
       const body = await response.json().catch(() => null);
 
       if (!response.ok || body?.error) {
-        throw new Error(body?.error?.message ?? "Unable to remove invite.");
+        throw new Error(body?.error?.message ?? t("trips.removeInviteError"));
       }
 
       setViewers((prev) =>
@@ -689,7 +681,7 @@ const TripDetail = ({
       }
     } catch (err) {
       setRemovalError(
-        err instanceof Error ? err.message : "Unable to remove invite.",
+        err instanceof Error ? err.message : t("trips.removeInviteError"),
       );
     } finally {
       setRemovingUserId(null);
@@ -729,7 +721,7 @@ const TripDetail = ({
 
       if (!response.ok || body?.error) {
         throw new Error(
-          body?.error?.message ?? "Unable to update contributor access.",
+          body?.error?.message ?? t("trips.updateContributorError"),
         );
       }
 
@@ -750,9 +742,7 @@ const TripDetail = ({
         ),
       );
       setToggleError(
-        err instanceof Error
-          ? err.message
-          : "Unable to update contributor access.",
+        err instanceof Error ? err.message : t("trips.updateContributorError"),
       );
     } finally {
       setTogglingUserId(null);
@@ -772,7 +762,7 @@ const TripDetail = ({
 
   const handleTransferOwnership = async () => {
     if (!selectedTransferId) {
-      setTransferError("Select a new owner.");
+      setTransferError(t("trips.selectNewOwner"));
       return;
     }
 
@@ -780,7 +770,7 @@ const TripDetail = ({
       (candidate) => candidate.id === selectedTransferId,
     );
     if (!isEligible) {
-      setTransferError("Selected user is no longer eligible.");
+      setTransferError(t("trips.selectedUserNoLongerEligible"));
       setSelectedTransferId("");
       return;
     }
@@ -804,7 +794,7 @@ const TripDetail = ({
 
       if (!response.ok || body?.error) {
         throw new Error(
-          body?.error?.message ?? "Unable to transfer ownership.",
+          body?.error?.message ?? t("trips.transferOwnershipError"),
         );
       }
 
@@ -813,7 +803,7 @@ const TripDetail = ({
       router.refresh();
     } catch (err) {
       setTransferError(
-        err instanceof Error ? err.message : "Unable to transfer ownership.",
+        err instanceof Error ? err.message : t("trips.transferOwnershipError"),
       );
     } finally {
       setTransferSaving(false);
@@ -847,7 +837,9 @@ const TripDetail = ({
       const body = await response.json().catch(() => null);
 
       if (!response.ok || body?.error) {
-        throw new Error(body?.error?.message ?? "Unable to revoke share link.");
+        throw new Error(
+          body?.error?.message ?? t("trips.revokeShareLinkError"),
+        );
       }
 
       setShareLink(null);
@@ -857,7 +849,7 @@ const TripDetail = ({
       setIsRevoking(false);
     } catch (err) {
       setRevokeError(
-        err instanceof Error ? err.message : "Unable to revoke share link.",
+        err instanceof Error ? err.message : t("trips.revokeShareLinkError"),
       );
       setIsRevoking(false);
     }
@@ -873,7 +865,7 @@ const TripDetail = ({
       setShareCopied(true);
       setShareError(null);
     } catch {
-      setShareError("Unable to copy the share link.");
+      setShareError(t("trips.copyShareLinkError"));
       setShareCopied(false);
     }
   };
@@ -913,12 +905,12 @@ const TripDetail = ({
       const body = await response.json().catch(() => null);
 
       if (!response.ok || body?.error) {
-        throw new Error(body?.error?.message ?? "Unable to open shared view.");
+        throw new Error(body?.error?.message ?? t("trips.openSharedViewError"));
       }
 
       const shareUrl = body?.data?.shareUrl;
       if (!shareUrl) {
-        throw new Error("Share link response was incomplete.");
+        throw new Error(t("trips.shareLinkIncomplete"));
       }
 
       setShareLink(shareUrl as string);
@@ -926,7 +918,7 @@ const TripDetail = ({
       openSharedView(shareUrl as string);
     } catch (err) {
       setViewError(
-        err instanceof Error ? err.message : "Unable to open shared view.",
+        err instanceof Error ? err.message : t("trips.openSharedViewError"),
       );
     } finally {
       setViewLoading(false);
@@ -937,20 +929,20 @@ const TripDetail = ({
     <div className="min-h-screen bg-[#FBF7F1] px-6 py-12">
       <main className="mx-auto w-full max-w-3xl space-y-6">
         <Link href="/trips" className="text-sm text-[#1F6F78] hover:underline">
-          ← Back to trips
+          ← {t('trips.backToTrips')}
         </Link>
 
         <section className="rounded-2xl border border-black/10 bg-white p-8 shadow-sm">
           <header className="flex flex-wrap items-start justify-between gap-4">
             <div className="space-y-2">
               <p className="text-xs uppercase tracking-[0.2em] text-[#6B635B]">
-                Trip overview
+                {t('trips.tripOverview')}
               </p>
               <h1 className="text-3xl font-semibold text-[#2D2A26]">
                 {trip.title}
               </h1>
               <p className="text-sm text-[#6B635B]">
-                {formatDate(trip.startDate)} – {formatDate(trip.endDate)}
+                {formatDateLocalized(new Date(trip.startDate))} – {formatDateLocalized(new Date(trip.endDate))}
               </p>
             </div>
           </header>
@@ -970,17 +962,17 @@ const TripDetail = ({
 
           <div className="mt-6 flex flex-wrap items-center gap-3 text-sm text-[#6B635B]">
             <div className="flex items-center gap-2">
-              <span className="font-semibold text-[#2D2A26]">Owner:</span>
-              <span>{trip.ownerName ?? "Creator"}</span>
+              <span className="font-semibold text-[#2D2A26]">{t('trips.owner')}:</span>
+              <span>{trip.ownerName ?? t("admin.creator")}</span>
             </div>
             {canManageShare ? (
               <button
                 type="button"
                 onClick={() => setIsSharePanelOpen((prev) => !prev)}
-                aria-label="Share trip"
+                aria-label={t("trips.shareTrip")}
                 className="inline-flex items-center gap-2 rounded-full border border-black/10 bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-[#6B635B] transition hover:border-[#1F6F78]/40 hover:text-[#1F6F78]"
               >
-                Share
+                {t("trips.share")}
               </button>
             ) : null}
           </div>
@@ -988,10 +980,10 @@ const TripDetail = ({
           {canManageShare && isSharePanelOpen ? (
             <div className="relative mt-4 rounded-2xl border border-black/10 bg-[#FBF7F1] p-4 text-sm text-[#6B635B]">
               <p className="text-xs uppercase tracking-[0.2em] text-[#6B635B]">
-                Share link
+                {t("trips.shareLink")}
               </p>
               <p className="mt-2">
-                Create a read-only link for this trip.
+                {t("trips.shareLinkDescription")}
               </p>
 
               {shareError ? (
@@ -999,7 +991,7 @@ const TripDetail = ({
               ) : null}
 
               {shareRevoked && !shareLink ? (
-                <p className="mt-3">Link revoked.</p>
+                <p className="mt-3">{t("trips.linkRevoked")}</p>
               ) : null}
 
               {shareLink ? (
@@ -1009,14 +1001,14 @@ const TripDetail = ({
                     value={shareLink}
                     readOnly
                     className="w-full flex-1 rounded-xl border border-black/10 bg-white px-3 py-2 text-sm text-[#2D2A26]"
-                    aria-label="Share URL"
+                    aria-label={t("trips.shareUrlLabel")}
                   />
                   <button
                     type="button"
                     onClick={handleCopyShareLink}
                     className="rounded-xl border border-[#1F6F78] px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-[#1F6F78] transition hover:bg-[#1F6F78] hover:text-white"
                   >
-                    {shareCopied ? "Copied" : "Copy link"}
+                    {shareCopied ? t("common.copied") : t("trips.copyLink")}
                   </button>
                 </div>
               ) : (
@@ -1026,20 +1018,22 @@ const TripDetail = ({
                   className="mt-3 rounded-xl bg-[#1F6F78] px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-white transition hover:bg-[#195C63] disabled:cursor-not-allowed disabled:opacity-70"
                   disabled={shareLoading}
                 >
-                  {shareLoading ? "Creating…" : "Generate link"}
+                  {shareLoading
+                    ? t("trips.creatingShareLink")
+                    : t("trips.generateLink")}
                 </button>
               )}
 
               {canManageViewers ? (
                 <div className="mt-6 border-t border-black/10 pt-4">
                   <p className="text-xs uppercase tracking-[0.2em] text-[#6B635B]">
-                    Invite viewers
+                    {t("trips.inviteViewers")}
                   </p>
                   <p className="mt-2">
-                    Invite existing users to view this trip.
+                    {t("trips.inviteViewersDescription")}
                   </p>
                   <p className="mt-1 text-xs text-[#6B635B]">
-                    Contributor access applies to this trip only.
+                    {t("trips.contributorAccessNote")}
                   </p>
 
                 {viewersError ? (
@@ -1047,9 +1041,11 @@ const TripDetail = ({
                 ) : null}
 
                 {viewersLoading ? (
-                  <p className="mt-3 text-sm">Loading viewers…</p>
+                  <p className="mt-3 text-sm">{t("trips.loadingViewers")}</p>
                 ) : viewers.length === 0 ? (
-                  <p className="mt-3 text-sm">No invited viewers yet.</p>
+                  <p className="mt-3 text-sm">
+                    {t("trips.noInvitedViewersYet")}
+                  </p>
                 ) : (
                   <ul className="mt-3 space-y-2 text-sm text-[#2D2A26]">
                     {viewers.map((viewer) => (
@@ -1071,11 +1067,13 @@ const TripDetail = ({
                                 : "border-black/10 text-[#6B635B]"
                             }`}
                           >
-                            {viewer.canContribute ? "Contributor" : "View only"}
+                            {viewer.canContribute
+                              ? t("trips.contributor")
+                              : t("trips.viewOnly")}
                           </span>
                           {togglingUserId === viewer.userId ? (
                             <span className="mt-1 text-[0.55rem] uppercase tracking-[0.2em] text-[#6B635B]">
-                              Updating…
+                              {t("trips.updating")}
                             </span>
                           ) : null}
                         </div>
@@ -1089,8 +1087,8 @@ const TripDetail = ({
                             }
                             aria-label={
                               viewer.canContribute
-                                ? "Disable contribution"
-                                : "Enable contribution"
+                                ? t("trips.disableContribution")
+                                : t("trips.enableContribution")
                             }
                             aria-busy={togglingUserId === viewer.userId}
                             className="inline-flex h-14 w-14 items-center justify-center rounded-full border border-[#1F6F78]/30 text-[#1F6F78] transition hover:border-[#1F6F78]/60 disabled:cursor-not-allowed disabled:opacity-60"
@@ -1135,7 +1133,7 @@ const TripDetail = ({
                               setRemovalError(null);
                               setIsInviteeMenuOpen(false);
                             }}
-                            aria-label="Remove invite"
+                            aria-label={t("trips.removeInvite")}
                             className="inline-flex h-14 w-14 items-center justify-center rounded-full border border-[#B34A3C]/40 text-[#B34A3C] transition hover:border-[#B34A3C]/70 hover:text-[#B34A3C]"
                           >
                             <svg
@@ -1182,7 +1180,7 @@ const TripDetail = ({
                           setIsInviteeMenuOpen((prev) => !prev)
                         }
                         className="flex w-full items-center justify-between rounded-xl border border-black/10 bg-white px-3 py-2 text-left text-sm text-[#2D2A26] transition hover:border-[#1F6F78]/40"
-                        aria-label="Invite viewer selector"
+                        aria-label={t("trips.inviteViewerSelector")}
                         aria-haspopup="listbox"
                         aria-expanded={isInviteeMenuOpen}
                         disabled={
@@ -1195,10 +1193,10 @@ const TripDetail = ({
                           {selectedInvitee
                             ? `${selectedInvitee.name} — ${selectedInvitee.email}`
                             : eligibleLoading
-                              ? "Loading invitees…"
+                              ? t("trips.loadingInvitees")
                               : filteredInvitees.length === 0
-                                ? "No eligible users"
-                                : "Select invitee"}
+                                ? t("trips.noEligibleUsers")
+                                : t("trips.selectInvitee")}
                         </span>
                         <span className="text-xs text-[#6B635B]">▾</span>
                       </button>
@@ -1208,7 +1206,7 @@ const TripDetail = ({
                         <div className="absolute z-10 mt-2 w-full rounded-2xl border border-black/10 bg-white p-2 shadow-lg">
                           <ul
                             role="listbox"
-                            aria-label="Eligible invitees"
+                            aria-label={t("trips.eligibleInvitees")}
                             className="max-h-48 space-y-1 overflow-auto"
                           >
                             {filteredInvitees.map((invitee) => (
@@ -1243,7 +1241,7 @@ const TripDetail = ({
                     className="rounded-xl border border-[#1F6F78] px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-[#1F6F78] transition hover:bg-[#1F6F78] hover:text-white disabled:cursor-not-allowed disabled:opacity-70"
                     disabled={inviteSending || eligibleLoading}
                   >
-                    {inviteSending ? "Inviting…" : "Invite"}
+                    {inviteSending ? t("trips.inviting") : t("trips.invite")}
                   </button>
                 </div>
 
@@ -1269,13 +1267,13 @@ const TripDetail = ({
                 id="remove-invite-title"
                 className="text-lg font-semibold text-[#2D2A26]"
               >
-                Remove this invite?
+                {t("trips.removeInviteTitle")}
               </h2>
               <p
                 id="remove-invite-description"
                 className="mt-2 text-sm text-[#6B635B]"
               >
-                This will revoke access for{" "}
+                {t("trips.revokeAccessFor")}{" "}
                 <span className="font-semibold text-[#2D2A26]">
                   {pendingRemoval.user.name}
                 </span>
@@ -1296,7 +1294,7 @@ const TripDetail = ({
                   className="min-h-[44px] rounded-xl border border-[#D5CDC4] px-4 py-2 text-sm font-semibold text-[#2D2A26] transition hover:bg-[#F6F1EB] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2D2A26]"
                   disabled={removingUserId === pendingRemoval.userId}
                 >
-                  No, keep
+                  {t("trips.keepInvite")}
                 </button>
                 <button
                   type="button"
@@ -1305,8 +1303,8 @@ const TripDetail = ({
                   className="min-h-[44px] rounded-xl bg-[#B64A3A] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#9E3F31] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#B64A3A] disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {removingUserId === pendingRemoval.userId
-                    ? "Removing..."
-                    : "Yes, remove"}
+                    ? t("trips.removing")
+                    : t("trips.confirmRemove")}
                 </button>
               </div>
             </div>
@@ -1321,18 +1319,20 @@ const TripDetail = ({
                 href={`/trips/${trip.id}/entries/new`}
                 className="rounded-xl bg-[#1F6F78] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#195C63]"
               >
-                Add story
+                {t('trips.addStory')}
               </Link>
             </div>
           ) : null}
 
           {entriesLoading ? (
-            <p className="mt-4 text-sm text-[#6B635B]">Loading entries…</p>
+            <p className="mt-4 text-sm text-[#6B635B]">
+              {t("trips.loadingEntries")}
+            </p>
           ) : entriesError ? (
             <p className="mt-4 text-sm text-[#B34A3C]">{entriesError}</p>
           ) : entriesByDate.length === 0 ? (
             <p className="mt-4 text-sm text-[#6B635B]">
-              No entries yet. Use the add story button to get started.
+              {t("trips.noEntriesYetWithAddStory")}
             </p>
           ) : (
             <div className="mt-4 space-y-3">
@@ -1341,7 +1341,7 @@ const TripDetail = ({
                 const inlineImages = extractInlineImageUrls(entry.text);
                 const previewText =
                   preview.length === 0
-                    ? "Photo update"
+                    ? t("trips.photoUpdate")
                     : preview.length > 120
                       ? `${preview.slice(0, 120)}…`
                       : preview;
@@ -1366,7 +1366,7 @@ const TripDetail = ({
                       >
                         <Image
                           src={cardImageUrl}
-                          alt={`Story cover for ${displayTitle}`}
+                          alt={`${t("trips.storyCoverFor")} ${displayTitle}`}
                           fill
                           sizes="140px"
                           className="object-cover"
@@ -1377,14 +1377,14 @@ const TripDetail = ({
                     ) : null}
                     <div className="min-w-0 flex-1">
                       <p className="text-xs uppercase tracking-[0.2em] text-[#6B635B]">
-                        {formatEntryDate(entry.createdAt)}
+                        {formatDateLocalized(new Date(entry.createdAt))}
                       </p>
                       <p className="mt-1 truncate text-sm text-[#2D2A26]">
                         {displayTitle}
                       </p>
                     </div>
                     <span className="text-xs font-semibold uppercase tracking-[0.2em] text-[#1F6F78]">
-                      Open
+                      {t("common.open")}
                     </span>
                   </Link>
                 );
@@ -1397,7 +1397,7 @@ const TripDetail = ({
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
               <p className="text-xs uppercase tracking-[0.2em] text-[#6B635B]">
-                Trip actions
+                {t('trips.tripActions')}
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-3">
@@ -1411,14 +1411,14 @@ const TripDetail = ({
                     : "rounded-xl bg-[#1F6F78] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#195C63] disabled:cursor-not-allowed disabled:opacity-70"
                 }
               >
-                {viewLoading ? "Opening…" : "View"}
+                {viewLoading ? t('common.loading') : t('common.view')}
               </button>
               {canEditTrip ? (
                 <Link
                   href={`/trips/${trip.id}/edit`}
                   className="rounded-xl bg-[#1F6F78] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#195C63]"
                 >
-                  Edit trip
+                  {t('trips.editTrip')}
                 </Link>
               ) : null}
               {canTransferOwnership ? (
@@ -1427,7 +1427,7 @@ const TripDetail = ({
                   onClick={handleOpenTransfer}
                   className="rounded-xl border border-[#1F6F78] px-4 py-2 text-sm font-semibold text-[#1F6F78] transition hover:bg-[#1F6F78] hover:text-white"
                 >
-                  Transfer ownership
+                  {t('trips.transferOwnership')}
                 </button>
               ) : null}
               {canDeleteTrip ? (
@@ -1440,7 +1440,7 @@ const TripDetail = ({
                   className="rounded-xl border border-[#B64A3A] px-4 py-2 text-sm font-semibold text-[#B64A3A] transition hover:bg-[#B64A3A]/10"
                   disabled={shareLoading || isRevoking}
                 >
-                  Revoke share link
+                  {t('trips.revokeShareLink')}
                 </button>
               ) : null}
             </div>
@@ -1464,14 +1464,13 @@ const TripDetail = ({
               id="transfer-ownership-title"
               className="text-lg font-semibold text-[#2D2A26]"
             >
-              Transfer ownership
+              {t("trips.transferOwnership")}
             </h2>
             <p
               id="transfer-ownership-description"
               className="mt-2 text-sm text-[#6B635B]"
             >
-              Select a new owner. Only active creators and administrators are
-              eligible.
+              {t("trips.transferOwnershipDescription")}
             </p>
 
             {transferError ? (
@@ -1480,11 +1479,11 @@ const TripDetail = ({
 
             {transferLoading ? (
               <p className="mt-3 text-sm text-[#6B635B]">
-                Loading eligible owners…
+                {t("trips.loadingEligibleOwners")}
               </p>
             ) : eligibleTransferCandidates.length === 0 ? (
               <p className="mt-3 text-sm text-[#6B635B]">
-                No eligible owners available.
+                {t("trips.noEligibleOwners")}
               </p>
             ) : (
               <div className="mt-4">
@@ -1492,7 +1491,7 @@ const TripDetail = ({
                   htmlFor="transfer-owner-select"
                   className="text-xs uppercase tracking-[0.2em] text-[#6B635B]"
                 >
-                  New owner
+                  {t("trips.newOwner")}
                 </label>
                 <select
                   id="transfer-owner-select"
@@ -1502,7 +1501,7 @@ const TripDetail = ({
                   }
                   className="mt-2 w-full rounded-xl border border-black/10 bg-white px-3 py-2 text-sm text-[#2D2A26]"
                 >
-                  <option value="">Select a user</option>
+                  <option value="">{t("trips.selectUser")}</option>
                   {eligibleTransferCandidates.map((candidate) => (
                     <option key={candidate.id} value={candidate.id}>
                       {candidate.name} ({candidate.role})
@@ -1518,7 +1517,7 @@ const TripDetail = ({
                 onClick={handleCloseTransfer}
                 className="min-h-[44px] rounded-xl border border-[#D5CDC4] px-4 py-2 text-sm font-semibold text-[#2D2A26] transition hover:bg-[#F6F1EB] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2D2A26]"
               >
-                Cancel
+                {t("common.cancel")}
               </button>
               <button
                 type="button"
@@ -1530,7 +1529,9 @@ const TripDetail = ({
                 }
                 className="min-h-[44px] rounded-xl bg-[#1F6F78] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#195C63] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1F6F78] disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {transferSaving ? "Transferring..." : "Transfer ownership"}
+                {transferSaving
+                  ? t("trips.transferring")
+                  : t("trips.transferOwnership")}
               </button>
             </div>
           </div>
@@ -1550,13 +1551,13 @@ const TripDetail = ({
               id="revoke-share-title"
               className="text-lg font-semibold text-[#2D2A26]"
             >
-              Revoke this link?
+              {t("trips.revokeLinkTitle")}
             </h2>
             <p
               id="revoke-share-description"
               className="mt-2 text-sm text-[#6B635B]"
             >
-              Anyone using this link will lose access immediately.
+              {t("trips.revokeLinkDescription")}
             </p>
 
             {revokeError ? (
@@ -1569,7 +1570,7 @@ const TripDetail = ({
                 onClick={handleCloseRevoke}
                 className="min-h-[44px] rounded-xl border border-[#D5CDC4] px-4 py-2 text-sm font-semibold text-[#2D2A26] transition hover:bg-[#F6F1EB] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2D2A26]"
               >
-                Keep link
+                {t("trips.keepLink")}
               </button>
               <button
                 type="button"
@@ -1577,7 +1578,9 @@ const TripDetail = ({
                 disabled={isRevoking}
                 className="min-h-[44px] rounded-xl bg-[#B64A3A] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#9E3F31] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#B64A3A] disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {isRevoking ? "Revoking..." : "Yes, revoke"}
+                {isRevoking
+                  ? t("trips.revoking")
+                  : t("trips.confirmRevoke")}
               </button>
             </div>
           </div>

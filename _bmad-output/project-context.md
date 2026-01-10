@@ -59,6 +59,7 @@ _This file contains critical rules and patterns that AI agents must follow when 
 - API response shape must be `{ data, error }` with `{ error: { code, message } }`.
 - JSON fields are `camelCase`.
 - Use `utils/` for shared helpers; avoid adding `lib/`.
+- All user-facing UI strings must be translatable and provided in both English and German.
 
 ### Development Workflow Rules
 

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
+import { useTranslation } from "../../utils/use-translation";
 
 type FieldErrors = {
   currentPassword?: string;
@@ -22,17 +23,17 @@ type ChangePasswordFormProps = {
   mustChangePassword: boolean;
 };
 
-const getErrors = (values: FormValues) => {
+const getErrors = (values: FormValues, t: (key: string) => string) => {
   const nextErrors: FieldErrors = {};
 
   if (!values.currentPassword.trim()) {
-    nextErrors.currentPassword = "Current password is required.";
+    nextErrors.currentPassword = t('account.currentPasswordRequired');
   }
 
   if (!values.newPassword.trim()) {
-    nextErrors.newPassword = "New password is required.";
+    nextErrors.newPassword = t('account.newPasswordRequired');
   } else if (values.newPassword.trim().length < 8) {
-    nextErrors.newPassword = "Password must be at least 8 characters.";
+    nextErrors.newPassword = t('account.passwordMinLength');
   }
 
   return nextErrors;
@@ -45,6 +46,7 @@ const ChangePasswordForm = ({
   mustChangePassword,
 }: ChangePasswordFormProps) => {
   const router = useRouter();
+  const { t } = useTranslation();
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [errors, setErrors] = useState<FieldErrors>({});
@@ -57,14 +59,14 @@ const ChangePasswordForm = ({
       newPassword: field === "newPassword" ? value : newPassword,
     };
 
-    setErrors({ ...getErrors(nextValues) });
+    setErrors({ ...getErrors(nextValues, t) });
   };
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setErrors({});
 
-    const nextErrors = getErrors({ currentPassword, newPassword });
+    const nextErrors = getErrors({ currentPassword, newPassword }, t);
     if (Object.keys(nextErrors).length > 0) {
       setErrors(nextErrors);
       return;
@@ -88,7 +90,7 @@ const ChangePasswordForm = ({
 
       if (!response.ok || result.error) {
         setErrors({
-          form: result.error?.message ?? "Unable to update password.",
+          form: result.error?.message ?? t('account.updatePasswordError'),
         });
         setSubmitting(false);
         return;
@@ -103,8 +105,7 @@ const ChangePasswordForm = ({
 
       if (!signInResult || signInResult.error) {
         setErrors({
-          form:
-            "Password updated, but we could not refresh your session. Please sign in again.",
+          form: t('account.passwordUpdatedSessionError'),
         });
         setSubmitting(false);
         router.push(
@@ -116,7 +117,7 @@ const ChangePasswordForm = ({
       router.push(signInResult.url ?? callbackUrl);
     } catch {
       setErrors({
-        form: "Unable to update password.",
+        form: t('account.updatePasswordError'),
       });
     } finally {
       setSubmitting(false);
@@ -127,12 +128,12 @@ const ChangePasswordForm = ({
     <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
       {mustChangePassword ? (
         <p className="rounded-xl border border-[#B34A3C]/20 bg-[#B34A3C]/10 px-3 py-2 text-sm text-[#B34A3C]">
-          Your temporary password must be updated before you can access trips.
+          {t('account.temporaryPasswordMustUpdate')}
         </p>
       ) : null}
 
       <label className="block text-sm text-[#2D2A26]">
-        Current password
+        {t('account.currentPassword')}
         <input
           name="currentPassword"
           type="password"
@@ -144,7 +145,7 @@ const ChangePasswordForm = ({
             updateField("currentPassword", nextValue);
           }}
           className="mt-2 w-full rounded-xl border border-black/10 px-3 py-2 text-sm focus:border-[#1F6F78] focus:outline-none focus:ring-2 focus:ring-[#1F6F78]/20"
-          placeholder="••••••••"
+          placeholder={t('account.placeholderPassword')}
         />
         {errors.currentPassword ? (
           <p className="mt-2 text-xs text-[#B34A3C]">
@@ -154,7 +155,7 @@ const ChangePasswordForm = ({
       </label>
 
       <label className="block text-sm text-[#2D2A26]">
-        New password
+        {t('account.newPassword')}
         <input
           name="newPassword"
           type="password"
@@ -166,7 +167,7 @@ const ChangePasswordForm = ({
             updateField("newPassword", nextValue);
           }}
           className="mt-2 w-full rounded-xl border border-black/10 px-3 py-2 text-sm focus:border-[#1F6F78] focus:outline-none focus:ring-2 focus:ring-[#1F6F78]/20"
-          placeholder="At least 8 characters"
+          placeholder={t('account.placeholderNewPassword')}
         />
         {errors.newPassword ? (
           <p className="mt-2 text-xs text-[#B34A3C]">
@@ -186,7 +187,7 @@ const ChangePasswordForm = ({
         disabled={submitting}
         className="w-full rounded-xl bg-[#1F6F78] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#195C63] disabled:cursor-not-allowed disabled:opacity-70"
       >
-        {submitting ? "Updating password..." : "Change password"}
+        {submitting ? t('account.updatingPassword') : t('account.changePassword')}
       </button>
     </form>
   );

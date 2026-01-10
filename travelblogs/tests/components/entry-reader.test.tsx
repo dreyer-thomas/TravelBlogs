@@ -5,6 +5,7 @@ import { describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/react";
 
 import EntryReader from "../../src/components/entries/entry-reader";
+import { LocaleProvider } from "../../src/utils/locale-context";
 
 vi.mock("next/image", () => ({
   default: (props: ImgHTMLAttributes<HTMLImageElement>) => {
@@ -29,7 +30,8 @@ vi.mock("next/link", () => ({
 describe("EntryReader", () => {
   it("renders a hero image and the remaining media in the gallery", () => {
     render(
-      <EntryReader
+      <LocaleProvider>
+        <EntryReader
         entry={{
           id: "entry-1",
           title: "Morning in Kyoto",
@@ -59,7 +61,8 @@ describe("EntryReader", () => {
             },
           ],
         }}
-      />,
+        />
+      </LocaleProvider>,
     );
 
     const images = screen.getAllByRole("img");
@@ -76,7 +79,8 @@ describe("EntryReader", () => {
 
   it("renders inline images alongside readable body text", () => {
     render(
-      <EntryReader
+      <LocaleProvider>
+        <EntryReader
         entry={{
           id: "entry-2",
           title: "Market stroll",
@@ -91,7 +95,8 @@ describe("EntryReader", () => {
             },
           ],
         }}
-      />,
+        />
+      </LocaleProvider>,
     );
 
     expect(screen.getByText(/Look/)).toBeInTheDocument();
@@ -102,7 +107,8 @@ describe("EntryReader", () => {
 
   it("opens the fullscreen viewer from the slideshow button", async () => {
     render(
-      <EntryReader
+      <LocaleProvider>
+        <EntryReader
         entry={{
           id: "entry-3",
           title: "Night market",
@@ -125,7 +131,8 @@ describe("EntryReader", () => {
             },
           ],
         }}
-      />,
+        />
+      </LocaleProvider>,
     );
 
     const slideshowButton = screen.getByRole("button", {
@@ -140,7 +147,8 @@ describe("EntryReader", () => {
 
   it("uses a custom entry link base for navigation when provided", () => {
     render(
-      <EntryReader
+      <LocaleProvider>
+        <EntryReader
         entryLinkBase="/trips/share/token-1/entries"
         backToTripHref="/trips/share/token-1"
         entry={{
@@ -165,7 +173,8 @@ describe("EntryReader", () => {
             nextEntryDate: "2025-05-06T00:00:00.000Z",
           },
         }}
-      />,
+        />
+      </LocaleProvider>,
     );
 
     expect(
@@ -179,7 +188,8 @@ describe("EntryReader", () => {
 
   it("shows a back to trip action when provided", () => {
     render(
-      <EntryReader
+      <LocaleProvider>
+        <EntryReader
         backToTripHref="/trips/share/token-2"
         entry={{
           id: "entry-5",
@@ -195,7 +205,8 @@ describe("EntryReader", () => {
             },
           ],
         }}
-      />,
+        />
+      </LocaleProvider>,
     );
 
     expect(
@@ -205,7 +216,8 @@ describe("EntryReader", () => {
 
   it("links the back to trip action to the shared overview", () => {
     render(
-      <EntryReader
+      <LocaleProvider>
+        <EntryReader
         backToTripHref="/trips/share/token-3"
         entry={{
           id: "entry-6",
@@ -221,7 +233,8 @@ describe("EntryReader", () => {
             },
           ],
         }}
-      />,
+        />
+      </LocaleProvider>,
     );
 
     expect(

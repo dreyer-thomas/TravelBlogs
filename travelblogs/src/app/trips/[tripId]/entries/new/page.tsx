@@ -1,11 +1,13 @@
 import Link from "next/link";
 import { getServerSession } from "next-auth";
 import { notFound, redirect } from "next/navigation";
+import { headers } from "next/headers";
 
 import CreateEntryFormWrapper from "@/components/entries/create-entry-form-wrapper";
 import { authOptions } from "@/utils/auth-options";
 import { prisma } from "@/utils/db";
 import { canContributeToTrip } from "@/utils/trip-access";
+import { getLocaleFromAcceptLanguage, getTranslation } from "@/utils/i18n";
 
 type NewEntryPageProps = {
   params: {
@@ -16,6 +18,11 @@ type NewEntryPageProps = {
 const NewEntryPage = async ({ params }: NewEntryPageProps) => {
   const { tripId } = await params;
   const session = await getServerSession(authOptions);
+  const headersList = await headers();
+  const locale = getLocaleFromAcceptLanguage(
+    headersList.get("accept-language"),
+  );
+  const t = (key: string) => getTranslation(key, locale);
 
   if (!session?.user?.id) {
     redirect(`/sign-in?callbackUrl=/trips/${tripId}/entries/new`);
@@ -52,17 +59,16 @@ const NewEntryPage = async ({ params }: NewEntryPageProps) => {
             href={`/trips/${tripId}`}
             className="text-sm text-[#1F6F78] hover:underline"
           >
-            ← Back to trip
+            ← {t("entries.backToTrip")}
           </Link>
           <p className="text-xs uppercase tracking-[0.2em] text-[#6B635B]">
-            New entry
+            {t("entries.create")}
           </p>
           <h1 className="text-3xl font-semibold text-[#2D2A26]">
-            Add today&apos;s story
+            {t("entries.addTodaysStory")}
           </h1>
           <p className="text-sm text-[#6B635B]">
-            Mix text and inline photos, then add any extra shots to the photo
-            gallery.
+            {t("entries.entryFormGuidance")}
           </p>
         </header>
 

@@ -3,6 +3,7 @@
 import { Suspense, useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useTranslation } from "../../utils/use-translation";
 
 const toRelative = (url: string | null) => {
   if (!url) {
@@ -29,6 +30,7 @@ const toRelative = (url: string | null) => {
 };
 
 const SignInContent = () => {
+  const { t } = useTranslation();
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const router = useRouter();
@@ -39,13 +41,13 @@ const SignInContent = () => {
     switch (code) {
       case "INVALID_CREDENTIALS":
       case "CredentialsSignin":
-        return "Invalid email or password.";
+        return t("auth.invalidCredentials");
       case "ACCOUNT_INACTIVE":
-        return "Your account is inactive. Contact an admin.";
+        return t("auth.accountInactive");
       case "ACCOUNT_NOT_FOUND":
-        return "Account not found or has been removed.";
+        return t("auth.accountNotFound");
       default:
-        return code ? "Unable to sign in. Please try again." : null;
+        return code ? t("auth.unableSignIn") : null;
     }
   };
   const authErrorMessage = formatAuthError(authError);
@@ -60,7 +62,7 @@ const SignInContent = () => {
     const password = String(formData.get("password") ?? "");
 
     if (!email || !password) {
-      setError("Email and password are required.");
+      setError(t("auth.credentialsRequired"));
       setSubmitting(false);
       return;
     }
@@ -73,7 +75,7 @@ const SignInContent = () => {
     });
 
     if (!result) {
-      setError("Unable to sign in. Please try again.");
+      setError(t("auth.unableSignIn"));
       setSubmitting(false);
       return;
     }
@@ -93,34 +95,36 @@ const SignInContent = () => {
       <main className="w-full max-w-md rounded-2xl border border-black/10 bg-white p-8 shadow-sm">
         <header className="space-y-2 text-center">
           <p className="text-xs uppercase tracking-[0.2em] text-[#6B635B]">
-            Account Access
+            {t("auth.accountAccess")}
           </p>
-          <h1 className="text-3xl font-semibold text-[#2D2A26]">Sign in</h1>
+          <h1 className="text-3xl font-semibold text-[#2D2A26]">
+            {t("auth.signIn")}
+          </h1>
           <p className="text-sm text-[#6B635B]">
-            Use your account to access the trips you have permission to view.
+            {t("auth.signInDescription")}
           </p>
         </header>
 
         <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
           <label className="block text-sm text-[#2D2A26]">
-            Email
+            {t("auth.email")}
             <input
               name="email"
               type="email"
               autoComplete="email"
               className="mt-2 w-full rounded-xl border border-black/10 px-3 py-2 text-sm focus:border-[#1F6F78] focus:outline-none focus:ring-2 focus:ring-[#1F6F78]/20"
-              placeholder="you@example.com"
+              placeholder={t("auth.emailPlaceholder")}
             />
           </label>
 
           <label className="block text-sm text-[#2D2A26]">
-            Password
+            {t("auth.password")}
             <input
               name="password"
               type="password"
               autoComplete="current-password"
               className="mt-2 w-full rounded-xl border border-black/10 px-3 py-2 text-sm focus:border-[#1F6F78] focus:outline-none focus:ring-2 focus:ring-[#1F6F78]/20"
-              placeholder="••••••••"
+              placeholder={t("auth.passwordPlaceholder")}
             />
           </label>
 
@@ -135,7 +139,7 @@ const SignInContent = () => {
             disabled={submitting}
             className="w-full rounded-xl bg-[#1F6F78] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#195C63] disabled:cursor-not-allowed disabled:opacity-70"
           >
-            {submitting ? "Signing in..." : "Sign in"}
+            {submitting ? t("auth.signingIn") : t("auth.signIn")}
           </button>
         </form>
       </main>
@@ -144,12 +148,15 @@ const SignInContent = () => {
 };
 
 const SignInPage = () => {
+  const { t } = useTranslation();
   return (
     <Suspense
       fallback={
         <div className="flex min-h-screen items-center justify-center bg-[#FBF7F1] px-6">
           <main className="w-full max-w-md rounded-2xl border border-black/10 bg-white p-8 shadow-sm">
-            <p className="text-center text-sm text-[#6B635B]">Loading…</p>
+            <p className="text-center text-sm text-[#6B635B]">
+              {t("common.loading")}
+            </p>
           </main>
         </div>
       }

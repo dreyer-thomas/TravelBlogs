@@ -4,6 +4,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 
 import CreateTripForm from "../../src/components/trips/create-trip-form";
 import { uploadCoverImage } from "../../src/utils/cover-upload";
+import { LocaleProvider } from "../../src/utils/locale-context";
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({
@@ -26,7 +27,11 @@ describe("CreateTripForm cover image", () => {
   });
 
   it("shows validation error for invalid file types", async () => {
-    render(<CreateTripForm />);
+    render(
+      <LocaleProvider>
+        <CreateTripForm />
+      </LocaleProvider>
+    );
     const input = screen.getByLabelText(/cover image/i);
     const badFile = new File(["bad"], "bad.txt", { type: "text/plain" });
 
@@ -43,7 +48,11 @@ describe("CreateTripForm cover image", () => {
       "/uploads/trips/cover-123.jpg",
     );
 
-    render(<CreateTripForm />);
+    render(
+      <LocaleProvider>
+        <CreateTripForm />
+      </LocaleProvider>
+    );
     const input = screen.getByLabelText(/cover image/i);
     const file = new File(["img"], "cover.png", { type: "image/png" });
 
@@ -55,6 +64,6 @@ describe("CreateTripForm cover image", () => {
       });
     });
 
-    expect(await screen.findByAltText("Cover preview")).toBeInTheDocument();
+    expect(await screen.findByAltText(/cover preview/i)).toBeInTheDocument();
   });
 });

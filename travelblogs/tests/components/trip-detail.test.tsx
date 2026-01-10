@@ -5,6 +5,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 
 import TripDetail from "../../src/components/trips/trip-detail";
+import { LocaleProvider } from "../../src/utils/locale-context";
 
 const pushMock = vi.hoisted(() => vi.fn());
 
@@ -24,6 +25,10 @@ vi.mock("next/navigation", () => ({
     refresh: vi.fn(),
   }),
 }));
+
+const renderWithProvider = (component: React.ReactElement) => {
+  return render(<LocaleProvider>{component}</LocaleProvider>);
+};
 
 describe("TripDetail", () => {
   afterEach(() => {
@@ -74,7 +79,7 @@ describe("TripDetail", () => {
 
     vi.stubGlobal("fetch", fetchMock);
 
-    render(
+    renderWithProvider(
       <TripDetail
         tripId="trip-1"
         canAddEntry
@@ -120,7 +125,7 @@ describe("TripDetail", () => {
 
     vi.stubGlobal("fetch", fetchMock);
 
-    render(
+    renderWithProvider(
       <TripDetail
         tripId="trip-2"
         canAddEntry
@@ -166,7 +171,7 @@ describe("TripDetail", () => {
 
     vi.stubGlobal("fetch", fetchMock);
 
-    render(
+    renderWithProvider(
       <TripDetail
         tripId="trip-5"
         canAddEntry
@@ -225,7 +230,7 @@ describe("TripDetail", () => {
 
     vi.stubGlobal("fetch", fetchMock);
 
-    render(
+    renderWithProvider(
       <TripDetail
         tripId="trip-3"
         canAddEntry={false}
@@ -315,7 +320,7 @@ describe("TripDetail", () => {
 
     vi.stubGlobal("fetch", fetchMock);
 
-    render(
+    renderWithProvider(
       <TripDetail
         tripId="trip-4"
         canAddEntry

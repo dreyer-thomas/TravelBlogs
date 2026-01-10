@@ -11,7 +11,7 @@ export type EntryContentBlock =
 
 const INLINE_IMAGE_REGEX = /!\[([^\]]*)\]\(([^)\s]+)\)/g;
 const URL_TIMESTAMP_REGEX = /-(\d{10,})-/;
-const DEFAULT_INLINE_ALT = "Entry photo";
+export const DEFAULT_INLINE_ALT = "Entry photo";
 
 export const parseEntryContent = (text: string): EntryContentBlock[] => {
   const blocks: EntryContentBlock[] = [];

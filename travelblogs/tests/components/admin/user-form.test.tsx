@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/react";
 
 import UserForm from "../../../src/components/admin/user-form";
+import { LocaleProvider } from "../../../src/utils/locale-context";
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({
@@ -12,7 +13,11 @@ vi.mock("next/navigation", () => ({
 
 describe("UserForm", () => {
   it("shows validation errors when submitting missing fields", async () => {
-    const { container } = render(<UserForm />);
+    const { container } = render(
+      <LocaleProvider>
+        <UserForm />
+      </LocaleProvider>
+    );
     const form = container.querySelector("form");
 
     if (!form) {
@@ -27,7 +32,11 @@ describe("UserForm", () => {
   });
 
   it("includes an Administrator option", () => {
-    render(<UserForm />);
+    render(
+      <LocaleProvider>
+        <UserForm />
+      </LocaleProvider>
+    );
 
     expect(
       screen.getByRole("option", { name: "Administrator" }),

@@ -3,6 +3,7 @@
 import type { ImgHTMLAttributes, ReactNode } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
+import { LocaleProvider } from "../../src/utils/locale-context";
 
 vi.mock("next/image", () => ({
   default: (props: ImgHTMLAttributes<HTMLImageElement>) => {
@@ -120,7 +121,7 @@ describe("SharedEntryPage", () => {
       params: { token: "token-1", entryId: "entry-1" },
     });
 
-    render(element);
+    render(<LocaleProvider>{element}</LocaleProvider>);
 
     expect(
       screen.getByRole("img", { name: /entry hero media/i }),
@@ -166,7 +167,7 @@ describe("SharedEntryPage", () => {
       params: { token: "token-1", entryId: "entry-2" },
     });
 
-    render(element);
+    render(<LocaleProvider>{element}</LocaleProvider>);
 
     expect(
       screen.getByRole("img", { name: /entry hero media/i }),
@@ -207,7 +208,7 @@ describe("SharedEntryPage", () => {
       params: { token: "token-9", entryId: "entry-3" },
     });
 
-    render(element);
+    render(<LocaleProvider>{element}</LocaleProvider>);
 
     expect(screen.getByRole("link", { name: /back to trip/i })).toHaveAttribute(
       "href",

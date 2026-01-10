@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 
 import SharedTripGuard from "../../src/components/trips/shared-trip-guard";
+import { LocaleProvider } from "../../src/utils/locale-context";
 
 describe("SharedTripGuard", () => {
   afterEach(() => {
@@ -22,9 +23,11 @@ describe("SharedTripGuard", () => {
     vi.stubGlobal("fetch", fetchMock);
 
     render(
-      <SharedTripGuard token="stale-token">
-        <div>Shared content</div>
-      </SharedTripGuard>,
+      <LocaleProvider>
+        <SharedTripGuard token="stale-token">
+          <div>Shared content</div>
+        </SharedTripGuard>
+      </LocaleProvider>,
     );
 
     expect(
@@ -39,9 +42,11 @@ describe("SharedTripGuard", () => {
     vi.stubGlobal("fetch", fetchMock);
 
     render(
-      <SharedTripGuard token="active-token">
-        <div>Shared content</div>
-      </SharedTripGuard>,
+      <LocaleProvider>
+        <SharedTripGuard token="active-token">
+          <div>Shared content</div>
+        </SharedTripGuard>
+      </LocaleProvider>,
     );
 
     await waitFor(() => {

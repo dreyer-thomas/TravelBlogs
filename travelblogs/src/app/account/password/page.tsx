@@ -4,6 +4,7 @@ import { unstable_noStore as noStore } from "next/cache";
 
 import { authOptions } from "../../../utils/auth-options";
 import ChangePasswordForm from "../../../components/account/change-password-form";
+import ChangePasswordHeader from "../../../components/account/change-password-header";
 
 type PasswordPageProps = {
   searchParams?: {
@@ -33,17 +34,7 @@ const PasswordPage = async ({ searchParams }: PasswordPageProps) => {
   return (
     <div className="flex min-h-screen items-center justify-center bg-[#FBF7F1] px-6">
       <main className="w-full max-w-md rounded-2xl border border-black/10 bg-white p-8 shadow-sm">
-        <header className="space-y-2 text-center">
-          <p className="text-xs uppercase tracking-[0.2em] text-[#6B635B]">
-            Account Security
-          </p>
-          <h1 className="text-3xl font-semibold text-[#2D2A26]">
-            Change password
-          </h1>
-          <p className="text-sm text-[#6B635B]">
-            Update your password to continue to your trips.
-          </p>
-        </header>
+        <ChangePasswordHeader />
 
         <ChangePasswordForm
           userId={session.user.id}

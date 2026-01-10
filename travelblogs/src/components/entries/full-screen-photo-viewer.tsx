@@ -4,6 +4,7 @@ import type { KeyboardEvent as ReactKeyboardEvent, TouchEvent } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import Image from "next/image";
+import { useTranslation } from "../../utils/use-translation";
 
 type PhotoViewerImage = {
   url: string;
@@ -54,6 +55,7 @@ const FullScreenPhotoViewer = ({
   onClose,
   mode = "viewer",
 }: FullScreenPhotoViewerProps) => {
+  const { t } = useTranslation();
   const safeIndex = useMemo(
     () => clampIndex(initialIndex, images.length),
     [initialIndex, images.length],
@@ -325,7 +327,7 @@ const FullScreenPhotoViewer = ({
       className="fixed inset-0 z-[2147483647] isolate flex h-screen w-screen flex-col bg-black"
       role="dialog"
       aria-modal="true"
-      aria-label="Photo viewer"
+      aria-label={t("entries.photoViewer")}
       onKeyDown={handleDialogKeyDown}
       onClick={handleOverlayClick}
       tabIndex={-1}

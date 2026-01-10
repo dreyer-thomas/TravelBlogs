@@ -4,6 +4,7 @@ import { headers } from "next/headers";
 
 import TripOverview from "../../../../components/trips/trip-overview";
 import SharedTripGuard from "../../../../components/trips/shared-trip-guard";
+import SharedTripError from "../../../../components/trips/shared-trip-error";
 import { getRequestBaseUrl } from "../../../../utils/request-base-url";
 
 export const dynamic = "force-dynamic";
@@ -27,7 +28,7 @@ type TripOverviewTrip = {
 
 type ApiError = {
   code: string;
-  message: string;
+  message?: string;
 };
 
 type ApiResponse = {
@@ -54,7 +55,7 @@ const loadSharedTrip = async (
       data: null,
       error: {
         code: body?.error?.code ?? "UNKNOWN_ERROR",
-        message: body?.error?.message ?? "Unable to load this trip.",
+        message: body?.error?.message ?? undefined,
       },
     };
   }
@@ -77,17 +78,7 @@ const SharedTripPage = async ({
   const baseUrl = getRequestBaseUrl(headersList);
 
   if (!baseUrl) {
-    return (
-      <div className="min-h-screen bg-[#FBF7F1] px-6 py-12">
-        <main className="mx-auto w-full max-w-3xl">
-          <section className="rounded-2xl border border-black/10 bg-white p-8 text-center">
-            <p className="text-sm text-[#B34A3C]">
-              Unable to determine the host for this request.
-            </p>
-          </section>
-        </main>
-      </div>
-    );
+    return <SharedTripError type="host" />;
   }
 
   const { data, error } = await loadSharedTrip(baseUrl, token);
@@ -97,17 +88,7 @@ const SharedTripPage = async ({
   }
 
   if (!data) {
-    return (
-      <div className="min-h-screen bg-[#FBF7F1] px-6 py-12">
-        <main className="mx-auto w-full max-w-3xl">
-          <section className="rounded-2xl border border-black/10 bg-white p-8 text-center">
-            <p className="text-sm text-[#B34A3C]">
-              {error?.message ?? "Unable to load this trip."}
-            </p>
-          </section>
-        </main>
-      </div>
-    );
+    return <SharedTripError message={error?.message} type="load" />;
   }
 
   return (
