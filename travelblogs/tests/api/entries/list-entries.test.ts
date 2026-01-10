@@ -66,6 +66,8 @@ describe("GET /api/entries", () => {
         text: "First day",
         createdAt: new Date("2025-06-02T10:00:00Z"),
         updatedAt: new Date("2025-06-02T10:00:00Z"),
+        latitude: 35.6762,
+        longitude: 139.6503,
         media: {
           create: [{ url: "/uploads/entries/first.jpg" }],
         },
@@ -105,6 +107,12 @@ describe("GET /api/entries", () => {
     expect(body.error).toBeNull();
     expect(body.data[0].id).toBe(olderEntry.id);
     expect(body.data[1].id).toBe(newerEntry.id);
+    expect(body.data[0].location).toEqual({
+      latitude: 35.6762,
+      longitude: 139.6503,
+      label: null,
+    });
+    expect(body.data[1].location).toBeNull();
   });
 
   it("rejects requests for trips not owned by the creator", async () => {

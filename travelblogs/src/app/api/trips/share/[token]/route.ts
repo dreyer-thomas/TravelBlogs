@@ -52,6 +52,9 @@ export const GET = async (
                 title: true,
                 createdAt: true,
                 coverImageUrl: true,
+                latitude: true,
+                longitude: true,
+                locationName: true,
                 media: {
                   orderBy: {
                     createdAt: "asc",
@@ -90,6 +93,14 @@ export const GET = async (
             createdAt: entry.createdAt.toISOString(),
             coverImageUrl: entry.coverImageUrl,
             media: entry.media.map((item) => ({ url: item.url })),
+            location:
+              entry.latitude !== null && entry.longitude !== null
+                ? {
+                    latitude: entry.latitude,
+                    longitude: entry.longitude,
+                    label: entry.locationName,
+                  }
+                : null,
           })),
         },
         error: null,

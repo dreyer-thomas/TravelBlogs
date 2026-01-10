@@ -2,7 +2,7 @@
 /* eslint-disable @next/next/no-img-element, jsx-a11y/alt-text */
 import type { ImgHTMLAttributes, ReactNode } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 
 import TripOverview from "../../src/components/trips/trip-overview";
 import { LocaleProvider } from "../../src/utils/locale-context";
@@ -22,8 +22,18 @@ vi.mock("next/image", () => ({
 }));
 
 vi.mock("next/link", () => ({
-  default: ({ href, children }: { href: string; children: ReactNode }) => (
-    <a href={href}>{children}</a>
+  default: ({
+    href,
+    children,
+    ...rest
+  }: {
+    href: string;
+    children: ReactNode;
+    [key: string]: unknown;
+  }) => (
+    <a href={href} {...rest}>
+      {children}
+    </a>
   ),
 }));
 
@@ -190,5 +200,55 @@ describe("TripOverview", () => {
     expect(
       screen.queryByRole("link", { name: /trips/i }),
     ).not.toBeInTheDocument();
+  });
+
+  it("highlights the related entry when a map pin is selected", async () => {
+    render(
+      <LocaleProvider>
+        <TripOverview
+          trip={{
+            id: "trip-map",
+            title: "Map trip",
+            startDate: "2025-06-01T00:00:00.000Z",
+            endDate: "2025-06-08T00:00:00.000Z",
+            coverImageUrl: null,
+          }}
+          entries={[
+            {
+              id: "entry-1",
+              tripId: "trip-map",
+              title: "First stop",
+              createdAt: "2025-06-02T12:00:00.000Z",
+              coverImageUrl: "/uploads/entries/first.jpg",
+              media: [{ url: "/uploads/entries/first.jpg" }],
+              location: {
+                latitude: 48.8566,
+                longitude: 2.3522,
+                label: "Paris",
+              },
+            },
+            {
+              id: "entry-2",
+              tripId: "trip-map",
+              title: "Second stop",
+              createdAt: "2025-06-03T12:00:00.000Z",
+              coverImageUrl: "/uploads/entries/second.jpg",
+              media: [{ url: "/uploads/entries/second.jpg" }],
+              location: {
+                latitude: 51.5074,
+                longitude: -0.1278,
+                label: "London",
+              },
+            },
+          ]}
+        />
+      </LocaleProvider>,
+    );
+
+    const pin = await screen.findByRole("button", { name: "Second stop" });
+    fireEvent.click(pin);
+
+    const selectedEntry = screen.getByRole("link", { name: /second stop/i });
+    expect(selectedEntry).toHaveAttribute("aria-current", "true");
   });
 });

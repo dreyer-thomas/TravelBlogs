@@ -171,6 +171,14 @@ export const POST = async (request: NextRequest) => {
             createdAt: item.createdAt.toISOString(),
           }),
           ),
+          location:
+            entry.latitude !== null && entry.longitude !== null
+              ? {
+                  latitude: entry.latitude,
+                  longitude: entry.longitude,
+                  label: entry.locationName,
+                }
+              : null,
         },
         error: null,
       },
@@ -243,6 +251,9 @@ export const GET = async (request: NextRequest) => {
             text: string;
             createdAt: Date;
             updatedAt: Date;
+            latitude: number | null;
+            longitude: number | null;
+            locationName: string | null;
             media: { id: string; url: string; createdAt: Date }[];
           }) => ({
           id: entry.id,
@@ -257,6 +268,14 @@ export const GET = async (request: NextRequest) => {
             url: item.url,
             createdAt: item.createdAt.toISOString(),
           })),
+          location:
+            entry.latitude !== null && entry.longitude !== null
+              ? {
+                  latitude: entry.latitude,
+                  longitude: entry.longitude,
+                  label: entry.locationName,
+                }
+              : null,
         }),
         ),
         error: null,

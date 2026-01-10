@@ -4,6 +4,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 
 import CreateEntryForm from "../../src/components/entries/create-entry-form";
 import { uploadEntryMediaBatch } from "../../src/utils/entry-media";
+import { LocaleProvider } from "../../src/utils/locale-context";
 
 vi.mock("../../src/utils/entry-media", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../../src/utils/entry-media")>();
@@ -14,6 +15,9 @@ vi.mock("../../src/utils/entry-media", async (importOriginal) => {
 });
 
 describe("CreateEntryForm", () => {
+  const renderWithLocale = (component: JSX.Element) =>
+    render(<LocaleProvider>{component}</LocaleProvider>);
+
   beforeEach(() => {
     vi.clearAllMocks();
     if (!URL.createObjectURL) {
@@ -22,7 +26,7 @@ describe("CreateEntryForm", () => {
   });
 
   it("shows validation errors when submitting without required fields", async () => {
-    render(<CreateEntryForm tripId="trip-123" />);
+    renderWithLocale(<CreateEntryForm tripId="trip-123" />);
 
     const submitButton = screen.getByRole("button", { name: /add entry/i });
     expect(submitButton).toBeDisabled();
@@ -49,7 +53,7 @@ describe("CreateEntryForm", () => {
   });
 
   it("shows a validation error for invalid media files", async () => {
-    render(<CreateEntryForm tripId="trip-123" />);
+    renderWithLocale(<CreateEntryForm tripId="trip-123" />);
 
     const input = screen.getByLabelText(/entry image library/i);
     const badFile = new File(["bad"], "bad.txt", { type: "text/plain" });
@@ -86,7 +90,7 @@ describe("CreateEntryForm", () => {
       ],
     }));
 
-    render(<CreateEntryForm tripId="trip-123" />);
+    renderWithLocale(<CreateEntryForm tripId="trip-123" />);
 
     const input = screen.getByLabelText(/entry image library/i);
     const firstFile = new File(["first"], "first.jpg", { type: "image/jpeg" });
@@ -118,7 +122,7 @@ describe("CreateEntryForm", () => {
       failures: [],
     }));
 
-    render(<CreateEntryForm tripId="trip-123" />);
+    renderWithLocale(<CreateEntryForm tripId="trip-123" />);
 
     const input = screen.getByLabelText(/entry image library/i);
     const file = new File(["photo"], "story.jpg", { type: "image/jpeg" });
@@ -149,7 +153,7 @@ describe("CreateEntryForm", () => {
       failures: [],
     }));
 
-    render(<CreateEntryForm tripId="trip-123" />);
+    renderWithLocale(<CreateEntryForm tripId="trip-123" />);
 
     const textArea = screen.getByLabelText(/entry text/i);
     fireEvent.change(textArea, { target: { value: "Hello" } });
@@ -183,7 +187,7 @@ describe("CreateEntryForm", () => {
       failures: [],
     }));
 
-    render(<CreateEntryForm tripId="trip-123" />);
+    renderWithLocale(<CreateEntryForm tripId="trip-123" />);
 
     const textArea = screen.getByLabelText(/entry text/i);
     fireEvent.change(textArea, {

@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi, afterEach } from "vitest";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 
 import DeleteEntryModal from "../../src/components/entries/delete-entry-modal";
+import { LocaleProvider } from "../../src/utils/locale-context";
 
 const replace = vi.fn();
 const refresh = vi.fn();
@@ -15,6 +16,9 @@ vi.mock("next/navigation", () => ({
 }));
 
 describe("DeleteEntryModal", () => {
+  const renderWithLocale = (component: JSX.Element) =>
+    render(<LocaleProvider>{component}</LocaleProvider>);
+
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -24,7 +28,7 @@ describe("DeleteEntryModal", () => {
   });
 
   it("opens and closes the confirmation dialog", () => {
-    render(
+    renderWithLocale(
       <DeleteEntryModal
         tripId="trip-123"
         entryId="entry-123"
@@ -52,7 +56,7 @@ describe("DeleteEntryModal", () => {
     });
     vi.stubGlobal("fetch", fetchMock);
 
-    render(
+    renderWithLocale(
       <DeleteEntryModal
         tripId="trip-123"
         entryId="entry-123"
@@ -85,7 +89,7 @@ describe("DeleteEntryModal", () => {
     const fetchMock = vi.fn();
     vi.stubGlobal("fetch", fetchMock);
 
-    render(
+    renderWithLocale(
       <DeleteEntryModal
         tripId="trip-123"
         entryId="entry-123"

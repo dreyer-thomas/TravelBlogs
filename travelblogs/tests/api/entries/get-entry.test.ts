@@ -67,6 +67,9 @@ describe("GET /api/entries/[id]", () => {
         tripId: trip.id,
         title: "Detail day",
         text: "Full day recap",
+        latitude: 40.7128,
+        longitude: -74.006,
+        locationName: "New York City",
         media: {
           create: [{ url: "/uploads/entries/detail.jpg" }],
         },
@@ -87,6 +90,11 @@ describe("GET /api/entries/[id]", () => {
     expect(body.error).toBeNull();
     expect(body.data.id).toBe(entry.id);
     expect(body.data.media).toHaveLength(1);
+    expect(body.data.location).toEqual({
+      latitude: 40.7128,
+      longitude: -74.006,
+      label: "New York City",
+    });
   });
 
   it("rejects unauthenticated requests", async () => {

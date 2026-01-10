@@ -5,6 +5,7 @@ import { act, fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 import FullScreenPhotoViewer from "../../src/components/entries/full-screen-photo-viewer";
+import { LocaleProvider } from "../../src/utils/locale-context";
 
 vi.mock("next/image", () => ({
   default: (props: ImgHTMLAttributes<HTMLImageElement>) => {
@@ -30,13 +31,15 @@ describe("FullScreenPhotoViewer", () => {
     const onClose = vi.fn();
 
     render(
-      <FullScreenPhotoViewer
-        images={images}
-        initialIndex={0}
-        isOpen
-        onClose={onClose}
-        mode="viewer"
-      />,
+      <LocaleProvider>
+        <FullScreenPhotoViewer
+          images={images}
+          initialIndex={0}
+          isOpen
+          onClose={onClose}
+          mode="viewer"
+        />
+      </LocaleProvider>,
     );
 
     const dialog = await screen.findByRole("dialog");
@@ -55,13 +58,15 @@ describe("FullScreenPhotoViewer", () => {
 
     try {
       render(
-        <FullScreenPhotoViewer
-          images={images}
-          initialIndex={0}
-          isOpen
-          onClose={vi.fn()}
-          mode="slideshow"
-        />,
+        <LocaleProvider>
+          <FullScreenPhotoViewer
+            images={images}
+            initialIndex={0}
+            isOpen
+            onClose={vi.fn()}
+            mode="slideshow"
+          />
+        </LocaleProvider>,
       );
 
       await act(async () => {});
@@ -116,13 +121,15 @@ describe("FullScreenPhotoViewer", () => {
 
     try {
       render(
-        <FullScreenPhotoViewer
-          images={images}
-          initialIndex={0}
-          isOpen
-          onClose={vi.fn()}
-          mode="slideshow"
-        />,
+        <LocaleProvider>
+          <FullScreenPhotoViewer
+            images={images}
+            initialIndex={0}
+            isOpen
+            onClose={vi.fn()}
+            mode="slideshow"
+          />
+        </LocaleProvider>,
       );
 
       await act(async () => {});
@@ -152,13 +159,15 @@ describe("FullScreenPhotoViewer", () => {
     const onClose = vi.fn();
 
     render(
-      <FullScreenPhotoViewer
-        images={images}
-        initialIndex={0}
-        isOpen
-        onClose={onClose}
-        mode="viewer"
-      />,
+      <LocaleProvider>
+        <FullScreenPhotoViewer
+          images={images}
+          initialIndex={0}
+          isOpen
+          onClose={onClose}
+          mode="viewer"
+        />
+      </LocaleProvider>,
     );
 
     const dialog = await screen.findByRole("dialog");

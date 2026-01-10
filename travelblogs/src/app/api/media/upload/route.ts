@@ -11,6 +11,7 @@ import {
   validateCoverImageFile,
 } from "../../../../utils/media";
 import { ensureActiveAccount, isAdminOrCreator } from "../../../../utils/roles";
+import { extractGpsFromImage } from "../../../../utils/entry-location";
 
 export const runtime = "nodejs";
 
@@ -55,6 +56,7 @@ const resolveUploadDir = () => {
 type UploadSuccess = {
   fileName: string;
   url: string;
+  location: { latitude: number; longitude: number } | null;
 };
 
 type UploadFailure = {
@@ -93,10 +95,13 @@ const uploadFile = async (
     const buffer = Buffer.from(await file.arrayBuffer());
     await fs.writeFile(filePath, buffer);
 
+    const location = await extractGpsFromImage(buffer);
+
     return {
       upload: {
         fileName: file.name,
         url: `${COVER_IMAGE_PUBLIC_PATH}/${safeName}`,
+        location,
       },
     };
   } catch (error) {
@@ -158,6 +163,7 @@ export const POST = async (request: NextRequest) => {
         {
           data: {
             url: result.upload?.url ?? null,
+            location: result.upload?.location ?? null,
           },
           error: null,
         },
@@ -180,7 +186,11 @@ export const POST = async (request: NextRequest) => {
     return NextResponse.json(
       {
         data: {
-          uploads,
+          uploads: uploads.map((upload) => ({
+            fileName: upload.fileName,
+            url: upload.url,
+            location: upload.location,
+          })),
           failures,
         },
         error: null,

@@ -171,6 +171,14 @@ export const GET = async (
             createdAt: item.createdAt.toISOString(),
           }),
           ),
+          location:
+            entry.latitude !== null && entry.longitude !== null
+              ? {
+                  latitude: entry.latitude,
+                  longitude: entry.longitude,
+                  label: entry.locationName,
+                }
+              : null,
           navigation: {
             previousEntryId: previousEntry?.id ?? null,
             nextEntryId: nextEntry?.id ?? null,
@@ -310,6 +318,14 @@ export const PATCH = async (
             createdAt: item.createdAt.toISOString(),
           }),
           ),
+          location:
+            updated.latitude !== null && updated.longitude !== null
+              ? {
+                  latitude: updated.latitude,
+                  longitude: updated.longitude,
+                  label: updated.locationName,
+                }
+              : null,
         },
         error: null,
       },

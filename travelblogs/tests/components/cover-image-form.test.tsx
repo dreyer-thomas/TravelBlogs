@@ -59,9 +59,13 @@ describe("CreateTripForm cover image", () => {
     fireEvent.change(input, { target: { files: [file] } });
 
     await waitFor(() => {
-      expect(uploadCoverImage).toHaveBeenCalledWith(file, {
-        onProgress: expect.any(Function),
-      });
+      expect(uploadCoverImage).toHaveBeenCalledWith(
+        file,
+        expect.objectContaining({
+          onProgress: expect.any(Function),
+          translate: expect.any(Function),
+        }),
+      );
     });
 
     expect(await screen.findByAltText(/cover preview/i)).toBeInTheDocument();

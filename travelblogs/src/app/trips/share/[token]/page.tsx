@@ -6,6 +6,7 @@ import TripOverview from "../../../../components/trips/trip-overview";
 import SharedTripGuard from "../../../../components/trips/shared-trip-guard";
 import SharedTripError from "../../../../components/trips/shared-trip-error";
 import { getRequestBaseUrl } from "../../../../utils/request-base-url";
+import type { EntryLocation } from "../../../../utils/entry-location";
 
 export const dynamic = "force-dynamic";
 
@@ -16,6 +17,7 @@ type TripOverviewEntry = {
   createdAt: string;
   coverImageUrl: string | null;
   media: { url: string }[];
+  location?: EntryLocation | null;
 };
 
 type TripOverviewTrip = {

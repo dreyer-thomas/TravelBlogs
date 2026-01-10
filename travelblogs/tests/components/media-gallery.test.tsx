@@ -5,6 +5,7 @@ import { describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/react";
 
 import MediaGallery from "../../src/components/media/media-gallery";
+import { LocaleProvider } from "../../src/utils/locale-context";
 
 vi.mock("next/image", () => ({
   default: (props: ImgHTMLAttributes<HTMLImageElement>) => {
@@ -22,22 +23,24 @@ vi.mock("next/image", () => ({
 describe("MediaGallery", () => {
   it("scrolls the carousel when navigation buttons are clicked", () => {
     render(
-      <MediaGallery
-        items={[
-          {
-            id: "media-1",
-            url: "https://example.com/gallery-1.jpg",
-            width: 1200,
-            height: 900,
-          },
-          {
-            id: "media-2",
-            url: "https://example.com/gallery-2.jpg",
-            width: 1200,
-            height: 900,
-          },
-        ]}
-      />,
+      <LocaleProvider>
+        <MediaGallery
+          items={[
+            {
+              id: "media-1",
+              url: "https://example.com/gallery-1.jpg",
+              width: 1200,
+              height: 900,
+            },
+            {
+              id: "media-2",
+              url: "https://example.com/gallery-2.jpg",
+              width: 1200,
+              height: 900,
+            },
+          ]}
+        />
+      </LocaleProvider>,
     );
 
     const scroller = screen.getByTestId("media-gallery-scroller");
@@ -72,17 +75,19 @@ describe("MediaGallery", () => {
     const startSlideshow = vi.fn();
 
     render(
-      <MediaGallery
-        items={[
-          {
-            id: "media-1",
-            url: "https://example.com/gallery-1.jpg",
-            width: 1200,
-            height: 900,
-          },
-        ]}
-        onStartSlideshow={startSlideshow}
-      />,
+      <LocaleProvider>
+        <MediaGallery
+          items={[
+            {
+              id: "media-1",
+              url: "https://example.com/gallery-1.jpg",
+              width: 1200,
+              height: 900,
+            },
+          ]}
+          onStartSlideshow={startSlideshow}
+        />
+      </LocaleProvider>,
     );
 
     fireEvent.click(

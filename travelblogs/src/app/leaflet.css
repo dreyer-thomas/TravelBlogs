@@ -1,0 +1,2 @@
+/* Leaflet CSS - imported dynamically to avoid SSR issues */
+@import 'leaflet/dist/leaflet.css';

@@ -86,6 +86,9 @@ describe("GET /api/trips/[id]/overview", () => {
         text: "New entry",
         coverImageUrl: "/uploads/entries/new-cover.jpg",
         createdAt: new Date("2025-06-03T08:00:00.000Z"),
+        latitude: 37.7749,
+        longitude: -122.4194,
+        locationName: "San Francisco",
         media: {
           create: [{ url: "/uploads/entries/new.jpg" }],
         },
@@ -124,7 +127,13 @@ describe("GET /api/trips/[id]/overview", () => {
       createdAt: newerEntry.createdAt.toISOString(),
       coverImageUrl: newerEntry.coverImageUrl,
       media: [{ url: newerEntry.media[0].url }],
+      location: {
+        latitude: 37.7749,
+        longitude: -122.4194,
+        label: "San Francisco",
+      },
     });
+    expect(body.data.entries[1].location).toBeNull();
   });
 
   it("returns an empty entries array when a trip has no entries", async () => {

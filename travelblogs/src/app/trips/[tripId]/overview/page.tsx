@@ -4,6 +4,7 @@ import { headers } from "next/headers";
 
 import TripOverview from "../../../../components/trips/trip-overview";
 import { getLocaleFromAcceptLanguage, getTranslation } from "../../../../utils/i18n";
+import type { EntryLocation } from "../../../../utils/entry-location";
 
 export const dynamic = "force-dynamic";
 
@@ -14,6 +15,7 @@ type TripOverviewEntry = {
   createdAt: string;
   coverImageUrl: string | null;
   media: { url: string }[];
+  location?: EntryLocation | null;
 };
 
 type TripOverviewTrip = {

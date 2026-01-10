@@ -1,8 +1,12 @@
 "use client";
 
+import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import TripMap from "./trip-map";
 import { useTranslation } from "../../utils/use-translation";
+import { filterEntriesWithLocation } from "../../utils/entry-location";
+import type { EntryLocation } from "../../utils/entry-location";
 
 type TripOverviewTrip = {
   id: string;
@@ -19,6 +23,7 @@ type TripOverviewEntry = {
   createdAt: string;
   coverImageUrl: string | null;
   media: { url: string }[];
+  location?: EntryLocation | null;
 };
 
 type TripOverviewProps = {
@@ -47,6 +52,40 @@ const TripOverview = ({
   backToTripsHref,
 }: TripOverviewProps) => {
   const { t, formatDate } = useTranslation();
+  const [selectedEntryId, setSelectedEntryId] = useState<string | null>(null);
+  const [isMapVisible, setIsMapVisible] = useState(false);
+
+  const entriesWithLocation = useMemo(
+    () => filterEntriesWithLocation(entries),
+    [entries],
+  );
+  const mapLocations = useMemo(
+    () =>
+      entriesWithLocation.map((entry) => ({
+        entryId: entry.id,
+        title: entry.title,
+        location: entry.location!,
+      })),
+    [entriesWithLocation],
+  );
+
+  // Lazy-load map after initial render to avoid blocking trip view
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsMapVisible(true);
+    }, 100);
+    return () => clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    if (!selectedEntryId) {
+      return;
+    }
+    const stillVisible = entries.some((entry) => entry.id === selectedEntryId);
+    if (!stillVisible) {
+      setSelectedEntryId(null);
+    }
+  }, [entries, selectedEntryId]);
 
   return (
     <div className="min-h-screen bg-[#FBF7F1] px-6 py-12">
@@ -74,18 +113,49 @@ const TripOverview = ({
           </header>
 
           {trip.coverImageUrl ? (
-            <div className="relative mt-6 h-64 w-full overflow-hidden rounded-2xl bg-[#F2ECE3]">
-              <Image
-                src={trip.coverImageUrl}
-                alt={`${t('trips.coverFor')} ${trip.title}`}
-                fill
-                sizes="(min-width: 768px) 768px, 100vw"
-                className="object-cover"
-                loading="lazy"
-                unoptimized={!isOptimizedImage(trip.coverImageUrl)}
-              />
+            <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
+              <div className="relative h-64 w-full overflow-hidden rounded-2xl bg-[#F2ECE3]">
+                <Image
+                  src={trip.coverImageUrl}
+                  alt={`${t('trips.coverFor')} ${trip.title}`}
+                  fill
+                  sizes="(min-width: 1024px) 50vw, 100vw"
+                  className="object-cover"
+                  loading="lazy"
+                  unoptimized={!isOptimizedImage(trip.coverImageUrl)}
+                />
+              </div>
+              <div className="space-y-3">
+                {isMapVisible ? (
+                  <TripMap
+                    ariaLabel={t("trips.tripMap")}
+                    pinsLabel={t("trips.mapPins")}
+                    emptyMessage={t("trips.noLocations")}
+                    locations={mapLocations}
+                    selectedEntryId={selectedEntryId}
+                    onSelectEntry={setSelectedEntryId}
+                  />
+                ) : (
+                  <div className="h-64 rounded-2xl bg-[#F2ECE3]" />
+                )}
+              </div>
             </div>
-          ) : null}
+          ) : (
+            <div className="mt-6 space-y-3">
+              {isMapVisible ? (
+                <TripMap
+                  ariaLabel={t("trips.tripMap")}
+                  pinsLabel={t("trips.mapPins")}
+                  emptyMessage={t("trips.noLocations")}
+                  locations={mapLocations}
+                  selectedEntryId={selectedEntryId}
+                  onSelectEntry={setSelectedEntryId}
+                />
+              ) : (
+                <div className="h-64 rounded-2xl bg-[#F2ECE3]" />
+              )}
+            </div>
+          )}
         </section>
 
         <section className="rounded-2xl border border-black/10 bg-white p-8 shadow-sm">
@@ -102,9 +172,10 @@ const TripOverview = ({
               {t('trips.noEntriesYet')}
             </p>
           ) : (
-            <div className="mt-4 space-y-4">
+            <div className="mt-6 space-y-4">
               {entries.map((entry) => {
                 const previewImage = getPreviewImage(entry);
+                const isSelected = selectedEntryId === entry.id;
                 const content = (
                   <>
                     <div
@@ -134,6 +205,9 @@ const TripOverview = ({
                     </span>
                   </>
                 );
+                const cardClassName = isSelected
+                  ? "flex flex-wrap items-center gap-4 rounded-2xl border border-[#1F6F78] bg-white p-4 shadow-sm"
+                  : "flex flex-wrap items-center gap-4 rounded-2xl border border-black/10 bg-white p-4 transition hover:border-[#1F6F78]/40 hover:shadow-sm";
 
                 if (linkEntries) {
                   const entryHref = entryLinkBase
@@ -143,7 +217,8 @@ const TripOverview = ({
                     <Link
                       key={entry.id}
                       href={entryHref}
-                      className="flex flex-wrap items-center gap-4 rounded-2xl border border-black/10 bg-white p-4 transition hover:border-[#1F6F78]/40 hover:shadow-sm"
+                      aria-current={isSelected ? "true" : undefined}
+                      className={cardClassName}
                     >
                       {content}
                     </Link>
@@ -153,7 +228,8 @@ const TripOverview = ({
                 return (
                   <div
                     key={entry.id}
-                    className="flex flex-wrap items-center gap-4 rounded-2xl border border-black/10 bg-white p-4"
+                    aria-current={isSelected ? "true" : undefined}
+                    className={cardClassName}
                   >
                     {content}
                   </div>

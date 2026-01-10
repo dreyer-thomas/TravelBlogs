@@ -53,6 +53,23 @@ const startHttpsServer = async () => {
 
   await app.prepare();
 
+  // Backfill GPS data for existing entries on startup
+  try {
+    const { PrismaClient } = require("@prisma/client");
+    const { PrismaBetterSqlite3 } = require("@prisma/adapter-better-sqlite3");
+    const { backfillGpsData } = require("./src/utils/backfill-gps");
+
+    const databaseUrl = process.env.DATABASE_URL ?? "file:./prisma/dev.db";
+    const databasePath = databaseUrl.replace(/^file:/, "");
+    const adapter = new PrismaBetterSqlite3({ url: databasePath });
+    const prisma = new PrismaClient({ adapter });
+
+    await backfillGpsData(prisma);
+    await prisma.$disconnect();
+  } catch (error) {
+    console.error("GPS backfill failed:", error);
+  }
+
   if (isHttpsEnabled()) {
     const tlsConfig = loadTlsConfigFromEnv();
     createServer(tlsConfig, (req, res) => {

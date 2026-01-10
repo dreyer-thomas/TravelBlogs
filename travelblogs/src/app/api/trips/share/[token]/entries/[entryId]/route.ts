@@ -114,6 +114,14 @@ export const GET = async (
             url: item.url,
             createdAt: item.createdAt.toISOString(),
           })),
+          location:
+            entry.latitude !== null && entry.longitude !== null
+              ? {
+                  latitude: entry.latitude,
+                  longitude: entry.longitude,
+                  label: entry.locationName,
+                }
+              : null,
           navigation: {
             previousEntryId: previousEntry?.id ?? null,
             nextEntryId: nextEntry?.id ?? null,

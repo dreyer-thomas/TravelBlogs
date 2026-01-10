@@ -61,6 +61,9 @@ describe("GET /api/trips/share/[token]/entries/[entryId]", () => {
         title: "Entry one",
         text: "Shared content",
         createdAt: new Date("2025-09-02T08:00:00.000Z"),
+        latitude: 59.3293,
+        longitude: 18.0686,
+        locationName: "Stockholm",
         media: {
           create: [{ url: "/uploads/entries/shared-entry.jpg" }],
         },
@@ -91,6 +94,11 @@ describe("GET /api/trips/share/[token]/entries/[entryId]", () => {
     expect(body.data.id).toBe(entry.id);
     expect(body.data.tripId).toBe(trip.id);
     expect(body.data.media[0].url).toBe(entry.media[0].url);
+    expect(body.data.location).toEqual({
+      latitude: 59.3293,
+      longitude: 18.0686,
+      label: "Stockholm",
+    });
   });
 
   it("returns 404 for an invalid share token", async () => {

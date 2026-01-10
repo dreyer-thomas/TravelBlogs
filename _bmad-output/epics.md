@@ -126,9 +126,9 @@ FR22: Epic 5 - Enable contributor
 FR23: Epic 5 - Viewer access to invited trips  
 FR24: Epic 5 - Contributor add entries  
 FR25: Epic 5 - Contributor edit entries  
-FR26: Epic 6 - Map view  
+FR26: Epic 7 - Map view  
 FR27: Epic 6 - Timeline view  
-FR28: Epic 6 - Photo coordinate extraction  
+FR28: Epic 7 - Photo coordinate extraction  
 FR29: Epic 3 - Trip overview with latest entries  
 FR30: Epic 3 - Single-page entry view  
 FR31: Epic 3 - Entry navigation  
@@ -161,9 +161,13 @@ Creators can generate a shareable link so others can view trips without friction
 Admin and user management, authenticated access, and contributor permissions for trips.
 **FRs covered:** FR1, FR2, FR3, FR4, FR5, FR21, FR22, FR23, FR24, FR25, FR32, FR33
 
-### Epic 6: Map & Timeline Storytelling (Phase 3)
-Add spatial storytelling with maps, timelines, and optional location extraction.
-**FRs covered:** FR26, FR27, FR28
+### Epic 6: Timeline Storytelling (Phase 3)
+Add timeline storytelling to show the journey in order.
+**FRs covered:** FR27
+
+### Epic 7: Map Handling (Phase 3)
+Add spatial storytelling with maps and optional location extraction.
+**FRs covered:** FR26, FR28
 
 ## Epic 0: Lightweight Authentication (MVP)
 
@@ -886,26 +890,9 @@ so that view-only users cannot access trip edit flows.
 **Then** the Edit button is hidden  
 **And** I cannot open the trip edit flow from the list
 
-## Epic 6: Map & Timeline Storytelling (Phase 3)
+## Epic 6: Timeline Storytelling (Phase 3)
 
-Add spatial storytelling with maps, timelines, and optional location extraction.
-
-### Story 6.1: Trip Map View
-
-As a viewer,
-I want to see a map view with entry locations,
-So that I can understand where the trip took place.
-
-**Acceptance Criteria:**
-
-**Given** a trip has entries with location data  
-**When** I open the map view  
-**Then** I see pins for each entry location  
-**And** selecting a pin highlights the related entry  
-
-**Given** a trip has entries without location data  
-**When** I open the map view  
-**Then** I see a clear message or empty state indicating no locations are available
+Add timeline storytelling to show the journey in order.
 
 ### Story 6.2: Trip Timeline View
 
@@ -923,22 +910,6 @@ So that I can follow the journey in order.
 **Given** a trip has no entries  
 **When** I open the timeline view  
 **Then** I see a clear empty state
-
-### Story 6.3: Extract Coordinates from Photo Metadata
-
-As a creator,
-I want the system to extract location coordinates from uploaded photos,
-So that entries can be placed on the map automatically.
-
-**Acceptance Criteria:**
-
-**Given** I upload photos that contain GPS metadata  
-**When** the upload completes  
-**Then** the system extracts coordinates and associates them with the entry  
-
-**Given** I upload photos without GPS metadata  
-**When** the upload completes  
-**Then** the system leaves location empty and does not error
 
 ### Story 6.6: Date Formatting Consistency
 
@@ -963,3 +934,85 @@ so that dates are clear and uniform across the app.
 **Given** date/time displays still exist  
 **When** the UI renders date+time values  
 **Then** they remain locale-aware and consistent with existing date-time formatting utilities
+
+## Epic 7: Map Handling (Phase 3)
+
+Add spatial storytelling with maps and optional location extraction.
+
+### Story 7.1: Trip Map View
+
+As a viewer,
+I want to see a map view with entry locations,
+So that I can understand where the trip took place.
+
+**Acceptance Criteria:**
+
+**Given** a trip has entries with location data  
+**When** I open the map view  
+**Then** I see pins for each entry location  
+**And** selecting a pin highlights the related entry  
+
+**Given** a trip has entries without location data  
+**When** I open the map view  
+**Then** I see a clear message or empty state indicating no locations are available
+
+### Story 7.2: Extract Coordinates from Photo Metadata
+
+As a creator,
+I want the system to extract location coordinates from uploaded photos,
+So that entries can be placed on the map automatically.
+
+**Acceptance Criteria:**
+
+**Given** I upload photos that contain GPS metadata  
+**When** the upload completes  
+**Then** the system extracts coordinates and associates them with the entry  
+
+**Given** I upload photos without GPS metadata  
+**When** the upload completes  
+**Then** the system leaves location empty and does not error
+
+### Story 7.3: Map on Edit Trip Page
+
+As a creator,
+I want the trip map panel visible on the edit trip page,
+So that I can review location context while updating trip details.
+
+**Acceptance Criteria:**
+
+**Given** I open the edit trip page for a trip with entries that have location data  
+**When** the page loads  
+**Then** I see the map panel and entry list arranged in the same layout as the shared viewer  
+**And** map pins match the trip entry locations  
+
+**Given** I open the edit trip page for a trip with no entry locations  
+**When** the map panel renders  
+**Then** I see the same empty-state message used in the shared viewer  
+**And** the layout still matches the shared viewer styling  
+
+**Given** I select a map pin on the edit trip page  
+**When** the selection changes  
+**Then** the corresponding entry card is highlighted in the list
+
+### Story 7.4: Story Location Selector
+
+As a creator,
+I want to choose a story location even when photos have no GPS metadata,
+So that each entry can appear on the trip map.
+
+**Acceptance Criteria:**
+
+**Given** I am creating or editing a story with no photo location data  
+**When** I enter a place name (e.g., "London Tower Bridge")  
+**Then** the app searches for matching locations and shows results  
+**And** if the search is ambiguous, I am prompted to select the correct result  
+
+**Given** I select a location result  
+**When** the selection is saved  
+**Then** the story location is stored with latitude, longitude, and a readable name  
+**And** the story appears on the trip map in the overview  
+
+**Given** a story has photos with GPS data  
+**When** I hover over a photo in the story image library  
+**Then** I see a control to use that photo's location as the story location  
+**And** selecting it sets the story location to that photo's coordinates  

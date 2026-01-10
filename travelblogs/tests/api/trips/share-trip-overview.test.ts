@@ -74,6 +74,9 @@ describe("GET /api/trips/share/[token]", () => {
         title: "Day two",
         text: "New entry",
         createdAt: new Date("2025-09-03T08:00:00.000Z"),
+        latitude: 52.52,
+        longitude: 13.405,
+        locationName: "Berlin",
         media: {
           create: [{ url: "/uploads/entries/public-new.jpg" }],
         },
@@ -117,7 +120,13 @@ describe("GET /api/trips/share/[token]", () => {
       createdAt: newerEntry.createdAt.toISOString(),
       coverImageUrl: newerEntry.coverImageUrl,
       media: [{ url: newerEntry.media[0].url }],
+      location: {
+        latitude: 52.52,
+        longitude: 13.405,
+        label: "Berlin",
+      },
     });
+    expect(body.data.entries[1].location).toBeNull();
   });
 
   it("returns 404 for an invalid share token", async () => {

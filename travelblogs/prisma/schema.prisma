@@ -47,6 +47,9 @@ model Entry {
   title     String
   coverImageUrl String?
   text      String
+  latitude  Float?
+  longitude Float?
+  locationName String?
   createdAt DateTime    @default(now())
   updatedAt DateTime    @updatedAt
 

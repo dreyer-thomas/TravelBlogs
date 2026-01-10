@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/react";
 
 import SignInPage from "../../src/app/sign-in/page";
+import { LocaleProvider } from "../../src/utils/locale-context";
 
 const push = vi.fn();
 const signIn = vi.fn();
@@ -31,6 +32,9 @@ vi.mock("next-auth/react", () => ({
 }));
 
 describe("SignInPage", () => {
+  const renderWithLocale = (component: JSX.Element) =>
+    render(<LocaleProvider>{component}</LocaleProvider>);
+
   beforeEach(() => {
     signIn.mockReset();
     push.mockReset();
@@ -39,9 +43,9 @@ describe("SignInPage", () => {
   });
 
   it("shows an error when required fields are missing", async () => {
-    render(<SignInPage />);
+    renderWithLocale(<SignInPage />);
 
-    fireEvent.click(screen.getByRole("button", { name: "Sign in" }));
+    fireEvent.click(screen.getByRole("button", { name: /sign in/i }));
 
     expect(
       await screen.findByText("Email and password are required."),
@@ -55,7 +59,7 @@ describe("SignInPage", () => {
       url: null,
     });
 
-    render(<SignInPage />);
+    renderWithLocale(<SignInPage />);
 
     fireEvent.change(screen.getByLabelText("Email"), {
       target: { value: "user@example.com" },
@@ -63,7 +67,7 @@ describe("SignInPage", () => {
     fireEvent.change(screen.getByLabelText("Password"), {
       target: { value: "Password123!" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Sign in" }));
+    fireEvent.click(screen.getByRole("button", { name: /sign in/i }));
 
     expect(
       await screen.findByText("Invalid email or password."),
@@ -77,7 +81,7 @@ describe("SignInPage", () => {
       url: "http://localhost:3000/trips?from=signin",
     });
 
-    render(<SignInPage />);
+    renderWithLocale(<SignInPage />);
 
     fireEvent.change(screen.getByLabelText("Email"), {
       target: { value: "user@example.com" },
@@ -85,7 +89,7 @@ describe("SignInPage", () => {
     fireEvent.change(screen.getByLabelText("Password"), {
       target: { value: "Password123!" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Sign in" }));
+    fireEvent.click(screen.getByRole("button", { name: /sign in/i }));
 
     expect(signIn).toHaveBeenCalledWith("credentials", {
       redirect: false,
@@ -104,7 +108,7 @@ describe("SignInPage", () => {
       url: "//evil.com",
     });
 
-    render(<SignInPage />);
+    renderWithLocale(<SignInPage />);
 
     fireEvent.change(screen.getByLabelText("Email"), {
       target: { value: "user@example.com" },
@@ -112,7 +116,7 @@ describe("SignInPage", () => {
     fireEvent.change(screen.getByLabelText("Password"), {
       target: { value: "Password123!" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Sign in" }));
+    fireEvent.click(screen.getByRole("button", { name: /sign in/i }));
 
     expect(signIn).toHaveBeenCalledWith("credentials", {
       redirect: false,
@@ -131,7 +135,7 @@ describe("SignInPage", () => {
       url: "mailto:user@example.com",
     });
 
-    render(<SignInPage />);
+    renderWithLocale(<SignInPage />);
 
     fireEvent.change(screen.getByLabelText("Email"), {
       target: { value: "user@example.com" },
@@ -139,7 +143,7 @@ describe("SignInPage", () => {
     fireEvent.change(screen.getByLabelText("Password"), {
       target: { value: "Password123!" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Sign in" }));
+    fireEvent.click(screen.getByRole("button", { name: /sign in/i }));
 
     expect(signIn).toHaveBeenCalledWith("credentials", {
       redirect: false,
@@ -154,7 +158,7 @@ describe("SignInPage", () => {
   it("shows auth error messages from query params", async () => {
     authErrorValue = "INVALID_CREDENTIALS";
 
-    render(<SignInPage />);
+    renderWithLocale(<SignInPage />);
 
     expect(
       await screen.findByText("Invalid email or password."),
@@ -167,7 +171,7 @@ describe("SignInPage", () => {
       url: null,
     });
 
-    render(<SignInPage />);
+    renderWithLocale(<SignInPage />);
 
     fireEvent.change(screen.getByLabelText("Email"), {
       target: { value: "user@example.com" },
@@ -175,7 +179,7 @@ describe("SignInPage", () => {
     fireEvent.change(screen.getByLabelText("Password"), {
       target: { value: "Password123!" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Sign in" }));
+    fireEvent.click(screen.getByRole("button", { name: /sign in/i }));
 
     expect(
       await screen.findByText("Unable to sign in. Please try again."),
@@ -185,7 +189,7 @@ describe("SignInPage", () => {
   it("shows a generic error when signIn returns null", async () => {
     signIn.mockResolvedValue(null);
 
-    render(<SignInPage />);
+    renderWithLocale(<SignInPage />);
 
     fireEvent.change(screen.getByLabelText("Email"), {
       target: { value: "user@example.com" },
@@ -193,7 +197,7 @@ describe("SignInPage", () => {
     fireEvent.change(screen.getByLabelText("Password"), {
       target: { value: "Password123!" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Sign in" }));
+    fireEvent.click(screen.getByRole("button", { name: /sign in/i }));
 
     expect(
       await screen.findByText("Unable to sign in. Please try again."),
@@ -203,7 +207,7 @@ describe("SignInPage", () => {
   it("shows a generic error for unexpected query errors", async () => {
     authErrorValue = "AccessDenied";
 
-    render(<SignInPage />);
+    renderWithLocale(<SignInPage />);
 
     expect(
       await screen.findByText("Unable to sign in. Please try again."),
@@ -216,7 +220,7 @@ describe("SignInPage", () => {
       url: null,
     });
 
-    render(<SignInPage />);
+    renderWithLocale(<SignInPage />);
 
     fireEvent.change(screen.getByLabelText("Email"), {
       target: { value: "user@example.com" },
@@ -224,7 +228,7 @@ describe("SignInPage", () => {
     fireEvent.change(screen.getByLabelText("Password"), {
       target: { value: "Password123!" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Sign in" }));
+    fireEvent.click(screen.getByRole("button", { name: /sign in/i }));
 
     expect(
       await screen.findByText("Your account is inactive. Contact an admin."),
@@ -234,7 +238,7 @@ describe("SignInPage", () => {
   it("shows a not found message from query params", async () => {
     authErrorValue = "ACCOUNT_NOT_FOUND";
 
-    render(<SignInPage />);
+    renderWithLocale(<SignInPage />);
 
     expect(
       await screen.findByText("Account not found or has been removed."),

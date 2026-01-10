@@ -4,6 +4,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 
 import EditEntryForm from "../../src/components/entries/edit-entry-form";
 import { uploadEntryMediaBatch } from "../../src/utils/entry-media";
+import { LocaleProvider } from "../../src/utils/locale-context";
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({
@@ -21,6 +22,9 @@ vi.mock("../../src/utils/entry-media", async (importOriginal) => {
 });
 
 describe("EditEntryForm", () => {
+  const renderWithLocale = (component: JSX.Element) =>
+    render(<LocaleProvider>{component}</LocaleProvider>);
+
   beforeEach(() => {
     vi.clearAllMocks();
     if (!URL.createObjectURL) {
@@ -29,7 +33,7 @@ describe("EditEntryForm", () => {
   });
 
   it("shows validation errors when required fields are missing", async () => {
-    render(
+    renderWithLocale(
       <EditEntryForm
         tripId="trip-123"
         entryId="entry-123"
@@ -70,7 +74,7 @@ describe("EditEntryForm", () => {
   });
 
   it("shows a validation error for invalid media files", async () => {
-    render(
+    renderWithLocale(
       <EditEntryForm
         tripId="trip-123"
         entryId="entry-123"
@@ -116,7 +120,7 @@ describe("EditEntryForm", () => {
       ],
     }));
 
-    render(
+    renderWithLocale(
       <EditEntryForm
         tripId="trip-123"
         entryId="entry-123"
@@ -157,7 +161,7 @@ describe("EditEntryForm", () => {
       failures: [],
     }));
 
-    render(
+    renderWithLocale(
       <EditEntryForm
         tripId="trip-123"
         entryId="entry-123"
@@ -197,7 +201,7 @@ describe("EditEntryForm", () => {
       failures: [],
     }));
 
-    render(
+    renderWithLocale(
       <EditEntryForm
         tripId="trip-123"
         entryId="entry-123"
@@ -239,7 +243,7 @@ describe("EditEntryForm", () => {
       failures: [],
     }));
 
-    render(
+    renderWithLocale(
       <EditEntryForm
         tripId="trip-123"
         entryId="entry-123"
