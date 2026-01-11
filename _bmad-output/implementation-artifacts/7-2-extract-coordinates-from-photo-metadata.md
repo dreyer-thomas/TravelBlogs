@@ -1,6 +1,6 @@
 # Story 7.2: Extract Coordinates from Photo Metadata
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -136,41 +136,43 @@ None.
 ### Completion Notes List
 
 - Installed `exifr` library for server-side GPS extraction from EXIF metadata
-- Created `extractGpsFromImage` utility in [src/utils/entry-location.ts](travelblogs/src/utils/entry-location.ts) with comprehensive validation
-- Extended media upload API [src/app/api/media/upload/route.ts](travelblogs/src/app/api/media/upload/route.ts) to extract GPS and return location with upload response
+- Created `extractGpsFromImage` utility in [src/utils/image-gps.ts](src/utils/image-gps.ts) with comprehensive validation
+- Re-exported GPS function from [src/utils/entry-location.ts](src/utils/entry-location.ts) for backward compatibility
+- Extended media upload API [src/app/api/media/upload/route.ts](src/app/api/media/upload/route.ts) to extract GPS and return location with upload response
 - Location data model: Entry-level storage using existing `latitude`, `longitude`, `locationName` fields from Story 7.1
 - Strategy: First photo with GPS metadata populates entry location (client-side responsibility)
 - Graceful null handling: Missing GPS returns `location: null` without errors
 - API responses include location in camelCase format: `{ latitude, longitude }`
 - **Automatic GPS Backfill on Startup:**
-  - Created [src/utils/backfill-gps.ts](travelblogs/src/utils/backfill-gps.ts) to extract GPS from existing images
-  - Integrated with Next.js instrumentation hook in [src/instrumentation.ts](travelblogs/src/instrumentation.ts)
+  - Created [src/utils/backfill-gps.ts](src/utils/backfill-gps.ts) to extract GPS from existing images
+  - Integrated with Next.js instrumentation hook in [src/instrumentation.ts](src/instrumentation.ts)
   - Runs once on app startup (dev and production) to backfill GPS data for existing entries
   - Skips entries that already have location data
-  - Manual script available: `cd travelblogs && npx tsx scripts/run-gps-backfill.ts`
+  - Manual script available: `npx tsx scripts/run-gps-backfill.ts`
   - Note: Next.js 16.1.0+ recognizes `instrumentation.ts` by default (experimental flag not needed)
   - Both instrumentation hook and production server use BetterSqlite3 adapter (required for Prisma 7.2.0)
   - Instrumentation hook uses dynamic imports to avoid Edge Runtime compatibility issues
 - Comprehensive test coverage:
-  - Unit tests for GPS extraction utility [tests/utils/entry-location.test.ts](travelblogs/tests/utils/entry-location.test.ts)
-  - API integration tests for media upload [tests/api/media/upload.test.ts](travelblogs/tests/api/media/upload.test.ts)
-  - Backfill integration tests [tests/utils/backfill-gps.test.ts](travelblogs/tests/utils/backfill-gps.test.ts)
+  - Unit tests for GPS extraction utility [tests/utils/entry-location.test.ts](tests/utils/entry-location.test.ts)
+  - API integration tests for media upload [tests/api/media/upload.test.ts](tests/api/media/upload.test.ts)
+  - Backfill integration tests [tests/utils/backfill-gps.test.ts](tests/utils/backfill-gps.test.ts)
   - Test fixtures for images with/without GPS metadata
 - All 387 tests passing, no regressions
 
 ### File List
 
 - `_bmad-output/implementation-artifacts/7-2-extract-coordinates-from-photo-metadata.md`
-- `travelblogs/package.json` (added exifr dependency)
-- `travelblogs/src/utils/entry-location.ts` (added extractGpsFromImage function)
-- `travelblogs/src/app/api/media/upload/route.ts` (GPS extraction integration)
-- `travelblogs/src/utils/backfill-gps.ts` (new file - GPS backfill utility)
-- `travelblogs/src/instrumentation.ts` (new file - Next.js startup hook)
-- `travelblogs/next.config.ts` (cleaned up - instrumentation hook no longer needed in Next.js 16.1.0+)
-- `travelblogs/server.js` (added backfill for production startup)
-- `travelblogs/scripts/run-gps-backfill.ts` (new file - manual backfill script)
-- `travelblogs/tests/utils/entry-location.test.ts` (GPS extraction tests)
-- `travelblogs/tests/api/media/upload.test.ts` (new file)
-- `travelblogs/tests/utils/backfill-gps.test.ts` (new file - backfill tests)
-- `travelblogs/tests/fixtures/test-image-with-gps.jpg` (new test fixture)
-- `travelblogs/tests/fixtures/test-image-no-gps.jpg` (new test fixture)
+- `package.json` (added exifr dependency)
+- `src/utils/image-gps.ts` (new file - GPS extraction implementation)
+- `src/utils/entry-location.ts` (added re-export for extractGpsFromImage)
+- `src/app/api/media/upload/route.ts` (GPS extraction integration)
+- `src/utils/backfill-gps.ts` (new file - GPS backfill utility)
+- `src/instrumentation.ts` (new file - Next.js startup hook)
+- `next.config.ts` (cleaned up - instrumentation hook no longer needed in Next.js 16.1.0+)
+- `server.js` (added backfill for production startup)
+- `scripts/run-gps-backfill.ts` (new file - manual backfill script)
+- `tests/utils/entry-location.test.ts` (GPS extraction tests)
+- `tests/api/media/upload.test.ts` (new file)
+- `tests/utils/backfill-gps.test.ts` (new file - backfill tests)
+- `tests/fixtures/test-image-with-gps.jpg` (new test fixture)
+- `tests/fixtures/test-image-no-gps.jpg` (new test fixture)
