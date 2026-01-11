@@ -50,6 +50,60 @@ describe("PATCH /api/entries/[id]", () => {
     await prisma.$disconnect();
   });
 
+  it("updates entry location data", async () => {
+    const trip = await prisma.trip.create({
+      data: {
+        title: "Update Location Trip",
+        startDate: new Date("2025-06-01"),
+        endDate: new Date("2025-06-10"),
+        ownerId: "creator",
+      },
+    });
+    const entry = await prisma.entry.create({
+      data: {
+        tripId: trip.id,
+        title: "Entry without location",
+        text: "Some text",
+        media: {
+          create: [{ url: "/uploads/entries/photo.jpg" }],
+        },
+      },
+    });
+
+    const request = new Request(`http://localhost/api/entries/${entry.id}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        title: "Entry without location",
+        text: "Some text",
+        latitude: 48.8566,
+        longitude: 2.3522,
+        locationName: "Paris, France",
+      }),
+    });
+
+    const response = await patch(request, { params: { id: entry.id } });
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.error).toBeNull();
+    expect(body.data.location).toEqual({
+      latitude: 48.8566,
+      longitude: 2.3522,
+      label: "Paris, France",
+    });
+
+    const updatedEntry = await prisma.entry.findUnique({
+      where: { id: entry.id },
+    });
+
+    expect(updatedEntry?.latitude).toBe(48.8566);
+    expect(updatedEntry?.longitude).toBe(2.3522);
+    expect(updatedEntry?.locationName).toBe("Paris, France");
+  });
+
   it("updates an entry with new text and media", async () => {
     const trip = await prisma.trip.create({
       data: {

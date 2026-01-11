@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 
 import EditEntryForm from "../../src/components/entries/edit-entry-form";
@@ -30,6 +30,11 @@ describe("EditEntryForm", () => {
     if (!URL.createObjectURL) {
       URL.createObjectURL = () => "blob:preview";
     }
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.useRealTimers();
   });
 
   it("shows validation errors when required fields are missing", async () => {
@@ -279,5 +284,55 @@ describe("EditEntryForm", () => {
     expect(
       screen.queryByRole("button", { name: /remove/i }),
     ).not.toBeInTheDocument();
+  });
+
+  it("searches locations and selects a result", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          data: [
+            {
+              id: "london",
+              latitude: 51.5074,
+              longitude: -0.1278,
+              displayName: "London, United Kingdom",
+            },
+          ],
+          error: null,
+        }),
+        { status: 200 },
+      ),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    renderWithLocale(
+      <EditEntryForm
+        tripId="trip-123"
+        entryId="entry-123"
+        initialEntryDate="2025-05-03T00:00:00.000Z"
+        initialTitle="Existing title"
+        initialText="Existing text"
+        initialMediaUrls={[]}
+      />,
+    );
+
+    const locationInput = screen.getByLabelText(/story location/i);
+    fireEvent.change(locationInput, { target: { value: "London" } });
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalled(), {
+      timeout: 1000,
+    });
+
+    const resultButton = await screen.findByRole("button", {
+      name: /london, united kingdom/i,
+    });
+    fireEvent.click(resultButton);
+
+    expect(
+      await screen.findByText("London, United Kingdom"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /clear location/i }),
+    ).toBeInTheDocument();
   });
 });

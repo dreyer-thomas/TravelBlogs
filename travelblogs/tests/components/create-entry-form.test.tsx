@@ -1,9 +1,10 @@
 // @vitest-environment jsdom
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 
 import CreateEntryForm from "../../src/components/entries/create-entry-form";
 import { uploadEntryMediaBatch } from "../../src/utils/entry-media";
+import { extractGpsFromImage } from "../../src/utils/entry-location";
 import { LocaleProvider } from "../../src/utils/locale-context";
 
 vi.mock("../../src/utils/entry-media", async (importOriginal) => {
@@ -14,6 +15,10 @@ vi.mock("../../src/utils/entry-media", async (importOriginal) => {
   };
 });
 
+vi.mock("../../src/utils/entry-location", () => ({
+  extractGpsFromImage: vi.fn(),
+}));
+
 describe("CreateEntryForm", () => {
   const renderWithLocale = (component: JSX.Element) =>
     render(<LocaleProvider>{component}</LocaleProvider>);
@@ -23,6 +28,11 @@ describe("CreateEntryForm", () => {
     if (!URL.createObjectURL) {
       URL.createObjectURL = () => "blob:preview";
     }
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.useRealTimers();
   });
 
   it("shows validation errors when submitting without required fields", async () => {
@@ -218,5 +228,88 @@ describe("CreateEntryForm", () => {
     expect(
       screen.queryByRole("button", { name: /remove/i }),
     ).not.toBeInTheDocument();
+  });
+
+  it("searches locations and selects a result", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          data: [
+            {
+              id: "paris",
+              latitude: 48.8566,
+              longitude: 2.3522,
+              displayName: "Paris, France",
+            },
+          ],
+          error: null,
+        }),
+        { status: 200 },
+      ),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    renderWithLocale(<CreateEntryForm tripId="trip-123" />);
+
+    const locationInput = screen.getByLabelText(/story location/i);
+    fireEvent.change(locationInput, { target: { value: "Paris" } });
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalled(), {
+      timeout: 1000,
+    });
+
+    const resultButton = await screen.findByRole("button", {
+      name: /paris, france/i,
+    });
+    fireEvent.click(resultButton);
+
+    expect(await screen.findByText("Paris, France")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /clear location/i }),
+    ).toBeInTheDocument();
+  });
+
+  it("uses photo GPS metadata to set the story location", async () => {
+    const uploadEntryMediaBatchMock = vi.mocked(uploadEntryMediaBatch);
+    uploadEntryMediaBatchMock.mockImplementation(async (files, options) => ({
+      uploads: [
+        {
+          fileId: options?.getFileId?.(files[0]) ?? files[0].name,
+          fileName: files[0].name,
+          url: "/uploads/story.jpg",
+        },
+      ],
+      failures: [],
+    }));
+
+    const extractGpsFromImageMock = vi.mocked(extractGpsFromImage);
+    extractGpsFromImageMock.mockResolvedValue({
+      latitude: 51.5055,
+      longitude: -0.0754,
+    });
+
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(
+        new Response(new Blob(["photo"], { type: "image/jpeg" }), {
+          status: 200,
+        }),
+      );
+    vi.stubGlobal("fetch", fetchMock);
+
+    renderWithLocale(<CreateEntryForm tripId="trip-123" />);
+
+    const input = screen.getByLabelText(/entry image library/i);
+    const file = new File(["photo"], "story.jpg", { type: "image/jpeg" });
+    fireEvent.change(input, { target: { files: [file] } });
+
+    const useLocationButton = await screen.findByRole("button", {
+      name: /use photo location/i,
+    });
+    fireEvent.click(useLocationButton);
+
+    expect(
+      await screen.findByText(/photo location/i),
+    ).toBeInTheDocument();
   });
 });

@@ -63,6 +63,7 @@ const isValidEntryDate = (value: string) =>
   Boolean(value) && !Number.isNaN(Date.parse(value));
 
 const maxTitleLength = 80;
+const locationSearchDelayMs = 400;
 
 const getErrors = (
   entryDate: string,
@@ -116,6 +117,22 @@ const CreateEntryForm = ({ tripId, onEntryCreated }: CreateEntryFormProps) => {
     start: 0,
     end: 0,
   });
+  const [locationQuery, setLocationQuery] = useState("");
+  const [locationResults, setLocationResults] = useState<
+    Array<{
+      id: string;
+      latitude: number;
+      longitude: number;
+      displayName: string;
+    }>
+  >([]);
+  const [locationSearching, setLocationSearching] = useState(false);
+  const [selectedLocation, setSelectedLocation] = useState<{
+    latitude: number;
+    longitude: number;
+    locationName: string;
+  } | null>(null);
+  const skipLocationSearchRef = useRef(false);
 
   const inlineImageUrls = useMemo(
     () => extractInlineImageUrls(text),
@@ -419,6 +436,106 @@ const CreateEntryForm = ({ tripId, onEntryCreated }: CreateEntryFormProps) => {
     }
   };
 
+  const handleLocationSearch = (query: string) => {
+    setLocationQuery(query);
+  };
+
+  const handleLocationSelect = (result: {
+    latitude: number;
+    longitude: number;
+    displayName: string;
+  }) => {
+    skipLocationSearchRef.current = true;
+    setSelectedLocation({
+      latitude: result.latitude,
+      longitude: result.longitude,
+      locationName: result.displayName,
+    });
+    setLocationQuery(result.displayName);
+    setLocationResults([]);
+  };
+
+  const handleClearLocation = () => {
+    skipLocationSearchRef.current = true;
+    setSelectedLocation(null);
+    setLocationQuery("");
+    setLocationResults([]);
+  };
+
+  const handleUsePhotoLocation = async (imageUrl: string) => {
+    // Extract GPS from uploaded image
+    try {
+      const response = await fetch(imageUrl);
+      const blob = await response.blob();
+      const arrayBuffer = await blob.arrayBuffer();
+      const buffer = new Uint8Array(arrayBuffer);
+
+      // Call extractGpsFromImage utility
+      const { extractGpsFromImage } = await import("../../utils/entry-location");
+      const gpsData = await extractGpsFromImage(buffer);
+
+      if (gpsData) {
+        skipLocationSearchRef.current = true;
+        setSelectedLocation({
+          latitude: gpsData.latitude,
+          longitude: gpsData.longitude,
+          locationName: t("entries.photoLocation"),
+        });
+        setLocationQuery(t("entries.photoLocation"));
+      }
+    } catch {
+      // Silently fail if GPS extraction fails
+    }
+  };
+
+  useEffect(() => {
+    const trimmedQuery = locationQuery.trim();
+
+    if (skipLocationSearchRef.current) {
+      skipLocationSearchRef.current = false;
+      setLocationSearching(false);
+      return;
+    }
+
+    if (!trimmedQuery) {
+      setLocationResults([]);
+      setLocationSearching(false);
+      return;
+    }
+
+    let isActive = true;
+    setLocationSearching(true);
+
+    const timeout = setTimeout(async () => {
+      try {
+        const response = await fetch(
+          `/api/locations/search?query=${encodeURIComponent(trimmedQuery)}`,
+        );
+        const result = await response.json();
+        if (!isActive) {
+          return;
+        }
+        if (response.ok && result.data) {
+          setLocationResults(result.data);
+        } else {
+          setLocationResults([]);
+        }
+      } catch {
+        if (isActive) {
+          setLocationResults([]);
+        }
+      } finally {
+        if (isActive) {
+          setLocationSearching(false);
+        }
+      }
+    }, locationSearchDelayMs);
+
+    return () => {
+      isActive = false;
+      clearTimeout(timeout);
+    };
+  }, [locationQuery]);
 
   const hasFieldErrors = Boolean(
     errors.date || errors.title || errors.text || errors.media,
@@ -626,6 +743,9 @@ const CreateEntryForm = ({ tripId, onEntryCreated }: CreateEntryFormProps) => {
             : undefined,
           text: text.trim(),
           mediaUrls: mergedMediaUrls,
+          latitude: selectedLocation?.latitude,
+          longitude: selectedLocation?.longitude,
+          locationName: selectedLocation?.locationName,
         }),
       });
 
@@ -836,6 +956,27 @@ const CreateEntryForm = ({ tripId, onEntryCreated }: CreateEntryFormProps) => {
                     </button>
                     <button
                       type="button"
+                      onClick={() => handleUsePhotoLocation(url)}
+                      aria-label={t("entries.usePhotoLocation")}
+                      disabled={!canSelect}
+                      className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-[#2D2A26] shadow transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-70"
+                    >
+                      <svg
+                        aria-hidden="true"
+                        viewBox="0 0 24 24"
+                        className="h-4 w-4"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2.25"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                        <circle cx="12" cy="10" r="3" />
+                      </svg>
+                    </button>
+                    <button
+                      type="button"
                       onClick={() => handleRemoveLibraryImage(url)}
                       aria-label={t("entries.remove")}
                       className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-[#B34A3C] shadow transition hover:bg-white"
@@ -876,6 +1017,51 @@ const CreateEntryForm = ({ tripId, onEntryCreated }: CreateEntryFormProps) => {
         ) : null}
         {previewLabel ? (
           <span className="sr-only">{previewLabel}</span>
+        ) : null}
+      </div>
+
+      <div className="space-y-2">
+        <label className="block text-sm text-[#2D2A26]">
+          {t("entries.storyLocation")}
+          <input
+            type="text"
+            value={locationQuery}
+            onChange={(e) => handleLocationSearch(e.target.value)}
+            placeholder={t("entries.searchLocation")}
+            className="mt-2 w-full rounded-xl border border-black/10 px-3 py-2 text-sm focus:border-[#1F6F78] focus:outline-none focus:ring-2 focus:ring-[#1F6F78]/20"
+          />
+        </label>
+        {locationSearching ? (
+          <p className="text-xs text-[#6B635B]">{t("entries.searching")}</p>
+        ) : null}
+        {locationResults.length > 0 ? (
+          <ul className="mt-2 space-y-1 rounded-xl border border-black/10 bg-white p-2">
+            {locationResults.map((result) => (
+              <li key={result.id}>
+                <button
+                  type="button"
+                  onClick={() => handleLocationSelect(result)}
+                  className="w-full rounded-lg px-3 py-2 text-left text-sm hover:bg-[#1F6F78]/10"
+                >
+                  {result.displayName}
+                </button>
+              </li>
+            ))}
+          </ul>
+        ) : null}
+        {selectedLocation ? (
+          <div className="mt-2 flex items-center justify-between rounded-xl border border-[#1F6F78]/30 bg-[#1F6F78]/10 px-3 py-2">
+            <span className="text-sm text-[#2D2A26]">
+              {selectedLocation.locationName}
+            </span>
+            <button
+              type="button"
+              onClick={handleClearLocation}
+              className="text-xs text-[#B34A3C] hover:underline"
+            >
+              {t("entries.clearLocation")}
+            </button>
+          </div>
         ) : null}
       </div>
 

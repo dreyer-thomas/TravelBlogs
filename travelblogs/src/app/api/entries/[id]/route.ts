@@ -62,6 +62,9 @@ const updateEntrySchema = z
     mediaUrls: z
       .array(z.string().trim().min(1, "Media URL is required."))
       .optional(),
+    latitude: z.number().min(-90).max(90).optional().nullable(),
+    longitude: z.number().min(-180).max(180).optional().nullable(),
+    locationName: z.string().trim().optional().nullable(),
   })
   .superRefine((data, ctx) => {
     const inlineImages = extractInlineImageUrls(data.text);
@@ -286,6 +289,15 @@ export const PATCH = async (
           : {}),
         ...(parsed.data.entryDate
           ? { createdAt: new Date(parsed.data.entryDate) }
+          : {}),
+        ...(parsed.data.latitude !== undefined
+          ? { latitude: parsed.data.latitude }
+          : {}),
+        ...(parsed.data.longitude !== undefined
+          ? { longitude: parsed.data.longitude }
+          : {}),
+        ...(parsed.data.locationName !== undefined
+          ? { locationName: parsed.data.locationName }
           : {}),
         ...(nextMediaUrls !== undefined
           ? {

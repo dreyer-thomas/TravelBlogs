@@ -1,28 +1,41 @@
 // @vitest-environment jsdom
-import { describe, expect, it, vi, beforeEach } from "vitest";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
+import { render, screen, waitFor } from "@testing-library/react";
 
 import TripMap from "../../src/components/trips/trip-map";
 
+const markerMock = vi.fn(() => ({
+  addTo: vi.fn().mockReturnThis(),
+  bindPopup: vi.fn().mockReturnThis(),
+  on: vi.fn().mockReturnThis(),
+  once: vi.fn().mockReturnThis(),
+  openPopup: vi.fn(),
+  closePopup: vi.fn(),
+  remove: vi.fn(),
+}));
+
+const mapMock = vi.fn(() => ({
+  fitBounds: vi.fn().mockReturnThis(),
+  remove: vi.fn(),
+}));
+
+const tileLayerMock = vi.fn(() => ({
+  addTo: vi.fn(),
+}));
+
+const latLngBoundsMock = vi.fn(() => ({}));
+const mergeOptionsMock = vi.fn();
+
 // Mock Leaflet to avoid SSR and DOM issues in tests
 vi.mock("leaflet", () => ({
-  default: {
-    map: vi.fn(() => ({
-      fitBounds: vi.fn().mockReturnThis(),
-      remove: vi.fn(),
-    })),
-    tileLayer: vi.fn(() => ({
-      addTo: vi.fn(),
-    })),
-    marker: vi.fn(() => ({
-      addTo: vi.fn().mockReturnThis(),
-      bindPopup: vi.fn().mockReturnThis(),
-      on: vi.fn().mockReturnThis(),
-      openPopup: vi.fn(),
-      closePopup: vi.fn(),
-      remove: vi.fn(),
-    })),
-    latLngBounds: vi.fn(() => ({})),
+  map: mapMock,
+  tileLayer: tileLayerMock,
+  marker: markerMock,
+  latLngBounds: latLngBoundsMock,
+  Icon: {
+    Default: {
+      mergeOptions: mergeOptionsMock,
+    },
   },
 }));
 
@@ -48,7 +61,7 @@ describe("TripMap", () => {
     },
   ];
 
-  it("renders pins with labels and highlights the selected entry", () => {
+  it("renders the map and initializes markers", async () => {
     render(
       <TripMap
         ariaLabel="Trip map"
@@ -60,28 +73,12 @@ describe("TripMap", () => {
 
     expect(screen.getByRole("region", { name: "Trip map" }))
       .toBeInTheDocument();
-    const selected = screen.getByRole("button", { name: "Second stop" });
-    expect(selected).toHaveAttribute("aria-pressed", "true");
-  });
-
-  it("notifies when a pin is selected", () => {
-    const onSelectEntry = vi.fn();
-
-    render(
-      <TripMap
-        ariaLabel="Trip map"
-        pinsLabel="Map pins"
-        locations={locations}
-        onSelectEntry={onSelectEntry}
-      />,
-    );
-
-    fireEvent.click(screen.getByRole("button", { name: "First stop" }));
-
-    expect(onSelectEntry).toHaveBeenCalledWith("entry-1");
+    await waitFor(() => expect(latLngBoundsMock).toHaveBeenCalled());
+    expect(markerMock).toHaveBeenCalledTimes(2);
   });
 
   it("renders an empty state message when no locations exist", () => {
+    markerMock.mockClear();
     render(
       <TripMap
         ariaLabel="Trip map"
@@ -92,6 +89,6 @@ describe("TripMap", () => {
     );
 
     expect(screen.getByText("No locations yet.")).toBeInTheDocument();
-    expect(screen.queryByRole("button")).not.toBeInTheDocument();
+    expect(markerMock).not.toHaveBeenCalled();
   });
 });

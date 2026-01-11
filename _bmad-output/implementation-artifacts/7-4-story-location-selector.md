@@ -1,6 +1,6 @@
 # Story 7.4: Story Location Selector
 
-Status: ready-for-dev
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -27,23 +27,23 @@ so that each entry can appear on the trip map.
 
 ## Tasks / Subtasks
 
-- [ ] Add story location inputs to create/edit entry forms (AC: 1, 2, 3)
-  - [ ] Add a location search field with results list and selection state
-  - [ ] Reuse the story image hover pattern for the new "use photo location" action
-  - [ ] Provide a clear way to view or clear the selected story location
-- [ ] Implement location search API (AC: 1)
-  - [ ] Add a server route (e.g., `src/app/api/locations/search/route.ts`) to call the chosen geocoding provider
-  - [ ] Return results in `{ data, error }` with `camelCase` fields
-  - [ ] Handle ambiguous results with a selectable list
-- [ ] Persist entry location selection (AC: 2, 3)
-  - [ ] Update entry create/update payloads to accept `latitude`, `longitude`, and `locationName`
-  - [ ] Ensure `locationName` is stored alongside coordinates when chosen from search
-- [ ] Wire map overview to updated location data (AC: 2)
-  - [ ] Reuse existing `EntryLocation` shape (`latitude`, `longitude`, `label?`)
-  - [ ] Map `locationName` to `label` in API responses
-- [ ] Tests (AC: 1, 2, 3)
-  - [ ] Component tests for search results, selection, and image-location action
-  - [ ] API tests for location search responses and entry payload updates
+- [x] Add story location inputs to create/edit entry forms (AC: 1, 2, 3)
+  - [x] Add a location search field with results list and selection state
+  - [x] Reuse the story image hover pattern for the new "use photo location" action
+  - [x] Provide a clear way to view or clear the selected story location
+- [x] Implement location search API (AC: 1)
+  - [x] Add a server route (e.g., `src/app/api/locations/search/route.ts`) to call the chosen geocoding provider
+  - [x] Return results in `{ data, error }` with `camelCase` fields
+  - [x] Handle ambiguous results with a selectable list
+- [x] Persist entry location selection (AC: 2, 3)
+  - [x] Update entry create/update payloads to accept `latitude`, `longitude`, and `locationName`
+  - [x] Ensure `locationName` is stored alongside coordinates when chosen from search
+- [x] Wire map overview to updated location data (AC: 2)
+  - [x] Reuse existing `EntryLocation` shape (`latitude`, `longitude`, `label?`)
+  - [x] Map `locationName` to `label` in API responses
+- [x] Tests (AC: 1, 2, 3)
+  - [x] Component tests for search results, selection, and image-location action
+  - [x] API tests for location search responses and entry payload updates
 
 ## Dev Notes
 
@@ -146,11 +146,30 @@ None.
 
 ### Completion Notes List
 
-- Add manual location search flow with disambiguation list.
-- Add per-image "use photo location" action mirroring story image selection UI.
+- Implemented location search API using OpenStreetMap Nominatim (free, no API key required)
+- Added location fields to entry create/update schemas (latitude, longitude, locationName)
+- Created location search UI with disambiguation list in both create and edit entry forms
+- Added "use photo location" button to image hover overlay (reuses GPS extraction from Story 7.2)
+- Debounced location searches and added a lightweight server-side rate limit
+- Updated GPS extraction to work in the browser and added missing translations
+- Added component tests for location search/selection and photo-location action
+- Mocked geocoding responses in API tests to avoid network dependency
+- All API and component tests passing (36 tests for location features)
+- Map overview already wired correctly (location fields present in API responses)
 
 ### File List
 
-- `_bmad-output/implementation-artifacts/7-4-story-location-selector.md`
-- `_bmad-output/implementation-artifacts/sprint-status.yaml`
-- `_bmad-output/epics.md`
+- travelblogs/src/app/api/locations/search/route.ts
+- travelblogs/src/app/api/entries/route.ts
+- travelblogs/src/app/api/entries/[id]/route.ts
+- travelblogs/src/components/entries/create-entry-form.tsx
+- travelblogs/src/components/entries/edit-entry-form.tsx
+- travelblogs/src/utils/image-gps.ts
+- travelblogs/src/utils/i18n.ts
+- travelblogs/tests/api/locations/search-locations.test.ts
+- travelblogs/tests/api/entries/create-entry.test.ts
+- travelblogs/tests/api/entries/update-entry.test.ts
+- travelblogs/tests/components/create-entry-form.test.tsx
+- travelblogs/tests/components/edit-entry-form.test.tsx
+- _bmad-output/implementation-artifacts/7-4-story-location-selector.md
+- _bmad-output/implementation-artifacts/sprint-status.yaml

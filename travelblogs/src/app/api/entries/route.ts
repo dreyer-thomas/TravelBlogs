@@ -30,6 +30,9 @@ const createEntrySchema = z
       .array(z.string().trim().min(1, "Media URL is required."))
       .optional()
       .default([]),
+    latitude: z.number().min(-90).max(90).optional(),
+    longitude: z.number().min(-180).max(180).optional(),
+    locationName: z.string().trim().optional(),
   })
   .superRefine((data, ctx) => {
     const inlineImages = extractInlineImageUrls(data.text);
@@ -145,6 +148,9 @@ export const POST = async (request: NextRequest) => {
         text: parsed.data.text,
         createdAt,
         updatedAt: createdAt,
+        latitude: parsed.data.latitude ?? null,
+        longitude: parsed.data.longitude ?? null,
+        locationName: parsed.data.locationName ?? null,
         media: {
           create: parsed.data.mediaUrls.map((url) => ({ url })),
         },

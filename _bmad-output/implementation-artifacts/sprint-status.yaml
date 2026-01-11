@@ -115,6 +115,6 @@ development_status:
   epic-7: in-progress
   7-1-trip-map-view: done
   7-2-extract-coordinates-from-photo-metadata: done
-  7-3-map-on-edit-trip: ready-for-dev
-  7-4-story-location-selector: ready-for-dev
+  7-3-map-on-edit-trip: done
+  7-4-story-location-selector: done
   epic-7-retrospective: optional

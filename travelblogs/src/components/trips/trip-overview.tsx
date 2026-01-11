@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import TripMap from "./trip-map";
 import { useTranslation } from "../../utils/use-translation";
 import { filterEntriesWithLocation } from "../../utils/entry-location";
@@ -52,6 +53,7 @@ const TripOverview = ({
   backToTripsHref,
 }: TripOverviewProps) => {
   const { t, formatDate } = useTranslation();
+  const router = useRouter();
   const [selectedEntryId, setSelectedEntryId] = useState<string | null>(null);
   const [isMapVisible, setIsMapVisible] = useState(false);
 
@@ -68,6 +70,17 @@ const TripOverview = ({
       })),
     [entriesWithLocation],
   );
+
+  const handleOpenEntry = useCallback((entryId: string) => {
+    setSelectedEntryId(entryId);
+    if (!linkEntries) {
+      return;
+    }
+    const entryHref = entryLinkBase
+      ? `${entryLinkBase}/${entryId}`
+      : `/entries/${entryId}`;
+    router.push(entryHref);
+  }, [entryLinkBase, linkEntries, router]);
 
   // Lazy-load map after initial render to avoid blocking trip view
   useEffect(() => {
@@ -134,6 +147,7 @@ const TripOverview = ({
                     locations={mapLocations}
                     selectedEntryId={selectedEntryId}
                     onSelectEntry={setSelectedEntryId}
+                    onOpenEntry={handleOpenEntry}
                   />
                 ) : (
                   <div className="h-64 rounded-2xl bg-[#F2ECE3]" />
@@ -150,6 +164,7 @@ const TripOverview = ({
                   locations={mapLocations}
                   selectedEntryId={selectedEntryId}
                   onSelectEntry={setSelectedEntryId}
+                  onOpenEntry={handleOpenEntry}
                 />
               ) : (
                 <div className="h-64 rounded-2xl bg-[#F2ECE3]" />

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -578,6 +578,11 @@ const TripDetail = ({
     return filterEntriesWithLocation(overviewData.entries);
   }, [overviewData?.entries]);
 
+  const handleOpenEntry = useCallback((entryId: string) => {
+    setSelectedEntryId(entryId);
+    router.push(`/trips/${tripId}/entries/${entryId}`);
+  }, [router, tripId]);
+
   const mapLocations = useMemo(
     () =>
       entriesWithLocation.map((entry) => ({
@@ -1070,6 +1075,7 @@ const TripDetail = ({
                     locations={mapLocations}
                     selectedEntryId={selectedEntryId}
                     onSelectEntry={setSelectedEntryId}
+                    onOpenEntry={handleOpenEntry}
                   />
                 ) : (
                   <div className="h-64 rounded-2xl bg-[#F2ECE3]" />
@@ -1086,6 +1092,7 @@ const TripDetail = ({
                   locations={mapLocations}
                   selectedEntryId={selectedEntryId}
                   onSelectEntry={setSelectedEntryId}
+                  onOpenEntry={handleOpenEntry}
                 />
               ) : (
                 <div className="h-64 rounded-2xl bg-[#F2ECE3]" />

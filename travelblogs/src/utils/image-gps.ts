@@ -4,7 +4,7 @@
  */
 
 export const extractGpsFromImage = async (
-  buffer: Buffer,
+  buffer: ArrayBuffer | Uint8Array,
 ): Promise<{ latitude: number; longitude: number } | null> => {
   try {
     const exifr = await import("exifr");

@@ -47,6 +47,52 @@ describe("POST /api/entries", () => {
     await prisma.$disconnect();
   });
 
+  it("creates an entry with location data", async () => {
+    const trip = await prisma.trip.create({
+      data: {
+        title: "Location Test Trip",
+        startDate: new Date("2025-06-01"),
+        endDate: new Date("2025-06-10"),
+        ownerId: "creator",
+      },
+    });
+
+    const request = new Request("http://localhost/api/entries", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        tripId: trip.id,
+        title: "London day",
+        text: "Visited Tower Bridge.",
+        mediaUrls: ["/uploads/entries/london.jpg"],
+        latitude: 51.5055,
+        longitude: -0.075406,
+        locationName: "Tower Bridge, London, UK",
+      }),
+    });
+
+    const response = await post(request);
+    const body = await response.json();
+
+    expect(response.status).toBe(201);
+    expect(body.error).toBeNull();
+    expect(body.data.location).toEqual({
+      latitude: 51.5055,
+      longitude: -0.075406,
+      label: "Tower Bridge, London, UK",
+    });
+
+    const createdEntry = await prisma.entry.findUnique({
+      where: { id: body.data.id },
+    });
+
+    expect(createdEntry?.latitude).toBe(51.5055);
+    expect(createdEntry?.longitude).toBe(-0.075406);
+    expect(createdEntry?.locationName).toBe("Tower Bridge, London, UK");
+  });
+
   it("creates an entry with media for an owned trip", async () => {
     const trip = await prisma.trip.create({
       data: {

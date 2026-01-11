@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import type { Map as LeafletMap } from "leaflet";
+import type { Map as LeafletMap, PopupEvent } from "leaflet";
 import type { EntryLocation } from "../../utils/entry-location";
 
 type TripMapLocation = {
@@ -17,6 +17,7 @@ type TripMapProps = {
   locations: TripMapLocation[];
   selectedEntryId?: string | null;
   onSelectEntry?: (entryId: string) => void;
+  onOpenEntry?: (entryId: string) => void;
 };
 
 /**
@@ -37,6 +38,7 @@ const TripMap = ({
   locations,
   selectedEntryId,
   onSelectEntry,
+  onOpenEntry,
 }: TripMapProps) => {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<LeafletMap | null>(null);
@@ -44,6 +46,25 @@ const TripMap = ({
   const [mapLoaded, setMapLoaded] = useState(false);
 
   const hasLocations = locations.length > 0;
+  const handleOpenEntry = onOpenEntry ?? onSelectEntry;
+
+  const escapeHtml = (value: string) =>
+    value.replace(/[&<>"']/g, (char) => {
+      switch (char) {
+        case "&":
+          return "&amp;";
+        case "<":
+          return "&lt;";
+        case ">":
+          return "&gt;";
+        case '"':
+          return "&quot;";
+        case "'":
+          return "&#39;";
+        default:
+          return char;
+      }
+    });
 
   // Initialize map
   useEffect(() => {
@@ -57,6 +78,21 @@ const TripMap = ({
         return;
       }
 
+      L.Icon.Default.mergeOptions({
+        iconRetinaUrl: new URL(
+          "leaflet/dist/images/marker-icon-2x.png",
+          import.meta.url,
+        ).toString(),
+        iconUrl: new URL(
+          "leaflet/dist/images/marker-icon.png",
+          import.meta.url,
+        ).toString(),
+        shadowUrl: new URL(
+          "leaflet/dist/images/marker-shadow.png",
+          import.meta.url,
+        ).toString(),
+      });
+
       // Calculate map bounds from locations
       const bounds = L.latLngBounds(
         locations.map((loc) => [loc.location.latitude, loc.location.longitude]),
@@ -65,6 +101,7 @@ const TripMap = ({
       // Create map instance
       const map = L.map(mapContainerRef.current, {
         scrollWheelZoom: false,
+        closePopupOnClick: false,
       }).fitBounds(bounds, { padding: [20, 20] });
 
       // Add OpenStreetMap tiles
@@ -104,18 +141,67 @@ const TripMap = ({
 
       // Add new markers
       locations.forEach((loc) => {
+        const popupLabel = `${pinsLabel}: ${loc.title}`;
+        const popupContent = `
+          <button
+            type="button"
+            class="trip-map-popup-button"
+            data-entry-id="${escapeHtml(loc.entryId)}"
+            aria-label="${escapeHtml(popupLabel)}"
+          >
+            ${escapeHtml(loc.title)}
+          </button>
+        `;
+
         const marker = L.marker([loc.location.latitude, loc.location.longitude])
           .addTo(map)
-          .bindPopup(loc.title);
+          .bindPopup(popupContent, {
+            closeButton: false,
+            className: "trip-map-popup",
+            autoClose: false,
+            closeOnClick: false,
+          });
 
-        marker.on("click", () => {
+        const attachPopupButtonHandler = (popupEl?: HTMLElement | null) => {
+          if (!popupEl || !handleOpenEntry) {
+            return;
+          }
+          const button = popupEl.querySelector<HTMLButtonElement>(
+            'button[data-entry-id]',
+          );
+          if (!button || button.dataset.bound === "true") {
+            return;
+          }
+          const handleClick = (event: MouseEvent) => {
+            event.preventDefault();
+            handleOpenEntry(loc.entryId);
+          };
+          button.dataset.bound = "true";
+          button.addEventListener("click", handleClick);
+          marker.once("popupclose", () => {
+            button.removeEventListener("click", handleClick);
+            button.dataset.bound = "false";
+          });
+        };
+
+        marker.on("click", (event: L.LeafletMouseEvent) => {
+          event.originalEvent?.stopPropagation();
+          marker.openPopup();
           onSelectEntry?.(loc.entryId);
+          setTimeout(() => {
+            const popupEl = marker.getPopup()?.getElement();
+            attachPopupButtonHandler(popupEl ?? null);
+          }, 0);
+        });
+
+        marker.on("popupopen", (event: PopupEvent) => {
+          attachPopupButtonHandler(event.popup.getElement());
         });
 
         markersRef.current.set(loc.entryId, marker);
       });
     });
-  }, [mapLoaded, locations, onSelectEntry]);
+  }, [mapLoaded, locations, onSelectEntry, handleOpenEntry, pinsLabel]);
 
   // Highlight selected marker
   useEffect(() => {
@@ -146,26 +232,6 @@ const TripMap = ({
           </div>
         ) : null}
       </div>
-      {hasLocations ? (
-        <ul className="mt-4 flex flex-wrap gap-2" aria-label={pinsLabel}>
-          {locations.map((location) => (
-            <li key={location.entryId}>
-              <button
-                type="button"
-                onClick={() => onSelectEntry?.(location.entryId)}
-                aria-pressed={selectedEntryId === location.entryId}
-                className={
-                  selectedEntryId === location.entryId
-                    ? "rounded-full border border-[#1F6F78] bg-[#1F6F78] px-3 py-1 text-xs font-semibold text-white"
-                    : "rounded-full border border-black/10 bg-white px-3 py-1 text-xs font-semibold text-[#2D2A26] hover:border-[#1F6F78]/40"
-                }
-              >
-                {location.title}
-              </button>
-            </li>
-          ))}
-        </ul>
-      ) : null}
     </div>
   );
 };

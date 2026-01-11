@@ -31,6 +31,30 @@ const renderWithProvider = (component: React.ReactElement) => {
 };
 
 describe("TripDetail", () => {
+  const jsonResponse = (data: unknown, status = 200) =>
+    new Response(JSON.stringify({ data, error: null }), { status });
+
+  const createFetchMock = (
+    handlers: Array<{
+      match: string;
+      respond: (url: string, init?: RequestInit) => Response;
+    }>,
+  ) =>
+    vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = typeof input === "string" ? input : input.toString();
+      const handler = handlers.find(({ match }) => url.includes(match));
+      if (!handler) {
+        return new Response(
+          JSON.stringify({
+            data: null,
+            error: { code: "UNMOCKED", message: `No mock for ${url}` },
+          }),
+          { status: 500 },
+        );
+      }
+      return handler.respond(url, init);
+    });
+
   afterEach(() => {
     vi.unstubAllGlobals();
     vi.restoreAllMocks();
@@ -38,44 +62,60 @@ describe("TripDetail", () => {
   });
 
   it("renders entry titles in the list", async () => {
-    const fetchMock = vi
-      .fn()
-      .mockResolvedValueOnce(
-        new Response(
-          JSON.stringify({
-            data: {
+    const fetchMock = createFetchMock([
+      {
+        match: "/api/trips/trip-1/overview",
+        respond: () =>
+          jsonResponse({
+            trip: {
               id: "trip-1",
               title: "Italy Highlights",
               startDate: "2025-05-01T00:00:00.000Z",
               endDate: "2025-05-10T00:00:00.000Z",
               coverImageUrl: null,
-              ownerName: "Alex Owner",
             },
-            error: null,
-          }),
-          { status: 200 },
-        ),
-      )
-      .mockResolvedValueOnce(
-        new Response(
-          JSON.stringify({
-            data: [
+            entries: [
               {
                 id: "entry-1",
                 tripId: "trip-1",
                 title: "Roman morning",
                 coverImageUrl: null,
-                text: "Great day in Rome.",
                 createdAt: "2025-05-02T00:00:00.000Z",
-                updatedAt: "2025-05-02T00:00:00.000Z",
                 media: [],
+                location: null,
               },
             ],
-            error: null,
           }),
-          { status: 200 },
-        ),
-      );
+      },
+      {
+        match: "/api/entries?tripId=trip-1",
+        respond: () =>
+          jsonResponse([
+            {
+              id: "entry-1",
+              tripId: "trip-1",
+              title: "Roman morning",
+              coverImageUrl: null,
+              text: "Great day in Rome.",
+              createdAt: "2025-05-02T00:00:00.000Z",
+              updatedAt: "2025-05-02T00:00:00.000Z",
+              media: [],
+            },
+          ]),
+      },
+      {
+        match: "/api/trips/trip-1",
+        respond: () =>
+          jsonResponse({
+            id: "trip-1",
+            title: "Italy Highlights",
+            startDate: "2025-05-01T00:00:00.000Z",
+            endDate: "2025-05-10T00:00:00.000Z",
+            coverImageUrl: null,
+            ownerName: "Alex Owner",
+          }),
+      },
+    ]);
 
     vi.stubGlobal("fetch", fetchMock);
 
@@ -96,32 +136,37 @@ describe("TripDetail", () => {
   });
 
   it("shows edit trip without delete when delete access is missing", async () => {
-    const fetchMock = vi
-      .fn()
-      .mockResolvedValueOnce(
-        new Response(
-          JSON.stringify({
-            data: {
+    const fetchMock = createFetchMock([
+      {
+        match: "/api/trips/trip-2/overview",
+        respond: () =>
+          jsonResponse({
+            trip: {
               id: "trip-2",
               title: "Contributor Trip",
               startDate: "2025-06-01T00:00:00.000Z",
               endDate: "2025-06-05T00:00:00.000Z",
               coverImageUrl: null,
             },
-            error: null,
+            entries: [],
           }),
-          { status: 200 },
-        ),
-      )
-      .mockResolvedValueOnce(
-        new Response(
-          JSON.stringify({
-            data: [],
-            error: null,
+      },
+      {
+        match: "/api/entries?tripId=trip-2",
+        respond: () => jsonResponse([]),
+      },
+      {
+        match: "/api/trips/trip-2",
+        respond: () =>
+          jsonResponse({
+            id: "trip-2",
+            title: "Contributor Trip",
+            startDate: "2025-06-01T00:00:00.000Z",
+            endDate: "2025-06-05T00:00:00.000Z",
+            coverImageUrl: null,
           }),
-          { status: 200 },
-        ),
-      );
+      },
+    ]);
 
     vi.stubGlobal("fetch", fetchMock);
 
@@ -142,32 +187,37 @@ describe("TripDetail", () => {
   });
 
   it("links to edit trip details page from trip overview when canEditTrip is true", async () => {
-    const fetchMock = vi
-      .fn()
-      .mockResolvedValueOnce(
-        new Response(
-          JSON.stringify({
-            data: {
+    const fetchMock = createFetchMock([
+      {
+        match: "/api/trips/trip-5/overview",
+        respond: () =>
+          jsonResponse({
+            trip: {
               id: "trip-5",
               title: "Edit Navigation Trip",
               startDate: "2025-06-01T00:00:00.000Z",
               endDate: "2025-06-05T00:00:00.000Z",
               coverImageUrl: null,
             },
-            error: null,
+            entries: [],
           }),
-          { status: 200 },
-        ),
-      )
-      .mockResolvedValueOnce(
-        new Response(
-          JSON.stringify({
-            data: [],
-            error: null,
+      },
+      {
+        match: "/api/entries?tripId=trip-5",
+        respond: () => jsonResponse([]),
+      },
+      {
+        match: "/api/trips/trip-5",
+        respond: () =>
+          jsonResponse({
+            id: "trip-5",
+            title: "Edit Navigation Trip",
+            startDate: "2025-06-01T00:00:00.000Z",
+            endDate: "2025-06-05T00:00:00.000Z",
+            coverImageUrl: null,
           }),
-          { status: 200 },
-        ),
-      );
+      },
+    ]);
 
     vi.stubGlobal("fetch", fetchMock);
 
@@ -188,45 +238,50 @@ describe("TripDetail", () => {
   });
 
   it("shows the view button for read-only users and opens the shared view", async () => {
-    const fetchMock = vi
-      .fn()
-      .mockResolvedValueOnce(
-        new Response(
-          JSON.stringify({
-            data: {
+    const fetchMock = createFetchMock([
+      {
+        match: "/api/trips/trip-3/share-link",
+        respond: (_, init) => {
+          if (init?.method === "POST") {
+            return jsonResponse({
+              shareUrl: "http://localhost/trips/share/shared-token",
+              token: "shared-token",
+              tripId: "trip-3",
+            });
+          }
+          return jsonResponse(null, 404);
+        },
+      },
+      {
+        match: "/api/trips/trip-3/overview",
+        respond: () =>
+          jsonResponse({
+            trip: {
               id: "trip-3",
               title: "Viewer Trip",
               startDate: "2025-06-01T00:00:00.000Z",
               endDate: "2025-06-05T00:00:00.000Z",
               coverImageUrl: null,
             },
-            error: null,
+            entries: [],
           }),
-          { status: 200 },
-        ),
-      )
-      .mockResolvedValueOnce(
-        new Response(
-          JSON.stringify({
-            data: [],
-            error: null,
+      },
+      {
+        match: "/api/trips/trip-3",
+        respond: () =>
+          jsonResponse({
+            id: "trip-3",
+            title: "Viewer Trip",
+            startDate: "2025-06-01T00:00:00.000Z",
+            endDate: "2025-06-05T00:00:00.000Z",
+            coverImageUrl: null,
           }),
-          { status: 200 },
-        ),
-      )
-      .mockResolvedValueOnce(
-        new Response(
-          JSON.stringify({
-            data: {
-              shareUrl: "http://localhost/trips/share/shared-token",
-              token: "shared-token",
-              tripId: "trip-3",
-            },
-            error: null,
-          }),
-          { status: 200 },
-        ),
-      );
+      },
+      {
+        match: "/api/entries?tripId=trip-3",
+        respond: () => jsonResponse([]),
+      },
+    ]);
 
     vi.stubGlobal("fetch", fetchMock);
 
@@ -265,58 +320,59 @@ describe("TripDetail", () => {
   });
 
   it("lists only eligible users in the transfer ownership selector", async () => {
-    const fetchMock = vi
-      .fn()
-      .mockResolvedValueOnce(
-        new Response(
-          JSON.stringify({
-            data: {
+    const fetchMock = createFetchMock([
+      {
+        match: "/api/trips/trip-4/transfer-ownership",
+        respond: () =>
+          jsonResponse([
+            {
+              id: "admin-1",
+              name: "Admin",
+              email: "admin@example.com",
+              role: "administrator",
+              createdAt: "2025-06-01T00:00:00.000Z",
+              updatedAt: "2025-06-01T00:00:00.000Z",
+            },
+            {
+              id: "viewer-1",
+              name: "Viewer",
+              email: "viewer@example.com",
+              role: "viewer",
+              createdAt: "2025-06-01T00:00:00.000Z",
+              updatedAt: "2025-06-01T00:00:00.000Z",
+            },
+          ]),
+      },
+      {
+        match: "/api/trips/trip-4/overview",
+        respond: () =>
+          jsonResponse({
+            trip: {
               id: "trip-4",
               title: "Transfer Trip",
               startDate: "2025-06-01T00:00:00.000Z",
               endDate: "2025-06-05T00:00:00.000Z",
               coverImageUrl: null,
             },
-            error: null,
+            entries: [],
           }),
-          { status: 200 },
-        ),
-      )
-      .mockResolvedValueOnce(
-        new Response(
-          JSON.stringify({
-            data: [],
-            error: null,
+      },
+      {
+        match: "/api/trips/trip-4",
+        respond: () =>
+          jsonResponse({
+            id: "trip-4",
+            title: "Transfer Trip",
+            startDate: "2025-06-01T00:00:00.000Z",
+            endDate: "2025-06-05T00:00:00.000Z",
+            coverImageUrl: null,
           }),
-          { status: 200 },
-        ),
-      )
-      .mockResolvedValueOnce(
-        new Response(
-          JSON.stringify({
-            data: [
-              {
-                id: "admin-1",
-                name: "Admin",
-                email: "admin@example.com",
-                role: "administrator",
-                createdAt: "2025-06-01T00:00:00.000Z",
-                updatedAt: "2025-06-01T00:00:00.000Z",
-              },
-              {
-                id: "viewer-1",
-                name: "Viewer",
-                email: "viewer@example.com",
-                role: "viewer",
-                createdAt: "2025-06-01T00:00:00.000Z",
-                updatedAt: "2025-06-01T00:00:00.000Z",
-              },
-            ],
-            error: null,
-          }),
-          { status: 200 },
-        ),
-      );
+      },
+      {
+        match: "/api/entries?tripId=trip-4",
+        respond: () => jsonResponse([]),
+      },
+    ]);
 
     vi.stubGlobal("fetch", fetchMock);
 
