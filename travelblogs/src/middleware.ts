@@ -8,6 +8,11 @@ const publicTripEntryView = (pathname: string) => {
     if (segments.length === 3) {
       return true;
     }
+    // Allow /trips/share/{token}/map
+    if (segments.length === 4 && segments[3] === "map") {
+      return true;
+    }
+    // Allow /trips/share/{token}/entries/{entryId}
     return segments.length === 5 && segments[3] === "entries";
   }
 
