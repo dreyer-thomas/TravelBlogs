@@ -28,6 +28,26 @@ const renderWithProvider = (component: React.ReactElement) => {
   return render(<LocaleProvider>{component}</LocaleProvider>);
 };
 
+// Helper to create overview response mock
+const createOverviewMock = (tripId: string, entries: unknown[] = []) => {
+  return new Response(
+    JSON.stringify({
+      data: {
+        trip: {
+          id: tripId,
+          title: "Italy Highlights",
+          startDate: "2025-05-01T00:00:00.000Z",
+          endDate: "2025-05-10T00:00:00.000Z",
+          coverImageUrl: null,
+        },
+        entries,
+      },
+      error: null,
+    }),
+    { status: 200 },
+  );
+};
+
 describe("TripDetail share panel", () => {
   afterEach(() => {
     vi.unstubAllGlobals();
@@ -60,6 +80,7 @@ describe("TripDetail share panel", () => {
           { status: 200 },
         ),
       )
+      .mockResolvedValueOnce(createOverviewMock("trip-1"))
       .mockResolvedValueOnce(new Response(null, { status: 404 }));
 
     vi.stubGlobal("fetch", fetchMock);
@@ -121,6 +142,7 @@ describe("TripDetail share panel", () => {
           { status: 200 },
         ),
       )
+      .mockResolvedValueOnce(createOverviewMock("trip-1"))
       .mockResolvedValueOnce(new Response(null, { status: 404 }))
       .mockResolvedValueOnce(
         new Response(
@@ -226,6 +248,7 @@ describe("TripDetail share panel", () => {
           { status: 200 },
         ),
       )
+      .mockResolvedValueOnce(createOverviewMock("trip-1"))
       .mockResolvedValueOnce(
         new Response(
           JSON.stringify({
@@ -303,6 +326,7 @@ describe("TripDetail share panel", () => {
           { status: 200 },
         ),
       )
+      .mockResolvedValueOnce(createOverviewMock("trip-1"))
       .mockResolvedValueOnce(
         new Response(
           JSON.stringify({
@@ -415,6 +439,7 @@ describe("TripDetail share panel", () => {
           { status: 200 },
         ),
       )
+      .mockResolvedValueOnce(createOverviewMock("trip-1"))
       .mockResolvedValueOnce(new Response(null, { status: 404 }))
       .mockResolvedValueOnce(
         new Response(
@@ -540,6 +565,7 @@ describe("TripDetail share panel", () => {
           { status: 200 },
         ),
       )
+      .mockResolvedValueOnce(createOverviewMock("trip-1"))
       .mockResolvedValueOnce(new Response(null, { status: 404 }))
       .mockResolvedValueOnce(
         new Response(
@@ -648,6 +674,7 @@ describe("TripDetail share panel", () => {
           { status: 200 },
         ),
       )
+      .mockResolvedValueOnce(createOverviewMock("trip-1"))
       .mockResolvedValueOnce(new Response(null, { status: 404 }))
       .mockResolvedValueOnce(
         new Response(
@@ -734,6 +761,7 @@ describe("TripDetail share panel", () => {
           { status: 200 },
         ),
       )
+      .mockResolvedValueOnce(createOverviewMock("trip-1"))
       .mockResolvedValueOnce(new Response(null, { status: 404 }))
       .mockResolvedValueOnce(
         new Response(
@@ -814,6 +842,7 @@ describe("TripDetail share panel", () => {
           { status: 200 },
         ),
       )
+      .mockResolvedValueOnce(createOverviewMock("trip-1"))
       .mockResolvedValueOnce(new Response(null, { status: 404 }))
       .mockResolvedValueOnce(
         new Response(
@@ -910,6 +939,7 @@ describe("TripDetail share panel", () => {
           { status: 200 },
         ),
       )
+      .mockResolvedValueOnce(createOverviewMock("trip-1"))
       .mockResolvedValueOnce(new Response(null, { status: 404 }))
       .mockResolvedValueOnce(
         new Response(

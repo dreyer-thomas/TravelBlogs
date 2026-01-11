@@ -5,9 +5,12 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import DeleteTripModal from "./delete-trip-modal";
+import TripMap from "./trip-map";
 import { isCoverImageUrl } from "../../utils/media";
 import { extractInlineImageUrls, stripInlineImages } from "../../utils/entry-content";
 import { useTranslation } from "../../utils/use-translation";
+import { filterEntriesWithLocation } from "../../utils/entry-location";
+import type { EntryLocation } from "../../utils/entry-location";
 
 type TripDetail = {
   id: string;
@@ -78,6 +81,25 @@ type EntrySummary = {
   media: EntryMedia[];
 };
 
+type TripOverviewData = {
+  trip: {
+    id: string;
+    title: string;
+    startDate: string;
+    endDate: string;
+    coverImageUrl: string | null;
+  };
+  entries: {
+    id: string;
+    tripId: string;
+    title: string;
+    createdAt: string;
+    coverImageUrl: string | null;
+    media: { url: string }[];
+    location?: EntryLocation | null;
+  }[];
+};
+
 const isOptimizedImage = (url: string) => url.startsWith("/");
 
 const TripDetail = ({
@@ -131,6 +153,11 @@ const TripDetail = ({
   const [isRevokeOpen, setIsRevokeOpen] = useState(false);
   const [isRevoking, setIsRevoking] = useState(false);
   const [revokeError, setRevokeError] = useState<string | null>(null);
+  const [overviewData, setOverviewData] = useState<TripOverviewData | null>(null);
+  const [overviewLoading, setOverviewLoading] = useState(true);
+  const [overviewError, setOverviewError] = useState<string | null>(null);
+  const [selectedEntryId, setSelectedEntryId] = useState<string | null>(null);
+  const [isMapVisible, setIsMapVisible] = useState(false);
   const inviteeMenuRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -207,6 +234,46 @@ const TripDetail = ({
     };
 
     loadEntries();
+
+    return () => {
+      isActive = false;
+    };
+  }, [tripId]);
+
+  useEffect(() => {
+    let isActive = true;
+    setOverviewLoading(true);
+    setOverviewError(null);
+
+    const loadOverview = async () => {
+      try {
+        const response = await fetch(`/api/trips/${tripId}/overview`, {
+          method: "GET",
+          credentials: "include",
+          cache: "no-store",
+        });
+        const body = await response.json().catch(() => null);
+
+        if (!response.ok || body?.error) {
+          throw new Error(body?.error?.message ?? t("trips.unableLoadTrip"));
+        }
+
+        if (isActive) {
+          setOverviewData((body?.data as TripOverviewData) ?? null);
+          setOverviewLoading(false);
+        }
+      } catch (err) {
+        if (isActive) {
+          setOverviewData(null);
+          setOverviewError(
+            err instanceof Error ? err.message : t("trips.unableLoadTrip"),
+          );
+          setOverviewLoading(false);
+        }
+      }
+    };
+
+    loadOverview();
 
     return () => {
       isActive = false;
@@ -505,6 +572,41 @@ const TripDetail = ({
         new Date(left.createdAt).getTime() - new Date(right.createdAt).getTime(),
     );
   }, [entries]);
+
+  const entriesWithLocation = useMemo(() => {
+    if (!overviewData?.entries) return [];
+    return filterEntriesWithLocation(overviewData.entries);
+  }, [overviewData?.entries]);
+
+  const mapLocations = useMemo(
+    () =>
+      entriesWithLocation.map((entry) => ({
+        entryId: entry.id,
+        title: entry.title,
+        location: entry.location!,
+      })),
+    [entriesWithLocation],
+  );
+
+  // Lazy-load map after initial render
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsMapVisible(true);
+    }, 100);
+    return () => clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    if (!selectedEntryId || !overviewData?.entries) {
+      return;
+    }
+    const stillVisible = overviewData.entries.some(
+      (entry) => entry.id === selectedEntryId,
+    );
+    if (!stillVisible) {
+      setSelectedEntryId(null);
+    }
+  }, [overviewData?.entries, selectedEntryId]);
 
 
   if (isLoading) {
@@ -948,17 +1050,48 @@ const TripDetail = ({
           </header>
 
           {trip.coverImageUrl && isCoverImageUrl(trip.coverImageUrl) ? (
-            <div className="relative mt-6 h-56 w-full overflow-hidden rounded-2xl bg-[#F2ECE3]">
-              <Image
-                src={trip.coverImageUrl}
-                alt={`Cover for ${trip.title}`}
-                fill
-                sizes="(min-width: 768px) 768px, 100vw"
-                className="object-cover"
-                loading="lazy"
-              />
+            <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
+              <div className="relative h-64 w-full overflow-hidden rounded-2xl bg-[#F2ECE3]">
+                <Image
+                  src={trip.coverImageUrl}
+                  alt={`Cover for ${trip.title}`}
+                  fill
+                  sizes="(min-width: 1024px) 50vw, 100vw"
+                  className="object-cover"
+                  loading="lazy"
+                />
+              </div>
+              <div className="space-y-3">
+                {isMapVisible ? (
+                  <TripMap
+                    ariaLabel={t("trips.tripMap")}
+                    pinsLabel={t("trips.mapPins")}
+                    emptyMessage={t("trips.noLocations")}
+                    locations={mapLocations}
+                    selectedEntryId={selectedEntryId}
+                    onSelectEntry={setSelectedEntryId}
+                  />
+                ) : (
+                  <div className="h-64 rounded-2xl bg-[#F2ECE3]" />
+                )}
+              </div>
             </div>
-          ) : null}
+          ) : (
+            <div className="mt-6 space-y-3">
+              {isMapVisible ? (
+                <TripMap
+                  ariaLabel={t("trips.tripMap")}
+                  pinsLabel={t("trips.mapPins")}
+                  emptyMessage={t("trips.noLocations")}
+                  locations={mapLocations}
+                  selectedEntryId={selectedEntryId}
+                  onSelectEntry={setSelectedEntryId}
+                />
+              ) : (
+                <div className="h-64 rounded-2xl bg-[#F2ECE3]" />
+              )}
+            </div>
+          )}
 
           <div className="mt-6 flex flex-wrap items-center gap-3 text-sm text-[#6B635B]">
             <div className="flex items-center gap-2">
@@ -1311,7 +1444,6 @@ const TripDetail = ({
           </div>
         ) : null}
 
-
         <section className="rounded-2xl border border-black/10 bg-white p-8 shadow-sm">
           {canAddEntry ? (
             <div className="flex flex-wrap items-center justify-between gap-4">
@@ -1353,11 +1485,17 @@ const TripDetail = ({
                   entry.media[0]?.url ||
                   inlineImages[0];
 
+                const isSelected = entry.id === selectedEntryId;
                 return (
                   <Link
                     key={entry.id}
                     href={`/trips/${trip.id}/entries/${entry.id}`}
-                    className="flex items-center gap-4 rounded-xl border border-black/10 bg-white px-4 py-3 transition hover:border-[#1F6F78]/40 hover:shadow-sm"
+                    className={`flex items-center gap-4 rounded-xl border px-4 py-3 transition hover:shadow-sm ${
+                      isSelected
+                        ? "border-[#1F6F78] bg-[#1F6F78]/5 hover:border-[#1F6F78]"
+                        : "border-black/10 bg-white hover:border-[#1F6F78]/40"
+                    }`}
+                    aria-current={isSelected ? "true" : undefined}
                   >
                     {cardImageUrl ? (
                       <div
