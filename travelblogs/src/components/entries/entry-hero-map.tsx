@@ -66,7 +66,6 @@ const EntryHeroMap = ({
         zoomControl: false,
         attributionControl: false,
         touchZoom: false,
-        tap: false,
       });
 
       L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {

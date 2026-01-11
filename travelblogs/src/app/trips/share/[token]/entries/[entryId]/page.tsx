@@ -135,7 +135,7 @@ const SharedEntryPage = async ({ params }: SharedEntryPageProps) => {
         .map((entry) => entry.location ?? null)
         .filter(
           (location): location is EntryLocation =>
-            Boolean(location) &&
+            location !== null &&
             Number.isFinite(location.latitude) &&
             Number.isFinite(location.longitude),
         );
