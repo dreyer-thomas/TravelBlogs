@@ -6,6 +6,7 @@ import { authOptions } from "../../../../../utils/auth-options";
 import { prisma } from "../../../../../utils/db";
 import EntryDetail from "../../../../../components/entries/entry-detail";
 import { canContributeToTrip, hasTripAccess } from "../../../../../utils/trip-access";
+import type { EntryLocation } from "../../../../../utils/entry-location";
 
 export const dynamic = "force-dynamic";
 
@@ -31,6 +32,13 @@ type EntryData = {
   createdAt: string;
   updatedAt: string;
   media: EntryMedia[];
+  location?: EntryLocation | null;
+};
+
+type EntryMapLocation = {
+  entryId: string;
+  title: string;
+  location: EntryLocation;
 };
 
 const EntryDetailPage = async ({ params }: EntryDetailPageProps) => {
@@ -64,6 +72,43 @@ const EntryDetailPage = async ({ params }: EntryDetailPageProps) => {
     : await canContributeToTrip(entry.tripId, session.user.id);
   const canDelete = isOwner;
 
+  const location =
+    entry.latitude !== null && entry.longitude !== null
+      ? {
+          latitude: entry.latitude,
+          longitude: entry.longitude,
+          label: entry.locationName,
+        }
+      : null;
+
+  const tripEntries = await prisma.entry.findMany({
+    where: { tripId },
+    select: {
+      id: true,
+      title: true,
+      latitude: true,
+      longitude: true,
+      locationName: true,
+    },
+  });
+
+  const tripLocations: EntryMapLocation[] = tripEntries.flatMap((item) => {
+    if (item.latitude === null || item.longitude === null) {
+      return [];
+    }
+    return [
+      {
+        entryId: item.id,
+        title: item.title,
+        location: {
+          latitude: item.latitude,
+          longitude: item.longitude,
+          label: item.locationName,
+        },
+      },
+    ];
+  });
+
   const entryData: EntryData = {
     id: entry.id,
     tripId: entry.tripId,
@@ -77,10 +122,16 @@ const EntryDetailPage = async ({ params }: EntryDetailPageProps) => {
       url: item.url,
       createdAt: item.createdAt.toISOString(),
     })),
+    location,
   };
 
   return (
-    <EntryDetail entry={entryData} canEdit={canEdit} canDelete={canDelete} />
+    <EntryDetail
+      entry={entryData}
+      canEdit={canEdit}
+      canDelete={canDelete}
+      tripLocations={tripLocations}
+    />
   );
 };
 

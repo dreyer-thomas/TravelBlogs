@@ -6,6 +6,7 @@ import Link from "next/link";
 
 import DeleteEntryModal from "./delete-entry-modal";
 import FullScreenPhotoViewer from "./full-screen-photo-viewer";
+import TripMap from "../trips/trip-map";
 import {
   DEFAULT_INLINE_ALT,
   extractInlineImageUrls,
@@ -13,6 +14,10 @@ import {
   getPhotoTimestamp,
   parseEntryContent,
 } from "../../utils/entry-content";
+import {
+  formatEntryLocationDisplay,
+  type EntryLocation,
+} from "../../utils/entry-location";
 import { useTranslation } from "../../utils/use-translation";
 
 type EntryMedia = {
@@ -30,17 +35,30 @@ type EntryData = {
   createdAt: string;
   updatedAt: string;
   media: EntryMedia[];
+  location?: EntryLocation | null;
+};
+
+type EntryMapLocation = {
+  entryId: string;
+  title: string;
+  location: EntryLocation;
 };
 
 type EntryDetailProps = {
   entry: EntryData;
   canEdit: boolean;
   canDelete: boolean;
+  tripLocations?: EntryMapLocation[];
 };
 
 const isOptimizedImage = (url: string) => url.startsWith("/");
 
-const EntryDetail = ({ entry, canEdit, canDelete }: EntryDetailProps) => {
+const EntryDetail = ({
+  entry,
+  canEdit,
+  canDelete,
+  tripLocations = [],
+}: EntryDetailProps) => {
   const { t, formatDate } = useTranslation();
   const [viewerIndex, setViewerIndex] = useState(0);
   const [isViewerOpen, setIsViewerOpen] = useState(false);
@@ -62,6 +80,25 @@ const EntryDetail = ({ entry, canEdit, canDelete }: EntryDetailProps) => {
     () => (entry ? extractInlineImageUrls(entry.text) : []),
     [entry],
   );
+  const locationDisplay = useMemo(
+    () => formatEntryLocationDisplay(entry.location),
+    [entry.location],
+  );
+  const entryMapLocations = useMemo(() => {
+    if (!entry.location) {
+      return [];
+    }
+    const title = entry.title?.trim()
+      ? entry.title
+      : t("entries.dailyEntry");
+    return [
+      {
+        entryId: entry.id,
+        title,
+        location: entry.location,
+      },
+    ];
+  }, [entry.id, entry.location, entry.title, t]);
   const galleryItems = useMemo(() => {
     if (!entry) {
       return [];
@@ -254,6 +291,30 @@ const EntryDetail = ({ entry, canEdit, canDelete }: EntryDetailProps) => {
             </div>
           )}
         </section>
+
+        {locationDisplay ? (
+          <section className="rounded-2xl border border-black/10 bg-white p-6 shadow-sm">
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <p className="text-xs uppercase tracking-[0.2em] text-[#6B635B]">
+                  {t("entries.entryLocationLabel")}
+                </p>
+                <p className="text-lg font-semibold text-[#2D2A26]">
+                  {locationDisplay}
+                </p>
+              </div>
+              {entryMapLocations.length > 0 ? (
+                <TripMap
+                  ariaLabel={t("entries.entryLocationMap")}
+                  pinsLabel={t("trips.mapPins")}
+                  locations={entryMapLocations}
+                  boundsLocations={tripLocations}
+                  selectedEntryId={entry.id}
+                />
+              ) : null}
+            </div>
+          </section>
+        ) : null}
 
         {canEdit || canDelete ? (
           <section className="rounded-2xl border border-black/10 bg-white p-6 shadow-sm">

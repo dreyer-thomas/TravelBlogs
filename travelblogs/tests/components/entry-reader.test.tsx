@@ -380,4 +380,73 @@ describe("EntryReader", () => {
       screen.queryByLabelText("Entry details"),
     ).not.toBeInTheDocument();
   });
+
+  it("renders the location section when entry has location data (shared view)", () => {
+    render(
+      <LocaleProvider>
+        <EntryReader
+          isSharedView
+          entry={{
+            id: "entry-100",
+            title: "Location test",
+            body: "Testing location display in shared view.",
+            createdAt: "2025-05-20T00:00:00.000Z",
+            media: [
+              {
+                id: "media-100",
+                url: "https://example.com/photo.jpg",
+                width: 1600,
+                height: 1000,
+              },
+            ],
+            location: {
+              latitude: 52.52,
+              longitude: 13.405,
+              label: "Berlin",
+            },
+          }}
+          heroMapLocations={[
+            {
+              latitude: 52.52,
+              longitude: 13.405,
+              label: "Berlin",
+            },
+          ]}
+        />
+      </LocaleProvider>,
+    );
+
+    expect(screen.getByText("Location")).toBeInTheDocument();
+    expect(screen.getByText("Berlin")).toBeInTheDocument();
+    expect(
+      screen.getByRole("region", { name: "Trip map" }),
+    ).toBeInTheDocument();
+  });
+
+  it("hides the location section when entry has no location (shared view)", () => {
+    render(
+      <LocaleProvider>
+        <EntryReader
+          isSharedView
+          entry={{
+            id: "entry-101",
+            title: "No location",
+            body: "No location data.",
+            createdAt: "2025-05-21T00:00:00.000Z",
+            media: [
+              {
+                id: "media-101",
+                url: "https://example.com/photo2.jpg",
+                width: 1600,
+                height: 1000,
+              },
+            ],
+            location: null,
+          }}
+        />
+      </LocaleProvider>,
+    );
+
+    expect(screen.queryByText("Location")).not.toBeInTheDocument();
+  });
 });

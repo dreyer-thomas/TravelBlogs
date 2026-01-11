@@ -17,6 +17,25 @@ export type EntryWithLocation = {
   location?: EntryLocation | null;
 };
 
+export const formatEntryLocationDisplay = (
+  location?: EntryLocation | null,
+): string | null => {
+  if (!location) {
+    return null;
+  }
+  const label = location.label?.trim();
+  if (label) {
+    return label;
+  }
+  if (
+    !Number.isFinite(location.latitude) ||
+    !Number.isFinite(location.longitude)
+  ) {
+    return null;
+  }
+  return `${location.latitude.toFixed(4)}, ${location.longitude.toFixed(4)}`;
+};
+
 export const hasEntryLocation = (entry: EntryWithLocation): boolean => {
   const location = entry.location;
   if (!location) {

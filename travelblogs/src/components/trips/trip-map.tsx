@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { Map as LeafletMap, PopupEvent } from "leaflet";
 import type { EntryLocation } from "../../utils/entry-location";
 
@@ -15,6 +15,7 @@ type TripMapProps = {
   pinsLabel: string;
   emptyMessage?: string;
   locations: TripMapLocation[];
+  boundsLocations?: TripMapLocation[];
   selectedEntryId?: string | null;
   onSelectEntry?: (entryId: string) => void;
   onOpenEntry?: (entryId: string) => void;
@@ -36,6 +37,7 @@ const TripMap = ({
   pinsLabel,
   emptyMessage,
   locations,
+  boundsLocations,
   selectedEntryId,
   onSelectEntry,
   onOpenEntry,
@@ -47,6 +49,12 @@ const TripMap = ({
 
   const hasLocations = locations.length > 0;
   const handleOpenEntry = onOpenEntry ?? onSelectEntry;
+  const boundsSource = useMemo(() => {
+    if (boundsLocations && boundsLocations.length > 0) {
+      return boundsLocations;
+    }
+    return locations;
+  }, [boundsLocations, locations]);
 
   const escapeHtml = (value: string) =>
     value.replace(/[&<>"']/g, (char) => {
@@ -93,10 +101,10 @@ const TripMap = ({
         ).toString(),
       });
 
-      // Calculate map bounds from locations
-      const bounds = L.latLngBounds(
-        locations.map((loc) => [loc.location.latitude, loc.location.longitude]),
-      );
+    // Calculate map bounds from locations
+    const bounds = L.latLngBounds(
+      boundsSource.map((loc) => [loc.location.latitude, loc.location.longitude]),
+    );
 
       // Create map instance
       const map = L.map(mapContainerRef.current, {
@@ -123,7 +131,7 @@ const TripMap = ({
         setMapLoaded(false);
       }
     };
-  }, [hasLocations, locations]);
+  }, [hasLocations, boundsSource, locations]);
 
   // Update markers when locations change
   useEffect(() => {

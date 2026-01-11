@@ -8,9 +8,11 @@ import MediaGallery from "../media/media-gallery";
 import { DEFAULT_INLINE_ALT, parseEntryContent } from "../../utils/entry-content";
 import type { EntryReaderData } from "../../utils/entry-reader";
 import type { EntryLocation } from "../../utils/entry-location";
+import { formatEntryLocationDisplay } from "../../utils/entry-location";
 import FullScreenPhotoViewer from "./full-screen-photo-viewer";
 import { useTranslation } from "../../utils/use-translation";
 import EntryHeroMap from "./entry-hero-map";
+import TripMap from "../trips/trip-map";
 
 type EntryReaderProps = {
   entry: EntryReaderData;
@@ -280,6 +282,40 @@ const EntryReader = ({
               viewerImages.length > 0 ? startSlideshow : undefined
             }
           />
+        ) : null}
+
+        {entry.location && formatEntryLocationDisplay(entry.location) ? (
+          <section className="rounded-2xl border border-black/10 bg-white p-6 shadow-sm">
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <p className="text-xs uppercase tracking-[0.2em] text-[#6B635B]">
+                  {t("entries.entryLocationLabel")}
+                </p>
+                <p className="text-lg font-semibold text-[#2D2A26]">
+                  {formatEntryLocationDisplay(entry.location)}
+                </p>
+              </div>
+              {heroMapLocations && heroMapLocations.length > 0 ? (
+                <TripMap
+                  ariaLabel={t("trips.tripMap")}
+                  pinsLabel={t("trips.mapPins")}
+                  locations={[
+                    {
+                      entryId: entry.id,
+                      title: entry.title || t("entries.dailyEntry"),
+                      location: entry.location,
+                    },
+                  ]}
+                  boundsLocations={heroMapLocations.map((loc, idx) => ({
+                    entryId: `trip-entry-${idx}`,
+                    title: "",
+                    location: loc,
+                  }))}
+                  selectedEntryId={entry.id}
+                />
+              ) : null}
+            </div>
+          </section>
         ) : null}
 
         <nav className="grid gap-4 sm:grid-cols-2">

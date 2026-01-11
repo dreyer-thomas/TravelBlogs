@@ -1016,3 +1016,29 @@ So that each entry can appear on the trip map.
 **When** I hover over a photo in the story image library  
 **Then** I see a control to use that photo's location as the story location  
 **And** selecting it sets the story location to that photo's coordinates  
+
+### Story 7.6: Entry Location Section
+
+As a viewer,
+I want to see the entry location in the entry view,
+so that I understand where the story took place.
+
+**Acceptance Criteria:**
+
+**Given** I open an entry that has a saved story location  
+**When** the entry page renders  
+**Then** I see a "Location" section after the Media section at the bottom of the page  
+**And** the section shows the location name  
+**And** the section optionally shows latitude/longitude when available  
+
+**Given** I open an entry with no saved location  
+**When** the entry page renders  
+**Then** the Location section is hidden (no empty placeholder)  
+
+**Given** I view the entry on mobile or desktop  
+**When** the Location section is displayed  
+**Then** it follows the existing entry layout and responsive spacing  
+
+**Given** the Location section is displayed  
+**When** I view UI text  
+**Then** all user-facing strings are available in English and German
