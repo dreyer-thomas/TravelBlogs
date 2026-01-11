@@ -152,6 +152,7 @@ Codex (GPT-5)
 - ✅ Tests: `travelblogs/tests/components/trip-detail.test.tsx`.
 - ✅ Code review completed: Fixed 3 MEDIUM issues (keyboard focus, URL validation, dead code) and 2 LOW issues (test coverage, consistent error handling).
 - ✅ All 419 tests passing.
+- ✅ Fixed TypeScript build error: Replaced `filterEntriesWithLocation` with inline filter to match `FullscreenTripMapEntry` type.
 
 ### File List
 

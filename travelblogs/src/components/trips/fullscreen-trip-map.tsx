@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { Map as LeafletMap } from "leaflet";
 
-import { filterEntriesWithLocation } from "../../utils/entry-location";
 import type { EntryLocation } from "../../utils/entry-location";
 
 type FullscreenTripMapEntry = {
@@ -100,18 +99,27 @@ const FullscreenTripMap = ({
       ? entryLinkBase.slice(0, -1)
       : entryLinkBase;
 
-    return filterEntriesWithLocation(entries).map((entry) => {
-      const heroImageUrl = sanitizeUrl(getPreviewImage(entry), "/window.svg");
-      const entryHref = sanitizeEntryUrl(`${base}/${entry.id}`, "#");
+    return entries
+      .filter((entry) => {
+        const location = entry.location;
+        return (
+          location &&
+          Number.isFinite(location.latitude) &&
+          Number.isFinite(location.longitude)
+        );
+      })
+      .map((entry) => {
+        const heroImageUrl = sanitizeUrl(getPreviewImage(entry), "/window.svg");
+        const entryHref = sanitizeEntryUrl(`${base}/${entry.id}`, "#");
 
-      return {
-        entryId: entry.id,
-        title: entry.title,
-        location: entry.location!,
-        heroImageUrl,
-        entryHref,
-      };
-    });
+        return {
+          entryId: entry.id,
+          title: entry.title,
+          location: entry.location!,
+          heroImageUrl,
+          entryHref,
+        };
+      });
   }, [entries, entryLinkBase]);
 
   const hasLocations = mapLocations.length > 0;
