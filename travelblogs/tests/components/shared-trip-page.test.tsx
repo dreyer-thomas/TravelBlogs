@@ -27,6 +27,13 @@ vi.mock("next/link", () => ({
   ),
 }));
 
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({
+    push: vi.fn(),
+    refresh: vi.fn(),
+  }),
+}));
+
 describe("Shared Trip Page Navigation", () => {
   it("renders back to trips link on shared trip overview", () => {
     render(

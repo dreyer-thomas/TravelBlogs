@@ -70,7 +70,17 @@ describe("TripDetail - Map Integration", () => {
       .mockResolvedValueOnce(
         new Response(
           JSON.stringify({
-            data: [],
+            data: [
+              {
+                id: "entry-1",
+                tripId: "trip-1",
+                title: "Base camp",
+                createdAt: "2025-06-02T12:00:00.000Z",
+                coverImageUrl: "/uploads/entries/base.jpg",
+                media: [{ url: "/uploads/entries/base.jpg" }],
+                text: "Base camp setup.",
+              },
+            ],
             error: null,
           }),
           { status: 200 },

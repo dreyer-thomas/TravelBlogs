@@ -1,19 +1,23 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 
 import MediaGallery from "../media/media-gallery";
 import { DEFAULT_INLINE_ALT, parseEntryContent } from "../../utils/entry-content";
 import type { EntryReaderData } from "../../utils/entry-reader";
+import type { EntryLocation } from "../../utils/entry-location";
 import FullScreenPhotoViewer from "./full-screen-photo-viewer";
 import { useTranslation } from "../../utils/use-translation";
+import EntryHeroMap from "./entry-hero-map";
 
 type EntryReaderProps = {
   entry: EntryReaderData;
   entryLinkBase?: string;
   backToTripHref?: string;
+  isSharedView?: boolean;
+  heroMapLocations?: EntryLocation[];
 };
 
 const isOptimizedImage = (url: string) => url.startsWith("/");
@@ -22,9 +26,11 @@ const EntryReader = ({
   entry,
   entryLinkBase,
   backToTripHref,
+  isSharedView = false,
+  heroMapLocations,
 }: EntryReaderProps) => {
   const { t, formatDate } = useTranslation();
-  const resolveAltText = (alt?: string | null) => {
+  const resolveAltText = useCallback((alt?: string | null) => {
     if (!alt) {
       return null;
     }
@@ -32,7 +38,7 @@ const EntryReader = ({
       return t("entries.entryPhoto");
     }
     return alt;
-  };
+  }, [t]);
 
   const getNavLabel = (title?: string | null, date?: string | null) => {
     if (title && title.trim()) {
@@ -45,6 +51,9 @@ const EntryReader = ({
   };
   const heroMedia = entry.media[0];
   const galleryItems = entry.media;
+  const entryTitle = entry.title || t("entries.dailyEntry");
+  const entryDate = formatDate(new Date(entry.createdAt));
+  const showSharedHeroOverlay = isSharedView;
   const contentBlocks = useMemo(
     () => parseEntryContent(entry.body ?? ""),
     [entry.body],
@@ -76,7 +85,7 @@ const EntryReader = ({
     });
 
     return Array.from(images.values());
-  }, [contentBlocks, entry.media, entry.title, t]);
+  }, [contentBlocks, entry.media, entry.title, resolveAltText, t]);
   const hasBodyContent =
     contentBlocks.some(
       (block) => block.type === "text" && block.value.trim(),
@@ -131,6 +140,7 @@ const EntryReader = ({
     setIsViewerOpen(false);
   }, []);
 
+
   return (
     <div className="min-h-screen bg-[#FBF7F1]">
       <main className="mx-auto flex w-full max-w-5xl flex-col gap-10 px-6 py-12">
@@ -142,39 +152,72 @@ const EntryReader = ({
             ← {t('entries.backToTrip')}
           </Link>
         ) : null}
-        <header className="space-y-3">
-          <p className="text-xs uppercase tracking-[0.2em] text-[#6B635B]">
-            {formatDate(new Date(entry.createdAt))}
-          </p>
-          <h1 className="text-4xl font-semibold text-[#2D2A26] sm:text-5xl">
-            {entry.title || t('entries.dailyEntry')}
-          </h1>
-        </header>
+        {!isSharedView ? (
+          <header className="space-y-3">
+            <p className="text-xs uppercase tracking-[0.2em] text-[#6B635B]">
+              {entryDate}
+            </p>
+            <h1 className="text-4xl font-semibold text-[#2D2A26] sm:text-5xl">
+              {entryTitle}
+            </h1>
+          </header>
+        ) : null}
 
         <section className="overflow-hidden rounded-3xl border border-black/10 bg-white shadow-sm">
-          {heroMedia ? (
-            <button
-              type="button"
-              onClick={() => openViewerAtUrl(heroMedia.url)}
-              className="block w-full focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2D2A26]"
-              aria-label={t('entries.openHeroPhoto')}
-            >
-              <Image
-                src={heroMedia.url}
-                alt={heroMedia.alt ?? t('entries.entryHeroMedia')}
-                width={heroMedia.width ?? 1600}
-                height={heroMedia.height ?? 1000}
-                sizes="(min-width: 1024px) 960px, 100vw"
-                className="h-auto w-full object-cover"
-                loading="lazy"
-                unoptimized={!isOptimizedImage(heroMedia.url)}
-              />
-            </button>
-          ) : (
-            <div className="flex min-h-[320px] items-center justify-center bg-[#F2ECE3] text-sm text-[#6B635B]">
-              {t('entries.noMediaAvailable')}
-            </div>
-          )}
+          <div className="relative isolate">
+            {heroMedia ? (
+              <button
+                type="button"
+                onClick={() => openViewerAtUrl(heroMedia.url)}
+                className="relative z-0 block w-full focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2D2A26]"
+                aria-label={t("entries.openHeroPhoto")}
+              >
+                <Image
+                  src={heroMedia.url}
+                  alt={heroMedia.alt ?? t("entries.entryHeroMedia")}
+                  width={heroMedia.width ?? 1600}
+                  height={heroMedia.height ?? 1000}
+                  sizes="(min-width: 1024px) 960px, 100vw"
+                  className="h-auto w-full object-cover"
+                  loading="lazy"
+                  unoptimized={!isOptimizedImage(heroMedia.url)}
+                />
+              </button>
+            ) : (
+              <div className="flex min-h-[320px] items-center justify-center bg-[#F2ECE3] text-sm text-[#6B635B]">
+                {t("entries.noMediaAvailable")}
+              </div>
+            )}
+            {showSharedHeroOverlay ? (
+              <>
+                <div
+                  role="group"
+                  aria-label={t("entries.entryHeroOverlay")}
+                  className="pointer-events-none absolute left-0 top-0 z-30 px-6 pt-6 sm:px-8 sm:pt-8"
+                >
+                  <div
+                    className="max-w-[32rem] space-y-2 rounded-2xl bg-black/45 px-4 py-3 shadow-xl shadow-black/40 backdrop-blur-sm sm:px-5 sm:py-4"
+                  >
+                    <p className="text-xs uppercase tracking-[0.3em] text-white drop-shadow-sm">
+                      {entryDate}
+                    </p>
+                    <h1 className="text-3xl font-semibold text-white drop-shadow-sm sm:text-4xl">
+                      {entryTitle}
+                    </h1>
+                  </div>
+                </div>
+                {entry.location ? (
+                  <div className="absolute bottom-4 right-4 z-30 sm:bottom-6 sm:right-6">
+                    <EntryHeroMap
+                      location={entry.location}
+                      boundsLocations={heroMapLocations}
+                      ariaLabel={t("entries.entryLocationMap")}
+                    />
+                  </div>
+                ) : null}
+              </>
+            ) : null}
+          </div>
         </section>
 
         <section className="rounded-3xl border border-black/10 bg-white p-8 shadow-sm">

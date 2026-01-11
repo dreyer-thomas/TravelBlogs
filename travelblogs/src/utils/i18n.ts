@@ -211,6 +211,8 @@ const translations = {
       entryDate: 'Entry date',
       entryTitle: 'Entry title',
       entryText: 'Entry text',
+      entryHeroOverlay: 'Entry details',
+      entryLocationMap: 'Entry location map',
       entryDateRequired: 'Entry date is required.',
       entryTitleRequired: 'Entry title is required.',
       entryTextRequired: 'Entry text is required.',
@@ -625,6 +627,8 @@ const translations = {
       entryDate: 'Eintragsdatum',
       entryTitle: 'Eintragstitel',
       entryText: 'Eintragstext',
+      entryHeroOverlay: 'Eintragsdetails',
+      entryLocationMap: 'Eintragskarte',
       entryDateRequired: 'Eintragsdatum ist erforderlich.',
       entryTitleRequired: 'Eintragstitel ist erforderlich.',
       entryTextRequired: 'Eintragstext ist erforderlich.',
@@ -840,11 +844,11 @@ const translations = {
  */
 export function getTranslation(key: string, locale: Locale): string {
   const keys = key.split('.');
-  let value: any = translations[locale];
+  let value: unknown = translations[locale];
 
   for (const k of keys) {
     if (value && typeof value === 'object' && k in value) {
-      value = value[k];
+      value = (value as Record<string, unknown>)[k];
     } else {
       // Fallback to key if translation not found
       return key;

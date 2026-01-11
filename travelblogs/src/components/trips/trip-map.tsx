@@ -153,7 +153,10 @@ const TripMap = ({
           </button>
         `;
 
-        const marker = L.marker([loc.location.latitude, loc.location.longitude])
+        const marker = L.marker([loc.location.latitude, loc.location.longitude], {
+          title: loc.title,
+          alt: loc.title,
+        })
           .addTo(map)
           .bindPopup(popupContent, {
             closeButton: false,

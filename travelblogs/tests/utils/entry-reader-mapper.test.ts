@@ -24,6 +24,7 @@ describe("mapEntryToReader", () => {
       title: "Rainy afternoon",
       body: "Warm cafes and misty streets.",
       createdAt: "2025-05-03T00:00:00.000Z",
+      location: null,
       media: [
         {
           id: "media-1",

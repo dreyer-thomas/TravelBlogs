@@ -1,3 +1,4 @@
+import type { EntryLocation } from "./entry-location";
 import { findInlineImageAlt } from "./entry-content";
 
 export type EntryApiMedia = {
@@ -14,6 +15,7 @@ export type EntryApiData = {
   createdAt: string;
   coverImageUrl?: string | null;
   media: EntryApiMedia[];
+  location?: EntryLocation | null;
   navigation?: EntryApiNavigation;
 };
 
@@ -50,6 +52,7 @@ export type EntryReaderData = {
   body: string;
   createdAt: string;
   media: EntryReaderMedia[];
+  location?: EntryLocation | null;
   navigation?: EntryReaderNavigation;
 };
 
@@ -102,6 +105,7 @@ export const mapEntryToReader = (entry: EntryApiData): EntryReaderData => {
       height: null,
       alt: findInlineImageAlt(entry.text, item.url),
     })),
+    location: entry.location ?? null,
     navigation: {
       previousEntryId: entry.navigation?.previousEntryId ?? null,
       nextEntryId: entry.navigation?.nextEntryId ?? null,

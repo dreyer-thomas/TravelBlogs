@@ -90,14 +90,13 @@ const TripOverview = ({
     return () => clearTimeout(timer);
   }, []);
 
-  useEffect(() => {
+  const resolvedSelectedEntryId = useMemo(() => {
     if (!selectedEntryId) {
-      return;
+      return null;
     }
-    const stillVisible = entries.some((entry) => entry.id === selectedEntryId);
-    if (!stillVisible) {
-      setSelectedEntryId(null);
-    }
+    return entries.some((entry) => entry.id === selectedEntryId)
+      ? selectedEntryId
+      : null;
   }, [entries, selectedEntryId]);
 
   return (
@@ -145,7 +144,7 @@ const TripOverview = ({
                     pinsLabel={t("trips.mapPins")}
                     emptyMessage={t("trips.noLocations")}
                     locations={mapLocations}
-                    selectedEntryId={selectedEntryId}
+                    selectedEntryId={resolvedSelectedEntryId}
                     onSelectEntry={setSelectedEntryId}
                     onOpenEntry={handleOpenEntry}
                   />
@@ -162,7 +161,7 @@ const TripOverview = ({
                   pinsLabel={t("trips.mapPins")}
                   emptyMessage={t("trips.noLocations")}
                   locations={mapLocations}
-                  selectedEntryId={selectedEntryId}
+                  selectedEntryId={resolvedSelectedEntryId}
                   onSelectEntry={setSelectedEntryId}
                   onOpenEntry={handleOpenEntry}
                 />
@@ -190,7 +189,7 @@ const TripOverview = ({
             <div className="mt-6 space-y-4">
               {entries.map((entry) => {
                 const previewImage = getPreviewImage(entry);
-                const isSelected = selectedEntryId === entry.id;
+                const isSelected = resolvedSelectedEntryId === entry.id;
                 const content = (
                   <>
                     <div

@@ -5,7 +5,9 @@ This guide covers deploying Epic 7 changes to your production server.
 ## What Changed
 
 - **Story 7.1**: Added Leaflet map view with OpenStreetMap tiles
-- **Story 7.2**: GPS coordinate extraction from photo EXIF data (pending)
+- **Story 7.2**: GPS coordinate extraction from photo EXIF data
+- **Story 7.3**: Map panel added to edit trip page with shared viewer layout
+- **Story 7.4**: Manual story location selector + geocoding search with popup entry links
 - **Database**: Added `latitude`, `longitude`, `locationName` fields to Entry table
 
 ## Prerequisites
@@ -15,6 +17,16 @@ This guide covers deploying Epic 7 changes to your production server.
 - Node.js and npm installed on production server
 
 ## Deployment Steps
+
+### Epic 6 → Epic 7 Upgrade Checklist
+
+- Confirm production is running the last Epic 6 tag/commit
+- Pull latest Epic 7 code (stories 7.1–7.4)
+- Install dependencies (`leaflet`, `react-leaflet`, `@types/leaflet`, `exifr`)
+- Apply Prisma migration `20260110183000_add_entry_location_fields`
+- Build and restart the app
+- Verify map markers and story popups render
+- Verify story location search + photo GPS selection work
 
 ### 1. Connect to Production Server
 
@@ -43,10 +55,11 @@ This installs Leaflet and related packages:
 npm install
 ```
 
-**New packages added:**
+**New packages added (Epic 7):**
 - `leaflet@^1.9.4` - Map rendering library
 - `react-leaflet@^5.0.0` - React bindings for Leaflet
 - `@types/leaflet@^1.9.21` - TypeScript types (dev dependency)
+- `exifr@^7.1.3` - EXIF GPS extraction for uploaded photos
 
 ### 5. Apply Database Migration
 
@@ -96,8 +109,23 @@ sudo systemctl restart travelblogs
 2. Verify:
    - If trip has no entries with location data: Empty state message appears
    - If trip has entries with location data: OpenStreetMap tiles load and markers appear
-   - Click on a map marker: Corresponding entry highlights in the list
-   - Click on entry pin buttons below map: Entry highlights and marker popup opens
+   - Click on a map marker: Entry highlights and a popup with the story title opens
+   - Click the popup title: Opens the entry page
+
+### Check Edit Trip Map
+
+1. Navigate to any edit trip page
+2. Verify:
+   - Map panel renders in the same layout as the shared viewer
+   - Marker click behavior matches the overview page
+
+### Check Manual Story Location
+
+1. Create/edit an entry and type a place name
+2. Verify:
+   - Search results appear and can be selected
+   - Selected location persists on save
+   - "Use photo location" is available on image hover for GPS-tagged images
 
 ### Check for Errors
 
@@ -187,11 +215,12 @@ npm run build
 - **Bundle size increase:** ~150KB gzipped (Leaflet library)
 - **Map tile caching:** Browser automatically caches tiles
 - **First load:** 100ms delay before map initialization (prevents blocking)
+- **Geocoding:** Location search is debounced in the UI and rate-limited server-side
 
 ## Security Notes
 
 - OpenStreetMap tiles are served over HTTPS
-- No API keys required for OSM tiles
+- Location search uses OpenStreetMap Nominatim (no API key required)
 - Attribution required: Already included in map component
 
 ## Support
@@ -204,6 +233,6 @@ If issues arise:
 
 ---
 
-**Last Updated:** 2026-01-10
+**Last Updated:** 2026-01-11
 **Epic:** 7 - Location Features
-**Stories Completed:** 7.1 (Map View)
+**Stories Completed:** 7.1, 7.2, 7.3, 7.4

@@ -7,6 +7,33 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import EntryReader from "../../src/components/entries/entry-reader";
 import { LocaleProvider } from "../../src/utils/locale-context";
 
+const mapMock = vi.fn(() => ({
+  setView: vi.fn().mockReturnThis(),
+  remove: vi.fn(),
+}));
+
+const markerMock = vi.fn(() => ({
+  addTo: vi.fn().mockReturnThis(),
+  remove: vi.fn(),
+}));
+
+const tileLayerMock = vi.fn(() => ({
+  addTo: vi.fn(),
+}));
+
+const mergeOptionsMock = vi.fn();
+
+vi.mock("leaflet", () => ({
+  map: mapMock,
+  tileLayer: tileLayerMock,
+  marker: markerMock,
+  Icon: {
+    Default: {
+      mergeOptions: mergeOptionsMock,
+    },
+  },
+}));
+
 vi.mock("next/image", () => ({
   default: (props: ImgHTMLAttributes<HTMLImageElement>) => {
     const { priority, unoptimized, fill, ...rest } = props;
@@ -241,5 +268,116 @@ describe("EntryReader", () => {
     expect(
       screen.getByRole("link", { name: /back to trip/i }),
     ).toHaveAttribute("href", "/trips/share/token-3");
+  });
+
+  it("renders shared hero overlays with date and title", () => {
+    render(
+      <LocaleProvider>
+        <EntryReader
+          isSharedView
+          entry={{
+            id: "entry-7",
+            title: "Morning in Kyoto",
+            body: "Temple walks and tea breaks.",
+            createdAt: "2025-05-03T12:00:00.000Z",
+            media: [
+              {
+                id: "media-40",
+                url: "https://example.com/hero.jpg",
+                width: 1600,
+                height: 1000,
+              },
+            ],
+          }}
+        />
+      </LocaleProvider>,
+    );
+
+    const overlay = screen.getByLabelText("Entry details");
+    expect(overlay).toBeInTheDocument();
+
+    // Validate overlay is positioned in upper-left within hero image
+    expect(overlay).toHaveClass("absolute", "left-0", "top-0");
+
+    expect(screen.getByText("May 3rd, 2025")).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Morning in Kyoto" }),
+    ).toBeInTheDocument();
+  });
+
+  it("shows a location map overlay only when location exists", () => {
+    const entry = {
+      id: "entry-8",
+      title: "Harbor view",
+      body: "Salt air.",
+      createdAt: "2025-05-07T00:00:00.000Z",
+      media: [
+        {
+          id: "media-41",
+          url: "https://example.com/hero-harbor.jpg",
+          width: 1600,
+          height: 1000,
+        },
+      ],
+    };
+
+    const { rerender } = render(
+      <LocaleProvider>
+        <EntryReader
+          isSharedView
+          entry={{
+            ...entry,
+            location: {
+              latitude: 35.0116,
+              longitude: 135.7681,
+              label: "Kyoto",
+            },
+          }}
+        />
+      </LocaleProvider>,
+    );
+
+    const mapOverlay = screen.getByLabelText("Entry location map");
+    expect(mapOverlay).toBeInTheDocument();
+
+    // Validate map overlay is positioned in lower-right within hero image
+    expect(mapOverlay.parentElement).toHaveClass("absolute", "bottom-4", "right-4");
+
+    rerender(
+      <LocaleProvider>
+        <EntryReader isSharedView entry={entry} />
+      </LocaleProvider>,
+    );
+
+    expect(
+      screen.queryByLabelText("Entry location map"),
+    ).not.toBeInTheDocument();
+  });
+
+  it("keeps non-shared entry reader hero layout unchanged", () => {
+    render(
+      <LocaleProvider>
+        <EntryReader
+          entry={{
+            id: "entry-9",
+            title: "Non shared",
+            body: "No overlays.",
+            createdAt: "2025-05-08T00:00:00.000Z",
+            media: [
+              {
+                id: "media-42",
+                url: "https://example.com/hero-non-shared.jpg",
+                width: 1600,
+                height: 1000,
+              },
+            ],
+          }}
+        />
+      </LocaleProvider>,
+    );
+
+    expect(
+      screen.queryByLabelText("Entry details"),
+    ).not.toBeInTheDocument();
   });
 });

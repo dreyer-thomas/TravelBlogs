@@ -8,6 +8,7 @@ import SharedEntryError from "../../../../../../components/entries/shared-entry-
 import type { EntryApiData } from "../../../../../../utils/entry-reader";
 import { mapEntryToReader } from "../../../../../../utils/entry-reader";
 import { getRequestBaseUrl } from "../../../../../../utils/request-base-url";
+import type { EntryLocation } from "../../../../../../utils/entry-location";
 
 export const dynamic = "force-dynamic";
 
@@ -25,6 +26,17 @@ type ApiError = {
 
 type ApiResponse = {
   data: EntryApiData | null;
+  error: ApiError | null;
+};
+
+type SharedTripEntry = {
+  location?: EntryLocation | null;
+};
+
+type SharedTripResponse = {
+  data: {
+    entries: SharedTripEntry[];
+  } | null;
   error: ApiError | null;
 };
 
@@ -59,6 +71,33 @@ const loadSharedEntry = async (
   };
 };
 
+const loadSharedTripLocations = async (
+  baseUrl: string,
+  token: string,
+): Promise<SharedTripResponse> => {
+  const response = await fetch(`${baseUrl}/api/trips/share/${token}`, {
+    method: "GET",
+    cache: "no-store",
+  });
+
+  const body = await response.json().catch(() => null);
+
+  if (!response.ok || body?.error) {
+    return {
+      data: null,
+      error: {
+        code: body?.error?.code ?? "UNKNOWN_ERROR",
+        message: body?.error?.message ?? undefined,
+      },
+    };
+  }
+
+  return {
+    data: (body?.data ?? null) as SharedTripResponse["data"],
+    error: null,
+  };
+};
+
 const SharedEntryPage = async ({ params }: SharedEntryPageProps) => {
   noStore();
 
@@ -81,12 +120,36 @@ const SharedEntryPage = async ({ params }: SharedEntryPageProps) => {
     return <SharedEntryError message={error?.message} type="load" />;
   }
 
+  const readerEntry = mapEntryToReader(data);
+
+  // Only fetch trip-wide locations if this entry has a location
+  // This provides bounds context for the hero map
+  let heroMapLocations: EntryLocation[] | undefined;
+  if (readerEntry.location) {
+    const { data: sharedTripData } = await loadSharedTripLocations(
+      baseUrl,
+      token,
+    );
+    if (sharedTripData?.entries) {
+      heroMapLocations = sharedTripData.entries
+        .map((entry) => entry.location ?? null)
+        .filter(
+          (location): location is EntryLocation =>
+            Boolean(location) &&
+            Number.isFinite(location.latitude) &&
+            Number.isFinite(location.longitude),
+        );
+    }
+  }
+
   return (
     <SharedTripGuard token={token}>
       <EntryReader
-        entry={mapEntryToReader(data)}
+        entry={readerEntry}
         entryLinkBase={`/trips/share/${token}/entries`}
         backToTripHref={`/trips/share/${token}`}
+        isSharedView
+        heroMapLocations={heroMapLocations}
       />
     </SharedTripGuard>
   );

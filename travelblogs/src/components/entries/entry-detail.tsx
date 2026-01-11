@@ -47,12 +47,12 @@ const EntryDetail = ({ entry, canEdit, canDelete }: EntryDetailProps) => {
   const [viewerMode, setViewerMode] = useState<"viewer" | "slideshow">(
     "viewer",
   );
-  const resolveAltText = (alt?: string | null) => {
+  const resolveAltText = useCallback((alt?: string | null) => {
     if (!alt || alt === DEFAULT_INLINE_ALT) {
       return t("entries.entryPhoto");
     }
     return alt;
-  };
+  }, [t]);
 
   const contentBlocks = useMemo(
     () => (entry ? parseEntryContent(entry.text) : []),
@@ -100,7 +100,7 @@ const EntryDetail = ({ entry, canEdit, canDelete }: EntryDetailProps) => {
       url: item.url,
       alt: resolveAltText(findInlineImageAlt(entry.text, item.url)),
     }));
-  }, [entry, galleryItems, t]);
+  }, [entry, galleryItems, resolveAltText]);
 
   const openViewerAtUrl = useCallback(
     (url: string) => {
