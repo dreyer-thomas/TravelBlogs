@@ -1,11 +1,13 @@
 import { notFound } from "next/navigation";
 import { unstable_noStore as noStore } from "next/cache";
 import { headers } from "next/headers";
+import { getServerSession } from "next-auth";
 
 import TripOverview from "../../../../components/trips/trip-overview";
 import SharedTripGuard from "../../../../components/trips/shared-trip-guard";
 import SharedTripError from "../../../../components/trips/shared-trip-error";
 import { getRequestBaseUrl } from "../../../../utils/request-base-url";
+import { authOptions } from "../../../../utils/auth-options";
 import type { EntryLocation } from "../../../../utils/entry-location";
 
 export const dynamic = "force-dynamic";
@@ -93,13 +95,17 @@ const SharedTripPage = async ({
     return <SharedTripError message={error?.message} type="load" />;
   }
 
+  // Check if user is authenticated - show back link only for logged-in users
+  const session = await getServerSession(authOptions);
+  const isAuthenticated = !!session?.user?.id;
+
   return (
     <SharedTripGuard token={token}>
       <TripOverview
         trip={data.trip}
         entries={data.entries}
         entryLinkBase={`/trips/share/${token}/entries`}
-        backToTripsHref="/trips"
+        backToTripsHref={isAuthenticated ? "/trips" : undefined}
         mapHref={`/trips/share/${token}/map`}
       />
     </SharedTripGuard>
