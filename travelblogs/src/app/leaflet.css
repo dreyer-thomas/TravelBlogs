@@ -26,3 +26,51 @@
   outline: 2px solid rgba(31, 111, 120, 0.35);
   outline-offset: 2px;
 }
+
+.trip-map-popup-rich .leaflet-popup-content-wrapper {
+  border-radius: 20px;
+  min-width: 240px;
+}
+
+.trip-map-popup-rich .leaflet-popup-content {
+  margin: 12px 14px;
+}
+
+.trip-map-popup-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+}
+
+.trip-map-popup-image {
+  height: 140px;
+  width: 220px;
+  overflow: hidden;
+  border-radius: 12px;
+  background: #f2ece3;
+}
+
+.trip-map-popup-image img {
+  display: block;
+  height: 100%;
+  width: 100%;
+  object-fit: cover;
+}
+
+.trip-map-popup-link {
+  display: block;
+  border-radius: 12px;
+  background: #1f6f78;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  padding: 8px 12px;
+  text-decoration: none;
+}
+
+.trip-map-popup-link:focus-visible {
+  outline: 2px solid rgba(31, 111, 120, 0.35);
+  outline-offset: 2px;
+}

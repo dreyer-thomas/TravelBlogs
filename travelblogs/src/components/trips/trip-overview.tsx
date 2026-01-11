@@ -33,6 +33,7 @@ type TripOverviewProps = {
   linkEntries?: boolean;
   entryLinkBase?: string;
   backToTripsHref?: string;
+  mapHref?: string;
 };
 
 const isOptimizedImage = (url: string) => url.startsWith("/");
@@ -51,6 +52,7 @@ const TripOverview = ({
   linkEntries = true,
   entryLinkBase,
   backToTripsHref,
+  mapHref,
 }: TripOverviewProps) => {
   const { t, formatDate } = useTranslation();
   const router = useRouter();
@@ -98,6 +100,45 @@ const TripOverview = ({
       ? selectedEntryId
       : null;
   }, [entries, selectedEntryId]);
+  const mapActionLabel = t("trips.viewFullMap");
+
+  const mapContent = isMapVisible ? (
+    <div className="relative isolate">
+      <TripMap
+        ariaLabel={t("trips.tripMap")}
+        pinsLabel={t("trips.mapPins")}
+        emptyMessage={t("trips.noLocations")}
+        locations={mapLocations}
+        selectedEntryId={resolvedSelectedEntryId}
+        onSelectEntry={setSelectedEntryId}
+        onOpenEntry={handleOpenEntry}
+      />
+      {mapHref ? (
+        <Link
+          href={mapHref}
+          aria-label={mapActionLabel}
+          className="absolute right-4 top-4 z-[1000] inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/70 bg-[#1F6F78] text-white shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2D2A26] pointer-events-auto"
+        >
+          <span className="sr-only">{mapActionLabel}</span>
+          <svg
+            aria-hidden="true"
+            viewBox="0 0 24 24"
+            className="h-4 w-4"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M12 21s6-5.4 6-10a6 6 0 1 0-12 0c0 4.6 6 10 6 10Z" />
+            <circle cx="12" cy="11" r="2.5" />
+          </svg>
+        </Link>
+      ) : null}
+    </div>
+  ) : (
+    <div className="h-64 rounded-2xl bg-[#F2ECE3]" />
+  );
 
   return (
     <div className="min-h-screen bg-[#FBF7F1] px-6 py-12">
@@ -138,36 +179,12 @@ const TripOverview = ({
                 />
               </div>
               <div className="space-y-3">
-                {isMapVisible ? (
-                  <TripMap
-                    ariaLabel={t("trips.tripMap")}
-                    pinsLabel={t("trips.mapPins")}
-                    emptyMessage={t("trips.noLocations")}
-                    locations={mapLocations}
-                    selectedEntryId={resolvedSelectedEntryId}
-                    onSelectEntry={setSelectedEntryId}
-                    onOpenEntry={handleOpenEntry}
-                  />
-                ) : (
-                  <div className="h-64 rounded-2xl bg-[#F2ECE3]" />
-                )}
+                {mapContent}
               </div>
             </div>
           ) : (
             <div className="mt-6 space-y-3">
-              {isMapVisible ? (
-                <TripMap
-                  ariaLabel={t("trips.tripMap")}
-                  pinsLabel={t("trips.mapPins")}
-                  emptyMessage={t("trips.noLocations")}
-                  locations={mapLocations}
-                  selectedEntryId={resolvedSelectedEntryId}
-                  onSelectEntry={setSelectedEntryId}
-                  onOpenEntry={handleOpenEntry}
-                />
-              ) : (
-                <div className="h-64 rounded-2xl bg-[#F2ECE3]" />
-              )}
+              {mapContent}
             </div>
           )}
         </section>

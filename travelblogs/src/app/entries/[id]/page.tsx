@@ -89,7 +89,12 @@ const EntryPage = async ({ params }: EntryPageProps) => {
     );
   }
 
-  return <EntryReader entry={mapEntryToReader(data)} />;
+  return (
+    <EntryReader
+      entry={mapEntryToReader(data)}
+      mapHref={`/trips/${data.tripId}/map`}
+    />
+  );
 };
 
 export default EntryPage;

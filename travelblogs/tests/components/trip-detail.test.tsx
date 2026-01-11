@@ -186,6 +186,72 @@ describe("TripDetail", () => {
     expect(screen.queryByText("Delete trip")).not.toBeInTheDocument();
   });
 
+  it("shows the view full map action in the trip overview map", async () => {
+    const fetchMock = createFetchMock([
+      {
+        match: "/api/trips/trip-6/overview",
+        respond: () =>
+          jsonResponse({
+            trip: {
+              id: "trip-6",
+              title: "Map Trip",
+              startDate: "2025-06-01T00:00:00.000Z",
+              endDate: "2025-06-05T00:00:00.000Z",
+              coverImageUrl: null,
+            },
+            entries: [
+              {
+                id: "entry-6",
+                tripId: "trip-6",
+                title: "Map stop",
+                createdAt: "2025-06-02T00:00:00.000Z",
+                coverImageUrl: null,
+                media: [],
+                location: {
+                  latitude: 48.8566,
+                  longitude: 2.3522,
+                  label: "Paris",
+                },
+              },
+            ],
+          }),
+      },
+      {
+        match: "/api/entries?tripId=trip-6",
+        respond: () => jsonResponse([]),
+      },
+      {
+        match: "/api/trips/trip-6",
+        respond: () =>
+          jsonResponse({
+            id: "trip-6",
+            title: "Map Trip",
+            startDate: "2025-06-01T00:00:00.000Z",
+            endDate: "2025-06-05T00:00:00.000Z",
+            coverImageUrl: null,
+          }),
+      },
+    ]);
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    renderWithProvider(
+      <TripDetail
+        tripId="trip-6"
+        canAddEntry
+        canEditTrip
+        canDeleteTrip={false}
+        canManageShare={false}
+        canManageViewers={false}
+        canTransferOwnership={false}
+      />,
+    );
+
+    expect(
+      await screen.findByRole("link", { name: /view full map/i }),
+    ).toHaveAttribute("href", "/trips/trip-6/map");
+  });
+
   it("links to edit trip details page from trip overview when canEditTrip is true", async () => {
     const fetchMock = createFetchMock([
       {

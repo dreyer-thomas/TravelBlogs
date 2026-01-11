@@ -423,6 +423,46 @@ describe("EntryReader", () => {
     ).toBeInTheDocument();
   });
 
+  it("shows the view full map action when a map href is provided", () => {
+    render(
+      <LocaleProvider>
+        <EntryReader
+          mapHref="/trips/trip-1/map"
+          entry={{
+            id: "entry-map",
+            title: "Map entry",
+            body: "Map entry body.",
+            createdAt: "2025-05-22T00:00:00.000Z",
+            media: [
+              {
+                id: "media-map",
+                url: "https://example.com/photo-map.jpg",
+                width: 1600,
+                height: 1000,
+              },
+            ],
+            location: {
+              latitude: 52.52,
+              longitude: 13.405,
+              label: "Berlin",
+            },
+          }}
+          heroMapLocations={[
+            {
+              latitude: 52.52,
+              longitude: 13.405,
+              label: "Berlin",
+            },
+          ]}
+        />
+      </LocaleProvider>,
+    );
+
+    expect(
+      screen.getByRole("link", { name: /view full map/i }),
+    ).toHaveAttribute("href", "/trips/trip-1/map");
+  });
+
   it("hides the location section when entry has no location (shared view)", () => {
     render(
       <LocaleProvider>

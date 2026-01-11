@@ -148,6 +148,7 @@ const SharedEntryPage = async ({ params }: SharedEntryPageProps) => {
         entry={readerEntry}
         entryLinkBase={`/trips/share/${token}/entries`}
         backToTripHref={`/trips/share/${token}`}
+        mapHref={`/trips/share/${token}/map`}
         isSharedView
         heroMapLocations={heroMapLocations}
       />

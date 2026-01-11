@@ -124,6 +124,7 @@ const TripOverviewPage = async ({
       trip={data.trip}
       entries={data.entries}
       backToTripsHref="/trips"
+      mapHref={`/trips/${tripId}/map`}
     />
   );
 };

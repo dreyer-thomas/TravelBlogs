@@ -592,6 +592,44 @@ const TripDetail = ({
       })),
     [entriesWithLocation],
   );
+  const mapActionLabel = t("trips.viewFullMap");
+  const mapHref = `/trips/${tripId}/map`;
+
+  const mapContent = isMapVisible ? (
+    <div className="group relative isolate">
+      <TripMap
+        ariaLabel={t("trips.tripMap")}
+        pinsLabel={t("trips.mapPins")}
+        emptyMessage={t("trips.noLocations")}
+        locations={mapLocations}
+        selectedEntryId={selectedEntryId}
+        onSelectEntry={setSelectedEntryId}
+        onOpenEntry={handleOpenEntry}
+      />
+      <Link
+        href={mapHref}
+        aria-label={mapActionLabel}
+        className="absolute right-4 top-4 z-[1000] inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/70 bg-[#1F6F78] text-white shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2D2A26]"
+      >
+        <span className="sr-only">{mapActionLabel}</span>
+        <svg
+          aria-hidden="true"
+          viewBox="0 0 24 24"
+          className="h-4 w-4"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <path d="M12 21s6-5.4 6-10a6 6 0 1 0-12 0c0 4.6 6 10 6 10Z" />
+          <circle cx="12" cy="11" r="2.5" />
+        </svg>
+      </Link>
+    </div>
+  ) : (
+    <div className="h-64 rounded-2xl bg-[#F2ECE3]" />
+  );
 
   // Lazy-load map after initial render
   useEffect(() => {
@@ -1067,36 +1105,12 @@ const TripDetail = ({
                 />
               </div>
               <div className="space-y-3">
-                {isMapVisible ? (
-                  <TripMap
-                    ariaLabel={t("trips.tripMap")}
-                    pinsLabel={t("trips.mapPins")}
-                    emptyMessage={t("trips.noLocations")}
-                    locations={mapLocations}
-                    selectedEntryId={selectedEntryId}
-                    onSelectEntry={setSelectedEntryId}
-                    onOpenEntry={handleOpenEntry}
-                  />
-                ) : (
-                  <div className="h-64 rounded-2xl bg-[#F2ECE3]" />
-                )}
+                {mapContent}
               </div>
             </div>
           ) : (
             <div className="mt-6 space-y-3">
-              {isMapVisible ? (
-                <TripMap
-                  ariaLabel={t("trips.tripMap")}
-                  pinsLabel={t("trips.mapPins")}
-                  emptyMessage={t("trips.noLocations")}
-                  locations={mapLocations}
-                  selectedEntryId={selectedEntryId}
-                  onSelectEntry={setSelectedEntryId}
-                  onOpenEntry={handleOpenEntry}
-                />
-              ) : (
-                <div className="h-64 rounded-2xl bg-[#F2ECE3]" />
-              )}
+              {mapContent}
             </div>
           )}
 

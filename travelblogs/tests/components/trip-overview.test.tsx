@@ -2,7 +2,7 @@
 /* eslint-disable @next/next/no-img-element, jsx-a11y/alt-text */
 import type { ImgHTMLAttributes, ReactNode } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 
 import TripOverview from "../../src/components/trips/trip-overview";
 import { LocaleProvider } from "../../src/utils/locale-context";
@@ -257,5 +257,49 @@ describe("TripOverview", () => {
 
     const selectedEntry = screen.getByRole("link", { name: /second stop/i });
     expect(selectedEntry).toHaveAttribute("aria-current", "true");
+  });
+
+  it("shows the view full map action when a map href is provided", () => {
+    vi.useFakeTimers();
+
+    render(
+      <LocaleProvider>
+        <TripOverview
+          trip={{
+            id: "trip-map-link",
+            title: "Map trip",
+            startDate: "2025-06-01T00:00:00.000Z",
+            endDate: "2025-06-08T00:00:00.000Z",
+            coverImageUrl: null,
+          }}
+          entries={[
+            {
+              id: "entry-map",
+              tripId: "trip-map-link",
+              title: "Map stop",
+              createdAt: "2025-06-02T12:00:00.000Z",
+              coverImageUrl: "/uploads/entries/map.jpg",
+              media: [{ url: "/uploads/entries/map.jpg" }],
+              location: {
+                latitude: 48.8566,
+                longitude: 2.3522,
+                label: "Paris",
+              },
+            },
+          ]}
+          mapHref="/trips/trip-map-link/map"
+        />
+      </LocaleProvider>,
+    );
+
+    act(() => {
+      vi.runAllTimers();
+    });
+
+    expect(
+      screen.getByRole("link", { name: /view full map/i }),
+    ).toHaveAttribute("href", "/trips/trip-map-link/map");
+
+    vi.useRealTimers();
   });
 });

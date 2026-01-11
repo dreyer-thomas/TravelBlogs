@@ -18,6 +18,7 @@ type EntryReaderProps = {
   entry: EntryReaderData;
   entryLinkBase?: string;
   backToTripHref?: string;
+  mapHref?: string;
   isSharedView?: boolean;
   heroMapLocations?: EntryLocation[];
 };
@@ -28,6 +29,7 @@ const EntryReader = ({
   entry,
   entryLinkBase,
   backToTripHref,
+  mapHref,
   isSharedView = false,
   heroMapLocations,
 }: EntryReaderProps) => {
@@ -115,6 +117,7 @@ const EntryReader = ({
     navigation.nextEntryTitle,
     navigation.nextEntryDate,
   );
+  const mapActionLabel = t("trips.viewFullMap");
 
   const openViewerAtUrl = useCallback(
     (url: string) => {
@@ -296,23 +299,47 @@ const EntryReader = ({
                 </p>
               </div>
               {heroMapLocations && heroMapLocations.length > 0 ? (
-                <TripMap
-                  ariaLabel={t("trips.tripMap")}
-                  pinsLabel={t("trips.mapPins")}
-                  locations={[
-                    {
-                      entryId: entry.id,
-                      title: entry.title || t("entries.dailyEntry"),
-                      location: entry.location,
-                    },
-                  ]}
-                  boundsLocations={heroMapLocations.map((loc, idx) => ({
-                    entryId: `trip-entry-${idx}`,
-                    title: "",
-                    location: loc,
-                  }))}
-                  selectedEntryId={entry.id}
-                />
+                <div className="relative isolate">
+                  <TripMap
+                    ariaLabel={t("trips.tripMap")}
+                    pinsLabel={t("trips.mapPins")}
+                    locations={[
+                      {
+                        entryId: entry.id,
+                        title: entry.title || t("entries.dailyEntry"),
+                        location: entry.location,
+                      },
+                    ]}
+                    boundsLocations={heroMapLocations.map((loc, idx) => ({
+                      entryId: `trip-entry-${idx}`,
+                      title: "",
+                      location: loc,
+                    }))}
+                    selectedEntryId={entry.id}
+                  />
+                  {mapHref ? (
+                    <Link
+                      href={mapHref}
+                      aria-label={mapActionLabel}
+                      className="absolute right-4 top-4 z-[1000] inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/70 bg-[#1F6F78] text-white shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2D2A26] pointer-events-auto"
+                    >
+                      <span className="sr-only">{mapActionLabel}</span>
+                      <svg
+                        aria-hidden="true"
+                        viewBox="0 0 24 24"
+                        className="h-4 w-4"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1.8"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M12 21s6-5.4 6-10a6 6 0 1 0-12 0c0 4.6 6 10 6 10Z" />
+                        <circle cx="12" cy="11" r="2.5" />
+                      </svg>
+                    </Link>
+                  ) : null}
+                </div>
               ) : null}
             </div>
           </section>
