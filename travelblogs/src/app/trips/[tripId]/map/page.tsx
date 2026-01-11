@@ -132,7 +132,7 @@ const TripMapPage = async ({
           mapLabel={t("trips.tripMap")}
           pinsLabel={t("trips.mapPins")}
           emptyMessage={t("trips.noLocations")}
-          backHref={`/trips/${tripId}/overview`}
+          backHref={`/trips/${tripId}`}
           backLabel={t("trips.backToTrip")}
         />
       </main>

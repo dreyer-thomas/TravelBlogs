@@ -154,6 +154,7 @@ Codex (GPT-5)
 - ✅ All 419 tests passing.
 - ✅ Fixed TypeScript build error: Replaced `filterEntriesWithLocation` with inline filter to match `FullscreenTripMapEntry` type.
 - ✅ Fixed popup link text color: Added `!important` to ensure white text shows on green background in all link states (default, hover, visited, focus).
+- ✅ Fixed back link in signed-in map page: Changed from `/trips/${tripId}/overview` to `/trips/${tripId}` to avoid authentication error.
 
 ### File List
 
