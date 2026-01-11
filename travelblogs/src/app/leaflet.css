@@ -62,7 +62,7 @@
   display: block;
   border-radius: 12px;
   background: #1f6f78;
-  color: #ffffff;
+  color: #ffffff !important;
   font-size: 13px;
   font-weight: 600;
   letter-spacing: 0.02em;
@@ -70,7 +70,17 @@
   text-decoration: none;
 }
 
+.trip-map-popup-link:hover {
+  color: #ffffff !important;
+  background: #196168;
+}
+
+.trip-map-popup-link:visited {
+  color: #ffffff !important;
+}
+
 .trip-map-popup-link:focus-visible {
   outline: 2px solid rgba(31, 111, 120, 0.35);
   outline-offset: 2px;
+  color: #ffffff !important;
 }
