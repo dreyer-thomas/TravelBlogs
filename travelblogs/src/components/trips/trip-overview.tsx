@@ -69,6 +69,7 @@ const TripOverview = ({
         entryId: entry.id,
         title: entry.title,
         location: entry.location!,
+        createdAt: entry.createdAt,
       })),
     [entriesWithLocation],
   );

@@ -1,14 +1,9 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { Map as LeafletMap, PopupEvent } from "leaflet";
-import type { EntryLocation } from "../../utils/entry-location";
-
-type TripMapLocation = {
-  entryId: string;
-  title: string;
-  location: EntryLocation;
-};
+import type { Map as LeafletMap, PopupEvent, Polyline } from "leaflet";
+import type { TripMapLocation } from "./trip-map-types";
+import { TRIP_MAP_PATH_STYLE } from "./trip-map-constants";
 
 type TripMapProps = {
   ariaLabel: string;
@@ -45,6 +40,7 @@ const TripMap = ({
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<LeafletMap | null>(null);
   const markersRef = useRef<Map<string, L.Marker>>(new Map());
+  const polylineRef = useRef<Polyline | null>(null);
   const [mapLoaded, setMapLoaded] = useState(false);
 
   const hasLocations = locations.length > 0;
@@ -125,6 +121,8 @@ const TripMap = ({
 
     return () => {
       if (mapRef.current) {
+        polylineRef.current?.remove();
+        polylineRef.current = null;
         mapRef.current.remove();
         mapRef.current = null;
         markersRef.current.clear();
@@ -143,12 +141,56 @@ const TripMap = ({
       const map = mapRef.current;
       if (!map) return;
 
+      // Remove old polyline
+      polylineRef.current?.remove();
+      polylineRef.current = null;
+
+      // Sort locations by createdAt timestamp (oldest to newest)
+      // Entries without createdAt are sorted to the end
+      const sortedLocations = locations.slice().sort((a, b) => {
+        if (!a.createdAt && !b.createdAt) return 0;
+        if (!a.createdAt) return 1; // a goes to end
+        if (!b.createdAt) return -1; // b goes to end
+        return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+      });
+
+      // Draw path line if 2+ locations with valid coordinates
+      // Polyline is added to map before markers to ensure it renders below (lower z-index)
+      if (sortedLocations.length >= 2) {
+        const pathCoordinates = sortedLocations
+          .filter((loc) =>
+            Number.isFinite(loc.location.latitude) &&
+            Number.isFinite(loc.location.longitude)
+          )
+          .map((loc) => [
+            loc.location.latitude,
+            loc.location.longitude,
+          ]);
+
+        if (pathCoordinates.length < 2) {
+          // Not enough valid coordinates for path
+          return;
+        }
+
+        const polyline = L.polyline(
+          pathCoordinates as [number, number][],
+          TRIP_MAP_PATH_STYLE
+        ).addTo(map);
+
+        polylineRef.current = polyline;
+      }
+
       // Remove old markers
       markersRef.current.forEach((marker) => marker.remove());
       markersRef.current.clear();
 
-      // Add new markers
+      // Add new markers (only for valid coordinates)
       locations.forEach((loc) => {
+        // Skip locations with invalid coordinates
+        if (!Number.isFinite(loc.location.latitude) || !Number.isFinite(loc.location.longitude)) {
+          return;
+        }
+
         const popupLabel = `${pinsLabel}: ${loc.title}`;
         const popupContent = `
           <button

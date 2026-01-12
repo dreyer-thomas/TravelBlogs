@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { Map as LeafletMap } from "leaflet";
-
+import type { Map as LeafletMap, Polyline } from "leaflet";
+import type { TripMapLocation as BaseTripMapLocation } from "./trip-map-types";
 import type { EntryLocation } from "../../utils/entry-location";
+import { TRIP_MAP_PATH_STYLE } from "./trip-map-constants";
 
 type FullscreenTripMapEntry = {
   id: string;
@@ -11,6 +12,7 @@ type FullscreenTripMapEntry = {
   coverImageUrl: string | null;
   media: { url: string }[];
   location?: EntryLocation | null;
+  createdAt?: string;
 };
 
 type FullscreenTripMapProps = {
@@ -24,10 +26,7 @@ type FullscreenTripMapProps = {
   backLabel?: string;
 };
 
-type TripMapLocation = {
-  entryId: string;
-  title: string;
-  location: EntryLocation;
+type TripMapLocation = BaseTripMapLocation & {
   heroImageUrl: string;
   entryHref: string;
 };
@@ -92,6 +91,7 @@ const FullscreenTripMap = ({
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<LeafletMap | null>(null);
   const markersRef = useRef<Map<string, L.Marker>>(new Map());
+  const polylineRef = useRef<Polyline | null>(null);
   const [mapLoaded, setMapLoaded] = useState(false);
 
   const mapLocations = useMemo<TripMapLocation[]>(() => {
@@ -118,6 +118,7 @@ const FullscreenTripMap = ({
           location: entry.location!,
           heroImageUrl,
           entryHref,
+          createdAt: entry.createdAt,
         };
       });
   }, [entries, entryLinkBase]);
@@ -174,6 +175,8 @@ const FullscreenTripMap = ({
 
     return () => {
       if (mapRef.current) {
+        polylineRef.current?.remove();
+        polylineRef.current = null;
         mapRef.current.remove();
         mapRef.current = null;
         markersRef.current.clear();
@@ -191,6 +194,35 @@ const FullscreenTripMap = ({
       const map = mapRef.current;
       if (!map) {
         return;
+      }
+
+      // Remove old polyline
+      polylineRef.current?.remove();
+      polylineRef.current = null;
+
+      // Sort locations by createdAt timestamp (oldest to newest)
+      // Entries without createdAt are sorted to the end
+      const sortedLocations = mapLocations.slice().sort((a, b) => {
+        if (!a.createdAt && !b.createdAt) return 0;
+        if (!a.createdAt) return 1; // a goes to end
+        if (!b.createdAt) return -1; // b goes to end
+        return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+      });
+
+      // Draw path line if 2+ locations
+      // Polyline is added to map before markers to ensure it renders below (lower z-index)
+      if (sortedLocations.length >= 2) {
+        const pathCoordinates = sortedLocations.map((loc) => [
+          loc.location.latitude,
+          loc.location.longitude,
+        ]);
+
+        const polyline = L.polyline(
+          pathCoordinates as [number, number][],
+          TRIP_MAP_PATH_STYLE
+        ).addTo(map);
+
+        polylineRef.current = polyline;
       }
 
       markersRef.current.forEach((marker) => marker.remove());
