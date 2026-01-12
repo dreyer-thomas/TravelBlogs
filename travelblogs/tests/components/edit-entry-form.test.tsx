@@ -331,8 +331,95 @@ describe("EditEntryForm", () => {
     expect(
       await screen.findByText("London, United Kingdom"),
     ).toBeInTheDocument();
+    expect(screen.getByText("Change location")).toBeInTheDocument();
+  });
+
+  it("displays initial location label when provided", () => {
+    renderWithLocale(
+      <EditEntryForm
+        tripId="trip-123"
+        entryId="entry-123"
+        initialEntryDate="2025-05-03T00:00:00.000Z"
+        initialTitle="Existing title"
+        initialText="Existing text"
+        initialMediaUrls={[]}
+        initialLocation={{
+          latitude: 51.5074,
+          longitude: -0.1278,
+          label: "London, United Kingdom",
+        }}
+      />,
+    );
+
+    expect(screen.getByText("London, United Kingdom")).toBeInTheDocument();
+    expect(screen.getByText("Change location")).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: /clear location/i }),
+      screen.queryByPlaceholderText(/search for a place/i),
+    ).not.toBeInTheDocument();
+  });
+
+  it("displays formatted coordinates when label is missing", () => {
+    renderWithLocale(
+      <EditEntryForm
+        tripId="trip-123"
+        entryId="entry-123"
+        initialEntryDate="2025-05-03T00:00:00.000Z"
+        initialTitle="Existing title"
+        initialText="Existing text"
+        initialMediaUrls={[]}
+        initialLocation={{
+          latitude: 51.5074,
+          longitude: -0.1278,
+          label: null,
+        }}
+      />,
+    );
+
+    expect(screen.getByText("51.5074, -0.1278")).toBeInTheDocument();
+    expect(screen.getByText("Change location")).toBeInTheDocument();
+  });
+
+  it("shows search input when no initial location is provided", () => {
+    renderWithLocale(
+      <EditEntryForm
+        tripId="trip-123"
+        entryId="entry-123"
+        initialEntryDate="2025-05-03T00:00:00.000Z"
+        initialTitle="Existing title"
+        initialText="Existing text"
+        initialMediaUrls={[]}
+        initialLocation={null}
+      />,
+    );
+
+    expect(
+      screen.getByPlaceholderText(/search for a place/i),
+    ).toBeInTheDocument();
+    expect(screen.queryByText("Change location")).not.toBeInTheDocument();
+  });
+
+  it("shows search input when change location is clicked", () => {
+    renderWithLocale(
+      <EditEntryForm
+        tripId="trip-123"
+        entryId="entry-123"
+        initialEntryDate="2025-05-03T00:00:00.000Z"
+        initialTitle="Existing title"
+        initialText="Existing text"
+        initialMediaUrls={[]}
+        initialLocation={{
+          latitude: 51.5074,
+          longitude: -0.1278,
+          label: "London, United Kingdom",
+        }}
+      />,
+    );
+
+    const changeButton = screen.getByText("Change location");
+    fireEvent.click(changeButton);
+
+    expect(
+      screen.getByPlaceholderText(/search for a place/i),
     ).toBeInTheDocument();
   });
 });

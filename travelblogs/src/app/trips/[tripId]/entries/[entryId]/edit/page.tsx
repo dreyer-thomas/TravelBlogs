@@ -77,6 +77,15 @@ const EditEntryPage = async ({ params }: EditEntryPageProps) => {
           initialCoverImageUrl={entry.coverImageUrl}
           initialText={entry.text}
           initialMediaUrls={entry.media.map((item) => item.url)}
+          initialLocation={
+            entry.latitude != null && entry.longitude != null
+              ? {
+                  latitude: entry.latitude,
+                  longitude: entry.longitude,
+                  label: entry.locationName,
+                }
+              : null
+          }
         />
       </main>
     </div>

@@ -16,6 +16,7 @@ import {
   removeInlineImageByUrl,
 } from "../../utils/entry-content";
 import { useTranslation } from "../../utils/use-translation";
+import { formatEntryLocationDisplay } from "../../utils/entry-location";
 
 type FieldErrors = {
   date?: string;
@@ -1034,18 +1035,42 @@ const EditEntryForm = ({
       <div className="space-y-2">
         <label className="block text-sm text-[#2D2A26]">
           {t("entries.storyLocation")}
-          <input
-            type="text"
-            value={locationQuery}
-            onChange={(e) => handleLocationSearch(e.target.value)}
-            placeholder={t("entries.searchLocation")}
-            className="mt-2 w-full rounded-xl border border-black/10 px-3 py-2 text-sm focus:border-[#1F6F78] focus:outline-none focus:ring-2 focus:ring-[#1F6F78]/20"
-          />
+          {selectedLocation ? (
+            <div className="mt-2 flex items-center justify-between rounded-xl border border-[#1F6F78]/30 bg-[#1F6F78]/10 px-3 py-2">
+              <span className="text-sm text-[#2D2A26]">
+                {formatEntryLocationDisplay({
+                  latitude: selectedLocation.latitude,
+                  longitude: selectedLocation.longitude,
+                  label: selectedLocation.locationName,
+                })}
+              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  skipLocationSearchRef.current = true;
+                  setSelectedLocation(null);
+                  setLocationQuery("");
+                  setLocationResults([]);
+                }}
+                className="text-xs text-[#1F6F78] hover:underline"
+              >
+                {t("entries.changeLocation")}
+              </button>
+            </div>
+          ) : (
+            <input
+              type="text"
+              value={locationQuery}
+              onChange={(e) => handleLocationSearch(e.target.value)}
+              placeholder={t("entries.searchLocation")}
+              className="mt-2 w-full rounded-xl border border-black/10 px-3 py-2 text-sm focus:border-[#1F6F78] focus:outline-none focus:ring-2 focus:ring-[#1F6F78]/20"
+            />
+          )}
         </label>
-        {locationSearching ? (
+        {!selectedLocation && locationSearching ? (
           <p className="text-xs text-[#6B635B]">{t("entries.searching")}</p>
         ) : null}
-        {locationResults.length > 0 ? (
+        {!selectedLocation && locationResults.length > 0 ? (
           <ul className="mt-2 space-y-1 rounded-xl border border-black/10 bg-white p-2">
             {locationResults.map((result) => (
               <li key={result.id}>
@@ -1059,20 +1084,6 @@ const EditEntryForm = ({
               </li>
             ))}
           </ul>
-        ) : null}
-        {selectedLocation ? (
-          <div className="mt-2 flex items-center justify-between rounded-xl border border-[#1F6F78]/30 bg-[#1F6F78]/10 px-3 py-2">
-            <span className="text-sm text-[#2D2A26]">
-              {selectedLocation.locationName}
-            </span>
-            <button
-              type="button"
-              onClick={handleClearLocation}
-              className="text-xs text-[#B34A3C] hover:underline"
-            >
-              {t("entries.clearLocation")}
-            </button>
-          </div>
         ) : null}
       </div>
 

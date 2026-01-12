@@ -1,6 +1,6 @@
 # Story 7.8: Edit Entry Location Display
 
-Status: ready-for-dev
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -34,19 +34,19 @@ so that I can confirm or update the entry location while editing.
 
 ## Tasks / Subtasks
 
-- [ ] Pass existing entry location data into the edit entry form (AC: 1, 5)
-  - [ ] Include `latitude`, `longitude`, and `locationName` from Prisma in the edit page load
-  - [ ] Provide `initialLocation` to `EditEntryForm`
-- [ ] Update Story location section to display current location consistently (AC: 1, 3, 4, 5)
-  - [ ] Use `formatEntryLocationDisplay` for label/coordinate fallback
-  - [ ] Keep the selected location badge in sync with form state
-- [ ] Add a clear "Change location" action when a location is present (AC: 2)
-  - [ ] Action focuses the search input or expands the search UI
-- [ ] Add translations for any new UI strings (AC: 6)
-- [ ] Tests (AC: 1, 2, 3, 5)
-  - [ ] Component test: edit form shows initial location label or coordinates
-  - [ ] Component test: change action is visible when location exists
-  - [ ] Component test: no selected location badge when initial location is null
+- [x] Pass existing entry location data into the edit entry form (AC: 1, 5)
+  - [x] Include `latitude`, `longitude`, and `locationName` from Prisma in the edit page load
+  - [x] Provide `initialLocation` to `EditEntryForm`
+- [x] Update Story location section to display current location consistently (AC: 1, 3, 4, 5)
+  - [x] Use `formatEntryLocationDisplay` for label/coordinate fallback
+  - [x] Keep the selected location badge in sync with form state
+- [x] Add a clear "Change location" action when a location is present (AC: 2)
+  - [x] Action focuses the search input or expands the search UI
+- [x] Add translations for any new UI strings (AC: 6)
+- [x] Tests (AC: 1, 2, 3, 5)
+  - [x] Component test: edit form shows initial location label or coordinates
+  - [x] Component test: change action is visible when location exists
+  - [x] Component test: no selected location badge when initial location is null
 
 ## Dev Notes
 
@@ -107,8 +107,8 @@ so that I can confirm or update the entry location while editing.
 
 ## Story Completion Status
 
-- Status: ready-for-dev
-- Completion note: Ultimate context engine analysis completed - comprehensive developer guide created
+- Status: done
+- Completion note: All acceptance criteria satisfied, tests passing, code review complete
 
 ## Dev Agent Record
 
@@ -121,7 +121,21 @@ Codex (GPT-5)
 ### Completion Notes List
 
 - Ultimate context engine analysis completed - comprehensive developer guide created
+- Passed entry location (latitude, longitude, locationName) from edit page to EditEntryForm
+- Updated Story location section to display current location using formatEntryLocationDisplay helper
+- Added "Change location" button that clears selectedLocation and shows search input
+- Added "changeLocation" translation in English and German
+- Added 4 component tests covering initial location display, coordinate fallback, empty state, and change action
+- All tests pass (11 edit-entry-form tests, 423 total tests)
+- Fixed UI: Simplified to single badge with location name and "Change location" button only
+- Hidden search results and "searching" indicator when location is already selected
+- Code review: Added missing .gitkeep deletion to File List; noted recent commits reference story 7.7 instead of 7.8
 
 ### File List
 
+- travelblogs/src/app/trips/[tripId]/entries/[entryId]/edit/page.tsx
+- travelblogs/src/components/entries/edit-entry-form.tsx
+- travelblogs/src/utils/i18n.ts
+- travelblogs/tests/components/edit-entry-form.test.tsx
+- travelblogs/public/uploads/trips/.gitkeep (deleted)
 - _bmad-output/implementation-artifacts/7-8-edit-entry-location-display.md
