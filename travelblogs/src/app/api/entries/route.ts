@@ -206,11 +206,31 @@ export const POST = async (request: NextRequest) => {
           })),
         },
       },
-      include: {
-        media: true,
+      select: {
+        id: true,
+        tripId: true,
+        title: true,
+        text: true,
+        coverImageUrl: true,
+        createdAt: true,
+        updatedAt: true,
+        latitude: true,
+        longitude: true,
+        locationName: true,
+        media: {
+          select: {
+            id: true,
+            url: true,
+            createdAt: true,
+          },
+        },
         tags: {
-          include: {
-            tag: true,
+          select: {
+            tag: {
+              select: {
+                name: true,
+              },
+            },
           },
         },
       },
