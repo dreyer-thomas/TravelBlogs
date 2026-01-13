@@ -13,6 +13,7 @@ type TripListItem = {
   coverImageUrl: string | null;
   updatedAt: string;
   canEditTrip: boolean;
+  tags: string[];
 };
 
 type TripsPageContentProps = {
@@ -111,6 +112,7 @@ const TripsPageContent = ({
                 endDate={trip.endDate}
                 coverImageUrl={trip.coverImageUrl}
                 canEditTrip={trip.canEditTrip}
+                tags={trip.tags}
               />
             ))}
           </section>

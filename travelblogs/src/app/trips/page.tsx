@@ -18,6 +18,7 @@ type TripListItem = {
   coverImageUrl: string | null;
   updatedAt: string;
   canEditTrip: boolean;
+  tags: string[];
 };
 
 const loadTrips = async (

@@ -1176,3 +1176,23 @@ So that I can see all stories related to selected tags.
 **Given** no tags are selected
 **When** I view the trip overview
 **Then** all entries are shown
+
+### Story 8.5: Show Tags on Trip Cards
+
+As a viewer,
+I want to see trip tags on the trips page cards,
+so that I can quickly recognize what each trip is about.
+
+**Acceptance Criteria:**
+
+**Given** I am on the /trips page
+**When** a trip has tagged entries
+**Then** the trip card shows the distinct tags for that trip below the trip title, to the right of the cover image, listed left to right
+
+**Given** a trip has no tags
+**When** I view the trip card
+**Then** no tag list is shown
+
+**Given** a trip has tags
+**When** I view the trip card
+**Then** tags are shown in a predictable sorted order (alphabetical)
