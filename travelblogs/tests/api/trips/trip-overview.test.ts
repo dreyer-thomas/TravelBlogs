@@ -79,6 +79,21 @@ describe("GET /api/trips/[id]/overview", () => {
       },
     });
 
+    const hikeTag = await prisma.tag.create({
+      data: {
+        tripId: trip.id,
+        name: "Hike",
+        normalizedName: "hike",
+      },
+    });
+    const foodTag = await prisma.tag.create({
+      data: {
+        tripId: trip.id,
+        name: "Food",
+        normalizedName: "food",
+      },
+    });
+
     const newerEntry = await prisma.entry.create({
       data: {
         tripId: trip.id,
@@ -96,6 +111,13 @@ describe("GET /api/trips/[id]/overview", () => {
       include: {
         media: true,
       },
+    });
+
+    await prisma.entryTag.createMany({
+      data: [
+        { entryId: newerEntry.id, tagId: hikeTag.id },
+        { entryId: newerEntry.id, tagId: foodTag.id },
+      ],
     });
 
     const request = new Request(
@@ -127,6 +149,7 @@ describe("GET /api/trips/[id]/overview", () => {
       createdAt: newerEntry.createdAt.toISOString(),
       coverImageUrl: newerEntry.coverImageUrl,
       media: [{ url: newerEntry.media[0].url }],
+      tags: ["Food", "Hike"],
       location: {
         latitude: 37.7749,
         longitude: -122.4194,
@@ -134,6 +157,7 @@ describe("GET /api/trips/[id]/overview", () => {
       },
     });
     expect(body.data.entries[1].location).toBeNull();
+    expect(body.data.entries[1].tags).toEqual([]);
   });
 
   it("returns an empty entries array when a trip has no entries", async () => {

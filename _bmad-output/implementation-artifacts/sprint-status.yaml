@@ -125,7 +125,7 @@ development_status:
 
   epic-8: in-progress
   8-1-add-tags-to-entry-createedit: review
-  8-2-show-tags-on-trip-overview-entry-cards: in-progress
+  8-2-show-tags-on-trip-overview-entry-cards: done
   8-3-show-tags-on-entry-reader-hero: ready-for-dev
   8-4-filter-entries-by-tags: ready-for-dev
   epic-8-retrospective: optional

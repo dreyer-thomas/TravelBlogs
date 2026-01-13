@@ -8,27 +8,9 @@ import SharedTripGuard from "../../../../components/trips/shared-trip-guard";
 import SharedTripError from "../../../../components/trips/shared-trip-error";
 import { getRequestBaseUrl } from "../../../../utils/request-base-url";
 import { authOptions } from "../../../../utils/auth-options";
-import type { EntryLocation } from "../../../../utils/entry-location";
+import type { TripOverviewEntry, TripOverviewTrip } from "../../../../types/trip-overview";
 
 export const dynamic = "force-dynamic";
-
-type TripOverviewEntry = {
-  id: string;
-  tripId: string;
-  title: string;
-  createdAt: string;
-  coverImageUrl: string | null;
-  media: { url: string }[];
-  location?: EntryLocation | null;
-};
-
-type TripOverviewTrip = {
-  id: string;
-  title: string;
-  startDate: string;
-  endDate: string;
-  coverImageUrl: string | null;
-};
 
 type ApiError = {
   code: string;

@@ -53,6 +53,7 @@ describe("Shared Trip Page Navigation", () => {
               title: "Day one",
               createdAt: "2025-06-02T12:00:00.000Z",
               coverImageUrl: "/uploads/entries/day-one.jpg",
+              tags: [],
               media: [{ url: "/uploads/entries/day-one-media.jpg" }],
             },
           ]}
@@ -85,6 +86,7 @@ describe("Shared Trip Page Navigation", () => {
               title: "Day five",
               createdAt: "2025-06-06T12:00:00.000Z",
               coverImageUrl: null,
+              tags: [],
               media: [],
             },
           ]}

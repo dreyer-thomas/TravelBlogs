@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { unstable_noStore as noStore } from "next/cache";
 
 import { prisma } from "../../../../../utils/db";
+import { sortTagNames } from "../../../../../utils/tag-sort";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -63,6 +64,15 @@ export const GET = async (
                     url: true,
                   },
                 },
+                tags: {
+                  select: {
+                    tag: {
+                      select: {
+                        name: true,
+                      },
+                    },
+                  },
+                },
               },
             },
           },
@@ -93,6 +103,7 @@ export const GET = async (
             createdAt: entry.createdAt.toISOString(),
             coverImageUrl: entry.coverImageUrl,
             media: entry.media.map((item) => ({ url: item.url })),
+            tags: sortTagNames(entry.tags.map((item) => item.tag.name)),
             location:
               entry.latitude !== null && entry.longitude !== null
                 ? {

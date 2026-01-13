@@ -67,6 +67,7 @@ describe("TripOverview", () => {
               title: "Day two",
               createdAt: "2025-06-03T12:00:00.000Z",
               coverImageUrl: "/uploads/entries/day-two.jpg",
+              tags: [],
               media: [{ url: "/uploads/entries/day-two-media.jpg" }],
             },
           ]}
@@ -103,6 +104,7 @@ describe("TripOverview", () => {
               title: "Day drei",
               createdAt: "2025-06-03T12:00:00.000",
               coverImageUrl: "/uploads/entries/day-three.jpg",
+              tags: [],
               media: [{ url: "/uploads/entries/day-three-media.jpg" }],
             },
           ]}
@@ -152,6 +154,7 @@ describe("TripOverview", () => {
               title: "Day nine",
               createdAt: "2025-06-09T12:00:00.000Z",
               coverImageUrl: "/uploads/entries/day-nine.jpg",
+              tags: [],
               media: [{ url: "/uploads/entries/day-nine-media.jpg" }],
             },
           ]}
@@ -227,6 +230,7 @@ describe("TripOverview", () => {
               title: "First stop",
               createdAt: "2025-06-02T12:00:00.000Z",
               coverImageUrl: "/uploads/entries/first.jpg",
+              tags: [],
               media: [{ url: "/uploads/entries/first.jpg" }],
               location: {
                 latitude: 48.8566,
@@ -240,6 +244,7 @@ describe("TripOverview", () => {
               title: "Second stop",
               createdAt: "2025-06-03T12:00:00.000Z",
               coverImageUrl: "/uploads/entries/second.jpg",
+              tags: [],
               media: [{ url: "/uploads/entries/second.jpg" }],
               location: {
                 latitude: 51.5074,
@@ -279,6 +284,7 @@ describe("TripOverview", () => {
               title: "Map stop",
               createdAt: "2025-06-02T12:00:00.000Z",
               coverImageUrl: "/uploads/entries/map.jpg",
+              tags: [],
               media: [{ url: "/uploads/entries/map.jpg" }],
               location: {
                 latitude: 48.8566,
@@ -301,5 +307,65 @@ describe("TripOverview", () => {
     ).toHaveAttribute("href", "/trips/trip-map-link/map");
 
     vi.useRealTimers();
+  });
+
+  it("renders tag chips for entries that have tags", () => {
+    render(
+      <LocaleProvider>
+        <TripOverview
+          trip={{
+            id: "trip-tags",
+            title: "Tagged trip",
+            startDate: "2025-06-01T00:00:00.000Z",
+            endDate: "2025-06-08T00:00:00.000Z",
+            coverImageUrl: null,
+          }}
+          entries={[
+            {
+              id: "entry-tags",
+              tripId: "trip-tags",
+              title: "Tag day",
+              createdAt: "2025-06-03T12:00:00.000Z",
+              coverImageUrl: "/uploads/entries/tag-day.jpg",
+              tags: ["Food", "Hike"],
+              media: [{ url: "/uploads/entries/tag-day-media.jpg" }],
+            },
+          ]}
+        />
+      </LocaleProvider>,
+    );
+
+    expect(screen.getByText("Food")).toBeInTheDocument();
+    expect(screen.getByText("Hike")).toBeInTheDocument();
+  });
+
+  it("hides the tag container when an entry has no tags", () => {
+    render(
+      <LocaleProvider>
+        <TripOverview
+          trip={{
+            id: "trip-no-tags",
+            title: "No tags trip",
+            startDate: "2025-06-01T00:00:00.000Z",
+            endDate: "2025-06-08T00:00:00.000Z",
+            coverImageUrl: null,
+          }}
+          entries={[
+            {
+              id: "entry-no-tags",
+              tripId: "trip-no-tags",
+              title: "No tag day",
+              createdAt: "2025-06-03T12:00:00.000Z",
+              coverImageUrl: "/uploads/entries/no-tag-day.jpg",
+              tags: [],
+              media: [{ url: "/uploads/entries/no-tag-day-media.jpg" }],
+            },
+          ]}
+        />
+      </LocaleProvider>,
+    );
+
+    expect(screen.queryByText("Food")).not.toBeInTheDocument();
+    expect(screen.queryByText("Hike")).not.toBeInTheDocument();
   });
 });

@@ -68,6 +68,21 @@ describe("GET /api/trips/share/[token]", () => {
       include: { media: true },
     });
 
+    const cultureTag = await prisma.tag.create({
+      data: {
+        tripId: trip.id,
+        name: "Culture",
+        normalizedName: "culture",
+      },
+    });
+    const foodTag = await prisma.tag.create({
+      data: {
+        tripId: trip.id,
+        name: "Food",
+        normalizedName: "food",
+      },
+    });
+
     const newerEntry = await prisma.entry.create({
       data: {
         tripId: trip.id,
@@ -82,6 +97,13 @@ describe("GET /api/trips/share/[token]", () => {
         },
       },
       include: { media: true },
+    });
+
+    await prisma.entryTag.createMany({
+      data: [
+        { entryId: newerEntry.id, tagId: cultureTag.id },
+        { entryId: newerEntry.id, tagId: foodTag.id },
+      ],
     });
 
     const shareLink = await prisma.tripShareLink.create({
@@ -120,6 +142,7 @@ describe("GET /api/trips/share/[token]", () => {
       createdAt: newerEntry.createdAt.toISOString(),
       coverImageUrl: newerEntry.coverImageUrl,
       media: [{ url: newerEntry.media[0].url }],
+      tags: ["Culture", "Food"],
       location: {
         latitude: 52.52,
         longitude: 13.405,
@@ -127,6 +150,7 @@ describe("GET /api/trips/share/[token]", () => {
       },
     });
     expect(body.data.entries[1].location).toBeNull();
+    expect(body.data.entries[1].tags).toEqual([]);
   });
 
   it("returns 404 for an invalid share token", async () => {

@@ -7,25 +7,7 @@ import { useRouter } from "next/navigation";
 import TripMap from "./trip-map";
 import { useTranslation } from "../../utils/use-translation";
 import { filterEntriesWithLocation } from "../../utils/entry-location";
-import type { EntryLocation } from "../../utils/entry-location";
-
-type TripOverviewTrip = {
-  id: string;
-  title: string;
-  startDate: string;
-  endDate: string;
-  coverImageUrl: string | null;
-};
-
-type TripOverviewEntry = {
-  id: string;
-  tripId: string;
-  title: string;
-  createdAt: string;
-  coverImageUrl: string | null;
-  media: { url: string }[];
-  location?: EntryLocation | null;
-};
+import type { TripOverviewEntry, TripOverviewTrip } from "../../types/trip-overview";
 
 type TripOverviewProps = {
   trip: TripOverviewTrip;
@@ -231,6 +213,19 @@ const TripOverview = ({
                       <p className="mt-1 text-base font-semibold text-[#2D2A26]">
                         {entry.title}
                       </p>
+                      {entry.tags.length > 0 ? (
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          {entry.tags.map((tag) => (
+                            <span
+                              key={tag}
+                              title={tag}
+                              className="inline-flex max-w-[12rem] items-center rounded-full bg-[#F2ECE3] px-3 py-1 text-xs font-semibold text-[#2D2A26] sm:max-w-[16rem]"
+                            >
+                              <span className="truncate" dir="auto">{tag}</span>
+                            </span>
+                          ))}
+                        </div>
+                      ) : null}
                     </div>
                     <span className="text-xs font-semibold uppercase tracking-[0.2em] text-[#1F6F78]">
                       {t('trips.read')}
