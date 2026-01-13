@@ -11,6 +11,7 @@ import {
 } from "../../../utils/entry-tags";
 import { canContributeToTrip, hasTripAccess } from "../../../utils/trip-access";
 import { ensureActiveAccount, isAdminOrCreator } from "../../../utils/roles";
+import { sortTagNames } from "../../../utils/tag-sort";
 
 export const runtime = "nodejs";
 
@@ -324,6 +325,15 @@ export const GET = async (request: NextRequest) => {
       },
       include: {
         media: true,
+        tags: {
+          select: {
+            tag: {
+              select: {
+                name: true,
+              },
+            },
+          },
+        },
       },
     });
 
@@ -342,6 +352,7 @@ export const GET = async (request: NextRequest) => {
             longitude: number | null;
             locationName: string | null;
             media: { id: string; url: string; createdAt: Date }[];
+            tags: { tag: { name: string } }[];
           }) => ({
           id: entry.id,
           tripId: entry.tripId,
@@ -355,6 +366,7 @@ export const GET = async (request: NextRequest) => {
             url: item.url,
             createdAt: item.createdAt.toISOString(),
           })),
+          tags: sortTagNames(entry.tags.map((item) => item.tag.name)),
           location:
             entry.latitude !== null && entry.longitude !== null
               ? {

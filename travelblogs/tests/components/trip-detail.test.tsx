@@ -100,6 +100,7 @@ describe("TripDetail", () => {
               createdAt: "2025-05-02T00:00:00.000Z",
               updatedAt: "2025-05-02T00:00:00.000Z",
               media: [],
+              tags: [],
             },
           ]),
       },
@@ -133,6 +134,70 @@ describe("TripDetail", () => {
 
     expect(await screen.findByText("Roman morning")).toBeInTheDocument();
     expect(await screen.findByText("Alex Owner")).toBeInTheDocument();
+  });
+
+  it("renders entry tags when present", async () => {
+    const fetchMock = createFetchMock([
+      {
+        match: "/api/trips/trip-tags/overview",
+        respond: () =>
+          jsonResponse({
+            trip: {
+              id: "trip-tags",
+              title: "Tag Trip",
+              startDate: "2025-07-01T00:00:00.000Z",
+              endDate: "2025-07-05T00:00:00.000Z",
+              coverImageUrl: null,
+            },
+            entries: [],
+          }),
+      },
+      {
+        match: "/api/entries?tripId=trip-tags",
+        respond: () =>
+          jsonResponse([
+            {
+              id: "entry-tags",
+              tripId: "trip-tags",
+              title: "Market Day",
+              coverImageUrl: null,
+              text: "Morning snacks.",
+              createdAt: "2025-07-02T00:00:00.000Z",
+              updatedAt: "2025-07-02T00:00:00.000Z",
+              media: [],
+              tags: ["Beach", "Food"],
+            },
+          ]),
+      },
+      {
+        match: "/api/trips/trip-tags",
+        respond: () =>
+          jsonResponse({
+            id: "trip-tags",
+            title: "Tag Trip",
+            startDate: "2025-07-01T00:00:00.000Z",
+            endDate: "2025-07-05T00:00:00.000Z",
+            coverImageUrl: null,
+          }),
+      },
+    ]);
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    renderWithProvider(
+      <TripDetail
+        tripId="trip-tags"
+        canAddEntry
+        canEditTrip
+        canDeleteTrip
+        canManageShare={false}
+        canManageViewers={false}
+        canTransferOwnership={false}
+      />,
+    );
+
+    expect(await screen.findByText("Beach")).toBeInTheDocument();
+    expect(screen.getByText("Food")).toBeInTheDocument();
   });
 
   it("shows edit trip without delete when delete access is missing", async () => {

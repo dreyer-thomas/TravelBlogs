@@ -56,7 +56,6 @@ describe("TripCard", () => {
         endDate="2025-05-05T00:00:00.000Z"
         coverImageUrl={null}
         canEditTrip={false}
-        tags={[]}
       />,
     );
 
@@ -91,7 +90,6 @@ describe("TripCard", () => {
         endDate="2025-06-05T00:00:00.000Z"
         coverImageUrl={null}
         canEditTrip
-        tags={[]}
       />,
     );
 
@@ -124,7 +122,6 @@ describe("TripCard", () => {
         endDate="2025-07-05T00:00:00.000Z"
         coverImageUrl={null}
         canEditTrip={false}
-        tags={[]}
       />,
     );
 
@@ -148,7 +145,6 @@ describe("TripCard", () => {
         endDate="2025-04-10T00:00:00.000Z"
         coverImageUrl={null}
         canEditTrip={false}
-        tags={[]}
       />,
     );
 
@@ -167,7 +163,6 @@ describe("TripCard", () => {
         endDate="2025-06-10T00:00:00.000Z"
         coverImageUrl={null}
         canEditTrip={false}
-        tags={[]}
       />,
     );
 
@@ -186,7 +181,6 @@ describe("TripCard", () => {
         endDate="2025-05-05T00:00:00.000Z"
         coverImageUrl={null}
         canEditTrip={false}
-        tags={[]}
       />,
     );
 
@@ -205,7 +199,6 @@ describe("TripCard", () => {
         endDate="2025-05-05T00:00:00.000Z"
         coverImageUrl={null}
         canEditTrip={false}
-        tags={[]}
       />,
     );
 
@@ -224,48 +217,10 @@ describe("TripCard", () => {
         endDate="2025-05-05T00:00:00.000Z"
         coverImageUrl={null}
         canEditTrip={false}
-        tags={[]}
       />,
     );
 
     expect(screen.getByText("Active")).toBeInTheDocument();
-  });
-
-  it("renders tag chips in order when tags are provided", () => {
-    renderWithProvider(
-      <TripCard
-        id="trip-tags-1"
-        title="Tagged Trip"
-        startDate="2025-08-01T00:00:00.000Z"
-        endDate="2025-08-05T00:00:00.000Z"
-        coverImageUrl={null}
-        canEditTrip={false}
-        tags={["Adventure", "Beach", "City"]}
-      />,
-    );
-
-    const tags = screen.getAllByTestId("trip-card-tag");
-    expect(tags.map((tag) => tag.textContent)).toEqual([
-      "Adventure",
-      "Beach",
-      "City",
-    ]);
-  });
-
-  it("hides the tag list when no tags are present", () => {
-    renderWithProvider(
-      <TripCard
-        id="trip-tags-2"
-        title="No Tags Trip"
-        startDate="2025-09-01T00:00:00.000Z"
-        endDate="2025-09-05T00:00:00.000Z"
-        coverImageUrl={null}
-        canEditTrip={false}
-        tags={[]}
-      />,
-    );
-
-    expect(screen.queryByTestId("trip-card-tags")).not.toBeInTheDocument();
   });
 
   it("hides the active badge when dates are invalid", () => {
@@ -280,7 +235,6 @@ describe("TripCard", () => {
         endDate="2025-05-05T00:00:00.000Z"
         coverImageUrl={null}
         canEditTrip={false}
-        tags={[]}
       />,
     );
 

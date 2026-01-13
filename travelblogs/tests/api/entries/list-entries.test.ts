@@ -115,6 +115,85 @@ describe("GET /api/entries", () => {
     expect(body.data[1].location).toBeNull();
   });
 
+  it("returns sorted tags for entries", async () => {
+    const trip = await prisma.trip.create({
+      data: {
+        title: "Tagged Entries",
+        startDate: new Date("2025-06-01"),
+        endDate: new Date("2025-06-10"),
+        ownerId: "creator",
+      },
+    });
+
+    const entry = await prisma.entry.create({
+      data: {
+        tripId: trip.id,
+        title: "Tag day",
+        text: "Notes",
+      },
+    });
+
+    const beachTag = await prisma.tag.create({
+      data: {
+        tripId: trip.id,
+        name: "Beach",
+        normalizedName: "beach",
+      },
+    });
+
+    const cityTag = await prisma.tag.create({
+      data: {
+        tripId: trip.id,
+        name: "city",
+        normalizedName: "city",
+      },
+    });
+
+    const adventureTag = await prisma.tag.create({
+      data: {
+        tripId: trip.id,
+        name: "Adventure",
+        normalizedName: "adventure",
+      },
+    });
+
+    await prisma.entryTag.create({
+      data: {
+        entryId: entry.id,
+        tagId: beachTag.id,
+      },
+    });
+
+    await prisma.entryTag.create({
+      data: {
+        entryId: entry.id,
+        tagId: cityTag.id,
+      },
+    });
+
+    await prisma.entryTag.create({
+      data: {
+        entryId: entry.id,
+        tagId: adventureTag.id,
+      },
+    });
+
+    const request = new Request(
+      `http://localhost/api/entries?tripId=${trip.id}`,
+      {
+        method: "GET",
+      },
+    );
+
+    const response = await get(request);
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.error).toBeNull();
+    expect(body.data).toHaveLength(1);
+    expect(body.data[0].tags).toEqual(["Adventure", "Beach", "city"]);
+  });
+
   it("rejects requests for trips not owned by the creator", async () => {
     const trip = await prisma.trip.create({
       data: {

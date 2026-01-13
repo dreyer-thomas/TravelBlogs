@@ -3,10 +3,8 @@ import { getToken } from "next-auth/jwt";
 import { z } from "zod";
 
 import { prisma } from "../../../utils/db";
-import { normalizeTagName } from "../../../utils/entry-tags";
 import { isCoverImageUrl } from "../../../utils/media";
 import { ensureActiveAccount, isAdminOrCreator } from "../../../utils/roles";
-import { sortTagNames } from "../../../utils/tag-sort";
 
 export const runtime = "nodejs";
 
@@ -218,49 +216,6 @@ export const GET = async (request: NextRequest) => {
       }));
     }
 
-    const tagsByTripId = new Map<string, string[]>();
-    const tripIds = tripList.map(({ trip }) => trip.id);
-
-    if (tripIds.length > 0) {
-      const tags = await prisma.tag.findMany({
-        where: {
-          tripId: {
-            in: tripIds,
-          },
-          entries: {
-            some: {},
-          },
-        },
-        select: {
-          tripId: true,
-          name: true,
-        },
-        orderBy: [{ tripId: "asc" }, { createdAt: "asc" }, { id: "asc" }],
-      });
-
-      const normalizedTagsByTrip = new Map<string, Map<string, string>>();
-
-      tags.forEach((tag) => {
-        const trimmed = tag.name.trim();
-        if (!trimmed) {
-          return;
-        }
-        const normalized = normalizeTagName(trimmed);
-        let tagMap = normalizedTagsByTrip.get(tag.tripId);
-        if (!tagMap) {
-          tagMap = new Map();
-          normalizedTagsByTrip.set(tag.tripId, tagMap);
-        }
-        if (!tagMap.has(normalized)) {
-          tagMap.set(normalized, trimmed);
-        }
-      });
-
-      normalizedTagsByTrip.forEach((tagMap, tripId) => {
-        tagsByTripId.set(tripId, sortTagNames(Array.from(tagMap.values())));
-      });
-    }
-
     return NextResponse.json(
       {
         data: tripList.map(({ trip, canEditTrip }) => ({
@@ -271,7 +226,6 @@ export const GET = async (request: NextRequest) => {
           coverImageUrl: trip.coverImageUrl,
           updatedAt: trip.updatedAt.toISOString(),
           canEditTrip,
-          tags: tagsByTripId.get(trip.id) ?? [],
         })),
         error: null,
       },

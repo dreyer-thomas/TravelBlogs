@@ -87,157 +87,7 @@ describe("GET /api/trips", () => {
       coverImageUrl: "https://example.com/cover.jpg",
       updatedAt: trip.updatedAt.toISOString(),
       canEditTrip: true,
-      tags: [],
     });
-  });
-
-  it("returns sorted distinct tags for trips", async () => {
-    getToken.mockResolvedValue({ sub: "creator", role: "creator" });
-
-    const trip = await prisma.trip.create({
-      data: {
-        title: "Tagged Trip",
-        startDate: new Date("2025-05-01T00:00:00.000Z"),
-        endDate: new Date("2025-05-04T00:00:00.000Z"),
-        ownerId: "creator",
-      },
-    });
-
-    const entry = await prisma.entry.create({
-      data: {
-        tripId: trip.id,
-        title: "First entry",
-        text: "Notes",
-      },
-    });
-
-    const beachTag = await prisma.tag.create({
-      data: {
-        tripId: trip.id,
-        name: "Beach",
-        normalizedName: "beach",
-      },
-    });
-
-    const cityTag = await prisma.tag.create({
-      data: {
-        tripId: trip.id,
-        name: "city",
-        normalizedName: "city",
-      },
-    });
-
-    const adventureTag = await prisma.tag.create({
-      data: {
-        tripId: trip.id,
-        name: "Adventure",
-        normalizedName: "adventure",
-      },
-    });
-
-    await prisma.entryTag.create({
-      data: {
-        entryId: entry.id,
-        tagId: beachTag.id,
-      },
-    });
-
-    await prisma.entryTag.create({
-      data: {
-        entryId: entry.id,
-        tagId: cityTag.id,
-      },
-    });
-
-    await prisma.entryTag.create({
-      data: {
-        entryId: entry.id,
-        tagId: adventureTag.id,
-      },
-    });
-
-    await prisma.tag.create({
-      data: {
-        tripId: trip.id,
-        name: "Unused",
-        normalizedName: "unused",
-      },
-    });
-
-    const request = new Request("http://localhost/api/trips", {
-      method: "GET",
-    });
-
-    const response = await get(request);
-    const body = await response.json();
-
-    expect(response.status).toBe(200);
-    expect(body.error).toBeNull();
-    expect(body.data).toHaveLength(1);
-    expect(body.data[0].tags).toEqual(["Adventure", "Beach", "city"]);
-  });
-
-  it("trims tag names and avoids duplicates across entries", async () => {
-    getToken.mockResolvedValue({ sub: "creator", role: "creator" });
-
-    const trip = await prisma.trip.create({
-      data: {
-        title: "Trimmed Tags Trip",
-        startDate: new Date("2025-05-01T00:00:00.000Z"),
-        endDate: new Date("2025-05-04T00:00:00.000Z"),
-        ownerId: "creator",
-      },
-    });
-
-    const firstEntry = await prisma.entry.create({
-      data: {
-        tripId: trip.id,
-        title: "First entry",
-        text: "Notes",
-      },
-    });
-
-    const secondEntry = await prisma.entry.create({
-      data: {
-        tripId: trip.id,
-        title: "Second entry",
-        text: "More notes",
-      },
-    });
-
-    const beachTag = await prisma.tag.create({
-      data: {
-        tripId: trip.id,
-        name: "  Beach  ",
-        normalizedName: "beach",
-      },
-    });
-
-    await prisma.entryTag.create({
-      data: {
-        entryId: firstEntry.id,
-        tagId: beachTag.id,
-      },
-    });
-
-    await prisma.entryTag.create({
-      data: {
-        entryId: secondEntry.id,
-        tagId: beachTag.id,
-      },
-    });
-
-    const request = new Request("http://localhost/api/trips", {
-      method: "GET",
-    });
-
-    const response = await get(request);
-    const body = await response.json();
-
-    expect(response.status).toBe(200);
-    expect(body.error).toBeNull();
-    expect(body.data).toHaveLength(1);
-    expect(body.data[0].tags).toEqual(["Beach"]);
   });
 
   it("returns creator-owned and invited trips", async () => {
@@ -298,7 +148,6 @@ describe("GET /api/trips", () => {
           coverImageUrl: null,
           updatedAt: ownedTrip.updatedAt.toISOString(),
           canEditTrip: true,
-          tags: [],
         },
         {
           id: invitedTrip.id,
@@ -308,7 +157,6 @@ describe("GET /api/trips", () => {
           coverImageUrl: null,
           updatedAt: invitedTrip.updatedAt.toISOString(),
           canEditTrip: false,
-          tags: [],
         },
       ]),
     );
@@ -353,7 +201,6 @@ describe("GET /api/trips", () => {
         coverImageUrl: null,
         updatedAt: tripB.updatedAt.toISOString(),
         canEditTrip: true,
-        tags: [],
       },
       {
         id: tripA.id,
@@ -363,7 +210,6 @@ describe("GET /api/trips", () => {
         coverImageUrl: null,
         updatedAt: tripA.updatedAt.toISOString(),
         canEditTrip: true,
-        tags: [],
       },
     ]);
   });
@@ -439,7 +285,6 @@ describe("GET /api/trips", () => {
       coverImageUrl: "https://example.com/coast.jpg",
       updatedAt: trip.updatedAt.toISOString(),
       canEditTrip: false,
-      tags: [],
     });
   });
 
@@ -490,7 +335,6 @@ describe("GET /api/trips", () => {
         coverImageUrl: null,
         updatedAt: trip.updatedAt.toISOString(),
         canEditTrip: true,
-        tags: [],
       },
     ]);
   });
@@ -619,7 +463,6 @@ describe("GET /api/trips", () => {
       coverImageUrl: null,
       updatedAt: trip.updatedAt.toISOString(),
       canEditTrip: true,
-      tags: [],
     });
   });
 });

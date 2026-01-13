@@ -15,7 +15,6 @@ type TripCardProps = {
   endDate: string;
   coverImageUrl: string | null;
   canEditTrip: boolean;
-  tags: string[];
 };
 
 const toUtcDateOnly = (value: Date) =>
@@ -64,7 +63,6 @@ const TripCard = ({
   endDate,
   coverImageUrl,
   canEditTrip,
-  tags,
 }: TripCardProps) => {
   const router = useRouter();
   const { t, formatDate: formatDateLocalized } = useTranslation();
@@ -161,20 +159,6 @@ const TripCard = ({
             <p className="mt-1 text-sm text-[#6B635B]">
               {formatDateLocalized(new Date(startDate))} – {formatDateLocalized(new Date(endDate))}
             </p>
-            {tags.length > 0 ? (
-              <ul className="mt-2 flex flex-wrap gap-2" data-testid="trip-card-tags">
-                {tags.map((tag) => (
-                  <li
-                    key={tag}
-                    title={tag}
-                    data-testid="trip-card-tag"
-                    className="inline-flex max-w-[12rem] items-center rounded-full bg-[#F2ECE3] px-3 py-1 text-xs font-semibold text-[#2D2A26] sm:max-w-[16rem]"
-                  >
-                    <span className="truncate" dir="auto">{tag}</span>
-                  </li>
-                ))}
-              </ul>
-            ) : null}
             {viewError ? (
               <p className="mt-2 text-xs text-[#B34A3C]">{viewError}</p>
             ) : null}

@@ -79,6 +79,7 @@ type EntrySummary = {
   createdAt: string;
   updatedAt: string;
   media: EntryMedia[];
+  tags: string[];
 };
 
 type TripOverviewData = {
@@ -1505,6 +1506,7 @@ const TripDetail = ({
                   entry.coverImageUrl?.trim() ||
                   entry.media[0]?.url ||
                   inlineImages[0];
+                const entryTags = entry.tags ?? [];
 
                 const isSelected = entry.id === selectedEntryId;
                 return (
@@ -1541,6 +1543,19 @@ const TripDetail = ({
                       <p className="mt-1 truncate text-sm text-[#2D2A26]">
                         {displayTitle}
                       </p>
+                      {entryTags.length > 0 ? (
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          {entryTags.map((tag) => (
+                            <span
+                              key={tag}
+                              title={tag}
+                              className="inline-flex max-w-[12rem] items-center rounded-full bg-[#F2ECE3] px-3 py-1 text-xs font-semibold text-[#2D2A26] sm:max-w-[16rem]"
+                            >
+                              <span className="truncate" dir="auto">{tag}</span>
+                            </span>
+                          ))}
+                        </div>
+                      ) : null}
                     </div>
                     <span className="text-xs font-semibold uppercase tracking-[0.2em] text-[#1F6F78]">
                       {t("common.open")}
