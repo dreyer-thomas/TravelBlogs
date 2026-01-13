@@ -70,12 +70,16 @@ GPT-5
   - Added multi-select dropdown interaction test
   - Added edge case tests (empty results, map filter interaction)
   - All tests passing (458/458)
+- Production build fix: Corrected Prisma query in shared entry route (TypeScript strict mode compatibility)
+  - Fixed `include` → `select` pattern in `/api/trips/share/[token]/entries/[entryId]`
+  - All tests passing, TypeScript compilation clean
 
 ### File List
 
 - travelblogs/src/utils/entry-tags.ts
 - travelblogs/src/components/trips/trip-overview.tsx
 - travelblogs/src/utils/i18n.ts
+- travelblogs/src/app/api/trips/share/[token]/entries/[entryId]/route.ts (build fix)
 - travelblogs/tests/utils/entry-tags.test.ts
 - travelblogs/tests/components/trip-overview.test.tsx
 - _bmad-output/implementation-artifacts/sprint-status.yaml
