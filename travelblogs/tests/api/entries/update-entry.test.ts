@@ -40,6 +40,8 @@ describe("PATCH /api/entries/[id]", () => {
   beforeEach(async () => {
     getToken.mockReset();
     getToken.mockResolvedValue({ sub: "creator" });
+    await prisma.entryTag.deleteMany();
+    await prisma.tag.deleteMany();
     await prisma.entryMedia.deleteMany();
     await prisma.entry.deleteMany();
     await prisma.trip.deleteMany();
@@ -154,6 +156,72 @@ describe("PATCH /api/entries/[id]", () => {
     expect(body.data.media).toHaveLength(2);
     expect(updatedEntry?.text).toBe("Updated text");
     expect(updatedEntry?.media).toHaveLength(2);
+  });
+
+  it("updates entry tags when provided", async () => {
+    const trip = await prisma.trip.create({
+      data: {
+        title: "Tagged Trip",
+        startDate: new Date("2025-05-01"),
+        endDate: new Date("2025-05-10"),
+        ownerId: "creator",
+      },
+    });
+    const entry = await prisma.entry.create({
+      data: {
+        tripId: trip.id,
+        title: "Original title",
+        text: "Old text",
+        media: {
+          create: [{ url: "/uploads/entries/old.jpg" }],
+        },
+        tags: {
+          create: [
+            {
+              tag: {
+                create: {
+                  tripId: trip.id,
+                  name: "Mountains",
+                  normalizedName: "mountains",
+                },
+              },
+            },
+          ],
+        },
+      },
+    });
+
+    const request = new Request(`http://localhost/api/entries/${entry.id}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        title: "Updated title",
+        text: "Updated text",
+        mediaUrls: ["/uploads/entries/new.jpg"],
+        tags: ["Lakes", "Forests"],
+      }),
+    });
+
+    const response = await patch(request, { params: { id: entry.id } });
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.error).toBeNull();
+    expect(body.data.tags).toEqual(["Forests", "Lakes"]);
+
+    const entryTags = await prisma.entryTag.findMany({
+      where: { entryId: entry.id },
+      include: { tag: true },
+      orderBy: { tag: { name: "asc" } },
+    });
+
+    expect(entryTags).toHaveLength(2);
+    expect(entryTags.map((item) => item.tag.normalizedName)).toEqual([
+      "forests",
+      "lakes",
+    ]);
   });
 
   it("updates the entry date when entryDate is provided", async () => {

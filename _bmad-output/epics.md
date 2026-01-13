@@ -894,23 +894,6 @@ so that view-only users cannot access trip edit flows.
 
 Add timeline storytelling to show the journey in order.
 
-### Story 6.2: Trip Timeline View
-
-As a viewer,
-I want to see a timeline view of trip entries,
-So that I can follow the journey in order.
-
-**Acceptance Criteria:**
-
-**Given** a trip has entries  
-**When** I open the timeline view  
-**Then** I see entries ordered chronologically  
-**And** selecting an entry focuses it in the timeline  
-
-**Given** a trip has no entries  
-**When** I open the timeline view  
-**Then** I see a clear empty state
-
 ### Story 6.6: Date Formatting Consistency
 
 As a user,
@@ -1025,20 +1008,20 @@ so that I understand where the story took place.
 
 **Acceptance Criteria:**
 
-**Given** I open an entry that has a saved story location  
-**When** the entry page renders  
-**Then** I see a "Location" section after the Media section at the bottom of the page  
-**And** the section shows the location name  
-**And** the section optionally shows latitude/longitude when available  
+**Given** I open an entry that has a saved story location
+**When** the entry page renders
+**Then** I see a "Location" section after the Media section at the bottom of the page
+**And** the section shows the location name
+**And** the section optionally shows latitude/longitude when available
 
-**Given** I open an entry with no saved location  
-**When** the entry page renders  
-**Then** the Location section is hidden (no empty placeholder)  
+**Given** I open an entry with no saved location
+**When** the entry page renders
+**Then** the Location section is hidden (no empty placeholder)
 
-**Given** I view the entry on mobile or desktop  
-**When** the Location section is displayed  
-**Then** it follows the existing entry layout and responsive spacing  
+**Given** I view the entry on mobile or desktop
+**When** the Location section is displayed
+**Then** it follows the existing entry layout and responsive spacing
 
-**Given** the Location section is displayed  
-**When** I view UI text  
+**Given** the Location section is displayed
+**When** I view UI text
 **Then** all user-facing strings are available in English and German

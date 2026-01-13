@@ -1,4 +1,4 @@
-# generated: 2025-12-29T16:38:16Z
+# generated: 2026-01-12T22:12:28Z
 # project: TravelBlogs
 # project_key: travelblogs
 # tracking_system: file-system
@@ -33,20 +33,20 @@
 # - SM typically creates next story after previous one is 'done' to incorporate learnings
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
-generated: 2025-12-29T16:38:16Z
+generated: 2026-01-12T22:12:28Z
 project: TravelBlogs
 project_key: travelblogs
 tracking_system: file-system
 story_location: /Users/tommy/Development/TravelBlogs/_bmad-output/implementation-artifacts
 
 development_status:
-  epic-0: in-progress
+  epic-0: done
   0-1-creator-sign-in-single-account: done
   0-2-enable-https: done
   0-3-deactivate-creator-account: done
-  epic-0-retrospective: optional
+  epic-0-retrospective: done
 
-  epic-1: in-progress
+  epic-1: done
   1-1-initialize-project-from-starter-template: done
   1-2-create-trip: done
   1-3-delete-trip: done
@@ -54,9 +54,9 @@ development_status:
   1-5-view-trip-list: done
   1-6-trip-cover-image-upload: done
   1-7-typography-refresh-sans-serif: done
-  epic-1-retrospective: optional
+  epic-1-retrospective: done
 
-  epic-2: in-progress
+  epic-2: done
   2-1-add-blog-entry: done
   2-2-edit-blog-entry: done
   2-3-multi-file-media-upload: done
@@ -65,17 +65,17 @@ development_status:
   2-6-unified-entry-image-library: done
   2-7-full-screen-photo-viewer: done
   2-8-media-slideshow-viewer: done
-  epic-2-retrospective: optional
+  epic-2-retrospective: done
 
-  epic-3: in-progress
+  epic-3: done
   3-1-view-entry-single-page-reader: done
   3-2-entry-navigation: done
   3-3-trip-overview-with-latest-entries: done
-  3-4-fullscreen-viewer-minimal-chrome-and-segmented-progress: done
+  3-4-fullscreen-viewer-minimal-chrome-and-segmented-slideshow-progress: done
   3-5-transfer-trip-ownership: done
-  epic-3-retrospective: optional
+  epic-3-retrospective: done
 
-  epic-4: in-progress
+  epic-4: done
   4-1-create-shareable-trip-link: done
   4-2-regenerate-shareable-link: done
   4-3-revoke-shareable-link: done
@@ -83,7 +83,7 @@ development_status:
   4-5-invalidate-shared-entry-pages-on-revoke: done
   epic-4-retrospective: done
 
-  epic-5: in-progress
+  epic-5: done
   5-1-admin-creates-user-accounts: done
   5-2-user-sign-in: done
   5-3-admin-changes-user-role: done
@@ -91,35 +91,41 @@ development_status:
   5-5-enable-contributor-access-for-a-viewer: done
   5-6-viewer-access-to-invited-trips: done
   5-7-contributor-adds-and-edits-entries: done
-  5-8-admin-deactivates-user: done
+  5-8-admin-deactivates-or-deletes-user: done
   5-9-administrator-role-and-admin-safeguards: done
   5-10-refine-viewer-invitations-with-custom-selector: done
   5-11-change-password: done
-  5-12-shared-view-button: done
+  5-12-shared-view-button-on-trip: done
   5-13-active-badge-date-range: done
-  5-14-relative_redirects: done
-  5-15-shared-view-hero-image: done
-  5-17-shared-view-back-to-overview: done
-  5-18-manage-trips-view-edit-gating: done
-  5-19-fix-edit-navigation: done
-  5-20-back-to-trips-navigation: done
-  epic-5-retrospective: optional
+  5-14-relative-redirects-for-sign-in: done
+  5-15-shared-view-hero-image-uses-selected-cover: done
+  5-17-shared-view-link-back-to-trip-overview: done
+  5-18-provide-edit-button-only-for-editors: done
+  5-19-fix-edit-navigation-targets: done
+  5-20-add-back-to-trips-navigation-from-trip-views: done
+  epic-5-retrospective: done
 
-  epic-6: in-progress
-  6-2-trip-timeline-view: backlog
-  6-6-date-formatting: done
+  epic-6: done
   6-4-user-manual: done
-  6-5-language-selection: done
-  epic-6-retrospective: optional
+  6-5-language-selection-ende: done
+  6-6-date-formatting-consistency: done
+  epic-6-retrospective: done
 
-  epic-7: in-progress
+  epic-7: done
   7-1-trip-map-view: done
   7-2-extract-coordinates-from-photo-metadata: done
-  7-3-map-on-edit-trip: done
+  7-3-map-on-edit-trip-page: done
   7-4-story-location-selector: done
   7-5-map-view-in-shared-hero-image: done
   7-6-entry-location-section: done
   7-7-fullscreen-trip-map: done
   7-8-edit-entry-location-display: done
   7-9-chronological-map-path: done
-  epic-7-retrospective: optional
+  epic-7-retrospective: done
+
+  epic-8: in-progress
+  8-1-add-tags-to-entry-createedit: review
+  8-2-show-tags-on-trip-overview-entry-cards: in-progress
+  8-3-show-tags-on-entry-reader-hero: ready-for-dev
+  8-4-filter-entries-by-tags: ready-for-dev
+  epic-8-retrospective: optional

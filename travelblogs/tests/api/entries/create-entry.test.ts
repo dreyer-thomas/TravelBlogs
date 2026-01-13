@@ -37,6 +37,8 @@ describe("POST /api/entries", () => {
   beforeEach(async () => {
     getToken.mockReset();
     getToken.mockResolvedValue({ sub: "creator" });
+    await prisma.entryTag.deleteMany();
+    await prisma.tag.deleteMany();
     await prisma.entryMedia.deleteMany();
     await prisma.entry.deleteMany();
     await prisma.trip.deleteMany();
@@ -91,6 +93,85 @@ describe("POST /api/entries", () => {
     expect(createdEntry?.latitude).toBe(51.5055);
     expect(createdEntry?.longitude).toBe(-0.075406);
     expect(createdEntry?.locationName).toBe("Tower Bridge, London, UK");
+  });
+
+  it("creates an entry with tags", async () => {
+    const trip = await prisma.trip.create({
+      data: {
+        title: "Tag Trip",
+        startDate: new Date("2025-06-01"),
+        endDate: new Date("2025-06-10"),
+        ownerId: "creator",
+      },
+    });
+
+    const request = new Request("http://localhost/api/entries", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        tripId: trip.id,
+        title: "Tagged entry",
+        text: "Tags for this entry.",
+        mediaUrls: ["/uploads/entries/tagged.jpg"],
+        tags: ["Beach", "  Sunset "],
+      }),
+    });
+
+    const response = await post(request);
+    const body = await response.json();
+
+    expect(response.status).toBe(201);
+    expect(body.error).toBeNull();
+    expect(body.data.tags).toEqual(["Beach", "Sunset"]);
+
+    const tags = await prisma.tag.findMany({
+      where: { tripId: trip.id },
+      orderBy: { name: "asc" },
+    });
+    const entryTags = await prisma.entryTag.findMany({
+      where: { entryId: body.data.id },
+    });
+
+    expect(tags).toHaveLength(2);
+    expect(tags.map((tag) => tag.normalizedName)).toEqual([
+      "beach",
+      "sunset",
+    ]);
+    expect(entryTags).toHaveLength(2);
+  });
+
+  it("rejects duplicate tags", async () => {
+    const trip = await prisma.trip.create({
+      data: {
+        title: "Duplicate Tag Trip",
+        startDate: new Date("2025-06-01"),
+        endDate: new Date("2025-06-10"),
+        ownerId: "creator",
+      },
+    });
+
+    const request = new Request("http://localhost/api/entries", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        tripId: trip.id,
+        title: "Tagged entry",
+        text: "Tags for this entry.",
+        mediaUrls: ["/uploads/entries/tagged.jpg"],
+        tags: ["Paris", "paris"],
+      }),
+    });
+
+    const response = await post(request);
+    const body = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(body.error.code).toBe("VALIDATION_ERROR");
+    expect(body.error.message).toBe("Tags must be unique.");
   });
 
   it("creates an entry with media for an owned trip", async () => {

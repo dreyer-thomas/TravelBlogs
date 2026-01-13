@@ -236,3 +236,135 @@ If issues arise:
 **Last Updated:** 2026-01-11
 **Epic:** 7 - Location Features
 **Stories Completed:** 7.1, 7.2, 7.3, 7.4
+
+---
+
+# Production Deployment Addendum - Epic 8.1 (Tags)
+
+This addendum covers deploying Story 8.1 changes to your production server.
+
+## What Changed
+
+- **Story 8.1**: Tag input UI on entry create/edit with trip-scoped suggestions
+- **API**: Tags persisted on entry create/update; trip tags endpoint for suggestions
+- **Database**: Added `Tag` and `EntryTag` tables with trip-scoped uniqueness
+
+## Epic 7 → Epic 8.1 Upgrade Checklist
+
+- Confirm production is running the last Epic 7 tag/commit
+- Pull latest Epic 8.1 code
+- Apply Prisma migration `20260112233000_add_entry_tags`
+- Build and restart the app
+- Verify tags appear on entry create/edit and persist
+
+## Deployment Steps (Epic 8.1)
+
+### 1. Connect to Production Server
+
+```bash
+ssh user@your-production-server
+cd /path/to/TravelBlogs
+```
+
+### 2. Pull Latest Code
+
+```bash
+git pull origin main
+```
+
+### 3. Navigate to Application Directory
+
+```bash
+cd travelblogs
+```
+
+### 4. Install Dependencies
+
+```bash
+npm install
+```
+
+### 5. Apply Database Migration
+
+```bash
+npx prisma migrate deploy
+```
+
+**Migration applied:** `20260112233000_add_entry_tags`
+
+**Schema changes:**
+- `Tag` table: `id`, `tripId`, `name`, `normalizedName`, `createdAt`
+- `EntryTag` table: `id`, `entryId`, `tagId`, `createdAt`
+- Unique constraints: `Tag.tripId + normalizedName`, `EntryTag.entryId + tagId`
+
+### 6. Build Application
+
+```bash
+npm run build
+```
+
+### 7. Restart Production Server
+
+**If using npm:**
+```bash
+npm run start
+```
+
+**If using PM2:**
+```bash
+pm2 restart travelblogs
+```
+
+**If using systemd:**
+```bash
+sudo systemctl restart travelblogs
+```
+
+## Verification
+
+### Tag UI
+
+1. Go to an entry create or edit page
+2. Verify a "Tags" input appears
+3. Add tags, save, and confirm they persist on reload
+4. Create a second entry in the same trip and confirm suggestions appear
+
+### Check for Errors
+
+```bash
+pm2 logs travelblogs
+```
+
+or
+
+```bash
+journalctl -u travelblogs -f
+```
+
+## Rollback (If Needed)
+
+### 1. Revert Code
+
+```bash
+git revert <commit-hash>
+git push origin main
+```
+
+### 2. Rollback Migration
+
+```bash
+npx prisma migrate resolve --rolled-back 20260112233000_add_entry_tags
+```
+
+### 3. Rebuild and Restart
+
+```bash
+npm run build
+pm2 restart travelblogs  # or your restart command
+```
+
+---
+
+**Last Updated:** 2026-01-12
+**Epic:** 8.1 - Entry Tags
+**Stories Completed:** 8.1

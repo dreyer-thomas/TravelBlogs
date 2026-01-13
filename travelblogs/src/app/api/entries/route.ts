@@ -4,6 +4,11 @@ import { z } from "zod";
 
 import { prisma } from "../../../utils/db";
 import { extractInlineImageUrls } from "../../../utils/entry-content";
+import {
+  buildTagInputs,
+  normalizeTagName,
+  tagMaxLength,
+} from "../../../utils/entry-tags";
 import { canContributeToTrip, hasTripAccess } from "../../../utils/trip-access";
 import { ensureActiveAccount, isAdminOrCreator } from "../../../utils/roles";
 
@@ -33,6 +38,19 @@ const createEntrySchema = z
     latitude: z.number().min(-90).max(90).optional(),
     longitude: z.number().min(-180).max(180).optional(),
     locationName: z.string().trim().optional(),
+    tags: z
+      .array(
+        z
+          .string()
+          .trim()
+          .min(1, "Tag is required.")
+          .max(
+            tagMaxLength,
+            `Tag must be ${tagMaxLength} characters or fewer.`,
+          ),
+      )
+      .optional()
+      .default([]),
   })
   .superRefine((data, ctx) => {
     const inlineImages = extractInlineImageUrls(data.text);
@@ -52,6 +70,19 @@ const createEntrySchema = z
         message: "Story image must be one of the entry photos.",
         path: ["coverImageUrl"],
       });
+    }
+    const normalizedTags = new Set<string>();
+    for (const tag of data.tags) {
+      const normalized = normalizeTagName(tag);
+      if (normalizedTags.has(normalized)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Tags must be unique.",
+          path: ["tags"],
+        });
+        break;
+      }
+      normalizedTags.add(normalized);
     }
   });
 
@@ -140,6 +171,7 @@ export const POST = async (request: NextRequest) => {
     const createdAt = parsed.data.entryDate
       ? new Date(parsed.data.entryDate)
       : new Date();
+    const tagInputs = buildTagInputs(parsed.data.tags);
     const entry = await prisma.entry.create({
       data: {
         tripId: parsed.data.tripId,
@@ -154,9 +186,33 @@ export const POST = async (request: NextRequest) => {
         media: {
           create: parsed.data.mediaUrls.map((url) => ({ url })),
         },
+        tags: {
+          create: tagInputs.map((tag) => ({
+            tag: {
+              connectOrCreate: {
+                where: {
+                  tripId_normalizedName: {
+                    tripId: parsed.data.tripId,
+                    normalizedName: tag.normalizedName,
+                  },
+                },
+                create: {
+                  tripId: parsed.data.tripId,
+                  name: tag.name,
+                  normalizedName: tag.normalizedName,
+                },
+              },
+            },
+          })),
+        },
       },
       include: {
         media: true,
+        tags: {
+          include: {
+            tag: true,
+          },
+        },
       },
     });
 
@@ -177,6 +233,11 @@ export const POST = async (request: NextRequest) => {
             createdAt: item.createdAt.toISOString(),
           }),
           ),
+          tags: entry.tags
+            .map((item: { tag: { name: string } }) => item.tag.name)
+            .sort((left: string, right: string) =>
+              left.localeCompare(right),
+            ),
           location:
             entry.latitude !== null && entry.longitude !== null
               ? {

@@ -36,6 +36,11 @@ const EditEntryPage = async ({ params }: EditEntryPageProps) => {
     include: {
       media: true,
       trip: true,
+      tags: {
+        include: {
+          tag: true,
+        },
+      },
     },
   });
 
@@ -77,6 +82,7 @@ const EditEntryPage = async ({ params }: EditEntryPageProps) => {
           initialCoverImageUrl={entry.coverImageUrl}
           initialText={entry.text}
           initialMediaUrls={entry.media.map((item) => item.url)}
+          initialTags={entry.tags.map((item) => item.tag.name)}
           initialLocation={
             entry.latitude != null && entry.longitude != null
               ? {

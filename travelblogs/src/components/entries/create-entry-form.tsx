@@ -15,12 +15,14 @@ import {
   removeInlineImageByUrl,
 } from "../../utils/entry-content";
 import { useTranslation } from "../../utils/use-translation";
+import EntryTagInput from "./entry-tag-input";
 
 type FieldErrors = {
   date?: string;
   title?: string;
   text?: string;
   media?: string;
+  tags?: string;
   form?: string;
 };
 
@@ -105,6 +107,7 @@ const CreateEntryForm = ({ tripId, onEntryCreated }: CreateEntryFormProps) => {
   const [title, setTitle] = useState("");
   const [coverImageUrl, setCoverImageUrl] = useState("");
   const [text, setText] = useState("");
+  const [tags, setTags] = useState<string[]>([]);
   const [mediaUrls, setMediaUrls] = useState<string[]>([]);
   const [mediaPreviews, setMediaPreviews] = useState<string[]>([]);
   const [mediaUploading, setMediaUploading] = useState(false);
@@ -133,6 +136,7 @@ const CreateEntryForm = ({ tripId, onEntryCreated }: CreateEntryFormProps) => {
     locationName: string;
   } | null>(null);
   const skipLocationSearchRef = useRef(false);
+  const [tagSuggestions, setTagSuggestions] = useState<string[]>([]);
 
   const inlineImageUrls = useMemo(
     () => extractInlineImageUrls(text),
@@ -190,6 +194,42 @@ const CreateEntryForm = ({ tripId, onEntryCreated }: CreateEntryFormProps) => {
       });
     };
   }, [mediaPreviews]);
+
+  useEffect(() => {
+    let isActive = true;
+
+    const loadTags = async () => {
+      if (typeof fetch !== "function") {
+        return;
+      }
+      try {
+        const response = await fetch(`/api/trips/${tripId}/tags`);
+        const result = await response.json().catch(() => null);
+        if (!isActive) {
+          return;
+        }
+        if (
+          response.ok &&
+          Array.isArray(result?.data) &&
+          result.data.every((item: unknown) => typeof item === "string")
+        ) {
+          setTagSuggestions(result.data);
+        } else {
+          setTagSuggestions([]);
+        }
+      } catch {
+        if (isActive) {
+          setTagSuggestions([]);
+        }
+      }
+    };
+
+    void loadTags();
+
+    return () => {
+      isActive = false;
+    };
+  }, [tripId]);
 
   const updateText = (value: string) => {
     setText(value);
@@ -538,7 +578,7 @@ const CreateEntryForm = ({ tripId, onEntryCreated }: CreateEntryFormProps) => {
   }, [locationQuery]);
 
   const hasFieldErrors = Boolean(
-    errors.date || errors.title || errors.text || errors.media,
+    errors.date || errors.title || errors.text || errors.media || errors.tags,
   );
   const canSubmit = Boolean(
     isValidEntryDate(entryDate) &&
@@ -703,6 +743,15 @@ const CreateEntryForm = ({ tripId, onEntryCreated }: CreateEntryFormProps) => {
     ) {
       return { media: t("entries.entryMediaRequired") };
     }
+    if (message === "Tag is required.") {
+      return { tags: t("entries.tagRequired") };
+    }
+    if (message === "Tag must be 40 characters or fewer.") {
+      return { tags: t("entries.tagTooLong") };
+    }
+    if (message === "Tags must be unique.") {
+      return { tags: t("entries.tagsMustBeUnique") };
+    }
     return { form: message };
   };
 
@@ -743,6 +792,7 @@ const CreateEntryForm = ({ tripId, onEntryCreated }: CreateEntryFormProps) => {
             : undefined,
           text: text.trim(),
           mediaUrls: mergedMediaUrls,
+          tags,
           latitude: selectedLocation?.latitude,
           longitude: selectedLocation?.longitude,
           locationName: selectedLocation?.locationName,
@@ -765,6 +815,7 @@ const CreateEntryForm = ({ tripId, onEntryCreated }: CreateEntryFormProps) => {
       setTitle("");
       setCoverImageUrl("");
       setText("");
+      setTags([]);
       setMediaUrls([]);
       setMediaPreviews([]);
       setEntryDate(new Date().toISOString().slice(0, 10));
@@ -834,6 +885,16 @@ const CreateEntryForm = ({ tripId, onEntryCreated }: CreateEntryFormProps) => {
           <p className="mt-2 text-xs text-[#B34A3C]">{errors.text}</p>
         ) : null}
       </label>
+
+      <EntryTagInput
+        value={tags}
+        onChange={setTags}
+        suggestions={tagSuggestions}
+        t={t}
+      />
+      {errors.tags ? (
+        <p className="text-xs text-[#B34A3C]">{errors.tags}</p>
+      ) : null}
 
       <div className="space-y-2 rounded-xl border border-dashed border-black/10 bg-[#F9F5EF] p-3">
         <div className="space-y-2">

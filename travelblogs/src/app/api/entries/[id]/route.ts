@@ -4,6 +4,11 @@ import { z } from "zod";
 
 import { prisma } from "../../../../utils/db";
 import { extractInlineImageUrls } from "../../../../utils/entry-content";
+import {
+  buildTagInputs,
+  normalizeTagName,
+  tagMaxLength,
+} from "../../../../utils/entry-tags";
 import { canContributeToTrip, hasTripAccess } from "../../../../utils/trip-access";
 import { ensureActiveAccount, isAdminOrCreator } from "../../../../utils/roles";
 
@@ -65,6 +70,18 @@ const updateEntrySchema = z
     latitude: z.number().min(-90).max(90).optional().nullable(),
     longitude: z.number().min(-180).max(180).optional().nullable(),
     locationName: z.string().trim().optional().nullable(),
+    tags: z
+      .array(
+        z
+          .string()
+          .trim()
+          .min(1, "Tag is required.")
+          .max(
+            tagMaxLength,
+            `Tag must be ${tagMaxLength} characters or fewer.`,
+          ),
+      )
+      .optional(),
   })
   .superRefine((data, ctx) => {
     const inlineImages = extractInlineImageUrls(data.text);
@@ -78,6 +95,21 @@ const updateEntrySchema = z
         message: "At least one photo is required.",
         path: ["mediaUrls"],
       });
+    }
+    if (data.tags) {
+      const normalizedTags = new Set<string>();
+      for (const tag of data.tags) {
+        const normalized = normalizeTagName(tag);
+        if (normalizedTags.has(normalized)) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "Tags must be unique.",
+            path: ["tags"],
+          });
+          break;
+        }
+        normalizedTags.add(normalized);
+      }
     }
   });
 
@@ -278,6 +310,9 @@ export const PATCH = async (
       );
     }
 
+    const tagInputs = parsed.data.tags
+      ? buildTagInputs(parsed.data.tags)
+      : [];
     const updated = await prisma.entry.update({
       where: { id },
       data: {
@@ -307,9 +342,38 @@ export const PATCH = async (
               },
             }
           : {}),
+        ...(parsed.data.tags !== undefined
+          ? {
+              tags: {
+                deleteMany: {},
+                create: tagInputs.map((tag) => ({
+                  tag: {
+                    connectOrCreate: {
+                      where: {
+                        tripId_normalizedName: {
+                          tripId: entry.tripId,
+                          normalizedName: tag.normalizedName,
+                        },
+                      },
+                      create: {
+                        tripId: entry.tripId,
+                        name: tag.name,
+                        normalizedName: tag.normalizedName,
+                      },
+                    },
+                  },
+                })),
+              },
+            }
+          : {}),
       },
       include: {
         media: true,
+        tags: {
+          include: {
+            tag: true,
+          },
+        },
       },
     });
 
@@ -330,6 +394,11 @@ export const PATCH = async (
             createdAt: item.createdAt.toISOString(),
           }),
           ),
+          tags: updated.tags
+            .map((item: { tag: { name: string } }) => item.tag.name)
+            .sort((left: string, right: string) =>
+              left.localeCompare(right),
+            ),
           location:
             updated.latitude !== null && updated.longitude !== null
               ? {

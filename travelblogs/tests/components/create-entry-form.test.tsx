@@ -231,22 +231,31 @@ describe("CreateEntryForm", () => {
   });
 
   it("searches locations and selects a result", async () => {
-    const fetchMock = vi.fn().mockResolvedValue(
-      new Response(
-        JSON.stringify({
-          data: [
-            {
-              id: "paris",
-              latitude: 48.8566,
-              longitude: 2.3522,
-              displayName: "Paris, France",
-            },
-          ],
-          error: null,
-        }),
-        { status: 200 },
-      ),
-    );
+    const fetchMock = vi.fn().mockImplementation((input: RequestInfo) => {
+      if (typeof input === "string" && input.includes("/api/trips/")) {
+        return Promise.resolve(
+          new Response(JSON.stringify({ data: [], error: null }), {
+            status: 200,
+          }),
+        );
+      }
+      return Promise.resolve(
+        new Response(
+          JSON.stringify({
+            data: [
+              {
+                id: "paris",
+                latitude: 48.8566,
+                longitude: 2.3522,
+                displayName: "Paris, France",
+              },
+            ],
+            error: null,
+          }),
+          { status: 200 },
+        ),
+      );
+    });
     vi.stubGlobal("fetch", fetchMock);
 
     renderWithLocale(<CreateEntryForm tripId="trip-123" />);
@@ -288,13 +297,20 @@ describe("CreateEntryForm", () => {
       longitude: -0.0754,
     });
 
-    const fetchMock = vi
-      .fn()
-      .mockResolvedValue(
+    const fetchMock = vi.fn().mockImplementation((input: RequestInfo) => {
+      if (typeof input === "string" && input.includes("/api/trips/")) {
+        return Promise.resolve(
+          new Response(JSON.stringify({ data: [], error: null }), {
+            status: 200,
+          }),
+        );
+      }
+      return Promise.resolve(
         new Response(new Blob(["photo"], { type: "image/jpeg" }), {
           status: 200,
         }),
       );
+    });
     vi.stubGlobal("fetch", fetchMock);
 
     renderWithLocale(<CreateEntryForm tripId="trip-123" />);

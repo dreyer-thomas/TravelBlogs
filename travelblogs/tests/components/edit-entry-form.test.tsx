@@ -287,22 +287,31 @@ describe("EditEntryForm", () => {
   });
 
   it("searches locations and selects a result", async () => {
-    const fetchMock = vi.fn().mockResolvedValue(
-      new Response(
-        JSON.stringify({
-          data: [
-            {
-              id: "london",
-              latitude: 51.5074,
-              longitude: -0.1278,
-              displayName: "London, United Kingdom",
-            },
-          ],
-          error: null,
-        }),
-        { status: 200 },
-      ),
-    );
+    const fetchMock = vi.fn().mockImplementation((input: RequestInfo) => {
+      if (typeof input === "string" && input.includes("/api/trips/")) {
+        return Promise.resolve(
+          new Response(JSON.stringify({ data: [], error: null }), {
+            status: 200,
+          }),
+        );
+      }
+      return Promise.resolve(
+        new Response(
+          JSON.stringify({
+            data: [
+              {
+                id: "london",
+                latitude: 51.5074,
+                longitude: -0.1278,
+                displayName: "London, United Kingdom",
+              },
+            ],
+            error: null,
+          }),
+          { status: 200 },
+        ),
+      );
+    });
     vi.stubGlobal("fetch", fetchMock);
 
     renderWithLocale(

@@ -1,5 +1,5 @@
 ---
-stepsCompleted: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+stepsCompleted: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, "step-01b-continue", "step-11-complete"]
 inputDocuments:
   - _bmad-output/analysis/product-brief-TravelBlogs-2025-12-20.md
   - _bmad-output/analysis/research/placeholder.md
@@ -10,7 +10,7 @@ documentCounts:
   brainstorming: 1
   projectDocs: 0
 workflowType: 'prd'
-lastStep: 0
+lastStep: 10
 project_name: 'TravelBlogs'
 user_name: 'Tommy'
 date: '2025-12-21T13:01:11Z'
