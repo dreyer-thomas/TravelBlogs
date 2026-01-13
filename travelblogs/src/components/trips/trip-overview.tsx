@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import TripMap from "./trip-map";
 import { useTranslation } from "../../utils/use-translation";
 import { filterEntriesWithLocation } from "../../utils/entry-location";
+import { getDistinctTagList, normalizeTagName } from "../../utils/entry-tags";
 import type { TripOverviewEntry, TripOverviewTrip } from "../../types/trip-overview";
 
 type TripOverviewProps = {
@@ -40,10 +41,44 @@ const TripOverview = ({
   const router = useRouter();
   const [selectedEntryId, setSelectedEntryId] = useState<string | null>(null);
   const [isMapVisible, setIsMapVisible] = useState(false);
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [isTagFilterOpen, setIsTagFilterOpen] = useState(false);
+
+  const distinctTags = useMemo(() => getDistinctTagList(entries), [entries]);
+  const shouldUseChips = distinctTags.length > 0 && distinctTags.length <= 8;
+  const shouldUseSelect = distinctTags.length > 8;
+
+  const normalizedSelectedTags = useMemo(
+    () => new Set(selectedTags.map((tag) => normalizeTagName(tag))),
+    [selectedTags],
+  );
+
+  // Pre-compute normalized tags for each entry to avoid re-normalizing on every filter
+  const entriesWithNormalizedTags = useMemo(
+    () =>
+      entries.map((entry) => ({
+        ...entry,
+        normalizedTags: entry.tags.map((tag) => normalizeTagName(tag)),
+      })),
+    [entries],
+  );
+
+  const filteredEntries = useMemo(() => {
+    if (selectedTags.length === 0) {
+      return entries;
+    }
+    return entriesWithNormalizedTags
+      .filter((entry) =>
+        entry.normalizedTags.some((normalizedTag) =>
+          normalizedSelectedTags.has(normalizedTag),
+        ),
+      )
+      .map(({ normalizedTags, ...entry }) => entry);
+  }, [entries, entriesWithNormalizedTags, normalizedSelectedTags, selectedTags.length]);
 
   const entriesWithLocation = useMemo(
-    () => filterEntriesWithLocation(entries),
-    [entries],
+    () => filterEntriesWithLocation(filteredEntries),
+    [filteredEntries],
   );
   const mapLocations = useMemo(
     () =>
@@ -79,11 +114,32 @@ const TripOverview = ({
     if (!selectedEntryId) {
       return null;
     }
-    return entries.some((entry) => entry.id === selectedEntryId)
+    return filteredEntries.some((entry) => entry.id === selectedEntryId)
       ? selectedEntryId
       : null;
-  }, [entries, selectedEntryId]);
+  }, [filteredEntries, selectedEntryId]);
   const mapActionLabel = t("trips.viewFullMap");
+  const hasSelectedTags = selectedTags.length > 0;
+
+  const toggleTag = useCallback((tag: string) => {
+    setSelectedTags((prev) =>
+      prev.includes(tag) ? prev.filter((value) => value !== tag) : [...prev, tag],
+    );
+  }, []);
+
+  const clearTagSelection = useCallback(() => {
+    setSelectedTags([]);
+  }, []);
+
+  const handleSelectChange = useCallback(
+    (event: React.ChangeEvent<HTMLSelectElement>) => {
+      const values = Array.from(event.target.selectedOptions).map(
+        (option) => option.value,
+      );
+      setSelectedTags(values);
+    },
+    [],
+  );
 
   const mapContent = isMapVisible ? (
     <div className="relative isolate">
@@ -187,7 +243,82 @@ const TripOverview = ({
             </p>
           ) : (
             <div className="mt-6 space-y-4">
-              {entries.map((entry) => {
+              {distinctTags.length > 0 ? (
+                <div className="space-y-3">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <p className="text-xs uppercase tracking-[0.2em] text-[#6B635B]">
+                      {t("trips.filterTags")}
+                    </p>
+                    {hasSelectedTags ? (
+                      <button
+                        type="button"
+                        onClick={clearTagSelection}
+                        className="text-xs font-semibold uppercase tracking-[0.2em] text-[#1F6F78] transition hover:text-[#195C63]"
+                      >
+                        {t("trips.clearTagFilters")}
+                      </button>
+                    ) : null}
+                  </div>
+                  {shouldUseChips ? (
+                    <div className="flex flex-wrap gap-2">
+                      {distinctTags.map((tag) => {
+                        const isSelected = selectedTags.includes(tag);
+                        return (
+                          <button
+                            key={tag}
+                            type="button"
+                            onClick={() => toggleTag(tag)}
+                            aria-pressed={isSelected}
+                            className={
+                              isSelected
+                                ? "rounded-full border border-[#1F6F78] bg-[#1F6F78]/10 px-3 py-1 text-xs font-semibold text-[#1F6F78]"
+                                : "rounded-full border border-black/10 bg-[#F2ECE3] px-3 py-1 text-xs font-semibold text-[#2D2A26]"
+                            }
+                          >
+                            {tag}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  ) : shouldUseSelect ? (
+                    <div className="space-y-3">
+                      <button
+                        type="button"
+                        onClick={() => setIsTagFilterOpen((prev) => !prev)}
+                        aria-expanded={isTagFilterOpen}
+                        aria-controls="trip-tag-filter"
+                        className="rounded-xl border border-black/10 bg-white px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-[#2D2A26] transition hover:border-[#1F6F78]/40"
+                      >
+                        {t("trips.filterTags")}
+                      </button>
+                      {isTagFilterOpen ? (
+                        <div>
+                          <label
+                            htmlFor="trip-tag-filter"
+                            className="text-xs uppercase tracking-[0.2em] text-[#6B635B]"
+                          >
+                            {t("trips.filterTags")}
+                          </label>
+                          <select
+                            id="trip-tag-filter"
+                            multiple
+                            value={selectedTags}
+                            onChange={handleSelectChange}
+                            className="mt-2 w-full rounded-xl border border-black/10 bg-white px-3 py-2 text-sm text-[#2D2A26]"
+                          >
+                            {distinctTags.map((tag) => (
+                              <option key={tag} value={tag}>
+                                {tag}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      ) : null}
+                    </div>
+                  ) : null}
+                </div>
+              ) : null}
+              {filteredEntries.map((entry) => {
                 const previewImage = getPreviewImage(entry);
                 const isSelected = resolvedSelectedEntryId === entry.id;
                 const content = (

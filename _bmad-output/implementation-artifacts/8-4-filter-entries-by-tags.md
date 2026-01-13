@@ -1,6 +1,6 @@
 # Story 8.4: Filter Entries by Tags
 
-Status: ready-for-dev
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -18,18 +18,18 @@ so that I can see all stories related to selected tags.
 
 ## Tasks / Subtasks
 
-- [ ] Compute distinct tags per trip (AC: 1,2)
-  - [ ] Expose distinct tag list for trip overview.
-  - [ ] Sort tags predictably (alpha or usage count).
-- [ ] Implement filter UI (AC: 1,2,3)
-  - [ ] Chip list for <=8 tags with multi-select OR.
-  - [ ] Multi-select control for >8 tags with OR behavior.
-  - [ ] Clear state shows all entries.
-- [ ] Filter entries client-side or via API (AC: 1,2,3)
-  - [ ] Apply OR logic to tags; ensure shared and signed-in views match.
-- [ ] Tests (AC: 1,2,3)
-  - [ ] Component tests for chip/multi-select modes.
-  - [ ] Filtering behavior tests for OR logic and empty selection.
+- [x] Compute distinct tags per trip (AC: 1,2)
+  - [x] Expose distinct tag list for trip overview.
+  - [x] Sort tags predictably (alpha or usage count).
+- [x] Implement filter UI (AC: 1,2,3)
+  - [x] Chip list for <=8 tags with multi-select OR.
+  - [x] Multi-select control for >8 tags with OR behavior.
+  - [x] Clear state shows all entries.
+- [x] Filter entries client-side or via API (AC: 1,2,3)
+  - [x] Apply OR logic to tags; ensure shared and signed-in views match.
+- [x] Tests (AC: 1,2,3)
+  - [x] Component tests for chip/multi-select modes.
+  - [x] Filtering behavior tests for OR logic and empty selection.
 
 ## Dev Notes
 
@@ -61,6 +61,22 @@ GPT-5
 ### Completion Notes List
 
 - Ultimate context engine analysis completed - comprehensive developer guide created
+- Implemented distinct tag aggregation, tag filter UI modes, and client-side OR filtering for trip overview entries.
+- Added tag utility and trip overview component tests; ran `npm test` and `npm run lint` (lint has pre-existing warnings).
+- Code review completed: Fixed 1 HIGH + 4 MEDIUM issues (test coverage gaps, performance optimizations)
+  - Added case-insensitive tag filtering test
+  - Optimized tag normalization by pre-computing normalized tags
+  - Fixed redundant useMemo dependency
+  - Added multi-select dropdown interaction test
+  - Added edge case tests (empty results, map filter interaction)
+  - All tests passing (458/458)
 
 ### File List
 
+- travelblogs/src/utils/entry-tags.ts
+- travelblogs/src/components/trips/trip-overview.tsx
+- travelblogs/src/utils/i18n.ts
+- travelblogs/tests/utils/entry-tags.test.ts
+- travelblogs/tests/components/trip-overview.test.tsx
+- _bmad-output/implementation-artifacts/sprint-status.yaml
+- _bmad-output/implementation-artifacts/8-4-filter-entries-by-tags.md

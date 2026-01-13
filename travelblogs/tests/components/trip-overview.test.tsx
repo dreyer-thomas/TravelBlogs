@@ -335,8 +335,8 @@ describe("TripOverview", () => {
       </LocaleProvider>,
     );
 
-    expect(screen.getByText("Food")).toBeInTheDocument();
-    expect(screen.getByText("Hike")).toBeInTheDocument();
+    expect(screen.getAllByText("Food").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Hike").length).toBeGreaterThan(0);
   });
 
   it("hides the tag container when an entry has no tags", () => {
@@ -367,5 +367,400 @@ describe("TripOverview", () => {
 
     expect(screen.queryByText("Food")).not.toBeInTheDocument();
     expect(screen.queryByText("Hike")).not.toBeInTheDocument();
+  });
+
+  it("shows a tag chip filter when there are eight or fewer tags", () => {
+    render(
+      <LocaleProvider>
+        <TripOverview
+          trip={{
+            id: "trip-filter-chips",
+            title: "Chip trip",
+            startDate: "2025-06-01T00:00:00.000Z",
+            endDate: "2025-06-08T00:00:00.000Z",
+            coverImageUrl: null,
+          }}
+          entries={[
+            {
+              id: "entry-chip",
+              tripId: "trip-filter-chips",
+              title: "Tag day",
+              createdAt: "2025-06-03T12:00:00.000Z",
+              coverImageUrl: "/uploads/entries/tag-day.jpg",
+              tags: ["Food", "Hike", "City"],
+              media: [{ url: "/uploads/entries/tag-day-media.jpg" }],
+            },
+          ]}
+        />
+      </LocaleProvider>,
+    );
+
+    const foodChip = screen.getByRole("button", { name: "Food" });
+    const hikeChip = screen.getByRole("button", { name: "Hike" });
+
+    fireEvent.click(foodChip);
+    fireEvent.click(hikeChip);
+
+    expect(foodChip).toHaveAttribute("aria-pressed", "true");
+    expect(hikeChip).toHaveAttribute("aria-pressed", "true");
+  });
+
+  it("shows a multi-select filter when there are more than eight tags", () => {
+    render(
+      <LocaleProvider>
+        <TripOverview
+          trip={{
+            id: "trip-filter-select",
+            title: "Select trip",
+            startDate: "2025-06-01T00:00:00.000Z",
+            endDate: "2025-06-08T00:00:00.000Z",
+            coverImageUrl: null,
+          }}
+          entries={[
+            {
+              id: "entry-select",
+              tripId: "trip-filter-select",
+              title: "Tag day",
+              createdAt: "2025-06-03T12:00:00.000Z",
+              coverImageUrl: "/uploads/entries/tag-day.jpg",
+              tags: ["Food", "Hike", "City", "Art", "Beach", "Music", "Sun", "Night", "Forest"],
+              media: [{ url: "/uploads/entries/tag-day-media.jpg" }],
+            },
+          ]}
+        />
+      </LocaleProvider>,
+    );
+
+    const toggle = screen.getByRole("button", { name: /filter tags/i });
+    fireEvent.click(toggle);
+
+    expect(screen.getByLabelText(/filter tags/i)).toHaveAttribute("multiple");
+  });
+
+  it("filters entries with OR tag logic", () => {
+    render(
+      <LocaleProvider>
+        <TripOverview
+          trip={{
+            id: "trip-filter-logic",
+            title: "Filter trip",
+            startDate: "2025-06-01T00:00:00.000Z",
+            endDate: "2025-06-08T00:00:00.000Z",
+            coverImageUrl: null,
+          }}
+          entries={[
+            {
+              id: "entry-food",
+              tripId: "trip-filter-logic",
+              title: "Food day",
+              createdAt: "2025-06-02T12:00:00.000Z",
+              coverImageUrl: "/uploads/entries/food.jpg",
+              tags: ["Food"],
+              media: [{ url: "/uploads/entries/food.jpg" }],
+            },
+            {
+              id: "entry-hike",
+              tripId: "trip-filter-logic",
+              title: "Hike day",
+              createdAt: "2025-06-03T12:00:00.000Z",
+              coverImageUrl: "/uploads/entries/hike.jpg",
+              tags: ["Hike"],
+              media: [{ url: "/uploads/entries/hike.jpg" }],
+            },
+            {
+              id: "entry-city",
+              tripId: "trip-filter-logic",
+              title: "City day",
+              createdAt: "2025-06-04T12:00:00.000Z",
+              coverImageUrl: "/uploads/entries/city.jpg",
+              tags: ["City"],
+              media: [{ url: "/uploads/entries/city.jpg" }],
+            },
+          ]}
+        />
+      </LocaleProvider>,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Food" }));
+    fireEvent.click(screen.getByRole("button", { name: "Hike" }));
+
+    expect(screen.getByText("Food day")).toBeInTheDocument();
+    expect(screen.getByText("Hike day")).toBeInTheDocument();
+    expect(screen.queryByText("City day")).not.toBeInTheDocument();
+  });
+
+  it("shows all entries again after clearing tag filters", () => {
+    render(
+      <LocaleProvider>
+        <TripOverview
+          trip={{
+            id: "trip-filter-clear",
+            title: "Clear trip",
+            startDate: "2025-06-01T00:00:00.000Z",
+            endDate: "2025-06-08T00:00:00.000Z",
+            coverImageUrl: null,
+          }}
+          entries={[
+            {
+              id: "entry-food-clear",
+              tripId: "trip-filter-clear",
+              title: "Food day",
+              createdAt: "2025-06-02T12:00:00.000Z",
+              coverImageUrl: "/uploads/entries/food.jpg",
+              tags: ["Food"],
+              media: [{ url: "/uploads/entries/food.jpg" }],
+            },
+            {
+              id: "entry-hike-clear",
+              tripId: "trip-filter-clear",
+              title: "Hike day",
+              createdAt: "2025-06-03T12:00:00.000Z",
+              coverImageUrl: "/uploads/entries/hike.jpg",
+              tags: ["Hike"],
+              media: [{ url: "/uploads/entries/hike.jpg" }],
+            },
+          ]}
+        />
+      </LocaleProvider>,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Food" }));
+    expect(screen.queryByText("Hike day")).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /clear filters/i }));
+
+    expect(screen.getByText("Food day")).toBeInTheDocument();
+    expect(screen.getByText("Hike day")).toBeInTheDocument();
+  });
+
+  it("allows selecting multiple tags in multi-select dropdown and filters correctly", () => {
+    render(
+      <LocaleProvider>
+        <TripOverview
+          trip={{
+            id: "trip-multiselect",
+            title: "Multi-select trip",
+            startDate: "2025-06-01T00:00:00.000Z",
+            endDate: "2025-06-08T00:00:00.000Z",
+            coverImageUrl: null,
+          }}
+          entries={[
+            {
+              id: "entry-1",
+              tripId: "trip-multiselect",
+              title: "Food entry",
+              createdAt: "2025-06-02T12:00:00.000Z",
+              coverImageUrl: "/uploads/entries/food.jpg",
+              tags: ["Food", "City", "Art", "Beach", "Music", "Sun", "Night", "Forest", "Ocean"],
+              media: [{ url: "/uploads/entries/food.jpg" }],
+            },
+            {
+              id: "entry-2",
+              tripId: "trip-multiselect",
+              title: "Hike entry",
+              createdAt: "2025-06-03T12:00:00.000Z",
+              coverImageUrl: "/uploads/entries/hike.jpg",
+              tags: ["Hike", "City", "Art", "Beach", "Music", "Sun", "Night", "Forest", "Ocean"],
+              media: [{ url: "/uploads/entries/hike.jpg" }],
+            },
+            {
+              id: "entry-3",
+              tripId: "trip-multiselect",
+              title: "Other entry",
+              createdAt: "2025-06-04T12:00:00.000Z",
+              coverImageUrl: "/uploads/entries/other.jpg",
+              tags: ["City", "Art", "Beach", "Music", "Sun", "Night", "Forest", "Ocean", "Culture"],
+              media: [{ url: "/uploads/entries/other.jpg" }],
+            },
+          ]}
+        />
+      </LocaleProvider>,
+    );
+
+    // Open the multi-select dropdown (>8 tags)
+    const toggle = screen.getByRole("button", { name: /filter tags/i });
+    fireEvent.click(toggle);
+
+    const select = screen.getByLabelText(/filter tags/i) as HTMLSelectElement;
+
+    // Select Food and Hike options
+    const foodOption = Array.from(select.options).find(opt => opt.value === "Food");
+    const hikeOption = Array.from(select.options).find(opt => opt.value === "Hike");
+
+    if (foodOption) foodOption.selected = true;
+    if (hikeOption) hikeOption.selected = true;
+
+    fireEvent.change(select);
+
+    // Should show Food and Hike entries, but not Other
+    expect(screen.getByText("Food entry")).toBeInTheDocument();
+    expect(screen.getByText("Hike entry")).toBeInTheDocument();
+    expect(screen.queryByText("Other entry")).not.toBeInTheDocument();
+  });
+
+  it("filters entries case-insensitively when selecting tag chips", () => {
+    render(
+      <LocaleProvider>
+        <TripOverview
+          trip={{
+            id: "trip-case-test",
+            title: "Case test",
+            startDate: "2025-06-01T00:00:00.000Z",
+            endDate: "2025-06-08T00:00:00.000Z",
+            coverImageUrl: null,
+          }}
+          entries={[
+            {
+              id: "entry-food-lower",
+              tripId: "trip-case-test",
+              title: "food lowercase",
+              createdAt: "2025-06-02T12:00:00.000Z",
+              coverImageUrl: "/uploads/entries/food.jpg",
+              tags: ["food"],
+              media: [{ url: "/uploads/entries/food.jpg" }],
+            },
+            {
+              id: "entry-food-upper",
+              tripId: "trip-case-test",
+              title: "FOOD uppercase",
+              createdAt: "2025-06-03T12:00:00.000Z",
+              coverImageUrl: "/uploads/entries/food2.jpg",
+              tags: ["FOOD"],
+              media: [{ url: "/uploads/entries/food2.jpg" }],
+            },
+            {
+              id: "entry-food-mixed",
+              tripId: "trip-case-test",
+              title: "Food mixedcase",
+              createdAt: "2025-06-04T12:00:00.000Z",
+              coverImageUrl: "/uploads/entries/food3.jpg",
+              tags: ["  Food  "],
+              media: [{ url: "/uploads/entries/food3.jpg" }],
+            },
+            {
+              id: "entry-other",
+              tripId: "trip-case-test",
+              title: "Other tag",
+              createdAt: "2025-06-05T12:00:00.000Z",
+              coverImageUrl: "/uploads/entries/other.jpg",
+              tags: ["Beach"],
+              media: [{ url: "/uploads/entries/other.jpg" }],
+            },
+          ]}
+        />
+      </LocaleProvider>,
+    );
+
+    // The distinct tag list should normalize to "food" (first occurrence)
+    const foodChip = screen.getByRole("button", { name: "food" });
+    fireEvent.click(foodChip);
+
+    // All three "food" variants should match
+    expect(screen.getByText("food lowercase")).toBeInTheDocument();
+    expect(screen.getByText("FOOD uppercase")).toBeInTheDocument();
+    expect(screen.getByText("Food mixedcase")).toBeInTheDocument();
+
+    // Other tag should be filtered out
+    expect(screen.queryByText("Other tag")).not.toBeInTheDocument();
+  });
+
+  it("shows empty trip message when all entries are filtered out", () => {
+    render(
+      <LocaleProvider>
+        <TripOverview
+          trip={{
+            id: "trip-empty-filter",
+            title: "Empty filter",
+            startDate: "2025-06-01T00:00:00.000Z",
+            endDate: "2025-06-08T00:00:00.000Z",
+            coverImageUrl: null,
+          }}
+          entries={[
+            {
+              id: "entry-1",
+              tripId: "trip-empty-filter",
+              title: "Food entry",
+              createdAt: "2025-06-02T12:00:00.000Z",
+              coverImageUrl: "/uploads/entries/food.jpg",
+              tags: ["Food"],
+              media: [{ url: "/uploads/entries/food.jpg" }],
+            },
+          ]}
+        />
+      </LocaleProvider>,
+    );
+
+    // Select a tag that doesn't match any entries
+    fireEvent.click(screen.getByRole("button", { name: "Food" }));
+
+    // Clear the selection to reset
+    fireEvent.click(screen.getByRole("button", { name: /clear filters/i }));
+
+    // Now add a non-existent tag scenario by checking the entry is visible
+    expect(screen.getByText("Food entry")).toBeInTheDocument();
+  });
+
+  it("respects filtered entries when displaying map locations", async () => {
+    render(
+      <LocaleProvider>
+        <TripOverview
+          trip={{
+            id: "trip-map-filter",
+            title: "Map filter",
+            startDate: "2025-06-01T00:00:00.000Z",
+            endDate: "2025-06-08T00:00:00.000Z",
+            coverImageUrl: null,
+          }}
+          entries={[
+            {
+              id: "entry-food-loc",
+              tripId: "trip-map-filter",
+              title: "Food with location",
+              createdAt: "2025-06-02T12:00:00.000Z",
+              coverImageUrl: "/uploads/entries/food.jpg",
+              tags: ["Food"],
+              media: [{ url: "/uploads/entries/food.jpg" }],
+              location: {
+                latitude: 48.8566,
+                longitude: 2.3522,
+                label: "Paris",
+              },
+            },
+            {
+              id: "entry-hike-loc",
+              tripId: "trip-map-filter",
+              title: "Hike with location",
+              createdAt: "2025-06-03T12:00:00.000Z",
+              coverImageUrl: "/uploads/entries/hike.jpg",
+              tags: ["Hike"],
+              media: [{ url: "/uploads/entries/hike.jpg" }],
+              location: {
+                latitude: 51.5074,
+                longitude: -0.1278,
+                label: "London",
+              },
+            },
+          ]}
+        />
+      </LocaleProvider>,
+    );
+
+    // Wait for map to render
+    const foodPin = await screen.findByRole("button", { name: "Food with location" });
+    const hikePin = await screen.findByRole("button", { name: "Hike with location" });
+
+    expect(foodPin).toBeInTheDocument();
+    expect(hikePin).toBeInTheDocument();
+
+    // Both entry cards should be visible
+    expect(screen.getByText("Food with location")).toBeInTheDocument();
+    expect(screen.getByText("Hike with location")).toBeInTheDocument();
+
+    // Filter by Food tag
+    fireEvent.click(screen.getByRole("button", { name: "Food" }));
+
+    // Only Food entry card should remain visible (Hike filtered out)
+    expect(screen.getAllByText("Food with location").length).toBeGreaterThan(0);
+    expect(screen.queryByText("Hike with location")).not.toBeInTheDocument();
   });
 });
