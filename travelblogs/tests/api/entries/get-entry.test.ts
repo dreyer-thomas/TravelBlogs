@@ -97,6 +97,94 @@ describe("GET /api/entries/[id]", () => {
     });
   });
 
+  it("includes tags for the entry reader response", async () => {
+    const trip = await prisma.trip.create({
+      data: {
+        title: "Tagged trip",
+        startDate: new Date("2025-06-01"),
+        endDate: new Date("2025-06-10"),
+        ownerId: "creator",
+      },
+    });
+
+    const entry = await prisma.entry.create({
+      data: {
+        tripId: trip.id,
+        title: "Tagged entry",
+        text: "Tag details",
+        media: {
+          create: [{ url: "/uploads/entries/tagged.jpg" }],
+        },
+        tags: {
+          create: [
+            {
+              tag: {
+                create: {
+                  tripId: trip.id,
+                  name: "Coffee",
+                  normalizedName: "coffee",
+                },
+              },
+            },
+            {
+              tag: {
+                create: {
+                  tripId: trip.id,
+                  name: "Sunset",
+                  normalizedName: "sunset",
+                },
+              },
+            },
+          ],
+        },
+      },
+    });
+
+    const request = new Request(`http://localhost/api/entries/${entry.id}`, {
+      method: "GET",
+    });
+
+    const response = await get(request, { params: { id: entry.id } });
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.error).toBeNull();
+    expect(body.data.tags).toEqual(["Coffee", "Sunset"]);
+  });
+
+  it("returns empty tags array when entry has no tags", async () => {
+    const trip = await prisma.trip.create({
+      data: {
+        title: "Untagged trip",
+        startDate: new Date("2025-06-01"),
+        endDate: new Date("2025-06-10"),
+        ownerId: "creator",
+      },
+    });
+
+    const entry = await prisma.entry.create({
+      data: {
+        tripId: trip.id,
+        title: "Untagged entry",
+        text: "No tags",
+        media: {
+          create: [{ url: "/uploads/entries/untagged.jpg" }],
+        },
+      },
+    });
+
+    const request = new Request(`http://localhost/api/entries/${entry.id}`, {
+      method: "GET",
+    });
+
+    const response = await get(request, { params: { id: entry.id } });
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.error).toBeNull();
+    expect(body.data.tags).toEqual([]);
+  });
+
   it("rejects unauthenticated requests", async () => {
     getToken.mockResolvedValue(null);
     const trip = await prisma.trip.create({

@@ -58,6 +58,7 @@ const EntryReader = ({
   const entryTitle = entry.title || t("entries.dailyEntry");
   const entryDate = formatDate(new Date(entry.createdAt));
   const showSharedHeroOverlay = isSharedView;
+  const hasTags = entry.tags.length > 0;
   const contentBlocks = useMemo(
     () => parseEntryContent(entry.body ?? ""),
     [entry.body],
@@ -221,6 +222,26 @@ const EntryReader = ({
                   </div>
                 ) : null}
               </>
+            ) : null}
+            {hasTags ? (
+              <div className="pointer-events-none absolute right-0 top-0 z-30 px-4 pt-4 sm:px-6 sm:pt-6">
+                <div
+                  role="list"
+                  aria-label={t("entries.tags")}
+                  className="flex max-w-[18rem] flex-col items-end gap-2 overflow-hidden rounded-2xl bg-black/60 px-3 py-3 shadow-xl shadow-black/40 backdrop-blur-sm sm:max-w-[22rem]"
+                >
+                  {entry.tags.map((tag) => (
+                    <span
+                      key={tag}
+                      role="listitem"
+                      title={tag}
+                      className="inline-flex max-w-[12rem] items-center rounded-full bg-[#F2ECE3] px-3 py-1 text-xs font-semibold text-[#2D2A26] sm:max-w-[16rem]"
+                    >
+                      <span className="truncate" dir="auto">{tag}</span>
+                    </span>
+                  ))}
+                </div>
+              </div>
             ) : null}
           </div>
         </section>

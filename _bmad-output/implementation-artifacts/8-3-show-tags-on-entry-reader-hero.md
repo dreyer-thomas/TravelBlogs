@@ -1,6 +1,6 @@
 # Story 8.3: Show Tags on Entry Reader Hero
 
-Status: ready-for-dev
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -16,13 +16,13 @@ so that I can understand the story context at a glance.
 
 ## Tasks / Subtasks
 
-- [ ] Expose tags in entry reader data (AC: 1)
-  - [ ] Ensure entry reader API/loader includes tag list.
-- [ ] Render hero tag overlay (AC: 1)
-  - [ ] Position tag chips top-right on hero image, responsive for mobile.
-  - [ ] Ensure contrast and accessibility against media.
-- [ ] Tests (AC: 1)
-  - [ ] Component test for hero tag overlay when tags exist.
+- [x] Expose tags in entry reader data (AC: 1)
+  - [x] Ensure entry reader API/loader includes tag list.
+- [x] Render hero tag overlay (AC: 1)
+  - [x] Position tag chips top-right on hero image, responsive for mobile.
+  - [x] Ensure contrast and accessibility against media.
+- [x] Tests (AC: 1)
+  - [x] Component test for hero tag overlay when tags exist.
 
 ## Dev Notes
 
@@ -54,6 +54,26 @@ GPT-5
 ### Completion Notes List
 
 - Ultimate context engine analysis completed - comprehensive developer guide created
+- Added entry tag data to entry reader API/mapping and exposed shared entry tags.
+- Rendered tag chips overlay on entry hero with accessible contrast styling.
+- Tests: `npm test`
+- Code review completed: Fixed 6 issues (4 MEDIUM, 2 LOW)
+  - Fixed tag overflow with `overflow-hidden` and vertical layout
+  - Improved tag alignment with `flex-col items-end`
+  - Enhanced backdrop contrast from `bg-black/45` to `bg-black/60`
+  - Added test coverage for shared view tag rendering
+  - Added test coverage for empty tags behavior
+  - Added API tests for empty tags array responses
 
 ### File List
 
+- travelblogs/src/utils/entry-reader.ts
+- travelblogs/src/app/api/entries/[id]/route.ts
+- travelblogs/src/app/api/trips/share/[token]/entries/[entryId]/route.ts
+- travelblogs/src/components/entries/entry-reader.tsx
+- travelblogs/tests/utils/entry-reader-mapper.test.ts
+- travelblogs/tests/api/entries/get-entry.test.ts
+- travelblogs/tests/api/trips/share-trip-entry.test.ts
+- travelblogs/tests/components/entry-reader.test.tsx
+- travelblogs/tests/components/entries/entry-reader-navigation.test.tsx
+- _bmad-output/implementation-artifacts/sprint-status.yaml

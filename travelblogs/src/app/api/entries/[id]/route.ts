@@ -9,6 +9,7 @@ import {
   normalizeTagName,
   tagMaxLength,
 } from "../../../../utils/entry-tags";
+import { sortTagNames } from "../../../../utils/tag-sort";
 import { canContributeToTrip, hasTripAccess } from "../../../../utils/trip-access";
 import { ensureActiveAccount, isAdminOrCreator } from "../../../../utils/roles";
 
@@ -138,6 +139,11 @@ export const GET = async (
             createdAt: "asc",
           },
         },
+        tags: {
+          include: {
+            tag: true,
+          },
+        },
         trip: true,
       },
     });
@@ -205,6 +211,11 @@ export const GET = async (
             url: item.url,
             createdAt: item.createdAt.toISOString(),
           }),
+          ),
+          tags: sortTagNames(
+            entry.tags.map(
+              (item: { tag: { name: string } }) => item.tag.name,
+            ),
           ),
           location:
             entry.latitude !== null && entry.longitude !== null

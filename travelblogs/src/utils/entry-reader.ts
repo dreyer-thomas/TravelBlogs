@@ -15,6 +15,7 @@ export type EntryApiData = {
   createdAt: string;
   coverImageUrl?: string | null;
   media: EntryApiMedia[];
+  tags?: string[];
   location?: EntryLocation | null;
   navigation?: EntryApiNavigation;
 };
@@ -52,6 +53,7 @@ export type EntryReaderData = {
   body: string;
   createdAt: string;
   media: EntryReaderMedia[];
+  tags: string[];
   location?: EntryLocation | null;
   navigation?: EntryReaderNavigation;
 };
@@ -97,6 +99,7 @@ export const mapEntryToReader = (entry: EntryApiData): EntryReaderData => {
     title: entry.title,
     body: entry.text,
     createdAt: entry.createdAt,
+    tags: entry.tags ?? [],
     media: orderedMedia.map((item) => ({
       id: item.id,
       url: item.url,

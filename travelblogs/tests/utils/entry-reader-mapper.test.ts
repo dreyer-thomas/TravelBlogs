@@ -10,6 +10,7 @@ describe("mapEntryToReader", () => {
       title: "Rainy afternoon",
       text: "Warm cafes and misty streets.",
       createdAt: "2025-05-03T00:00:00.000Z",
+      tags: ["Coffee", "Rain"],
       media: [
         {
           id: "media-1",
@@ -24,6 +25,7 @@ describe("mapEntryToReader", () => {
       title: "Rainy afternoon",
       body: "Warm cafes and misty streets.",
       createdAt: "2025-05-03T00:00:00.000Z",
+      tags: ["Coffee", "Rain"],
       location: null,
       media: [
         {

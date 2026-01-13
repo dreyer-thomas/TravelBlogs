@@ -46,6 +46,7 @@ describe("EntryReader navigation", () => {
           title: "Morning in Kyoto",
           body: "Temple walks and tea breaks.",
           createdAt: "2025-05-03T00:00:00.000Z",
+          tags: [],
           media: [
             {
               id: "media-1",
@@ -86,6 +87,7 @@ describe("EntryReader navigation", () => {
           title: "Solo day",
           body: "Only one entry.",
           createdAt: "2025-05-03T00:00:00.000Z",
+          tags: [],
           media: [],
           navigation: {
             previousEntryId: null,
@@ -118,6 +120,7 @@ describe("EntryReader navigation", () => {
             title: "Morning in Oslo",
             body: "Cold air and warm coffee.",
             createdAt: "2025-05-03T00:00:00.000Z",
+            tags: [],
             media: [],
             navigation: {
               previousEntryId: null,
@@ -147,6 +150,7 @@ describe("EntryReader navigation", () => {
             title: "Late-night harbor",
             body: "City lights over the water.",
             createdAt: "2025-05-04T00:00:00.000Z",
+            tags: [],
             media: [],
             navigation: {
               previousEntryId: "entry-10",

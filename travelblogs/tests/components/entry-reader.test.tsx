@@ -64,6 +64,7 @@ describe("EntryReader", () => {
           title: "Morning in Kyoto",
           body: "Temple walks and tea breaks.",
           createdAt: "2025-05-03T12:00:00.000Z",
+          tags: [],
           media: [
             {
               id: "media-1",
@@ -105,6 +106,93 @@ describe("EntryReader", () => {
     ).toBeInTheDocument();
   });
 
+  it("renders tags on the hero image when tags exist", () => {
+    render(
+      <LocaleProvider>
+        <EntryReader
+          entry={{
+            id: "entry-tags",
+            title: "Tag showcase",
+            body: "Tag overlay test.",
+            createdAt: "2025-05-09T00:00:00.000Z",
+            tags: ["Cafes", "Night"],
+            media: [
+              {
+                id: "media-tags",
+                url: "https://example.com/hero-tags.jpg",
+                width: 1600,
+                height: 1000,
+              },
+            ],
+          }}
+        />
+      </LocaleProvider>,
+    );
+
+    const tagList = screen.getByLabelText("Tags");
+    expect(tagList).toBeInTheDocument();
+    expect(tagList.parentElement).toHaveClass("absolute", "right-0", "top-0");
+    expect(screen.getByText("Cafes")).toBeInTheDocument();
+    expect(screen.getByText("Night")).toBeInTheDocument();
+  });
+
+  it("renders tags on the hero image in shared view", () => {
+    render(
+      <LocaleProvider>
+        <EntryReader
+          isSharedView
+          entry={{
+            id: "entry-shared-tags",
+            title: "Shared with tags",
+            body: "Tags in shared view.",
+            createdAt: "2025-05-10T00:00:00.000Z",
+            tags: ["Beach", "Sunset"],
+            media: [
+              {
+                id: "media-shared-tags",
+                url: "https://example.com/hero-shared-tags.jpg",
+                width: 1600,
+                height: 1000,
+              },
+            ],
+          }}
+        />
+      </LocaleProvider>,
+    );
+
+    const tagList = screen.getByLabelText("Tags");
+    expect(tagList).toBeInTheDocument();
+    expect(tagList.parentElement).toHaveClass("absolute", "right-0", "top-0");
+    expect(screen.getByText("Beach")).toBeInTheDocument();
+    expect(screen.getByText("Sunset")).toBeInTheDocument();
+  });
+
+  it("hides tag overlay when entry has no tags", () => {
+    render(
+      <LocaleProvider>
+        <EntryReader
+          entry={{
+            id: "entry-no-tags",
+            title: "No tags",
+            body: "Entry without tags.",
+            createdAt: "2025-05-11T00:00:00.000Z",
+            tags: [],
+            media: [
+              {
+                id: "media-no-tags",
+                url: "https://example.com/hero-no-tags.jpg",
+                width: 1600,
+                height: 1000,
+              },
+            ],
+          }}
+        />
+      </LocaleProvider>,
+    );
+
+    expect(screen.queryByLabelText("Tags")).not.toBeInTheDocument();
+  });
+
   it("renders inline images alongside readable body text", () => {
     render(
       <LocaleProvider>
@@ -114,6 +202,7 @@ describe("EntryReader", () => {
           title: "Market stroll",
           body: "Look ![Fresh produce](https://example.com/inline.jpg) here.",
           createdAt: "2025-05-03T00:00:00.000Z",
+          tags: [],
           media: [
             {
               id: "media-4",
@@ -142,6 +231,7 @@ describe("EntryReader", () => {
           title: "Night market",
           body: "Neon lights and snacks.",
           createdAt: "2025-05-04T00:00:00.000Z",
+          tags: [],
           media: [
             {
               id: "media-10",
@@ -184,6 +274,7 @@ describe("EntryReader", () => {
           title: "Village walk",
           body: "Morning mist.",
           createdAt: "2025-05-05T00:00:00.000Z",
+          tags: [],
           media: [
             {
               id: "media-20",
@@ -224,6 +315,7 @@ describe("EntryReader", () => {
           title: "Canal walk",
           body: "Reflections at dusk.",
           createdAt: "2025-05-06T00:00:00.000Z",
+          tags: [],
           media: [
             {
               id: "media-30",
@@ -252,6 +344,7 @@ describe("EntryReader", () => {
           title: "Harbor view",
           body: "Salt air.",
           createdAt: "2025-05-07T00:00:00.000Z",
+          tags: [],
           media: [
             {
               id: "media-31",
@@ -280,6 +373,7 @@ describe("EntryReader", () => {
             title: "Morning in Kyoto",
             body: "Temple walks and tea breaks.",
             createdAt: "2025-05-03T12:00:00.000Z",
+            tags: [],
             media: [
               {
                 id: "media-40",
@@ -311,6 +405,7 @@ describe("EntryReader", () => {
       title: "Harbor view",
       body: "Salt air.",
       createdAt: "2025-05-07T00:00:00.000Z",
+      tags: [],
       media: [
         {
           id: "media-41",
@@ -363,6 +458,7 @@ describe("EntryReader", () => {
             title: "Non shared",
             body: "No overlays.",
             createdAt: "2025-05-08T00:00:00.000Z",
+            tags: [],
             media: [
               {
                 id: "media-42",
@@ -391,6 +487,7 @@ describe("EntryReader", () => {
             title: "Location test",
             body: "Testing location display in shared view.",
             createdAt: "2025-05-20T00:00:00.000Z",
+            tags: [],
             media: [
               {
                 id: "media-100",
@@ -433,6 +530,7 @@ describe("EntryReader", () => {
             title: "Map entry",
             body: "Map entry body.",
             createdAt: "2025-05-22T00:00:00.000Z",
+            tags: [],
             media: [
               {
                 id: "media-map",
@@ -473,6 +571,7 @@ describe("EntryReader", () => {
             title: "No location",
             body: "No location data.",
             createdAt: "2025-05-21T00:00:00.000Z",
+            tags: [],
             media: [
               {
                 id: "media-101",

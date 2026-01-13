@@ -67,6 +67,19 @@ describe("GET /api/trips/share/[token]/entries/[entryId]", () => {
         media: {
           create: [{ url: "/uploads/entries/shared-entry.jpg" }],
         },
+        tags: {
+          create: [
+            {
+              tag: {
+                create: {
+                  tripId: trip.id,
+                  name: "Culture",
+                  normalizedName: "culture",
+                },
+              },
+            },
+          ],
+        },
       },
       include: { media: true },
     });
@@ -94,11 +107,56 @@ describe("GET /api/trips/share/[token]/entries/[entryId]", () => {
     expect(body.data.id).toBe(entry.id);
     expect(body.data.tripId).toBe(trip.id);
     expect(body.data.media[0].url).toBe(entry.media[0].url);
+    expect(body.data.tags).toEqual(["Culture"]);
     expect(body.data.location).toEqual({
       latitude: 59.3293,
       longitude: 18.0686,
       label: "Stockholm",
     });
+  });
+
+  it("returns empty tags array when shared entry has no tags", async () => {
+    const trip = await prisma.trip.create({
+      data: {
+        title: "Shared No Tags Trip",
+        startDate: new Date("2025-09-05T00:00:00.000Z"),
+        endDate: new Date("2025-09-07T00:00:00.000Z"),
+        ownerId: "creator",
+      },
+    });
+
+    const entry = await prisma.entry.create({
+      data: {
+        tripId: trip.id,
+        title: "Entry no tags",
+        text: "No tags content",
+        createdAt: new Date("2025-09-06T08:00:00.000Z"),
+        media: {
+          create: [{ url: "/uploads/entries/shared-no-tags.jpg" }],
+        },
+      },
+    });
+
+    await prisma.tripShareLink.create({
+      data: {
+        tripId: trip.id,
+        token: "no-tags-token",
+      },
+    });
+
+    const request = new Request(
+      `http://localhost/api/trips/share/no-tags-token/entries/${entry.id}`,
+      { method: "GET" },
+    );
+
+    const response = await get(request, {
+      params: { token: "no-tags-token", entryId: entry.id },
+    });
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.error).toBeNull();
+    expect(body.data.tags).toEqual([]);
   });
 
   it("returns 404 for an invalid share token", async () => {
