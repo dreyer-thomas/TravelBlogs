@@ -59,6 +59,11 @@ FR35: Tags display on entry cards in trip overview (signed-in + shared). (Phase 
 FR36: Tags display in entry reader hero (top-right). (Phase 2)
 FR37: Users can filter entries by tags (multi-select OR). (Phase 2)
 FR38: Tag filter uses chips up to 8 tags, then a multi-select control. (Phase 2)
+FR39: Creators can format entry text with bold, italic, headings (H1/H2/H3), lists, links, and text alignment. (Phase 2)
+FR40: Entry text is stored in structured rich format (Tiptap JSON) with backward compatibility for plain text. (Phase 2)
+FR41: Inline images in entries reference EntryMedia records by ID to maintain connection with gallery. (Phase 2)
+FR42: Plain text entries are automatically rendered as rich format on view without permanent conversion. (Phase 2)
+FR43: Plain text entries are converted to rich format on edit and saved as JSON permanently. (Phase 2)
 
 ### MVP Scope Adjustment
 
@@ -142,8 +147,13 @@ FR28: Epic 7 - Photo coordinate extraction
 FR29: Epic 3 - Trip overview with latest entries  
 FR30: Epic 3 - Single-page entry view  
 FR31: Epic 3 - Entry navigation  
-FR32: Epic 5 - Admin manage roles  
+FR32: Epic 5 - Admin manage roles
 FR33: Epic 5 - Admin deactivate users
+FR39: Epic 9 - Rich text formatting (bold, italic, headings, lists, links, alignment)
+FR40: Epic 9 - Structured rich format storage (Tiptap JSON)
+FR41: Epic 9 - Image nodes with entryMediaId references
+FR42: Epic 9 - Plain text render as rich format on view
+FR43: Epic 9 - Plain text conversion to rich format on edit
 
 ## Epic List
 
@@ -181,6 +191,10 @@ Add spatial storytelling with maps and optional location extraction.
 ### Epic 8: Entry Tags & Filtering (Phase 2 - New)
 Creators and contributors add tags to entries; viewers see tags and filter entries by tags.
 **FRs covered:** FR34, FR35, FR36, FR37, FR38
+
+### Epic 9: Rich Text Editor for Blog Entries (Phase 2 - New)
+Replace plain text entry editor with rich text editing capabilities (bold, italic, headings, lists, links, alignment) while maintaining existing image library and gallery workflow.
+**FRs covered:** FR39, FR40, FR41, FR42, FR43
 
 
 ## Epic 0: Lightweight Authentication (MVP)
@@ -1176,3 +1190,319 @@ So that I can see all stories related to selected tags.
 **Given** no tags are selected
 **When** I view the trip overview
 **Then** all entries are shown
+
+## Epic 9: Rich Text Editor for Blog Entries (Phase 2 - New)
+
+Replace plain text entry editor with rich text editing capabilities (bold, italic, headings, lists, links, alignment) while maintaining existing image library and gallery workflow.
+
+### Story 9.1: Install and Configure Tiptap
+
+As a developer,
+I want to install Tiptap and its required extensions,
+So that the rich text editor infrastructure is available for entry editing.
+
+**Acceptance Criteria:**
+
+**Given** the project uses Next.js with TypeScript
+**When** I install Tiptap core and React adapter
+**Then** all required packages are added to package.json with compatible versions
+
+**Given** Tiptap is installed
+**When** I configure extensions for bold, italic, headings (H1/H2/H3), bullet lists, ordered lists, links, and text alignment
+**Then** the extension configuration is ready for use in the editor component
+
+**Given** the Tiptap editor is configured
+**When** I verify the installation
+**Then** the editor can be imported and initialized without errors
+
+### Story 9.2: Update Entry Schema for Dual-Format Support
+
+As a developer,
+I want to update the Entry model to support both plain text and Tiptap JSON,
+So that we can maintain backward compatibility during migration.
+
+**Acceptance Criteria:**
+
+**Given** the Entry model has a text field (String)
+**When** I review the schema
+**Then** the text field remains as-is to store both plain text and JSON strings
+
+**Given** I need to determine the format of stored text
+**When** I implement a format detection utility
+**Then** it can reliably distinguish between plain text and Tiptap JSON format
+
+**Given** existing entries contain plain text
+**When** the schema is updated
+**Then** all existing entries remain accessible without data loss
+
+### Story 9.3: Build Tiptap Editor Component
+
+As a developer,
+I want to create a reusable Tiptap editor component with toolbar,
+So that creators can format entry text with rich text features.
+
+**Acceptance Criteria:**
+
+**Given** I am building the editor component
+**When** I implement the Tiptap editor with React
+**Then** the editor displays a full toolbar with buttons for bold, italic, H1, H2, H3, bullet list, ordered list, link, and text alignment (left/center/right)
+
+**Given** the editor is initialized
+**When** a user types in the editor
+**Then** text input works smoothly without lag or visual glitches
+
+**Given** the toolbar is displayed
+**When** I apply formatting (bold, italic, etc.)
+**Then** the formatting is applied to selected text and visually reflected immediately
+
+**Given** the editor component is built
+**When** I pass initial content as Tiptap JSON
+**Then** the editor loads and displays the formatted content correctly
+
+### Story 9.4: Integrate Editor with Create Entry Form
+
+As a creator,
+I want to use the rich text editor when creating a new entry,
+So that I can format my entry text with bold, italic, headings, lists, links, and alignment.
+
+**Acceptance Criteria:**
+
+**Given** I open the create entry form
+**When** the form loads
+**Then** I see the Tiptap rich text editor in place of the plain textarea
+
+**Given** I am creating an entry
+**When** I format text using the toolbar
+**Then** the formatting is applied and saved as Tiptap JSON when I submit the form
+
+**Given** I submit the create entry form
+**When** the entry is saved
+**Then** the text field contains valid Tiptap JSON format
+
+**Given** the rich text editor is active
+**When** I interact with other form fields (title, images, tags, location)
+**Then** all existing functionality remains unchanged
+
+### Story 9.5: Integrate Editor with Edit Entry Form
+
+As a creator,
+I want to use the rich text editor when editing an existing entry,
+So that I can update formatting and content.
+
+**Acceptance Criteria:**
+
+**Given** I open the edit entry form for a plain text entry
+**When** the form loads
+**Then** the plain text is converted to Tiptap JSON and displayed in the rich text editor
+
+**Given** I edit and save a plain text entry
+**When** the form submits
+**Then** the entry text is permanently converted to Tiptap JSON format
+
+**Given** I open the edit entry form for an entry already in Tiptap JSON format
+**When** the form loads
+**Then** the formatted content displays correctly in the editor
+
+**Given** I save changes to an entry
+**When** the form submits
+**Then** the updated Tiptap JSON is saved to the database
+
+### Story 9.6: Implement Custom Image Node with entryMediaId
+
+As a developer,
+I want to create a custom Tiptap image node that stores entryMediaId references,
+So that inline images remain connected to the entry media library.
+
+**Acceptance Criteria:**
+
+**Given** I am implementing the custom image node
+**When** I define the node schema
+**Then** it includes attributes for entryMediaId (string) and src (URL for display)
+
+**Given** an image is inserted from the gallery
+**When** it is added to the editor
+**Then** the image node stores both the entryMediaId and the image URL
+
+**Given** the editor renders an image node
+**When** I look up the entryMediaId
+**Then** the image URL is fetched from the EntryMedia table and displayed in the editor
+
+**Given** the custom image node is implemented
+**When** I serialize the editor content to JSON
+**Then** the entryMediaId is preserved in the Tiptap JSON output
+
+### Story 9.7: Update Gallery Insert to Use Custom Image Nodes
+
+As a creator,
+I want to insert images from the gallery into the rich text as connected image nodes,
+So that gallery images are embedded in my formatted text.
+
+**Acceptance Criteria:**
+
+**Given** I am editing entry text in the rich text editor
+**When** I click "Insert inline" on a gallery image
+**Then** a Tiptap image node with entryMediaId is inserted at the cursor position
+
+**Given** an image node is inserted
+**When** the editor renders
+**Then** the image displays inline within the formatted text
+
+**Given** I save the entry
+**When** the form submits
+**Then** the Tiptap JSON contains image nodes with entryMediaId references
+
+**Given** the gallery insert button is clicked
+**When** the image is inserted
+**Then** the cursor remains in the editor and I can continue typing
+
+### Story 9.8: Update Entry Viewer to Render Tiptap JSON
+
+As a viewer,
+I want to see formatted entry text when viewing an entry,
+So that bold, italic, headings, lists, links, and alignment are displayed correctly.
+
+**Acceptance Criteria:**
+
+**Given** I open an entry view with Tiptap JSON content
+**When** the entry loads
+**Then** the formatted content renders with all formatting preserved (bold, italic, headings, lists, links, alignment)
+
+**Given** the entry contains image nodes with entryMediaId
+**When** the entry renders
+**Then** inline images are fetched from EntryMedia and displayed within the text
+
+**Given** I open an entry view with plain text content
+**When** the entry loads
+**Then** the plain text is converted to basic rich format for display without saving the conversion
+
+**Given** the entry viewer renders rich content
+**When** I view the page
+**Then** no editor toolbar is displayed (read-only view)
+
+### Story 9.9: Implement Plain Text to Tiptap Converter
+
+As a developer,
+I want to build a converter that transforms plain text to Tiptap JSON,
+So that existing entries can be rendered and migrated to rich format.
+
+**Acceptance Criteria:**
+
+**Given** a plain text entry contains line breaks and paragraphs
+**When** I convert it to Tiptap JSON
+**Then** paragraphs are preserved as separate paragraph nodes
+
+**Given** a plain text entry contains inline image references `![Image](url)`
+**When** I convert it to Tiptap JSON
+**Then** the converter looks up the URL in EntryMedia, finds the entryMediaId, and creates image nodes with entryMediaId references
+
+**Given** a plain text entry contains inline image references that don't match any EntryMedia record
+**When** I convert it to Tiptap JSON
+**Then** the converter skips or converts them to plain text to avoid broken references
+
+**Given** the converter is implemented
+**When** I test with various plain text entries
+**Then** the output is valid Tiptap JSON that renders correctly in the viewer
+
+### Story 9.10: Add Lazy Migration Logic (Convert on Edit)
+
+As a developer,
+I want plain text entries to be converted to Tiptap JSON only when edited,
+So that migration happens gradually without risk to existing data.
+
+**Acceptance Criteria:**
+
+**Given** a plain text entry is opened for viewing
+**When** the entry loads
+**Then** the plain text is converted to Tiptap JSON for display only and NOT saved to the database
+
+**Given** a plain text entry is opened for editing
+**When** the edit form loads
+**Then** the plain text is converted to Tiptap JSON and loaded into the editor
+
+**Given** I save the edited entry
+**When** the form submits
+**Then** the Tiptap JSON is permanently saved to the database replacing the plain text
+
+**Given** an entry has already been converted to Tiptap JSON
+**When** I open it for viewing or editing
+**Then** it loads directly from the stored JSON without re-conversion
+
+### Story 9.11: Update Gallery Delete to Remove Image Nodes
+
+As a creator,
+I want images deleted from the gallery to be removed from the entry text,
+So that broken image references don't appear in my entries.
+
+**Acceptance Criteria:**
+
+**Given** an entry contains image nodes referencing a specific entryMediaId
+**When** I delete that image from the gallery
+**Then** the system scans the entry text (Tiptap JSON) and removes all image nodes with that entryMediaId
+
+**Given** the entry text is updated after image deletion
+**When** I view the entry
+**Then** the deleted images no longer appear inline
+
+**Given** an entry is still in plain text format
+**When** I delete an image from the gallery
+**Then** inline references matching `![Image](url)` are removed from the plain text
+
+**Given** multiple entries reference the same gallery image
+**When** I delete that image
+**Then** all entries are updated to remove the image nodes
+
+### Story 9.12: Add Format Detection and Migration Status
+
+As a developer,
+I want to track which entries have been migrated to Tiptap JSON,
+So that I can monitor migration progress and ensure data integrity.
+
+**Acceptance Criteria:**
+
+**Given** I implement format detection
+**When** I check an entry's text field
+**Then** the system can reliably identify whether it contains plain text or Tiptap JSON
+
+**Given** the system detects plain text
+**When** the entry is viewed
+**Then** temporary conversion to Tiptap JSON occurs for display only
+
+**Given** the system detects Tiptap JSON
+**When** the entry is viewed or edited
+**Then** the JSON is used directly without re-conversion
+
+**Given** migration is ongoing
+**When** I query the database
+**Then** I can identify which entries are still plain text vs. migrated to JSON (optional logging/admin view)
+
+### Story 9.13: Test Rich Text Features End-to-End
+
+As a QA tester,
+I want to verify that all rich text features work correctly across create, edit, and view flows,
+So that the rich text editor is production-ready.
+
+**Acceptance Criteria:**
+
+**Given** I create a new entry with rich formatting
+**When** I use bold, italic, headings, lists, links, and alignment
+**Then** all formatting is saved and displayed correctly in the entry viewer
+
+**Given** I insert gallery images into rich text
+**When** I save and view the entry
+**Then** inline images appear correctly within the formatted text
+
+**Given** I edit a plain text entry
+**When** I add rich formatting and save
+**Then** the entry is permanently converted to Tiptap JSON and displays correctly
+
+**Given** I delete a gallery image used in entry text
+**When** I view the entry
+**Then** the image is removed from the text without breaking the entry
+
+**Given** I view an old plain text entry without editing
+**When** the entry loads
+**Then** it displays as formatted text without permanent conversion
+
+**Given** I test on different browsers (Chrome, Safari, Firefox, Edge)
+**When** I use the rich text editor
+**Then** all features work consistently across browsers

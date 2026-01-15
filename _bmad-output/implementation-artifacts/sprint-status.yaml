@@ -132,7 +132,7 @@ development_status:
   epic-8-retrospective: optional
 
   epic-9: in-progress
-  9-1-install-and-configure-tiptap: review
+  9-1-install-and-configure-tiptap: done
   9-2-update-entry-schema-for-dual-format-support: backlog
   9-3-build-tiptap-editor-component: backlog
   9-4-integrate-editor-with-create-entry-form: backlog
