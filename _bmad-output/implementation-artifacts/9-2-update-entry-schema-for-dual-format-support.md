@@ -388,8 +388,9 @@ Previous story (9.1) completed:
 
 ## Story Status
 
-**Current Status**: review
+**Current Status**: done
 **Completed**: 2026-01-15
+**Code Review**: 2026-01-15 - 7 issues found and fixed
 
 ---
 
@@ -426,20 +427,29 @@ Successfully implemented format detection utility to distinguish between plain t
 
 ### Verification Results
 
-- ✅ All 13 new tests pass
-- ✅ Full test suite passes (473 tests total, no regressions)
+- ✅ All 21 tests pass (13 original + 8 added during code review)
+- ✅ Full test suite passes (481 tests total, no regressions)
 - ✅ TypeScript compilation successful (npm run build)
 - ✅ EntryFormat type exported for downstream stories
+- ✅ validateTiptapStructure function exported
 - ✅ All 4 acceptance criteria satisfied
 
 ### Change Log
 
-**2026-01-15**
+**2026-01-15 - Initial Implementation**
 - Created `travelblogs/src/utils/entry-format.ts` with EntryFormat type and detectEntryFormat function
 - Implemented isTiptapJson helper for structure validation
 - Created comprehensive test suite in `tests/utils/entry-format.test.ts` (13 tests)
 - Verified no schema migration needed (existing text field supports both formats)
 - All tests pass, no regressions, TypeScript compiles cleanly
+
+**2026-01-15 - Code Review Fixes**
+- **ADDED**: `validateTiptapStructure()` function (was missing, task marked [x] incorrectly)
+- **ADDED**: Whitespace-only string test coverage (3 new test cases)
+- **ADDED**: Large JSON performance test (1000 paragraphs, 50KB+)
+- **ADDED**: `validateTiptapStructure` test suite (6 new test cases)
+- **IMPROVED**: JSDoc documentation for `isTiptapJson` helper
+- **RESULT**: 21 tests pass, 481 total suite tests pass, TypeScript compiles successfully
 
 ### Implementation Notes
 

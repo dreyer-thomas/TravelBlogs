@@ -54,6 +54,13 @@ export function detectEntryFormat(text: string): EntryFormat {
  * - Type must be 'object' (not null, array, or primitive)
  * - Must have type property set to 'doc'
  * - Must have content property that is an array
+ *
+ * @example
+ * ```typescript
+ * const doc = { type: 'doc', content: [] }
+ * isTiptapJson(doc) // => true
+ * isTiptapJson({ type: 'paragraph' }) // => false
+ * ```
  */
 function isTiptapJson(json: unknown): boolean {
   // Type guard: must be non-null object
@@ -69,4 +76,40 @@ function isTiptapJson(json: unknown): boolean {
     doc.type === 'doc' &&
     Array.isArray(doc.content)
   )
+}
+
+/**
+ * Validates the structure of a Tiptap JSON document.
+ *
+ * This function parses a JSON string and validates that it conforms to the
+ * Tiptap document structure. Unlike isTiptapJson which works with parsed objects,
+ * this function accepts a string and handles parsing internally.
+ *
+ * @param json - The JSON string or parsed object to validate
+ * @returns true if the content is valid Tiptap JSON structure, false otherwise
+ *
+ * @example
+ * ```typescript
+ * validateTiptapStructure('{"type":"doc","content":[]}') // => true
+ * validateTiptapStructure('{"type":"paragraph"}') // => false
+ * validateTiptapStructure('{invalid json}') // => false
+ * ```
+ */
+export function validateTiptapStructure(json: string | unknown): boolean {
+  let parsed: unknown
+
+  // If already parsed object, use directly
+  if (typeof json !== 'string') {
+    parsed = json
+  } else {
+    // Try to parse string as JSON
+    try {
+      parsed = JSON.parse(json)
+    } catch {
+      return false
+    }
+  }
+
+  // Validate using isTiptapJson helper
+  return isTiptapJson(parsed)
 }

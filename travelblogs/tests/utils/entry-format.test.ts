@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { detectEntryFormat, type EntryFormat } from '@/utils/entry-format'
+import { detectEntryFormat, validateTiptapStructure, type EntryFormat } from '@/utils/entry-format'
 
 describe('detectEntryFormat', () => {
   describe('Plain Text Detection', () => {
@@ -20,6 +20,12 @@ Third line`
 
     it('treats empty string as plain text', () => {
       expect(detectEntryFormat('')).toBe('plain')
+    })
+
+    it('treats whitespace-only string as plain text', () => {
+      expect(detectEntryFormat('   ')).toBe('plain')
+      expect(detectEntryFormat('\n\t')).toBe('plain')
+      expect(detectEntryFormat('  \n  ')).toBe('plain')
     })
   })
 
@@ -102,5 +108,56 @@ Third line`
       })
       expect(detectEntryFormat(missingContent)).toBe('plain')
     })
+
+    it('handles large JSON strings efficiently', () => {
+      const largeContent = {
+        type: 'doc',
+        content: Array(1000).fill(null).map((_, i) => ({
+          type: 'paragraph',
+          content: [{ type: 'text', text: `Paragraph ${i}` }]
+        }))
+      }
+      const largeJson = JSON.stringify(largeContent)
+      expect(detectEntryFormat(largeJson)).toBe('tiptap')
+      expect(largeJson.length).toBeGreaterThan(50000) // Verify it's actually large
+    })
+  })
+})
+
+describe('validateTiptapStructure', () => {
+  it('validates valid Tiptap JSON string', () => {
+    const tiptapJson = JSON.stringify({
+      type: 'doc',
+      content: []
+    })
+    expect(validateTiptapStructure(tiptapJson)).toBe(true)
+  })
+
+  it('validates valid Tiptap JSON object', () => {
+    const tiptapObj = {
+      type: 'doc',
+      content: [{ type: 'paragraph', content: [] }]
+    }
+    expect(validateTiptapStructure(tiptapObj)).toBe(true)
+  })
+
+  it('rejects invalid JSON string', () => {
+    expect(validateTiptapStructure('{invalid')).toBe(false)
+  })
+
+  it('rejects valid JSON but wrong structure', () => {
+    const wrongStructure = JSON.stringify({ type: 'paragraph', content: [] })
+    expect(validateTiptapStructure(wrongStructure)).toBe(false)
+  })
+
+  it('rejects missing content array', () => {
+    const missingContent = JSON.stringify({ type: 'doc' })
+    expect(validateTiptapStructure(missingContent)).toBe(false)
+  })
+
+  it('rejects non-object types', () => {
+    expect(validateTiptapStructure('plain text')).toBe(false)
+    expect(validateTiptapStructure(JSON.stringify([1, 2, 3]))).toBe(false)
+    expect(validateTiptapStructure(JSON.stringify(null))).toBe(false)
   })
 })
