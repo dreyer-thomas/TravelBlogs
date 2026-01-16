@@ -19,6 +19,47 @@ vi.mock("../../src/utils/entry-location", () => ({
   extractGpsFromImage: vi.fn(),
 }));
 
+// Mock TiptapEditor to avoid complex Tiptap setup in tests
+vi.mock("../../src/components/entries/tiptap-editor", () => ({
+  default: ({
+    onChange,
+    placeholder,
+  }: {
+    initialContent: string;
+    onChange: (content: string) => void;
+    placeholder?: string;
+  }) => {
+    return (
+      <div data-testid="tiptap-editor">
+        <textarea
+          data-testid="tiptap-mock-textarea"
+          placeholder={placeholder}
+          aria-label="Entry text"
+          onChange={(e) => {
+            // Simulate Tiptap JSON output for non-empty content
+            const value = e.target.value;
+            if (value.trim()) {
+              onChange(
+                JSON.stringify({
+                  type: "doc",
+                  content: [
+                    {
+                      type: "paragraph",
+                      content: [{ type: "text", text: value }],
+                    },
+                  ],
+                })
+              );
+            } else {
+              onChange(JSON.stringify({ type: "doc", content: [] }));
+            }
+          }}
+        />
+      </div>
+    );
+  },
+}));
+
 describe("CreateEntryForm", () => {
   const renderWithLocale = (component: JSX.Element) =>
     render(<LocaleProvider>{component}</LocaleProvider>);
@@ -35,6 +76,14 @@ describe("CreateEntryForm", () => {
     vi.useRealTimers();
   });
 
+  it("renders TiptapEditor instead of textarea", async () => {
+    renderWithLocale(<CreateEntryForm tripId="trip-123" />);
+
+    // TiptapEditor should be rendered
+    expect(screen.getByTestId("tiptap-editor")).toBeInTheDocument();
+    expect(screen.getByText("Entry text")).toBeInTheDocument();
+  });
+
   it("shows validation errors when submitting without required fields", async () => {
     renderWithLocale(<CreateEntryForm tripId="trip-123" />);
 
@@ -42,24 +91,62 @@ describe("CreateEntryForm", () => {
     expect(submitButton).toBeDisabled();
 
     const titleInput = screen.getByLabelText(/entry title/i);
-    const textArea = screen.getByLabelText(/entry text/i);
     const mediaInput = screen.getByLabelText(/entry image library/i);
 
     fireEvent.blur(titleInput);
-    fireEvent.blur(textArea);
     fireEvent.blur(mediaInput);
 
     expect(
       await screen.findByText("Entry title is required."),
     ).toBeInTheDocument();
     expect(
-      await screen.findByText("Entry text is required."),
-    ).toBeInTheDocument();
-    expect(
       await screen.findByText(
         "Add at least one photo in the library or inline text.",
       ),
     ).toBeInTheDocument();
+  });
+
+  it("validates empty TiptapEditor content and shows error on change", async () => {
+    renderWithLocale(<CreateEntryForm tripId="trip-123" />);
+
+    const mockTextarea = screen.getByTestId("tiptap-mock-textarea");
+
+    // Type some content first, then clear it to trigger validation
+    fireEvent.change(mockTextarea, { target: { value: "Some text" } });
+    fireEvent.change(mockTextarea, { target: { value: "" } });
+
+    // Validation error should appear (updateText validates on change)
+    expect(
+      await screen.findByText("Entry text is required."),
+    ).toBeInTheDocument();
+
+    // The submit button should remain disabled with empty content
+    const submitButton = screen.getByRole("button", { name: /add entry/i });
+    expect(submitButton).toBeDisabled();
+  });
+
+  it("allows content input through TiptapEditor and clears error", async () => {
+    renderWithLocale(<CreateEntryForm tripId="trip-123" />);
+
+    const mockTextarea = screen.getByTestId("tiptap-mock-textarea");
+
+    // Type some content first, then clear to trigger error
+    fireEvent.change(mockTextarea, { target: { value: "Some text" } });
+    fireEvent.change(mockTextarea, { target: { value: "" } });
+    expect(
+      await screen.findByText("Entry text is required."),
+    ).toBeInTheDocument();
+
+    // Type some content - error should clear
+    fireEvent.change(mockTextarea, { target: { value: "My travel story" } });
+
+    // Error should be gone
+    await waitFor(() => {
+      expect(screen.queryByText("Entry text is required.")).not.toBeInTheDocument();
+    });
+
+    // Editor should contain the text
+    expect(mockTextarea).toHaveValue("My travel story");
   });
 
   it("shows a validation error for invalid media files", async () => {
@@ -150,41 +237,11 @@ describe("CreateEntryForm", () => {
     expect(selectedButton).toHaveAttribute("aria-pressed", "true");
   });
 
-  it("inserts a library image inline at the cursor", async () => {
-    const uploadEntryMediaBatchMock = vi.mocked(uploadEntryMediaBatch);
-    uploadEntryMediaBatchMock.mockImplementation(async (files, options) => ({
-      uploads: [
-        {
-          fileId: options?.getFileId?.(files[0]) ?? files[0].name,
-          fileName: files[0].name,
-          url: "/uploads/inline.jpg",
-        },
-      ],
-      failures: [],
-    }));
+  // Note: Inline image insertion test removed - deferred to Story 9.6
+  // The inline image insertion button has been removed from the UI
+  // and will be re-added when custom Tiptap image nodes are implemented
 
-    renderWithLocale(<CreateEntryForm tripId="trip-123" />);
-
-    const textArea = screen.getByLabelText(/entry text/i);
-    fireEvent.change(textArea, { target: { value: "Hello" } });
-    textArea.setSelectionRange(5, 5);
-    fireEvent.click(textArea);
-
-    const input = screen.getByLabelText(/entry image library/i);
-    const file = new File(["photo"], "inline.jpg", { type: "image/jpeg" });
-    fireEvent.change(input, { target: { files: [file] } });
-
-    const insertButton = await screen.findByRole("button", {
-      name: /insert inline/i,
-    });
-    fireEvent.click(insertButton);
-
-    expect(textArea.value).toMatch(
-      /^Hello!\[Entry photo\]\(\/uploads\/inline\.jpg\)$/,
-    );
-  });
-
-  it("removes a library image from the gallery and inline text", async () => {
+  it("removes a library image from the gallery", async () => {
     const uploadEntryMediaBatchMock = vi.mocked(uploadEntryMediaBatch);
     uploadEntryMediaBatchMock.mockImplementation(async (files, options) => ({
       uploads: [
@@ -198,11 +255,6 @@ describe("CreateEntryForm", () => {
     }));
 
     renderWithLocale(<CreateEntryForm tripId="trip-123" />);
-
-    const textArea = screen.getByLabelText(/entry text/i);
-    fireEvent.change(textArea, {
-      target: { value: "Hello\n![Entry photo](/uploads/remove.jpg)" },
-    });
 
     const input = screen.getByLabelText(/entry image library/i);
     const file = new File(["photo"], "remove.jpg", { type: "image/jpeg" });
@@ -221,7 +273,6 @@ describe("CreateEntryForm", () => {
     });
     fireEvent.click(removeButton);
 
-    expect(textArea.value).not.toContain("/uploads/remove.jpg");
     expect(
       screen.queryByRole("button", { name: /clear story image/i }),
     ).not.toBeInTheDocument();
@@ -327,5 +378,92 @@ describe("CreateEntryForm", () => {
     expect(
       await screen.findByText(/photo location/i),
     ).toBeInTheDocument();
+  });
+
+  it("submits entry with Tiptap JSON content", async () => {
+    const uploadEntryMediaBatchMock = vi.mocked(uploadEntryMediaBatch);
+    uploadEntryMediaBatchMock.mockImplementation(async (files, options) => ({
+      uploads: [
+        {
+          fileId: options?.getFileId?.(files[0]) ?? files[0].name,
+          fileName: files[0].name,
+          url: "/uploads/photo.jpg",
+        },
+      ],
+      failures: [],
+    }));
+
+    const onEntryCreated = vi.fn();
+    const fetchMock = vi.fn().mockImplementation((input: RequestInfo, init?: RequestInit) => {
+      if (typeof input === "string" && input.includes("/api/trips/")) {
+        return Promise.resolve(
+          new Response(JSON.stringify({ data: [], error: null }), {
+            status: 200,
+          }),
+        );
+      }
+      if (typeof input === "string" && input === "/api/entries" && init?.method === "POST") {
+        const body = JSON.parse(init.body as string);
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              data: {
+                id: "entry-1",
+                tripId: body.tripId,
+                title: body.title,
+                text: body.text,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
+                media: [],
+              },
+              error: null,
+            }),
+            { status: 200 },
+          ),
+        );
+      }
+      return Promise.resolve(new Response(JSON.stringify({ data: null }), { status: 404 }));
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    renderWithLocale(<CreateEntryForm tripId="trip-123" onEntryCreated={onEntryCreated} />);
+
+    // Fill in required fields
+    const titleInput = screen.getByLabelText(/entry title/i);
+    fireEvent.change(titleInput, { target: { value: "My Test Entry" } });
+
+    const mockTextarea = screen.getByTestId("tiptap-mock-textarea");
+    fireEvent.change(mockTextarea, { target: { value: "This is my travel story content" } });
+
+    // Upload an image
+    const mediaInput = screen.getByLabelText(/entry image library/i);
+    const file = new File(["photo"], "photo.jpg", { type: "image/jpeg" });
+    fireEvent.change(mediaInput, { target: { files: [file] } });
+
+    // Wait for upload to complete and button to enable
+    const submitButton = screen.getByRole("button", { name: /add entry/i });
+    await waitFor(() => expect(submitButton).toBeEnabled(), { timeout: 3000 });
+
+    // Click submit
+    fireEvent.click(submitButton);
+
+    // Verify the API was called
+    await waitFor(() => {
+      const postCalls = fetchMock.mock.calls.filter(
+        (call: [RequestInfo, RequestInit?]) =>
+          call[0] === "/api/entries" && call[1]?.method === "POST"
+      );
+      expect(postCalls.length).toBeGreaterThan(0);
+
+      // Verify the text is Tiptap JSON format
+      const body = JSON.parse(postCalls[0][1]?.body as string);
+      expect(body.text).toContain('"type":"doc"');
+      expect(body.text).toContain('"type":"paragraph"');
+    });
+
+    // Verify callback was called
+    await waitFor(() => {
+      expect(onEntryCreated).toHaveBeenCalled();
+    });
   });
 });
