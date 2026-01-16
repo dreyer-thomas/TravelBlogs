@@ -6,7 +6,7 @@ import Link from '@tiptap/extension-link'
  * Returns configured Tiptap extensions for the rich text editor.
  *
  * Extensions included:
- * - StarterKit: Bold, Italic, Headings (H1-H3), Lists, etc.
+ * - StarterKit: Bold, Italic, Headings (H1-H3), Lists, etc. (Link disabled to use custom config)
  * - TextAlign: Left, center, right alignment for paragraphs and headings
  * - Link: Hyperlink support with custom styling
  *
@@ -17,6 +17,8 @@ export const getTiptapExtensions = () => [
     heading: {
       levels: [1, 2, 3], // Only H1, H2, H3 as per requirements
     },
+    // Disable built-in Link to use custom configured version below
+    link: false,
   }),
   TextAlign.configure({
     types: ['heading', 'paragraph'],

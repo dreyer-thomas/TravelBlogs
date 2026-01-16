@@ -134,7 +134,7 @@ development_status:
   epic-9: in-progress
   9-1-install-and-configure-tiptap: done
   9-2-update-entry-schema-for-dual-format-support: done
-  9-3-build-tiptap-editor-component: backlog
+  9-3-build-tiptap-editor-component: done
   9-4-integrate-editor-with-create-entry-form: backlog
   9-5-integrate-editor-with-edit-entry-form: backlog
   9-6-implement-custom-image-node-with-entrymediaid: backlog
