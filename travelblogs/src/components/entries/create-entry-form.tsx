@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
+import type { Editor } from "@tiptap/core";
 
 import {
   createEntryPreviewUrl,
@@ -9,6 +10,7 @@ import {
   uploadEntryMediaBatch,
   validateEntryMediaFile,
 } from "../../utils/entry-media";
+import { insertEntryImage } from "../../utils/tiptap-image-helpers";
 import { useTranslation } from "../../utils/use-translation";
 import EntryTagInput from "./entry-tag-input";
 import TiptapEditor from "./tiptap-editor";
@@ -112,7 +114,6 @@ const getErrors = (
     nextErrors.text = t("entries.entryTextRequired");
   }
 
-  // Note: Inline images from Tiptap JSON will be tracked in Story 9.6
   if (mediaUrls.length === 0) {
     nextErrors.media = t("entries.entryMediaRequired");
   }
@@ -155,10 +156,10 @@ const CreateEntryForm = ({ tripId, onEntryCreated }: CreateEntryFormProps) => {
     locationName: string;
   } | null>(null);
   const skipLocationSearchRef = useRef(false);
+  const editorRef = useRef<Editor | null>(null);
   const [tagSuggestions, setTagSuggestions] = useState<string[]>([]);
 
-  // Note: Inline image URLs will be extracted from Tiptap JSON in Story 9.6
-  // For now, only mediaUrls (gallery images) are tracked
+  // Inline images are inserted into Tiptap JSON; gallery images remain tracked in mediaUrls.
   const libraryImageUrls = useMemo(() => {
     const seen = new Set<string>();
     return mediaUrls.filter((url) => {
@@ -409,14 +410,64 @@ const CreateEntryForm = ({ tripId, onEntryCreated }: CreateEntryFormProps) => {
     }
   };
 
-  // Note: Inline image insertion deferred to Story 9.6 (custom Tiptap image node)
-  // For now, images remain in the gallery and can be selected as cover images
+  const replaceEntryImageIds = (
+    content: string,
+    urlToIdMap: Map<string, string>,
+  ) => {
+    if (!content.trim() || urlToIdMap.size === 0) {
+      return content;
+    }
+    try {
+      const parsed = JSON.parse(content);
+      let updated = false;
+
+      const visitNode = (node: any): any => {
+        if (node?.type === "entryImage") {
+          const entryMediaId = node.attrs?.entryMediaId;
+          const src = node.attrs?.src;
+          const nextId =
+            (entryMediaId && urlToIdMap.get(entryMediaId)) ||
+            (src && urlToIdMap.get(src));
+          if (nextId && node.attrs?.entryMediaId !== nextId) {
+            updated = true;
+            return {
+              ...node,
+              attrs: { ...node.attrs, entryMediaId: nextId },
+              content: Array.isArray(node.content)
+                ? node.content.map(visitNode)
+                : node.content,
+            };
+          }
+        }
+        if (Array.isArray(node?.content)) {
+          const newContent = node.content.map(visitNode);
+          if (newContent.some((child: any, i: number) => child !== node.content[i])) {
+            updated = true;
+            return { ...node, content: newContent };
+          }
+        }
+        return node;
+      };
+
+      const newParsed = visitNode(parsed);
+      return updated ? JSON.stringify(newParsed) : content;
+    } catch {
+      return content;
+    }
+  };
+
+  const handleInsertInlineImage = (url: string) => {
+    const editor = editorRef.current;
+    if (!editor || !url || !url.trim()) {
+      return;
+    }
+    insertEntryImage(editor, url, url, t("entries.entryPhoto"));
+  };
 
   const handleRemoveLibraryImage = (url: string) => {
     setMediaUrls((prev) => prev.filter((item) => item !== url));
     setMediaPreviews((prev) => prev.filter((item) => item !== url));
     setMediaUploadItems((prev) => prev.filter((item) => item.url !== url));
-    // Note: Removing inline images from Tiptap JSON will be handled in Story 9.6
     if (coverImageUrl === url) {
       setCoverImageUrl("");
     }
@@ -720,8 +771,8 @@ const CreateEntryForm = ({ tripId, onEntryCreated }: CreateEntryFormProps) => {
     setSubmitting(true);
 
     try {
-      // Note: Inline images from Tiptap JSON will be merged in Story 9.6
       const mergedMediaUrls = Array.from(new Set(mediaUrls));
+      const submittedText = text.trim();
       const response = await fetch("/api/entries", {
         method: "POST",
         headers: {
@@ -734,7 +785,7 @@ const CreateEntryForm = ({ tripId, onEntryCreated }: CreateEntryFormProps) => {
           coverImageUrl: validatedCoverImageUrl.trim()
             ? validatedCoverImageUrl
             : undefined,
-          text: text.trim(),
+          text: submittedText,
           mediaUrls: mergedMediaUrls,
           tags,
           latitude: selectedLocation?.latitude,
@@ -756,6 +807,47 @@ const CreateEntryForm = ({ tripId, onEntryCreated }: CreateEntryFormProps) => {
         return;
       }
 
+      const createdEntry = result.data as CreatedEntry;
+      let resolvedText = submittedText;
+      if (Array.isArray(createdEntry.media) && createdEntry.media.length > 0) {
+        const mediaIdByUrl = new Map(
+          createdEntry.media.map((item) => [item.url, item.id]),
+        );
+        const nextText = replaceEntryImageIds(submittedText, mediaIdByUrl);
+        if (nextText !== submittedText) {
+          try {
+            const patchResponse = await fetch(
+              `/api/entries/${createdEntry.id}`,
+              {
+                method: "PATCH",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  entryDate,
+                  title: title.trim(),
+                  coverImageUrl: validatedCoverImageUrl.trim()
+                    ? validatedCoverImageUrl
+                    : null,
+                  text: nextText,
+                  mediaUrls: mergedMediaUrls,
+                  tags,
+                  latitude: selectedLocation?.latitude ?? null,
+                  longitude: selectedLocation?.longitude ?? null,
+                  locationName: selectedLocation?.locationName ?? null,
+                }),
+              },
+            );
+            const patchResult = await patchResponse.json().catch(() => null);
+            if (patchResponse.ok && !patchResult?.error) {
+              resolvedText = nextText;
+            }
+          } catch {
+            // Best effort; leave resolvedText as submittedText
+          }
+        }
+      }
+
       setTitle("");
       setCoverImageUrl("");
       setText("");
@@ -763,7 +855,7 @@ const CreateEntryForm = ({ tripId, onEntryCreated }: CreateEntryFormProps) => {
       setMediaUrls([]);
       setMediaPreviews([]);
       setEntryDate(new Date().toISOString().slice(0, 10));
-      onEntryCreated?.(result.data as CreatedEntry);
+      onEntryCreated?.({ ...createdEntry, text: resolvedText });
       setSubmitting(false);
     } catch {
       setErrors({
@@ -814,6 +906,9 @@ const CreateEntryForm = ({ tripId, onEntryCreated }: CreateEntryFormProps) => {
         <TiptapEditor
           initialContent=""
           onChange={updateText}
+          onEditorReady={(editor) => {
+            editorRef.current = editor;
+          }}
           placeholder={t("entries.storyPlaceholder")}
         />
         {errors.text ? (
@@ -929,7 +1024,27 @@ const CreateEntryForm = ({ tripId, onEntryCreated }: CreateEntryFormProps) => {
                         <line x1="16.65" y1="16.65" x2="21" y2="21" />
                       </svg>
                     </button>
-                    {/* Inline image insertion deferred to Story 9.6 (custom Tiptap image node) */}
+                    <button
+                      type="button"
+                      onClick={() => handleInsertInlineImage(url)}
+                      aria-label={t("entries.insertInline")}
+                      disabled={!canSelect}
+                      className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-[#2D2A26] shadow transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-70"
+                    >
+                      <svg
+                        aria-hidden="true"
+                        viewBox="0 0 24 24"
+                        className="h-4 w-4"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2.25"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M10 13a5 5 0 0 0 7.07 0l2.83-2.83a5 5 0 0 0-7.07-7.07L11 4" />
+                        <path d="M14 11a5 5 0 0 0-7.07 0L4.1 13.83a5 5 0 0 0 7.07 7.07L13 20" />
+                      </svg>
+                    </button>
                     <button
                       type="button"
                       onClick={() => handleUsePhotoLocation(url)}

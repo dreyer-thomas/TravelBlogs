@@ -137,8 +137,8 @@ development_status:
   9-3-build-tiptap-editor-component: done
   9-4-integrate-editor-with-create-entry-form: done
   9-5-integrate-editor-with-edit-entry-form: done
-  9-6-implement-custom-image-node-with-entrymediaid: backlog
-  9-7-update-gallery-insert-to-use-custom-image-nodes: backlog
+  9-6-implement-custom-image-node-with-entrymediaid: done
+  9-7-update-gallery-insert-to-use-custom-image-nodes: done
   9-8-update-entry-viewer-to-render-tiptap-json: backlog
   9-9-implement-plain-text-to-tiptap-converter: backlog
   9-10-add-lazy-migration-logic-convert-on-edit: backlog

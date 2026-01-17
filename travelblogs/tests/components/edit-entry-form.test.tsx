@@ -4,6 +4,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 
 import EditEntryForm from "../../src/components/entries/edit-entry-form";
 import { uploadEntryMediaBatch } from "../../src/utils/entry-media";
+import { insertEntryImage } from "../../src/utils/tiptap-image-helpers";
 import { LocaleProvider } from "../../src/utils/locale-context";
 
 vi.mock("next/navigation", () => ({
@@ -22,21 +23,46 @@ vi.mock("../../src/utils/entry-media", async (importOriginal) => {
 });
 
 vi.mock("../../src/components/entries/tiptap-editor", () => ({
-  default: ({ initialContent, onChange, placeholder, className }: any) => {
+  default: ({
+    initialContent,
+    onChange,
+    onEditorReady,
+    placeholder,
+    className,
+  }: any) => {
     const [value, setValue] = require("react").useState(initialContent);
+    const { useEffect } = require("react");
+    const mockEditor = { commands: {} };
+    useEffect(() => {
+      onEditorReady?.(mockEditor);
+    }, [onEditorReady]);
     return (
       <textarea
         data-testid="tiptap-editor-mock"
         value={value}
         onChange={(e) => {
           setValue(e.target.value);
-          onChange(e.target.value);
+          const nextValue = e.target.value;
+          try {
+            const parsed = JSON.parse(nextValue);
+            if (parsed?.type === "doc") {
+              onChange(nextValue);
+              return;
+            }
+          } catch {
+            // Not JSON
+          }
+          onChange(nextValue);
         }}
         placeholder={placeholder}
         className={className}
       />
     );
   },
+}));
+
+vi.mock("../../src/utils/tiptap-image-helpers", () => ({
+  insertEntryImage: vi.fn(),
 }));
 
 vi.mock("../../src/utils/entry-format", () => ({
@@ -242,19 +268,7 @@ describe("EditEntryForm", () => {
     expect(selectedButton).toHaveAttribute("aria-pressed", "true");
   });
 
-  it.skip("inserts a library image inline at the cursor (deferred to Story 9.6)", async () => {
-    const uploadEntryMediaBatchMock = vi.mocked(uploadEntryMediaBatch);
-    uploadEntryMediaBatchMock.mockImplementation(async (files, options) => ({
-      uploads: [
-        {
-          fileId: options?.getFileId?.(files[0]) ?? files[0].name,
-          fileName: files[0].name,
-          url: "/uploads/inline.jpg",
-        },
-      ],
-      failures: [],
-    }));
-
+  it("inserts a library image inline as an entryImage node", async () => {
     renderWithLocale(
       <EditEntryForm
         tripId="trip-123"
@@ -262,25 +276,21 @@ describe("EditEntryForm", () => {
         initialEntryDate="2025-05-03T00:00:00.000Z"
         initialTitle="Existing title"
         initialText="Hello"
-        initialMediaUrls={[]}
+        initialMediaUrls={["/uploads/inline.jpg"]}
+        initialMedia={[{ id: "media-1", url: "/uploads/inline.jpg" }]}
       />,
     );
-
-    const textArea = screen.getByLabelText(/entry text/i);
-    textArea.setSelectionRange(5, 5);
-    fireEvent.click(textArea);
-
-    const input = screen.getByLabelText(/entry image library/i);
-    const file = new File(["photo"], "inline.jpg", { type: "image/jpeg" });
-    fireEvent.change(input, { target: { files: [file] } });
 
     const insertButton = await screen.findByRole("button", {
       name: /insert inline/i,
     });
     fireEvent.click(insertButton);
 
-    expect(textArea.value).toMatch(
-      /^Hello!\[Entry photo\]\(\/uploads\/inline\.jpg\)$/,
+    expect(insertEntryImage).toHaveBeenCalledWith(
+      expect.anything(),
+      "media-1",
+      "/uploads/inline.jpg",
+      expect.any(String),
     );
   });
 
@@ -605,6 +615,104 @@ describe("EditEntryForm", () => {
 
       const editorElement = editor as HTMLTextAreaElement;
       expect(editorElement.value).toBe(updatedContent);
+    });
+
+    it("submits entry with entryImage nodes containing real entryMediaId (AC 3)", async () => {
+      const fetchMock = vi.fn().mockImplementation(
+        (input: RequestInfo, init?: RequestInit) => {
+          if (typeof input === "string" && input.includes("/api/trips/")) {
+            return Promise.resolve(
+              new Response(JSON.stringify({ data: [], error: null }), {
+                status: 200,
+              }),
+            );
+          }
+          if (
+            typeof input === "string" &&
+            input.includes("/api/entries/entry-123") &&
+            init?.method === "PATCH"
+          ) {
+            const body = JSON.parse(init.body as string);
+            return Promise.resolve(
+              new Response(
+                JSON.stringify({
+                  data: {
+                    id: "entry-123",
+                    tripId: body.tripId || "trip-123",
+                    title: body.title,
+                    text: body.text,
+                    media: [
+                      { id: "media-1", url: "/uploads/photo.jpg" },
+                    ],
+                  },
+                  error: null,
+                }),
+                { status: 200 },
+              ),
+            );
+          }
+          return Promise.resolve(
+            new Response(JSON.stringify({ data: null }), { status: 404 }),
+          );
+        },
+      );
+      vi.stubGlobal("fetch", fetchMock);
+
+      renderWithLocale(
+        <EditEntryForm
+          tripId="trip-123"
+          entryId="entry-123"
+          initialEntryDate="2025-05-03T00:00:00.000Z"
+          initialTitle="Test Entry"
+          initialText="Initial text"
+          initialMediaUrls={["/uploads/photo.jpg"]}
+          initialMedia={[
+            { id: "media-1", url: "/uploads/photo.jpg" },
+          ]}
+        />,
+      );
+
+      // Simulate editor content with entryImage node
+      const editor = screen.getByTestId("tiptap-editor-mock");
+      const tiptapJsonWithImage = JSON.stringify({
+        type: "doc",
+        content: [
+          {
+            type: "entryImage",
+            attrs: {
+              entryMediaId: "media-1",
+              src: "/uploads/photo.jpg",
+              alt: "Entry photo",
+            },
+          },
+        ],
+      });
+      fireEvent.change(editor, { target: { value: tiptapJsonWithImage } });
+
+      const submitButton = screen.getByRole("button", { name: /save entry/i });
+      await waitFor(() => expect(submitButton).toBeEnabled());
+      fireEvent.click(submitButton);
+
+      await waitFor(() => {
+        const patchCalls = fetchMock.mock.calls.filter(
+          (call: [RequestInfo, RequestInit?]) =>
+            typeof call[0] === "string" &&
+            call[0].includes("/api/entries/entry-123") &&
+            call[1]?.method === "PATCH",
+        );
+        expect(patchCalls.length).toBeGreaterThan(0);
+
+        // AC 3 validation: Verify JSON contains entryImage with real entryMediaId (not URL)
+        const body = JSON.parse(patchCalls[0][1]?.body as string);
+        const parsedText = JSON.parse(body.text);
+        expect(parsedText.type).toBe("doc");
+        const entryImageNode = parsedText.content.find(
+          (node: any) => node.type === "entryImage",
+        );
+        expect(entryImageNode).toBeDefined();
+        expect(entryImageNode.attrs.entryMediaId).toBe("media-1");
+        expect(entryImageNode.attrs.src).toBe("/uploads/photo.jpg");
+      });
     });
   });
 });

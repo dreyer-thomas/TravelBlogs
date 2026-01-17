@@ -5,6 +5,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import CreateEntryForm from "../../src/components/entries/create-entry-form";
 import { uploadEntryMediaBatch } from "../../src/utils/entry-media";
 import { extractGpsFromImage } from "../../src/utils/entry-location";
+import { insertEntryImage } from "../../src/utils/tiptap-image-helpers";
 import { LocaleProvider } from "../../src/utils/locale-context";
 
 vi.mock("../../src/utils/entry-media", async (importOriginal) => {
@@ -19,16 +20,28 @@ vi.mock("../../src/utils/entry-location", () => ({
   extractGpsFromImage: vi.fn(),
 }));
 
+vi.mock("../../src/utils/tiptap-image-helpers", () => ({
+  insertEntryImage: vi.fn(),
+}));
+
 // Mock TiptapEditor to avoid complex Tiptap setup in tests
 vi.mock("../../src/components/entries/tiptap-editor", () => ({
   default: ({
     onChange,
+    onEditorReady,
     placeholder,
   }: {
     initialContent: string;
     onChange: (content: string) => void;
+    onEditorReady?: (editor: unknown) => void;
     placeholder?: string;
   }) => {
+    const { useEffect } = require("react");
+    const mockEditor = { commands: {} };
+    useEffect(() => {
+      onEditorReady?.(mockEditor);
+    }, [onEditorReady]);
+
     return (
       <div data-testid="tiptap-editor">
         <textarea
@@ -36,8 +49,16 @@ vi.mock("../../src/components/entries/tiptap-editor", () => ({
           placeholder={placeholder}
           aria-label="Entry text"
           onChange={(e) => {
-            // Simulate Tiptap JSON output for non-empty content
             const value = e.target.value;
+            try {
+              const parsed = JSON.parse(value);
+              if (parsed?.type === "doc") {
+                onChange(value);
+                return;
+              }
+            } catch {
+              // Not JSON
+            }
             if (value.trim()) {
               onChange(
                 JSON.stringify({
@@ -380,6 +401,54 @@ describe("CreateEntryForm", () => {
     ).toBeInTheDocument();
   });
 
+  it("inserts inline images using entryImage nodes", async () => {
+    const uploadEntryMediaBatchMock = vi.mocked(uploadEntryMediaBatch);
+    uploadEntryMediaBatchMock.mockImplementation(async (files, options) => ({
+      uploads: [
+        {
+          fileId: options?.getFileId?.(files[0]) ?? files[0].name,
+          fileName: files[0].name,
+          url: "/uploads/inline.jpg",
+        },
+      ],
+      failures: [],
+    }));
+
+    const fetchMock = vi.fn().mockImplementation((input: RequestInfo) => {
+      if (typeof input === "string" && input.includes("/api/trips/")) {
+        return Promise.resolve(
+          new Response(JSON.stringify({ data: [], error: null }), {
+            status: 200,
+          }),
+        );
+      }
+      return Promise.resolve(
+        new Response(new Blob(["photo"], { type: "image/jpeg" }), {
+          status: 200,
+        }),
+      );
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    renderWithLocale(<CreateEntryForm tripId="trip-123" />);
+
+    const input = screen.getByLabelText(/entry image library/i);
+    const file = new File(["photo"], "inline.jpg", { type: "image/jpeg" });
+    fireEvent.change(input, { target: { files: [file] } });
+
+    const insertButton = await screen.findByRole("button", {
+      name: /insert inline/i,
+    });
+    fireEvent.click(insertButton);
+
+    expect(insertEntryImage).toHaveBeenCalledWith(
+      expect.anything(),
+      "/uploads/inline.jpg",
+      "/uploads/inline.jpg",
+      expect.any(String),
+    );
+  });
+
   it("submits entry with Tiptap JSON content", async () => {
     const uploadEntryMediaBatchMock = vi.mocked(uploadEntryMediaBatch);
     uploadEntryMediaBatchMock.mockImplementation(async (files, options) => ({
@@ -464,6 +533,110 @@ describe("CreateEntryForm", () => {
     // Verify callback was called
     await waitFor(() => {
       expect(onEntryCreated).toHaveBeenCalled();
+    });
+  });
+
+  it("submits entry with entryImage nodes in Tiptap JSON", async () => {
+    const uploadEntryMediaBatchMock = vi.mocked(uploadEntryMediaBatch);
+    uploadEntryMediaBatchMock.mockImplementation(async (files, options) => ({
+      uploads: [
+        {
+          fileId: options?.getFileId?.(files[0]) ?? files[0].name,
+          fileName: files[0].name,
+          url: "/uploads/photo.jpg",
+        },
+      ],
+      failures: [],
+    }));
+
+    const fetchMock = vi.fn().mockImplementation(
+      (input: RequestInfo, init?: RequestInit) => {
+        if (typeof input === "string" && input.includes("/api/trips/")) {
+          return Promise.resolve(
+            new Response(JSON.stringify({ data: [], error: null }), {
+              status: 200,
+            }),
+          );
+        }
+        if (
+          typeof input === "string" &&
+          input === "/api/entries" &&
+          init?.method === "POST"
+        ) {
+          const body = JSON.parse(init.body as string);
+          return Promise.resolve(
+            new Response(
+              JSON.stringify({
+                data: {
+                  id: "entry-1",
+                  tripId: body.tripId,
+                  title: body.title,
+                  text: body.text,
+                  createdAt: new Date().toISOString(),
+                  updatedAt: new Date().toISOString(),
+                  media: [],
+                },
+                error: null,
+              }),
+              { status: 200 },
+            ),
+          );
+        }
+        return Promise.resolve(
+          new Response(JSON.stringify({ data: null }), { status: 404 }),
+        );
+      },
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    renderWithLocale(<CreateEntryForm tripId="trip-123" />);
+
+    const titleInput = screen.getByLabelText(/entry title/i);
+    fireEvent.change(titleInput, { target: { value: "Inline entry" } });
+
+    const mediaInput = screen.getByLabelText(/entry image library/i);
+    const file = new File(["photo"], "photo.jpg", { type: "image/jpeg" });
+    fireEvent.change(mediaInput, { target: { files: [file] } });
+
+    const editor = screen.getByTestId("tiptap-mock-textarea");
+    const tiptapJsonWithImage = JSON.stringify({
+      type: "doc",
+      content: [
+        {
+          type: "entryImage",
+          attrs: {
+            entryMediaId: "/uploads/photo.jpg",
+            src: "/uploads/photo.jpg",
+            alt: "Entry photo",
+          },
+        },
+      ],
+    });
+    fireEvent.change(editor, { target: { value: tiptapJsonWithImage } });
+
+    const submitButton = screen.getByRole("button", { name: /add entry/i });
+    await waitFor(() => expect(submitButton).toBeEnabled(), { timeout: 3000 });
+    fireEvent.click(submitButton);
+
+    await waitFor(() => {
+      const postCalls = fetchMock.mock.calls.filter(
+        (call: [RequestInfo, RequestInit?]) =>
+          call[0] === "/api/entries" && call[1]?.method === "POST",
+      );
+      expect(postCalls.length).toBeGreaterThan(0);
+      const body = JSON.parse(postCalls[0][1]?.body as string);
+      expect(body.text).toContain("\"entryImage\"");
+      expect(body.text).toContain("\"entryMediaId\"");
+
+      // AC 3 validation: Verify the JSON structure contains entryImage nodes with entryMediaId
+      const parsedText = JSON.parse(body.text);
+      expect(parsedText.type).toBe("doc");
+      const entryImageNode = parsedText.content.find((node: any) => node.type === "entryImage");
+      expect(entryImageNode).toBeDefined();
+      expect(entryImageNode.attrs.entryMediaId).toBeDefined();
+      expect(entryImageNode.attrs.src).toBe("/uploads/photo.jpg");
+      // In create flow, entryMediaId starts as URL placeholder until post-save patch
+      expect(entryImageNode.attrs.entryMediaId).toBe("/uploads/photo.jpg");
     });
   });
 });

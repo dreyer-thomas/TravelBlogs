@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
+import type { Editor } from "@tiptap/core";
 import { useRouter } from "next/navigation";
 
 import {
@@ -10,6 +11,7 @@ import {
   uploadEntryMediaBatch,
   validateEntryMediaFile,
 } from "../../utils/entry-media";
+import { insertEntryImage } from "../../utils/tiptap-image-helpers";
 import { useTranslation } from "../../utils/use-translation";
 import { formatEntryLocationDisplay } from "../../utils/entry-location";
 import { detectEntryFormat, plainTextToTiptapJson } from "../../utils/entry-format";
@@ -46,6 +48,7 @@ type EditEntryFormProps = {
   initialCoverImageUrl?: string | null;
   initialText: string;
   initialMediaUrls: string[];
+  initialMedia?: Array<{ id: string; url: string }>;
   initialTags?: string[];
   initialLocation?: {
     latitude: number;
@@ -124,6 +127,7 @@ const EditEntryForm = ({
   initialCoverImageUrl,
   initialText,
   initialMediaUrls,
+  initialMedia,
   initialTags = [],
   initialLocation,
 }: EditEntryFormProps) => {
@@ -177,10 +181,16 @@ const EditEntryForm = ({
       : null,
   );
   const skipLocationSearchRef = useRef(Boolean(initialLocation?.label));
+  const editorRef = useRef<Editor | null>(null);
   const [tagSuggestions, setTagSuggestions] = useState<string[]>([]);
+  const entryMediaIdByUrl = useMemo(() => {
+    if (!initialMedia) {
+      return new Map<string, string>();
+    }
+    return new Map(initialMedia.map((item) => [item.url, item.id]));
+  }, [initialMedia]);
 
-  // TODO Story 9.6: Re-add inline image extraction when custom Tiptap image nodes are implemented
-  // For now, only using mediaUrls (uploaded images in gallery)
+  // Inline images are stored in Tiptap JSON; gallery images remain tracked in mediaUrls.
   const availableStoryImages = useMemo(() => {
     const urls = [...mediaUrls];
     const seen = new Set<string>();
@@ -464,17 +474,69 @@ const EditEntryForm = ({
     }
   };
 
+  const replaceEntryImageIds = (
+    content: string,
+    urlToIdMap: Map<string, string>,
+  ) => {
+    if (!content.trim() || urlToIdMap.size === 0) {
+      return content;
+    }
+    try {
+      const parsed = JSON.parse(content);
+      let updated = false;
+
+      const visitNode = (node: any): any => {
+        if (node?.type === "entryImage") {
+          const entryMediaId = node.attrs?.entryMediaId;
+          const src = node.attrs?.src;
+          const nextId =
+            (entryMediaId && urlToIdMap.get(entryMediaId)) ||
+            (src && urlToIdMap.get(src));
+          if (nextId && node.attrs?.entryMediaId !== nextId) {
+            updated = true;
+            return {
+              ...node,
+              attrs: { ...node.attrs, entryMediaId: nextId },
+              content: Array.isArray(node.content)
+                ? node.content.map(visitNode)
+                : node.content,
+            };
+          }
+        }
+        if (Array.isArray(node?.content)) {
+          const newContent = node.content.map(visitNode);
+          if (newContent.some((child: any, i: number) => child !== node.content[i])) {
+            updated = true;
+            return { ...node, content: newContent };
+          }
+        }
+        return node;
+      };
+
+      const newParsed = visitNode(parsed);
+      return updated ? JSON.stringify(newParsed) : content;
+    } catch {
+      return content;
+    }
+  };
+
   const handleInsertInlineImage = (url: string) => {
-    // TODO Story 9.6: Implement custom Tiptap image node for inline insertion
-    // For now, inline images are deferred - images shown in gallery only
-    console.warn("Inline image insertion deferred to Story 9.6", url);
+    const editor = editorRef.current;
+    if (!editor || !url || !url.trim()) {
+      return;
+    }
+    const entryMediaId = entryMediaIdByUrl.get(url);
+    if (!entryMediaId) {
+      // URL not found in existing media - skip insertion
+      return;
+    }
+    insertEntryImage(editor, entryMediaId, url, t("entries.entryPhoto"));
   };
 
   const handleRemoveLibraryImage = (url: string) => {
     setMediaUrls((prev) => prev.filter((item) => item !== url));
     setMediaPreviews((prev) => prev.filter((item) => item !== url));
     setMediaUploadItems((prev) => prev.filter((item) => item.url !== url));
-    // Inline images deferred to Story 9.6 - no text manipulation needed
     if (coverImageUrl === url) {
       setCoverImageUrl("");
     }
@@ -778,6 +840,7 @@ const EditEntryForm = ({
       const mergedMediaUrls = Array.from(
         new Set([...mediaUrls]),
       );
+      const submittedText = text.trim();
       const response = await fetch(`/api/entries/${entryId}`, {
         method: "PATCH",
         headers: {
@@ -789,7 +852,7 @@ const EditEntryForm = ({
           coverImageUrl: validatedCoverImageUrl
             ? validatedCoverImageUrl
             : null,
-          text: text.trim(),
+          text: submittedText,
           mediaUrls: mergedMediaUrls,
           tags,
           latitude: selectedLocation?.latitude ?? null,
@@ -809,6 +872,42 @@ const EditEntryForm = ({
         }
         setSubmitting(false);
         return;
+      }
+
+      const updatedEntry = result.data as {
+        id: string;
+        media?: Array<{ id: string; url: string }>;
+      };
+      if (Array.isArray(updatedEntry.media) && updatedEntry.media.length > 0) {
+        const mediaIdByUrl = new Map(
+          updatedEntry.media.map((item) => [item.url, item.id]),
+        );
+        const nextText = replaceEntryImageIds(submittedText, mediaIdByUrl);
+        if (nextText !== submittedText) {
+          try {
+            await fetch(`/api/entries/${entryId}`, {
+              method: "PATCH",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                entryDate,
+                title: title.trim(),
+                coverImageUrl: validatedCoverImageUrl
+                  ? validatedCoverImageUrl
+                  : null,
+                text: nextText,
+                mediaUrls: mergedMediaUrls,
+                tags,
+                latitude: selectedLocation?.latitude ?? null,
+                longitude: selectedLocation?.longitude ?? null,
+                locationName: selectedLocation?.locationName ?? null,
+              }),
+            });
+          } catch {
+            // Best effort; keep original text on failure
+          }
+        }
       }
 
       setSubmitting(false);
@@ -848,6 +947,9 @@ const EditEntryForm = ({
         <TiptapEditor
           initialContent={text}
           onChange={updateText}
+          onEditorReady={(editor) => {
+            editorRef.current = editor;
+          }}
           placeholder={t("entries.storyEditPlaceholder")}
           className="mt-2"
         />
@@ -983,8 +1085,7 @@ const EditEntryForm = ({
                       type="button"
                       onClick={() => handleInsertInlineImage(url)}
                       aria-label={t("entries.insertInline")}
-                      disabled={true}
-                      title="Inline images deferred to Story 9.6"
+                      disabled={!canSelect}
                       className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-[#2D2A26] shadow transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-70"
                     >
                       <svg

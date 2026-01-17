@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useEditor, EditorContent } from "@tiptap/react";
+import type { Editor } from "@tiptap/core";
 import Placeholder from "@tiptap/extension-placeholder";
 import { getTiptapExtensions } from "@/utils/tiptap-config";
 import { detectEntryFormat } from "@/utils/entry-format";
@@ -15,6 +16,8 @@ type TiptapEditorProps = {
   initialContent: string;
   /** Callback invoked with Tiptap JSON string on content changes */
   onChange: (jsonContent: string) => void;
+  /** Callback invoked once the editor instance is ready */
+  onEditorReady?: (editor: Editor) => void;
   /** Optional placeholder text shown when editor is empty */
   placeholder?: string;
   /** Optional additional CSS classes for the container */
@@ -76,6 +79,7 @@ const parseInitialContent = (content: string) => {
 export default function TiptapEditor({
   initialContent,
   onChange,
+  onEditorReady,
   placeholder,
   className = "",
 }: TiptapEditorProps) {
@@ -109,6 +113,12 @@ export default function TiptapEditor({
       },
     },
   });
+
+  useEffect(() => {
+    if (editor && onEditorReady) {
+      onEditorReady(editor);
+    }
+  }, [editor, onEditorReady]);
 
   // Handle external content updates (controlled component behavior)
   useEffect(() => {

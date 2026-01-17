@@ -15,8 +15,9 @@ vi.mock("@/utils/use-translation", () => ({
         "editor.textFormatting": "Text formatting",
         "editor.bold": "Bold",
         "editor.italic": "Italic",
-        "editor.strikethrough": "Strikethrough",
+        "editor.underline": "Underline",
         "editor.headings": "Headings",
+        "editor.paragraph": "Paragraph",
         "editor.heading1": "Heading 1",
         "editor.heading2": "Heading 2",
         "editor.heading3": "Heading 3",
@@ -33,9 +34,6 @@ vi.mock("@/utils/use-translation", () => ({
         "editor.linkUrl": "Link URL",
         "editor.linkPlaceholder": "https://example.com",
         "editor.applyLink": "Apply",
-        "editor.undoRedo": "Undo and redo",
-        "editor.undo": "Undo",
-        "editor.redo": "Redo",
         "editor.initError": "Editor failed to initialize.",
         "common.cancel": "Cancel",
       };
@@ -124,7 +122,7 @@ describe("TiptapEditor", () => {
       // Text formatting group
       expect(screen.getByLabelText(/bold/i)).toBeInTheDocument();
       expect(screen.getByLabelText(/italic/i)).toBeInTheDocument();
-      expect(screen.getByLabelText(/strikethrough/i)).toBeInTheDocument();
+      expect(screen.getByLabelText(/underline/i)).toBeInTheDocument();
 
       // Headings group
       expect(screen.getByLabelText(/heading 1/i)).toBeInTheDocument();
@@ -144,9 +142,28 @@ describe("TiptapEditor", () => {
       expect(screen.getByLabelText(/add link/i)).toBeInTheDocument();
       expect(screen.getByLabelText(/remove link/i)).toBeInTheDocument();
 
-      // Utility group
-      expect(screen.getByLabelText(/^undo$/i)).toBeInTheDocument();
-      expect(screen.getByLabelText(/^redo$/i)).toBeInTheDocument();
+      // Utility group (undo/redo buttons are not rendered)
+      expect(screen.queryByLabelText(/^undo$/i)).not.toBeInTheDocument();
+      expect(screen.queryByLabelText(/^redo$/i)).not.toBeInTheDocument();
+    });
+
+    it("exposes the editor instance via onEditorReady", async () => {
+      const onChange = vi.fn();
+      const onEditorReady = vi.fn();
+
+      render(
+        <TiptapEditor
+          initialContent=""
+          onChange={onChange}
+          onEditorReady={onEditorReady}
+        />,
+      );
+
+      await waitFor(() => {
+        expect(onEditorReady).toHaveBeenCalled();
+        const editorArg = onEditorReady.mock.calls[0]?.[0];
+        expect(editorArg?.commands).toBeDefined();
+      });
     });
 
     it("editor initializes without errors", () => {
@@ -299,16 +316,12 @@ describe("TiptapEditor", () => {
       await fireEvent.click(centerButton);
     });
 
-    it("undo/redo buttons have correct initial disabled state", () => {
+    it("does not render undo/redo buttons", () => {
       const onChange = vi.fn();
       render(<TiptapEditor initialContent="" onChange={onChange} />);
 
-      const undoButton = screen.getByLabelText(/^undo$/i);
-      const redoButton = screen.getByLabelText(/^redo$/i);
-
-      // Initially, both undo and redo should be disabled (empty editor)
-      expect(undoButton).toBeDisabled();
-      expect(redoButton).toBeDisabled();
+      expect(screen.queryByLabelText(/^undo$/i)).not.toBeInTheDocument();
+      expect(screen.queryByLabelText(/^redo$/i)).not.toBeInTheDocument();
     });
 
     it("link button opens link dialog when clicked", async () => {
