@@ -3,3 +3,6 @@ travelblogs/public/uploads/trips/*
 travelblogs/public/uploads/entries/*
 !travelblogs/public/uploads/trips/.gitkeep
 !travelblogs/public/uploads/entries/.gitkeep
+
+# Claude Code CLI session data
+.codex/
