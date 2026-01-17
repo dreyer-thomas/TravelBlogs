@@ -10,14 +10,11 @@ import {
   uploadEntryMediaBatch,
   validateEntryMediaFile,
 } from "../../utils/entry-media";
-import {
-  extractInlineImageUrls,
-  insertInlineImageAtCursor,
-  removeInlineImageByUrl,
-} from "../../utils/entry-content";
 import { useTranslation } from "../../utils/use-translation";
 import { formatEntryLocationDisplay } from "../../utils/entry-location";
+import { detectEntryFormat, plainTextToTiptapJson } from "../../utils/entry-format";
 import EntryTagInput from "./entry-tag-input";
+import TiptapEditor from "./tiptap-editor";
 
 type FieldErrors = {
   date?: string;
@@ -70,12 +67,29 @@ const toDateInputValue = (value: string) => {
     : parsed.toISOString().slice(0, 10);
 };
 
+const isEmptyTiptapContent = (content: string): boolean => {
+  if (!content || !content.trim()) return true;
+  try {
+    const parsed = JSON.parse(content);
+    if (parsed.type === 'doc' && Array.isArray(parsed.content)) {
+      if (parsed.content.length === 0) return true;
+      return parsed.content.every((node: any) =>
+        node.type === 'paragraph' &&
+        (!node.content || node.content.length === 0 ||
+         node.content.every((c: any) => c.type === 'text' && !c.text?.trim()))
+      );
+    }
+    return false;
+  } catch {
+    return !content.trim();
+  }
+};
+
 const getErrors = (
   entryDate: string,
   title: string,
   text: string,
   mediaUrls: string[],
-  inlineImageUrls: string[],
   t: (key: string) => string,
 ) => {
   const nextErrors: FieldErrors = {};
@@ -88,11 +102,11 @@ const getErrors = (
     nextErrors.title = t("entries.entryTitleRequired");
   }
 
-  if (!text.trim()) {
+  if (isEmptyTiptapContent(text)) {
     nextErrors.text = t("entries.entryTextRequired");
   }
 
-  if (mediaUrls.length === 0 && inlineImageUrls.length === 0) {
+  if (mediaUrls.length === 0) {
     nextErrors.media = t("entries.entryMediaRequired");
   }
 
@@ -122,7 +136,13 @@ const EditEntryForm = ({
   const [coverImageUrl, setCoverImageUrl] = useState(
     initialCoverImageUrl ?? "",
   );
-  const [text, setText] = useState(initialText);
+  const [text, setText] = useState(() => {
+    const format = detectEntryFormat(initialText);
+    if (format === 'plain') {
+      return plainTextToTiptapJson(initialText);
+    }
+    return initialText;
+  });
   const [tags, setTags] = useState<string[]>(initialTags);
   const [mediaUrls, setMediaUrls] = useState<string[]>(initialMediaUrls);
   const [mediaPreviews, setMediaPreviews] = useState<string[]>(initialMediaUrls);
@@ -130,12 +150,7 @@ const EditEntryForm = ({
   const [mediaUploadItems, setMediaUploadItems] = useState<UploadItem[]>([]);
   const [errors, setErrors] = useState<FieldErrors>({});
   const [submitting, setSubmitting] = useState(false);
-  const textAreaRef = useRef<HTMLTextAreaElement | null>(null);
   const [hoveredImageUrl, setHoveredImageUrl] = useState<string | null>(null);
-  const [cursorSelection, setCursorSelection] = useState({
-    start: 0,
-    end: 0,
-  });
   const [locationQuery, setLocationQuery] = useState(
     initialLocation?.label ?? "",
   );
@@ -164,12 +179,10 @@ const EditEntryForm = ({
   const skipLocationSearchRef = useRef(Boolean(initialLocation?.label));
   const [tagSuggestions, setTagSuggestions] = useState<string[]>([]);
 
-  const inlineImageUrls = useMemo(
-    () => extractInlineImageUrls(text),
-    [text],
-  );
+  // TODO Story 9.6: Re-add inline image extraction when custom Tiptap image nodes are implemented
+  // For now, only using mediaUrls (uploaded images in gallery)
   const availableStoryImages = useMemo(() => {
-    const urls = [...mediaUrls, ...inlineImageUrls];
+    const urls = [...mediaUrls];
     const seen = new Set<string>();
     return urls.filter((url) => {
       const value = url.trim();
@@ -179,9 +192,9 @@ const EditEntryForm = ({
       seen.add(value);
       return true;
     });
-  }, [mediaUrls, inlineImageUrls]);
+  }, [mediaUrls]);
   const libraryImageUrls = useMemo(() => {
-    const urls = [...mediaUrls, ...inlineImageUrls];
+    const urls = [...mediaUrls];
     const seen = new Set<string>();
     return urls.filter((url) => {
       const value = url.trim();
@@ -191,7 +204,7 @@ const EditEntryForm = ({
       seen.add(value);
       return true;
     });
-  }, [mediaUrls, inlineImageUrls]);
+  }, [mediaUrls]);
   const selectableImageUrls = useMemo(() => {
     const urls = [...availableStoryImages, ...libraryImageUrls];
     const seen = new Set<string>();
@@ -261,11 +274,7 @@ const EditEntryForm = ({
     setText(value);
     setErrors((prev) => ({
       ...prev,
-      text: value.trim() ? undefined : t("entries.entryTextRequired"),
-      media:
-        value.trim() && extractInlineImageUrls(value).length > 0
-          ? undefined
-          : prev.media,
+      text: isEmptyTiptapContent(value) ? t("entries.entryTextRequired") : undefined,
     }));
   };
 
@@ -303,7 +312,7 @@ const EditEntryForm = ({
   };
 
   const handleTextBlur = () => {
-    if (!text.trim()) {
+    if (isEmptyTiptapContent(text)) {
       setErrors((prev) => ({
         ...prev,
         text: t("entries.entryTextRequired"),
@@ -311,16 +320,6 @@ const EditEntryForm = ({
     }
   };
 
-  const updateCursorSelection = () => {
-    const textarea = textAreaRef.current;
-    if (!textarea) {
-      return;
-    }
-    setCursorSelection({
-      start: textarea.selectionStart ?? 0,
-      end: textarea.selectionEnd ?? 0,
-    });
-  };
 
   const handleMediaChange = async (
     event: React.ChangeEvent<HTMLInputElement>,
@@ -457,7 +456,7 @@ const EditEntryForm = ({
   };
 
   const handleMediaBlur = () => {
-    if (mediaUrls.length === 0 && inlineImageUrls.length === 0) {
+    if (mediaUrls.length === 0) {
       setErrors((prev) => ({
         ...prev,
         media: t("entries.entryMediaRequired"),
@@ -466,37 +465,16 @@ const EditEntryForm = ({
   };
 
   const handleInsertInlineImage = (url: string) => {
-    let nextCursor = cursorSelection.start;
-
-    setText((prev) => {
-      const result = insertInlineImageAtCursor(
-        prev,
-        url,
-        cursorSelection.start,
-        cursorSelection.end,
-      );
-      nextCursor = result.nextCursor;
-      return result.nextText;
-    });
-
-    setErrors((prev) => ({ ...prev, media: undefined, text: undefined }));
-
-    requestAnimationFrame(() => {
-      const textarea = textAreaRef.current;
-      if (!textarea) {
-        return;
-      }
-      textarea.focus();
-      textarea.setSelectionRange(nextCursor, nextCursor);
-      setCursorSelection({ start: nextCursor, end: nextCursor });
-    });
+    // TODO Story 9.6: Implement custom Tiptap image node for inline insertion
+    // For now, inline images are deferred - images shown in gallery only
+    console.warn("Inline image insertion deferred to Story 9.6", url);
   };
 
   const handleRemoveLibraryImage = (url: string) => {
     setMediaUrls((prev) => prev.filter((item) => item !== url));
     setMediaPreviews((prev) => prev.filter((item) => item !== url));
     setMediaUploadItems((prev) => prev.filter((item) => item.url !== url));
-    setText((prev) => removeInlineImageByUrl(prev, url));
+    // Inline images deferred to Story 9.6 - no text manipulation needed
     if (coverImageUrl === url) {
       setCoverImageUrl("");
     }
@@ -607,7 +585,7 @@ const EditEntryForm = ({
   const canSubmit = Boolean(
     isValidEntryDate(entryDate) &&
       text.trim() &&
-      (mediaUrls.length > 0 || inlineImageUrls.length > 0) &&
+      mediaUrls.length > 0 &&
       !hasFieldErrors &&
       !submitting &&
       !mediaUploading,
@@ -787,7 +765,6 @@ const EditEntryForm = ({
       title,
       text,
       mediaUrls,
-      inlineImageUrls,
       t,
     );
     if (Object.keys(nextErrors).length > 0) {
@@ -799,7 +776,7 @@ const EditEntryForm = ({
 
     try {
       const mergedMediaUrls = Array.from(
-        new Set([...mediaUrls, ...inlineImageUrls]),
+        new Set([...mediaUrls]),
       );
       const response = await fetch(`/api/entries/${entryId}`, {
         method: "PATCH",
@@ -868,19 +845,11 @@ const EditEntryForm = ({
 
       <label className="block text-sm text-[#2D2A26]">
         {t("entries.entryText")}
-        <textarea
-          name="text"
-          rows={20}
-          value={text}
-          onChange={(event) => updateText(event.target.value)}
-          onBlur={handleTextBlur}
-          onSelect={updateCursorSelection}
-          onKeyUp={updateCursorSelection}
-          onMouseUp={updateCursorSelection}
-          onClick={updateCursorSelection}
-          ref={textAreaRef}
-          className="mt-2 w-full rounded-xl border border-black/10 px-3 py-2 text-sm focus:border-[#1F6F78] focus:outline-none focus:ring-2 focus:ring-[#1F6F78]/20"
+        <TiptapEditor
+          initialContent={text}
+          onChange={updateText}
           placeholder={t("entries.storyEditPlaceholder")}
+          className="mt-2"
         />
         {errors.text ? (
           <p className="mt-2 text-xs text-[#B34A3C]">{errors.text}</p>
@@ -1014,7 +983,8 @@ const EditEntryForm = ({
                       type="button"
                       onClick={() => handleInsertInlineImage(url)}
                       aria-label={t("entries.insertInline")}
-                      disabled={!canSelect}
+                      disabled={true}
+                      title="Inline images deferred to Story 9.6"
                       className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-[#2D2A26] shadow transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-70"
                     >
                       <svg

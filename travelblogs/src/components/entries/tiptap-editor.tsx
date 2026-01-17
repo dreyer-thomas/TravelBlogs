@@ -87,6 +87,7 @@ export default function TiptapEditor({
   const editorPlaceholder = placeholder ?? t("editor.placeholder");
 
   const editor = useEditor({
+    immediatelyRender: false,
     extensions: [
       ...getTiptapExtensions(),
       Placeholder.configure({
@@ -102,7 +103,8 @@ export default function TiptapEditor({
     },
     editorProps: {
       attributes: {
-        class: "prose prose-lg max-w-none focus:outline-none min-h-[200px] p-4",
+        class:
+          "prose prose-lg max-w-none focus:outline-none min-h-[200px] p-4 [&_h1]:text-3xl [&_h1]:font-semibold [&_h2]:text-2xl [&_h2]:font-semibold [&_h3]:text-xl [&_h3]:font-semibold",
         "aria-label": t("editor.contentArea"),
       },
     },
@@ -165,9 +167,9 @@ export default function TiptapEditor({
 
   // Toolbar button styling constants
   const buttonBaseClass =
-    "px-3 py-1.5 text-sm font-medium rounded min-w-[44px] min-h-[44px] focus:ring-2 focus:ring-[#1F6F78] focus:outline-none transition-colors";
-  const activeClass = "bg-[#1F6F78] text-white";
-  const inactiveClass = "bg-gray-200 text-gray-700 hover:bg-gray-300";
+    "p-2 text-base font-medium rounded focus:ring-2 focus:ring-[#1F6F78] focus:outline-none transition-colors";
+  const activeClass = "text-[#1F6F78]";
+  const inactiveClass = "text-gray-700 hover:bg-gray-200";
 
   return (
     <div
@@ -204,15 +206,15 @@ export default function TiptapEditor({
             I
           </button>
           <button
-            onClick={() => editor.chain().focus().toggleStrike().run()}
+            onClick={() => editor.chain().focus().toggleUnderline().run()}
             className={`${buttonBaseClass} ${
-              editor.isActive("strike") ? activeClass : inactiveClass
+              editor.isActive("underline") ? activeClass : inactiveClass
             }`}
-            aria-label={t("editor.strikethrough")}
-            aria-pressed={editor.isActive("strike")}
+            aria-label={t("editor.underline")}
+            aria-pressed={editor.isActive("underline")}
             type="button"
           >
-            S
+            U
           </button>
         </div>
 
@@ -222,6 +224,17 @@ export default function TiptapEditor({
           role="group"
           aria-label={t("editor.headings")}
         >
+          <button
+            onClick={() => editor.chain().focus().setParagraph().run()}
+            className={`${buttonBaseClass} ${
+              editor.isActive("paragraph") ? activeClass : inactiveClass
+            }`}
+            aria-label={t("editor.paragraph")}
+            aria-pressed={editor.isActive("paragraph")}
+            type="button"
+          >
+            P
+          </button>
           <button
             onClick={() =>
               editor.chain().focus().toggleHeading({ level: 1 }).run()
@@ -366,31 +379,6 @@ export default function TiptapEditor({
           </button>
         </div>
 
-        {/* Utility Group */}
-        <div
-          className="flex gap-1 border-l pl-2"
-          role="group"
-          aria-label={t("editor.undoRedo")}
-        >
-          <button
-            onClick={() => editor.chain().focus().undo().run()}
-            disabled={!editor.can().undo()}
-            className={`${buttonBaseClass} ${inactiveClass} disabled:opacity-50 disabled:cursor-not-allowed`}
-            aria-label={t("editor.undo")}
-            type="button"
-          >
-            ↶
-          </button>
-          <button
-            onClick={() => editor.chain().focus().redo().run()}
-            disabled={!editor.can().redo()}
-            className={`${buttonBaseClass} ${inactiveClass} disabled:opacity-50 disabled:cursor-not-allowed`}
-            aria-label={t("editor.redo")}
-            type="button"
-          >
-            ↷
-          </button>
-        </div>
       </div>
 
       {/* Link Dialog */}
@@ -440,7 +428,7 @@ export default function TiptapEditor({
       {/* Editor Content Area */}
       <EditorContent
         editor={editor}
-        className="prose prose-lg max-w-none p-4 min-h-[300px] [&_.is-editor-empty:first-child::before]:text-gray-400 [&_.is-editor-empty:first-child::before]:content-[attr(data-placeholder)] [&_.is-editor-empty:first-child::before]:float-left [&_.is-editor-empty:first-child::before]:h-0 [&_.is-editor-empty:first-child::before]:pointer-events-none"
+        className="prose prose-lg max-w-none p-4 min-h-[300px] [&_h1]:text-3xl [&_h1]:font-semibold [&_h2]:text-2xl [&_h2]:font-semibold [&_h3]:text-xl [&_h3]:font-semibold [&_.is-editor-empty:first-child::before]:text-gray-400 [&_.is-editor-empty:first-child::before]:content-[attr(data-placeholder)] [&_.is-editor-empty:first-child::before]:float-left [&_.is-editor-empty:first-child::before]:h-0 [&_.is-editor-empty:first-child::before]:pointer-events-none"
       />
     </div>
   );

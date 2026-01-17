@@ -113,3 +113,41 @@ export function validateTiptapStructure(json: string | unknown): boolean {
   // Validate using isTiptapJson helper
   return isTiptapJson(parsed)
 }
+
+/**
+ * Converts plain text to Tiptap JSON format.
+ *
+ * Splits plain text on double newlines to create paragraphs.
+ * Each paragraph becomes a Tiptap paragraph node with text content.
+ * Empty paragraphs are filtered out.
+ *
+ * @param plainText - The plain text content to convert
+ * @returns Tiptap JSON string with paragraph structure
+ *
+ * @example
+ * ```typescript
+ * plainTextToTiptapJson('Hello\n\nWorld')
+ * // => '{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Hello"}]},{"type":"paragraph","content":[{"type":"text","text":"World"}]}]}'
+ * ```
+ */
+export function plainTextToTiptapJson(plainText: string): string {
+  if (!plainText || !plainText.trim()) {
+    return JSON.stringify({
+      type: 'doc',
+      content: [{ type: 'paragraph' }]
+    })
+  }
+
+  // Split on double newlines to create paragraphs
+  const paragraphs = plainText.split('\n\n').filter(p => p.trim())
+
+  const content = paragraphs.map(paragraph => ({
+    type: 'paragraph',
+    content: [{ type: 'text', text: paragraph }]
+  }))
+
+  return JSON.stringify({
+    type: 'doc',
+    content: content.length > 0 ? content : [{ type: 'paragraph' }]
+  })
+}

@@ -124,7 +124,7 @@ development_status:
   epic-7-retrospective: done
 
   epic-8: in-progress
-  8-1-add-tags-to-entry-createedit: review
+  8-1-add-tags-to-entry-createedit: done
   8-2-show-tags-on-trip-overview-entry-cards: done
   8-3-show-tags-on-entry-reader-hero: done
   8-4-filter-entries-by-tags: done
@@ -136,7 +136,7 @@ development_status:
   9-2-update-entry-schema-for-dual-format-support: done
   9-3-build-tiptap-editor-component: done
   9-4-integrate-editor-with-create-entry-form: done
-  9-5-integrate-editor-with-edit-entry-form: backlog
+  9-5-integrate-editor-with-edit-entry-form: done
   9-6-implement-custom-image-node-with-entrymediaid: backlog
   9-7-update-gallery-insert-to-use-custom-image-nodes: backlog
   9-8-update-entry-viewer-to-render-tiptap-json: backlog

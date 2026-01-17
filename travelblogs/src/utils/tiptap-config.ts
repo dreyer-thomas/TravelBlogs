@@ -1,6 +1,7 @@
 import StarterKit from '@tiptap/starter-kit'
 import TextAlign from '@tiptap/extension-text-align'
 import Link from '@tiptap/extension-link'
+import Underline from '@tiptap/extension-underline'
 
 /**
  * Returns configured Tiptap extensions for the rich text editor.
@@ -17,6 +18,7 @@ export const getTiptapExtensions = () => [
     heading: {
       levels: [1, 2, 3], // Only H1, H2, H3 as per requirements
     },
+    strike: false,
     // Disable built-in Link to use custom configured version below
     link: false,
   }),
@@ -30,4 +32,5 @@ export const getTiptapExtensions = () => [
       class: 'text-[#1F6F78] underline hover:text-[#2D2A26]',
     },
   }),
+  Underline,
 ]
