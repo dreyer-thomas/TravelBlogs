@@ -1,5 +1,10 @@
 import { describe, it, expect } from 'vitest'
-import { detectEntryFormat, validateTiptapStructure, type EntryFormat } from '@/utils/entry-format'
+import {
+  detectEntryFormat,
+  plainTextToTiptapJson,
+  validateTiptapStructure,
+  type EntryFormat,
+} from '@/utils/entry-format'
 
 describe('detectEntryFormat', () => {
   describe('Plain Text Detection', () => {
@@ -159,5 +164,46 @@ describe('validateTiptapStructure', () => {
     expect(validateTiptapStructure('plain text')).toBe(false)
     expect(validateTiptapStructure(JSON.stringify([1, 2, 3]))).toBe(false)
     expect(validateTiptapStructure(JSON.stringify(null))).toBe(false)
+  })
+})
+
+describe('plainTextToTiptapJson', () => {
+  it('converts paragraphs into Tiptap JSON', () => {
+    const result = plainTextToTiptapJson('Hello\n\nWorld')
+    const parsed = JSON.parse(result)
+
+    expect(parsed).toMatchObject({
+      type: 'doc',
+      content: [
+        {
+          type: 'paragraph',
+          content: [{ type: 'text', text: 'Hello' }],
+        },
+        {
+          type: 'paragraph',
+          content: [{ type: 'text', text: 'World' }],
+        },
+      ],
+    })
+  })
+
+  it('converts inline image markdown into entryImage nodes', () => {
+    const result = plainTextToTiptapJson(
+      'Look ![Fresh](https://example.com/inline.jpg) here.',
+    )
+    const parsed = JSON.parse(result)
+
+    expect(parsed.content).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: 'entryImage',
+          attrs: {
+            entryMediaId: null,
+            src: 'https://example.com/inline.jpg',
+            alt: 'Fresh',
+          },
+        }),
+      ]),
+    )
   })
 })

@@ -193,7 +193,7 @@ describe("EntryReader", () => {
     expect(screen.queryByLabelText("Tags")).not.toBeInTheDocument();
   });
 
-  it("renders inline images alongside readable body text", () => {
+  it("renders inline images alongside readable body text", async () => {
     render(
       <LocaleProvider>
         <EntryReader
@@ -216,10 +216,99 @@ describe("EntryReader", () => {
       </LocaleProvider>,
     );
 
-    expect(screen.getByText(/Look/)).toBeInTheDocument();
+    expect(await screen.findByText(/Look/)).toBeInTheDocument();
     expect(
-      screen.getByRole("img", { name: /Fresh produce/i }),
+      await screen.findByRole("img", { name: /Fresh produce/i }),
     ).toHaveAttribute("src", "https://example.com/inline.jpg");
+  });
+
+  it("renders Tiptap JSON content as formatted text", async () => {
+    const tiptapJson = JSON.stringify({
+      type: "doc",
+      content: [
+        {
+          type: "paragraph",
+          content: [
+            { type: "text", text: "Hello " },
+            { type: "text", text: "world", marks: [{ type: "bold" }] },
+          ],
+        },
+      ],
+    });
+
+    render(
+      <LocaleProvider>
+        <EntryReader
+          entry={{
+            id: "entry-rich",
+            title: "Rich entry",
+            body: tiptapJson,
+            createdAt: "2025-05-03T12:00:00.000Z",
+            tags: [],
+            media: [
+              {
+                id: "media-rich",
+                url: "https://example.com/hero-rich.jpg",
+                width: 1600,
+                height: 1000,
+              },
+            ],
+          }}
+        />
+      </LocaleProvider>,
+    );
+
+    expect(await screen.findByText("Hello")).toBeInTheDocument();
+    expect(await screen.findByText("world")).toBeInTheDocument();
+  });
+
+  it("renders entryImage nodes using entryMediaId resolution", async () => {
+    const tiptapJson = JSON.stringify({
+      type: "doc",
+      content: [
+        {
+          type: "entryImage",
+          attrs: {
+            entryMediaId: "media-inline",
+            src: "https://example.com/inline-fallback.jpg",
+            alt: "Inline photo",
+          },
+        },
+      ],
+    });
+
+    render(
+      <LocaleProvider>
+        <EntryReader
+          entry={{
+            id: "entry-inline",
+            title: "Inline image entry",
+            body: tiptapJson,
+            createdAt: "2025-05-04T12:00:00.000Z",
+            tags: [],
+            media: [
+              {
+                id: "media-inline",
+                url: "https://example.com/inline-from-media.jpg",
+                width: 1200,
+                height: 800,
+                alt: "Inline photo",
+              },
+            ],
+          }}
+        />
+      </LocaleProvider>,
+    );
+
+    const inlineImages = await screen.findAllByRole("img", {
+      name: /inline photo/i,
+    });
+    const inlineMatch = inlineImages.find(
+      (image) =>
+        image.getAttribute("src") ===
+        "https://example.com/inline-from-media.jpg",
+    );
+    expect(inlineMatch).toBeTruthy();
   });
 
   it("opens the fullscreen viewer from the slideshow button", async () => {

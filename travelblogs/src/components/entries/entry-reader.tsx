@@ -5,7 +5,9 @@ import Image from "next/image";
 import Link from "next/link";
 
 import MediaGallery from "../media/media-gallery";
-import { DEFAULT_INLINE_ALT, parseEntryContent } from "../../utils/entry-content";
+import { DEFAULT_INLINE_ALT } from "../../utils/entry-content";
+import { detectEntryFormat, plainTextToTiptapJson } from "../../utils/entry-format";
+import { extractEntryImageNodesFromJson } from "../../utils/tiptap-image-helpers";
 import type { EntryReaderData } from "../../utils/entry-reader";
 import type { EntryLocation } from "../../utils/entry-location";
 import { formatEntryLocationDisplay } from "../../utils/entry-location";
@@ -13,6 +15,7 @@ import FullScreenPhotoViewer from "./full-screen-photo-viewer";
 import { useTranslation } from "../../utils/use-translation";
 import EntryHeroMap from "./entry-hero-map";
 import TripMap from "../trips/trip-map";
+import EntryReaderRichText from "./entry-reader-rich-text";
 
 type EntryReaderProps = {
   entry: EntryReaderData;
@@ -59,9 +62,20 @@ const EntryReader = ({
   const entryDate = formatDate(new Date(entry.createdAt));
   const showSharedHeroOverlay = isSharedView;
   const hasTags = entry.tags.length > 0;
-  const contentBlocks = useMemo(
-    () => parseEntryContent(entry.body ?? ""),
-    [entry.body],
+  const entryBody = entry.body ?? "";
+  const entryFormat = useMemo(
+    () => detectEntryFormat(entryBody),
+    [entryBody],
+  );
+  const tiptapContent = useMemo(() => {
+    if (entryFormat === "tiptap") {
+      return entryBody;
+    }
+    return plainTextToTiptapJson(entryBody);
+  }, [entryBody, entryFormat]);
+  const inlineImages = useMemo(
+    () => extractEntryImageNodesFromJson(tiptapContent),
+    [tiptapContent],
   );
   const viewerImages = useMemo(() => {
     const images = new Map<string, { url: string; alt: string }>();
@@ -74,27 +88,56 @@ const EntryReader = ({
       });
     });
 
-    contentBlocks.forEach((block) => {
-      if (block.type !== "image") {
+    inlineImages.forEach((node) => {
+      const mediaItem = node.entryMediaId
+        ? entry.media.find((item) => item.id === node.entryMediaId)
+        : undefined;
+      const url = mediaItem?.url ?? node.src;
+      if (!url || images.has(url)) {
         return;
       }
-      if (!images.has(block.url)) {
-        images.set(block.url, {
-          url: block.url,
-          alt:
-            resolveAltText(block.alt?.trim()) ||
-            entry.title ||
-            t("entries.tripPhoto"),
-        });
-      }
+
+      images.set(url, {
+        url,
+        alt:
+          resolveAltText(node.alt?.trim()) ||
+          resolveAltText(mediaItem?.alt?.trim()) ||
+          entry.title ||
+          t("entries.tripPhoto"),
+      });
     });
 
     return Array.from(images.values());
-  }, [contentBlocks, entry.media, entry.title, resolveAltText, t]);
-  const hasBodyContent =
-    contentBlocks.some(
-      (block) => block.type === "text" && block.value.trim(),
-    ) || contentBlocks.some((block) => block.type === "image");
+  }, [entry.media, entry.title, inlineImages, resolveAltText, t]);
+  const hasBodyContent = useMemo(() => {
+    try {
+      const parsed = JSON.parse(tiptapContent);
+      const nodes = Array.isArray(parsed?.content) ? parsed.content : [];
+      type TiptapNode = {
+        type?: string;
+        text?: string;
+        content?: TiptapNode[];
+      };
+      const hasContent = (node: TiptapNode | undefined): boolean => {
+        if (!node) {
+          return false;
+        }
+        if (node.type === "entryImage") {
+          return true;
+        }
+        if (node.type === "text" && typeof node.text === "string") {
+          return node.text.trim().length > 0;
+        }
+        if (Array.isArray(node.content)) {
+          return node.content.some(hasContent);
+        }
+        return false;
+      };
+      return nodes.some(hasContent);
+    } catch {
+      return false;
+    }
+  }, [tiptapContent]);
   const [viewerIndex, setViewerIndex] = useState(0);
   const [isViewerOpen, setIsViewerOpen] = useState(false);
   const [viewerMode, setViewerMode] = useState<"viewer" | "slideshow">(
@@ -249,47 +292,14 @@ const EntryReader = ({
         <section className="rounded-3xl border border-black/10 bg-white p-8 shadow-sm">
           <div className="mx-auto max-w-[42rem] space-y-5">
             {hasBodyContent ? (
-              contentBlocks.map((block, index) => {
-                if (block.type === "image") {
-                  return (
-                    <div
-                      key={`entry-inline-image-${block.url}-${index}`}
-                      className="overflow-hidden rounded-2xl border border-black/10 bg-[#F2ECE3]"
-                    >
-                      <button
-                        type="button"
-                        onClick={() => openViewerAtUrl(block.url)}
-                        className="block h-full w-full focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2D2A26]"
-                        aria-label={t('entries.openPhoto')}
-                      >
-                        <Image
-                          src={block.url}
-                          alt={resolveAltText(block.alt) || t("entries.entryPhoto")}
-                          width={1200}
-                          height={800}
-                          sizes="100vw"
-                          className="h-auto w-full object-cover"
-                          loading="lazy"
-                          unoptimized={!isOptimizedImage(block.url)}
-                        />
-                      </button>
-                    </div>
-                  );
-                }
-
-                return block.value
-                  .split(/\n{2,}/)
-                  .map((paragraph) => paragraph.trim())
-                  .filter(Boolean)
-                  .map((paragraph, paragraphIndex) => (
-                    <p
-                      key={`entry-paragraph-${index}-${paragraphIndex}`}
-                      className="text-[17px] leading-7 text-[#2D2A26]"
-                    >
-                      {paragraph}
-                    </p>
-                  ));
-              })
+              <EntryReaderRichText
+                content={tiptapContent}
+                media={entry.media}
+                fallbackAlt={entry.title || t("entries.tripPhoto")}
+                openImageLabel={t("entries.openPhoto")}
+                onImageClick={openViewerAtUrl}
+                resolveAltText={resolveAltText}
+              />
             ) : (
               <p className="text-[17px] leading-7 text-[#6B635B]">
                 {t('entries.noEntryText')}

@@ -93,3 +93,39 @@ export const extractEntryMediaIdsFromJson = (tiptapJsonString: string): string[]
     return []
   }
 }
+
+export type EntryImageNodeData = {
+  entryMediaId: string | null
+  src: string | null
+  alt: string | null
+}
+
+export const extractEntryImageNodesFromJson = (
+  tiptapJsonString: string,
+): EntryImageNodeData[] => {
+  try {
+    const json = JSON.parse(tiptapJsonString)
+    const nodes: EntryImageNodeData[] = []
+
+    const traverse = (node: any) => {
+      if (node.type === 'entryImage') {
+        nodes.push({
+          entryMediaId: node.attrs?.entryMediaId ?? null,
+          src: node.attrs?.src ?? null,
+          alt: node.attrs?.alt ?? null,
+        })
+      }
+      if (node.content) {
+        node.content.forEach(traverse)
+      }
+    }
+
+    if (json.content) {
+      json.content.forEach(traverse)
+    }
+
+    return nodes
+  } catch {
+    return []
+  }
+}

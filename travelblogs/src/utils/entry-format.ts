@@ -6,6 +6,8 @@
  * strategy for backward compatibility with existing plain text entries.
  */
 
+import { parseEntryContent } from "./entry-content";
+
 export type EntryFormat = 'plain' | 'tiptap'
 
 /**
@@ -138,13 +140,34 @@ export function plainTextToTiptapJson(plainText: string): string {
     })
   }
 
-  // Split on double newlines to create paragraphs
-  const paragraphs = plainText.split('\n\n').filter(p => p.trim())
+  const content: Array<Record<string, unknown>> = []
+  const blocks = parseEntryContent(plainText)
 
-  const content = paragraphs.map(paragraph => ({
-    type: 'paragraph',
-    content: [{ type: 'text', text: paragraph }]
-  }))
+  blocks.forEach(block => {
+    if (block.type === 'text') {
+      const paragraphs = block.value
+        .split(/\n{2,}/)
+        .map(paragraph => paragraph.trim())
+        .filter(Boolean)
+
+      paragraphs.forEach(paragraph => {
+        content.push({
+          type: 'paragraph',
+          content: [{ type: 'text', text: paragraph }]
+        })
+      })
+      return
+    }
+
+    content.push({
+      type: 'entryImage',
+      attrs: {
+        entryMediaId: null,
+        src: block.url,
+        alt: block.alt ?? ''
+      }
+    })
+  })
 
   return JSON.stringify({
     type: 'doc',

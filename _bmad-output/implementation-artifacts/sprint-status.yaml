@@ -139,7 +139,7 @@ development_status:
   9-5-integrate-editor-with-edit-entry-form: done
   9-6-implement-custom-image-node-with-entrymediaid: done
   9-7-update-gallery-insert-to-use-custom-image-nodes: done
-  9-8-update-entry-viewer-to-render-tiptap-json: backlog
+  9-8-update-entry-viewer-to-render-tiptap-json: done
   9-9-implement-plain-text-to-tiptap-converter: backlog
   9-10-add-lazy-migration-logic-convert-on-edit: backlog
   9-11-update-gallery-delete-to-remove-image-nodes: backlog
