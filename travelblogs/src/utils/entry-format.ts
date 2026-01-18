@@ -18,6 +18,64 @@ export type EntryMediaItem = {
 export type EntryMediaLookup = Map<string, string> | EntryMediaItem[] | undefined
 
 /**
+ * Represents the format status of a single entry.
+ *
+ * Used for tracking migration progress from plain text to Tiptap JSON format.
+ *
+ * @property entryId - The unique identifier of the entry
+ * @property format - The detected format ('plain' or 'tiptap')
+ */
+export type EntryFormatStatus = {
+  entryId: string
+  format: EntryFormat
+}
+
+/**
+ * Summary statistics of entry format distribution.
+ *
+ * Provides aggregated counts for migration reporting and diagnostics.
+ *
+ * @property totalCount - Total number of entries analyzed
+ * @property plainCount - Number of entries in plain text format
+ * @property tiptapCount - Number of entries in Tiptap JSON format
+ */
+export type EntryFormatSummary = {
+  totalCount: number
+  plainCount: number
+  tiptapCount: number
+}
+
+export const getEntryFormatStatus = (
+  entries: Array<{ id: string; text: string }>,
+): EntryFormatStatus[] =>
+  entries.map((entry) => ({
+    entryId: entry.id,
+    format: detectEntryFormat(entry.text ?? ''),
+  }))
+
+export const formatEntryFormatSummary = (
+  statuses: EntryFormatStatus[],
+): EntryFormatSummary => {
+  const counts = statuses.reduce(
+    (accumulator, status) => {
+      if (status.format === 'tiptap') {
+        accumulator.tiptapCount += 1
+      } else {
+        accumulator.plainCount += 1
+      }
+      return accumulator
+    },
+    { plainCount: 0, tiptapCount: 0 },
+  )
+
+  return {
+    totalCount: statuses.length,
+    plainCount: counts.plainCount,
+    tiptapCount: counts.tiptapCount,
+  }
+}
+
+/**
  * Detects whether entry text content is plain text or Tiptap JSON format.
  *
  * @param text - The entry text content to analyze

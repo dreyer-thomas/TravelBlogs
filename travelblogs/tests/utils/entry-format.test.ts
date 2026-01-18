@@ -1,6 +1,8 @@
 import { describe, it, expect } from 'vitest'
 import {
   detectEntryFormat,
+  formatEntryFormatSummary,
+  getEntryFormatStatus,
   plainTextToTiptapJson,
   validateTiptapStructure,
   type EntryFormat,
@@ -286,5 +288,45 @@ describe('plainTextToTiptapJson', () => {
         }),
       ]),
     )
+  })
+})
+
+describe('getEntryFormatStatus', () => {
+  it('returns per-entry format status using detection helper', () => {
+    const entries = [
+      { id: 'entry-plain', text: 'Hello world' },
+      {
+        id: 'entry-json',
+        text: JSON.stringify({ type: 'doc', content: [] }),
+      },
+      { id: 'entry-empty', text: '' },
+    ]
+
+    expect(getEntryFormatStatus(entries)).toEqual([
+      { entryId: 'entry-plain', format: 'plain' },
+      { entryId: 'entry-json', format: 'tiptap' },
+      { entryId: 'entry-empty', format: 'plain' },
+    ])
+  })
+})
+
+describe('formatEntryFormatSummary', () => {
+  it('summarizes counts for reporting', () => {
+    const entries = [
+      { id: 'entry-plain', text: 'Hello world' },
+      { id: 'entry-empty', text: '' },
+      {
+        id: 'entry-json',
+        text: JSON.stringify({ type: 'doc', content: [] }),
+      },
+    ]
+
+    const statuses = getEntryFormatStatus(entries)
+
+    expect(formatEntryFormatSummary(statuses)).toEqual({
+      totalCount: 3,
+      plainCount: 2,
+      tiptapCount: 1,
+    })
   })
 })

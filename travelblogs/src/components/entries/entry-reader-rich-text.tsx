@@ -134,6 +134,7 @@ const EntryReaderRichText = ({
     extensions,
     content: parseContent(content),
     editable: false,
+    immediatelyRender: false,
     editorProps: {
       attributes: {
         class:

@@ -102,6 +102,38 @@ describe("EntryDetail", () => {
     expect(screen.getByText("May 3rd, 2025")).toBeInTheDocument();
   });
 
+  it("renders Tiptap JSON content as rich text", async () => {
+    const tiptapJson = JSON.stringify({
+      type: "doc",
+      content: [
+        {
+          type: "paragraph",
+          content: [{ type: "text", text: "Rich text body" }],
+        },
+      ],
+    });
+
+    renderWithProvider(
+      <EntryDetail
+        entry={{
+          id: "entry-json",
+          tripId: "trip-1",
+          title: "Rich text entry",
+          coverImageUrl: null,
+          text: tiptapJson,
+          createdAt: "2025-05-03T12:00:00.000Z",
+          updatedAt: "2025-05-03T00:00:00.000Z",
+          media: [],
+        }}
+        canEdit
+        canDelete
+      />,
+    );
+
+    expect(await screen.findByText("Rich text body")).toBeInTheDocument();
+    expect(screen.queryByText(tiptapJson)).not.toBeInTheDocument();
+  });
+
   it("opens and closes the photo viewer from inline content", async () => {
     renderWithProvider(
       <EntryDetail

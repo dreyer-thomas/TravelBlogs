@@ -18,7 +18,11 @@ import {
   formatEntryLocationDisplay,
   type EntryLocation,
 } from "../../utils/entry-location";
+import { detectEntryFormat, plainTextToTiptapJson } from "../../utils/entry-format";
+import type { EntryReaderMedia } from "../../utils/entry-reader";
+import { extractEntryImageNodesFromJson } from "../../utils/tiptap-image-helpers";
 import { useTranslation } from "../../utils/use-translation";
+import EntryReaderRichText from "./entry-reader-rich-text";
 
 type EntryMedia = {
   id: string;
@@ -72,13 +76,79 @@ const EntryDetail = ({
     return alt;
   }, [t]);
 
-  const contentBlocks = useMemo(
-    () => (entry ? parseEntryContent(entry.text) : []),
-    [entry],
+  const entryBody = entry?.text ?? "";
+  const entryFormat = useMemo(
+    () => detectEntryFormat(entryBody),
+    [entryBody],
   );
-  const inlineImageUrls = useMemo(
-    () => (entry ? extractInlineImageUrls(entry.text) : []),
-    [entry],
+  const entryMediaIdByUrl = useMemo(
+    () => new Map(entry.media.map((item) => [item.url, item.id])),
+    [entry.media],
+  );
+  const entryMediaById = useMemo(() => {
+    const map = new Map<string, EntryMedia>();
+    entry.media.forEach((item) => map.set(item.id, item));
+    return map;
+  }, [entry.media]);
+  const tiptapContent = useMemo(() => {
+    if (entryFormat === "tiptap") {
+      return entryBody;
+    }
+    return plainTextToTiptapJson(entryBody, entryMediaIdByUrl);
+  }, [entryBody, entryFormat, entryMediaIdByUrl]);
+  const inlineImages = useMemo(
+    () =>
+      entryFormat === "tiptap"
+        ? extractEntryImageNodesFromJson(tiptapContent)
+        : [],
+    [entryFormat, tiptapContent],
+  );
+  const inlineImageUrls = useMemo(() => {
+    if (entryFormat === "plain") {
+      return extractInlineImageUrls(entryBody);
+    }
+    return inlineImages
+      .map((node) => {
+        if (node.entryMediaId && entryMediaById.has(node.entryMediaId)) {
+          return entryMediaById.get(node.entryMediaId)?.url ?? null;
+        }
+        return node.src ?? null;
+      })
+      .filter((url): url is string => Boolean(url));
+  }, [entryBody, entryFormat, entryMediaById, inlineImages]);
+  const inlineImageAltByUrl = useMemo(() => {
+    if (entryFormat === "plain") {
+      return null;
+    }
+    const map = new Map<string, string>();
+    inlineImages.forEach((node) => {
+      const url = node.entryMediaId
+        ? entryMediaById.get(node.entryMediaId)?.url
+        : node.src ?? null;
+      if (!url || map.has(url)) {
+        return;
+      }
+      const alt = node.alt?.trim();
+      map.set(url, alt && alt.length > 0 ? alt : DEFAULT_INLINE_ALT);
+    });
+    return map;
+  }, [entryFormat, entryMediaById, inlineImages]);
+  const readerMedia = useMemo<EntryReaderMedia[]>(
+    () =>
+      entry.media.map((item) => ({
+        id: item.id,
+        url: item.url,
+        type: null,
+        width: null,
+        height: null,
+        alt: null,
+      })),
+    [entry.media],
+  );
+
+  const contentBlocks = useMemo(
+    () => (entryFormat === "plain" ? parseEntryContent(entryBody) : []),
+    [entryBody, entryFormat],
   );
   const locationDisplay = useMemo(
     () => formatEntryLocationDisplay(entry.location),
@@ -135,9 +205,13 @@ const EntryDetail = ({
     }
     return galleryItems.map((item) => ({
       url: item.url,
-      alt: resolveAltText(findInlineImageAlt(entry.text, item.url)),
+      alt: resolveAltText(
+        entryFormat === "tiptap"
+          ? inlineImageAltByUrl?.get(item.url) ?? null
+          : findInlineImageAlt(entryBody, item.url),
+      ),
     }));
-  }, [entry, galleryItems, resolveAltText]);
+  }, [entry, entryBody, entryFormat, galleryItems, inlineImageAltByUrl, resolveAltText]);
 
   const openViewerAtUrl = useCallback(
     (url: string) => {
@@ -188,50 +262,61 @@ const EntryDetail = ({
           </header>
 
           <div className="mt-6 space-y-4">
-            {contentBlocks.map((block, index) => {
-              if (block.type === "text") {
-                if (!block.value.trim()) {
-                  return null;
+            {entryFormat === "tiptap" ? (
+              <EntryReaderRichText
+                content={tiptapContent}
+                media={readerMedia}
+                fallbackAlt={entry.title || t("entries.tripPhoto")}
+                openImageLabel={t("entries.openPhoto")}
+                onImageClick={openViewerAtUrl}
+                resolveAltText={resolveAltText}
+              />
+            ) : (
+              contentBlocks.map((block, index) => {
+                if (block.type === "text") {
+                  if (!block.value.trim()) {
+                    return null;
+                  }
+                  return (
+                    <p
+                      key={`text-${index}`}
+                      className="whitespace-pre-wrap text-sm text-[#2D2A26]"
+                    >
+                      {block.value}
+                    </p>
+                  );
                 }
-                return (
-                  <p
-                    key={`text-${index}`}
-                    className="whitespace-pre-wrap text-sm text-[#2D2A26]"
-                  >
-                    {block.value}
-                  </p>
-                );
-              }
 
-              return (
-                <div
-                  key={`image-${block.url}-${index}`}
-                  className="overflow-hidden rounded-2xl border border-black/10 bg-[#F2ECE3]"
-                >
-                  <button
-                    type="button"
-                    onClick={() => openViewerAtUrl(block.url)}
-                    className="block h-full w-full focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2D2A26]"
-                    aria-label={`${t("entries.openPhoto")} ${
-                      viewerImages.findIndex(
-                        (item) => item.url === block.url,
-                      ) + 1
-                    }`}
+                return (
+                  <div
+                    key={`image-${block.url}-${index}`}
+                    className="overflow-hidden rounded-2xl border border-black/10 bg-[#F2ECE3]"
                   >
-                    <Image
-                      src={block.url}
-                      alt={resolveAltText(block.alt)}
-                      width={1200}
-                      height={800}
-                      sizes="100vw"
-                      className="h-auto w-full object-cover"
-                      loading="lazy"
-                      unoptimized={!isOptimizedImage(block.url)}
-                    />
-                  </button>
-                </div>
-              );
-            })}
+                    <button
+                      type="button"
+                      onClick={() => openViewerAtUrl(block.url)}
+                      className="block h-full w-full focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2D2A26]"
+                      aria-label={`${t("entries.openPhoto")} ${
+                        viewerImages.findIndex(
+                          (item) => item.url === block.url,
+                        ) + 1
+                      }`}
+                    >
+                      <Image
+                        src={block.url}
+                        alt={resolveAltText(block.alt)}
+                        width={1200}
+                        height={800}
+                        sizes="100vw"
+                        className="h-auto w-full object-cover"
+                        loading="lazy"
+                        unoptimized={!isOptimizedImage(block.url)}
+                      />
+                    </button>
+                  </div>
+                );
+              })
+            )}
           </div>
 
         </section>

@@ -4,6 +4,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 
 import EditEntryForm from "../../src/components/entries/edit-entry-form";
 import { uploadEntryMediaBatch } from "../../src/utils/entry-media";
+import { detectEntryFormat, plainTextToTiptapJson } from "../../src/utils/entry-format";
 import { insertEntryImage } from "../../src/utils/tiptap-image-helpers";
 import { LocaleProvider } from "../../src/utils/locale-context";
 
@@ -93,7 +94,7 @@ describe("EditEntryForm", () => {
     render(<LocaleProvider>{component}</LocaleProvider>);
 
   beforeEach(() => {
-    vi.clearAllMocks();
+    vi.resetAllMocks();
     if (!URL.createObjectURL) {
       URL.createObjectURL = () => "blob:preview";
     }
@@ -151,6 +152,81 @@ describe("EditEntryForm", () => {
         "Add at least one photo in the library or inline text.",
       ),
     ).toBeInTheDocument();
+  });
+
+  it("converts plain text to Tiptap JSON for editing (AC2)", () => {
+    const detectSpy = vi.mocked(detectEntryFormat);
+    const conversionSpy = vi.mocked(plainTextToTiptapJson);
+    detectSpy.mockReturnValue("plain");
+    conversionSpy.mockReturnValue(
+      JSON.stringify({
+        type: "doc",
+        content: [
+          {
+            type: "paragraph",
+            content: [{ type: "text", text: "Converted for edit" }],
+          },
+        ],
+      }),
+    );
+
+    renderWithLocale(
+      <EditEntryForm
+        tripId="trip-123"
+        entryId="entry-123"
+        initialEntryDate="2025-05-03T00:00:00.000Z"
+        initialTitle="Existing title"
+        initialText="Plain text body"
+        initialMediaUrls={["/uploads/entries/old.jpg"]}
+      />,
+    );
+
+    const editor = screen.getByTestId("tiptap-editor-mock");
+    expect(detectSpy).toHaveBeenCalledWith("Plain text body");
+    expect(conversionSpy).toHaveBeenCalledTimes(1);
+    expect(editor).toHaveValue(
+      JSON.stringify({
+        type: "doc",
+        content: [
+          {
+            type: "paragraph",
+            content: [{ type: "text", text: "Converted for edit" }],
+          },
+        ],
+      }),
+    );
+  });
+
+  it("keeps stored Tiptap JSON without reconversion (AC3)", () => {
+    const detectSpy = vi.mocked(detectEntryFormat);
+    const conversionSpy = vi.mocked(plainTextToTiptapJson);
+    const tiptapJson = JSON.stringify({
+      type: "doc",
+      content: [
+        {
+          type: "paragraph",
+          content: [{ type: "text", text: "Stored JSON" }],
+        },
+      ],
+    });
+
+    detectSpy.mockReturnValue("tiptap");
+
+    renderWithLocale(
+      <EditEntryForm
+        tripId="trip-123"
+        entryId="entry-123"
+        initialEntryDate="2025-05-03T00:00:00.000Z"
+        initialTitle="Existing title"
+        initialText={tiptapJson}
+        initialMediaUrls={["/uploads/entries/old.jpg"]}
+      />,
+    );
+
+    const editor = screen.getByTestId("tiptap-editor-mock");
+    expect(detectSpy).toHaveBeenCalledWith(tiptapJson);
+    expect(conversionSpy).not.toHaveBeenCalled();
+    expect(editor).toHaveValue(tiptapJson);
   });
 
   it("shows a validation error for invalid media files", async () => {

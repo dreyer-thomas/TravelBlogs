@@ -143,6 +143,6 @@ development_status:
   9-9-implement-plain-text-to-tiptap-converter: done
   9-10-add-lazy-migration-logic-convert-on-edit: done
   9-11-update-gallery-delete-to-remove-image-nodes: done
-  9-12-add-format-detection-and-migration-status: backlog
+  9-12-add-format-detection-and-migration-status: done
   9-13-test-rich-text-features-end-to-end: backlog
   epic-9-retrospective: optional
