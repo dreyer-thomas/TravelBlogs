@@ -6,6 +6,7 @@ import { fireEvent, render, screen } from "@testing-library/react";
 
 import EntryReader from "../../src/components/entries/entry-reader";
 import { LocaleProvider } from "../../src/utils/locale-context";
+import * as entryFormat from "../../src/utils/entry-format";
 
 const mapMock = vi.fn(() => ({
   setView: vi.fn().mockReturnThis(),
@@ -272,6 +273,104 @@ describe("EntryReader", () => {
 
     expect(await screen.findByText("Hello")).toBeInTheDocument();
     expect(await screen.findByText("world")).toBeInTheDocument();
+  });
+
+  it("converts plain text to Tiptap JSON for display without persisting (AC1)", async () => {
+    const fetchSpy = vi.spyOn(global, "fetch");
+    const detectSpy = vi
+      .spyOn(entryFormat, "detectEntryFormat")
+      .mockReturnValue("plain");
+    const conversionSpy = vi
+      .spyOn(entryFormat, "plainTextToTiptapJson")
+      .mockReturnValue(
+        JSON.stringify({
+          type: "doc",
+          content: [
+            {
+              type: "paragraph",
+              content: [{ type: "text", text: "Converted for display" }],
+            },
+          ],
+        }),
+      );
+
+    render(
+      <LocaleProvider>
+        <EntryReader
+          entry={{
+            id: "entry-display-conversion",
+            title: "Display conversion",
+            body: "Plain text body",
+            createdAt: "2025-05-03T12:00:00.000Z",
+            tags: [],
+            media: [
+              {
+                id: "media-display",
+                url: "https://example.com/hero-display.jpg",
+                width: 1600,
+                height: 1000,
+              },
+            ],
+          }}
+        />
+      </LocaleProvider>,
+    );
+
+    expect(detectSpy).toHaveBeenCalledWith("Plain text body");
+    expect(conversionSpy).toHaveBeenCalledTimes(1);
+    expect(await screen.findByText("Converted for display")).toBeInTheDocument();
+
+    // AC1: Verify no persistence occurs (display-only conversion)
+    expect(fetchSpy).not.toHaveBeenCalled();
+
+    fetchSpy.mockRestore();
+    detectSpy.mockRestore();
+    conversionSpy.mockRestore();
+  });
+
+  it("skips conversion when entry body is already Tiptap JSON (AC4)", async () => {
+    const detectSpy = vi
+      .spyOn(entryFormat, "detectEntryFormat")
+      .mockReturnValue("tiptap");
+    const conversionSpy = vi.spyOn(entryFormat, "plainTextToTiptapJson");
+    const tiptapJson = JSON.stringify({
+      type: "doc",
+      content: [
+        {
+          type: "paragraph",
+          content: [{ type: "text", text: "Stored JSON" }],
+        },
+      ],
+    });
+
+    render(
+      <LocaleProvider>
+        <EntryReader
+          entry={{
+            id: "entry-json",
+            title: "JSON entry",
+            body: tiptapJson,
+            createdAt: "2025-05-03T12:00:00.000Z",
+            tags: [],
+            media: [
+              {
+                id: "media-json",
+                url: "https://example.com/hero-json.jpg",
+                width: 1600,
+                height: 1000,
+              },
+            ],
+          }}
+        />
+      </LocaleProvider>,
+    );
+
+    expect(detectSpy).toHaveBeenCalledWith(tiptapJson);
+    expect(conversionSpy).not.toHaveBeenCalled();
+    expect(await screen.findByText("Stored JSON")).toBeInTheDocument();
+
+    detectSpy.mockRestore();
+    conversionSpy.mockRestore();
   });
 
   it("renders entryImage nodes using entryMediaId resolution", async () => {

@@ -193,7 +193,10 @@ const EditEntryForm = ({
     return new Map(initialMedia.map((item) => [item.url, item.id]));
   }, [initialMedia]);
 
-  // Inline images are stored in Tiptap JSON; gallery images remain tracked in mediaUrls.
+  // Dual storage strategy (Story 9.10 lazy migration): Inline images live in Tiptap JSON
+  // as entryImage nodes with entryMediaId, while gallery images remain in mediaUrls array
+  // for the separate media library UI. See entry-format.ts plainTextToTiptapJson() for
+  // the plain-text-to-JSON migration logic that maps URLs to entryMediaIds.
   const availableStoryImages = useMemo(() => {
     const urls = [...mediaUrls];
     const seen = new Set<string>();

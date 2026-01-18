@@ -66,7 +66,7 @@ vi.mock("../../src/utils/tiptap-image-helpers", () => ({
 }));
 
 vi.mock("../../src/utils/entry-format", () => ({
-  detectEntryFormat: (text: string) => {
+  detectEntryFormat: vi.fn((text: string) => {
     try {
       const parsed = JSON.parse(text);
       if (parsed.type === 'doc') return 'tiptap';
@@ -74,8 +74,8 @@ vi.mock("../../src/utils/entry-format", () => ({
       // Not JSON
     }
     return 'plain';
-  },
-  plainTextToTiptapJson: (plainText: string) => {
+  }),
+  plainTextToTiptapJson: vi.fn((plainText: string) => {
     return JSON.stringify({
       type: 'doc',
       content: [
@@ -85,7 +85,7 @@ vi.mock("../../src/utils/entry-format", () => ({
         }
       ]
     });
-  },
+  }),
 }));
 
 describe("EditEntryForm", () => {
@@ -713,6 +713,134 @@ describe("EditEntryForm", () => {
         expect(entryImageNode.attrs.entryMediaId).toBe("media-1");
         expect(entryImageNode.attrs.src).toBe("/uploads/photo.jpg");
       });
+    });
+  });
+
+  it("converts plain text on edit and submits JSON payload (AC2, AC3)", async () => {
+    const fetchMock = vi.fn().mockImplementation((input: RequestInfo, init?: RequestInit) => {
+      if (typeof input === "string" && input.includes("/api/trips/")) {
+        return Promise.resolve(
+          new Response(JSON.stringify({ data: [], error: null }), { status: 200 }),
+        );
+      }
+      if (
+        typeof input === "string" &&
+        input.includes("/api/entries/entry-plain") &&
+        init?.method === "PATCH"
+      ) {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              data: { id: "entry-plain", media: [{ id: "media-1", url: "/uploads/photo.jpg" }] },
+              error: null,
+            }),
+            { status: 200 },
+          ),
+        );
+      }
+      return Promise.resolve(new Response(JSON.stringify({ data: null }), { status: 404 }));
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { detectEntryFormat, plainTextToTiptapJson } = await import("../../src/utils/entry-format");
+
+    renderWithLocale(
+      <EditEntryForm
+        tripId="trip-plain"
+        entryId="entry-plain"
+        initialEntryDate="2025-05-03T00:00:00.000Z"
+        initialTitle="Plain entry"
+        initialText="Plain text body"
+        initialMediaUrls={["/uploads/photo.jpg"]}
+        initialMedia={[{ id: "media-1", url: "/uploads/photo.jpg" }]}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(vi.mocked(detectEntryFormat)).toHaveBeenCalledWith("Plain text body");
+    });
+    expect(vi.mocked(plainTextToTiptapJson)).toHaveBeenCalledTimes(1);
+    const [plainArg, mediaArg] = vi.mocked(plainTextToTiptapJson).mock.calls[0] ?? [];
+    expect(plainArg).toBe("Plain text body");
+    expect(mediaArg instanceof Map).toBe(true);
+    expect(mediaArg?.get("/uploads/photo.jpg")).toBe("media-1");
+
+    const submitButton = screen.getByRole("button", { name: /save entry/i });
+    await waitFor(() => expect(submitButton).toBeEnabled());
+    fireEvent.click(submitButton);
+
+    await waitFor(() => {
+      const patchCalls = fetchMock.mock.calls.filter(
+        (call: [RequestInfo, RequestInit?]) =>
+          typeof call[0] === "string" &&
+          call[0].includes("/api/entries/entry-plain") &&
+          call[1]?.method === "PATCH",
+      );
+      expect(patchCalls.length).toBeGreaterThan(0);
+      const body = JSON.parse(patchCalls[0][1]?.body as string);
+      expect(() => JSON.parse(body.text)).not.toThrow();
+      expect(body.text).not.toBe("Plain text body");
+    });
+  });
+
+  it("skips conversion when entry text is already Tiptap JSON (AC4)", async () => {
+    const tiptapJson = JSON.stringify({
+      type: "doc",
+      content: [{ type: "paragraph", content: [{ type: "text", text: "Stored JSON" }] }],
+    });
+    const fetchMock = vi.fn().mockImplementation((input: RequestInfo, init?: RequestInit) => {
+      if (typeof input === "string" && input.includes("/api/trips/")) {
+        return Promise.resolve(
+          new Response(JSON.stringify({ data: [], error: null }), { status: 200 }),
+        );
+      }
+      if (
+        typeof input === "string" &&
+        input.includes("/api/entries/entry-json") &&
+        init?.method === "PATCH"
+      ) {
+        return Promise.resolve(
+          new Response(JSON.stringify({ data: { id: "entry-json", media: [] }, error: null }), {
+            status: 200,
+          }),
+        );
+      }
+      return Promise.resolve(new Response(JSON.stringify({ data: null }), { status: 404 }));
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { detectEntryFormat, plainTextToTiptapJson } = await import("../../src/utils/entry-format");
+
+    renderWithLocale(
+      <EditEntryForm
+        tripId="trip-json"
+        entryId="entry-json"
+        initialEntryDate="2025-05-03T00:00:00.000Z"
+        initialTitle="JSON entry"
+        initialText={tiptapJson}
+        initialMediaUrls={["/uploads/photo.jpg"]}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(vi.mocked(detectEntryFormat)).toHaveBeenCalledWith(tiptapJson);
+    });
+    expect(vi.mocked(plainTextToTiptapJson)).not.toHaveBeenCalled();
+
+    const submitButton = screen.getByRole("button", { name: /save entry/i });
+    await waitFor(() => expect(submitButton).toBeEnabled());
+    fireEvent.click(submitButton);
+
+    await waitFor(() => {
+      const patchCalls = fetchMock.mock.calls.filter(
+        (call: [RequestInfo, RequestInit?]) =>
+          typeof call[0] === "string" &&
+          call[0].includes("/api/entries/entry-json") &&
+          call[1]?.method === "PATCH",
+      );
+      expect(patchCalls.length).toBeGreaterThan(0);
+      const body = JSON.parse(patchCalls[0][1]?.body as string);
+      expect(body.text).toBe(tiptapJson);
     });
   });
 });

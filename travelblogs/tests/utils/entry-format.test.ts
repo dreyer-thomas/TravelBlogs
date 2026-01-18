@@ -114,6 +114,14 @@ Third line`
       expect(detectEntryFormat(missingContent)).toBe('plain')
     })
 
+    it('treats JSON with non-array content as plain text', () => {
+      const badContent = JSON.stringify({
+        type: 'doc',
+        content: 'not-an-array'
+      })
+      expect(detectEntryFormat(badContent)).toBe('plain')
+    })
+
     it('handles large JSON strings efficiently', () => {
       const largeContent = {
         type: 'doc',
