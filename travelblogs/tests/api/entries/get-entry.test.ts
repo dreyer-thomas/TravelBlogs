@@ -448,4 +448,47 @@ describe("GET /api/entries/[id]", () => {
       }),
     );
   });
+
+  it("does not persist plain text to JSON conversion when viewing (AC 5)", async () => {
+    const trip = await prisma.trip.create({
+      data: {
+        title: "Legacy Trip",
+        startDate: new Date("2025-05-01"),
+        endDate: new Date("2025-05-10"),
+        ownerId: "creator",
+      },
+    });
+
+    const plainTextBody = "This is plain text.\n\nIt should not be converted on view.";
+    const entry = await prisma.entry.create({
+      data: {
+        tripId: trip.id,
+        title: "Legacy Plain Text Entry",
+        text: plainTextBody,
+        media: {
+          create: [{ url: "/uploads/entries/legacy.jpg" }],
+        },
+      },
+    });
+
+    const request = new Request(`http://localhost/api/entries/${entry.id}`, {
+      method: "GET",
+    });
+
+    const response = await get(request, { params: { id: entry.id } });
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.error).toBeNull();
+    expect(body.data.id).toBe(entry.id);
+
+    // Verify database was NOT mutated - text should remain plain text
+    const entryAfterGet = await prisma.entry.findUnique({
+      where: { id: entry.id },
+    });
+
+    expect(entryAfterGet?.text).toBe(plainTextBody);
+    // Ensure it's still plain text, not JSON
+    expect(() => JSON.parse(entryAfterGet?.text ?? "")).toThrow();
+  });
 });

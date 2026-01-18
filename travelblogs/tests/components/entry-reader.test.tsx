@@ -275,6 +275,113 @@ describe("EntryReader", () => {
     expect(await screen.findByText("world")).toBeInTheDocument();
   });
 
+  it("renders rich formatting elements from Tiptap JSON", async () => {
+    const tiptapJson = JSON.stringify({
+      type: "doc",
+      content: [
+        {
+          type: "heading",
+          attrs: { level: 1, textAlign: "center" },
+          content: [{ type: "text", text: "Heading" }],
+        },
+        {
+          type: "paragraph",
+          content: [
+            { type: "text", text: "Bold", marks: [{ type: "bold" }] },
+            { type: "text", text: " and " },
+            { type: "text", text: "Italic", marks: [{ type: "italic" }] },
+          ],
+        },
+        {
+          type: "bulletList",
+          content: [
+            {
+              type: "listItem",
+              content: [
+                {
+                  type: "paragraph",
+                  content: [{ type: "text", text: "Bullet item" }],
+                },
+              ],
+            },
+          ],
+        },
+        {
+          type: "orderedList",
+          content: [
+            {
+              type: "listItem",
+              content: [
+                {
+                  type: "paragraph",
+                  content: [{ type: "text", text: "Numbered item" }],
+                },
+              ],
+            },
+          ],
+        },
+        {
+          type: "paragraph",
+          content: [
+            {
+              type: "text",
+              text: "Link",
+              marks: [{ type: "link", attrs: { href: "https://example.com" } }],
+            },
+          ],
+        },
+        {
+          type: "paragraph",
+          attrs: { textAlign: "right" },
+          content: [{ type: "text", text: "Aligned text" }],
+        },
+      ],
+    });
+
+    const { container } = render(
+      <LocaleProvider>
+        <EntryReader
+          entry={{
+            id: "entry-formatting",
+            title: "Formatting entry",
+            body: tiptapJson,
+            createdAt: "2025-05-03T12:00:00.000Z",
+            tags: [],
+            media: [
+              {
+                id: "media-formatting",
+                url: "https://example.com/hero-formatting.jpg",
+                width: 1600,
+                height: 1000,
+              },
+            ],
+          }}
+        />
+      </LocaleProvider>,
+    );
+
+    const heading = await screen.findByRole("heading", { name: "Heading" });
+    expect(heading).toBeInTheDocument();
+    expect(heading).toHaveStyle({ textAlign: "center" });
+
+    const boldText = screen.getByText("Bold");
+    const italicText = screen.getByText("Italic");
+    expect(boldText.tagName).toBe("STRONG");
+    expect(italicText.tagName).toBe("EM");
+
+    expect(screen.getByText("Bullet item").closest("ul")).toBeTruthy();
+    expect(screen.getByText("Numbered item").closest("ol")).toBeTruthy();
+
+    const link = screen.getByRole("link", { name: "Link" });
+    expect(link).toHaveAttribute("href", "https://example.com");
+
+    const aligned = screen.getByText("Aligned text");
+    const alignedParagraph = aligned.closest("p");
+    expect(alignedParagraph).toHaveStyle({ textAlign: "right" });
+
+    expect(container.querySelector(".ProseMirror")).toBeInTheDocument();
+  });
+
   it("converts plain text to Tiptap JSON for display without persisting (AC1)", async () => {
     const fetchSpy = vi.spyOn(global, "fetch");
     const detectSpy = vi
@@ -787,5 +894,38 @@ describe("EntryReader", () => {
     );
 
     expect(screen.queryByText("Location")).not.toBeInTheDocument();
+  });
+
+  it("gracefully handles invalid Tiptap JSON with fallback rendering", async () => {
+    const invalidJson = '{"type":"doc","content":[{invalid}]}';
+
+    const { container } = render(
+      <LocaleProvider>
+        <EntryReader
+          entry={{
+            id: "entry-invalid-json",
+            title: "Invalid JSON Entry",
+            body: invalidJson,
+            createdAt: "2025-05-03T12:00:00.000Z",
+            tags: [],
+            media: [
+              {
+                id: "media-invalid",
+                url: "https://example.com/hero-invalid.jpg",
+                width: 1600,
+                height: 1000,
+              },
+            ],
+          }}
+        />
+      </LocaleProvider>,
+    );
+
+    // Should render without crashing
+    expect(screen.getByText("Invalid JSON Entry")).toBeInTheDocument();
+
+    // Should attempt to display content (either as plain text fallback or empty state)
+    // The exact behavior depends on implementation, but it shouldn't crash
+    expect(container.querySelector(".ProseMirror")).toBeInTheDocument();
   });
 });

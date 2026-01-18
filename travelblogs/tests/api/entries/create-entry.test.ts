@@ -216,6 +216,112 @@ describe("POST /api/entries", () => {
     expect(createdEntry?.media.length).toBe(2);
   });
 
+  it("persists rich text formatting as Tiptap JSON", async () => {
+    const trip = await prisma.trip.create({
+      data: {
+        title: "Rich Text Trip",
+        startDate: new Date("2025-05-01"),
+        endDate: new Date("2025-05-10"),
+        ownerId: "creator",
+      },
+    });
+
+    const tiptapJson = JSON.stringify({
+      type: "doc",
+      content: [
+        {
+          type: "heading",
+          attrs: { level: 1, textAlign: "center" },
+          content: [{ type: "text", text: "Heading" }],
+        },
+        {
+          type: "paragraph",
+          content: [
+            { type: "text", text: "Bold", marks: [{ type: "bold" }] },
+            { type: "text", text: " and " },
+            { type: "text", text: "Italic", marks: [{ type: "italic" }] },
+          ],
+        },
+        {
+          type: "bulletList",
+          content: [
+            {
+              type: "listItem",
+              content: [
+                {
+                  type: "paragraph",
+                  content: [{ type: "text", text: "Bullet item" }],
+                },
+              ],
+            },
+          ],
+        },
+        {
+          type: "orderedList",
+          content: [
+            {
+              type: "listItem",
+              content: [
+                {
+                  type: "paragraph",
+                  content: [{ type: "text", text: "Numbered item" }],
+                },
+              ],
+            },
+          ],
+        },
+        {
+          type: "paragraph",
+          content: [
+            {
+              type: "text",
+              text: "Link",
+              marks: [{ type: "link", attrs: { href: "https://example.com" } }],
+            },
+          ],
+        },
+        {
+          type: "paragraph",
+          attrs: { textAlign: "right" },
+          content: [{ type: "text", text: "Aligned text" }],
+        },
+      ],
+    });
+
+    const request = new Request("http://localhost/api/entries", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        tripId: trip.id,
+        title: "Rich entry",
+        text: tiptapJson,
+        mediaUrls: ["/uploads/entries/rich-1.jpg"],
+      }),
+    });
+
+    const response = await post(request);
+    const body = await response.json();
+
+    expect(response.status).toBe(201);
+    expect(body.error).toBeNull();
+    expect(body.data.text).toBe(tiptapJson);
+
+    const createdEntry = await prisma.entry.findUnique({
+      where: { id: body.data.id },
+    });
+    const parsed = JSON.parse(createdEntry?.text ?? "{}");
+
+    expect(parsed.type).toBe("doc");
+    expect(parsed.content.some((node: any) => node.type === "heading")).toBe(
+      true,
+    );
+    expect(parsed.content.some((node: any) => node.type === "bulletList")).toBe(
+      true,
+    );
+  });
+
   it("allows setting the entry date explicitly", async () => {
     const trip = await prisma.trip.create({
       data: {

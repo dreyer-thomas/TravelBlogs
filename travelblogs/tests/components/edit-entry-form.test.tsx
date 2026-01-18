@@ -693,7 +693,7 @@ describe("EditEntryForm", () => {
       expect(editorElement.value).toBe(updatedContent);
     });
 
-    it("submits entry with entryImage nodes containing real entryMediaId (AC 3)", async () => {
+  it("submits entry with entryImage nodes containing real entryMediaId (AC 3)", async () => {
       const fetchMock = vi.fn().mockImplementation(
         (input: RequestInfo, init?: RequestInit) => {
           if (typeof input === "string" && input.includes("/api/trips/")) {
@@ -789,6 +789,100 @@ describe("EditEntryForm", () => {
         expect(entryImageNode.attrs.entryMediaId).toBe("media-1");
         expect(entryImageNode.attrs.src).toBe("/uploads/photo.jpg");
       });
+    });
+  });
+
+  it("submits edited entry with rich formatting marks preserved", async () => {
+    const fetchMock = vi.fn().mockImplementation(
+      (input: RequestInfo, init?: RequestInit) => {
+        if (typeof input === "string" && input.includes("/api/trips/")) {
+          return Promise.resolve(
+            new Response(JSON.stringify({ data: [], error: null }), {
+              status: 200,
+            }),
+          );
+        }
+        if (
+          typeof input === "string" &&
+          input.includes("/api/entries/entry-rich") &&
+          init?.method === "PATCH"
+        ) {
+          return Promise.resolve(
+            new Response(
+              JSON.stringify({
+                data: { id: "entry-rich", media: [] },
+                error: null,
+              }),
+              { status: 200 },
+            ),
+          );
+        }
+        return Promise.resolve(
+          new Response(JSON.stringify({ data: null }), { status: 404 }),
+        );
+      },
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    renderWithLocale(
+      <EditEntryForm
+        tripId="trip-123"
+        entryId="entry-rich"
+        initialEntryDate="2025-05-03T00:00:00.000Z"
+        initialTitle="Rich entry"
+        initialText="Plain text body"
+        initialMediaUrls={["/uploads/entries/rich.jpg"]}
+      />,
+    );
+
+    const editor = screen.getByTestId("tiptap-editor-mock");
+    const tiptapJson = JSON.stringify({
+      type: "doc",
+      content: [
+        {
+          type: "paragraph",
+          content: [
+            { type: "text", text: "Bold", marks: [{ type: "bold" }] },
+            { type: "text", text: " and " },
+            { type: "text", text: "Italic", marks: [{ type: "italic" }] },
+          ],
+        },
+      ],
+    });
+    fireEvent.change(editor, { target: { value: tiptapJson } });
+
+    const submitButton = screen.getByRole("button", { name: /save entry/i });
+    await waitFor(() => expect(submitButton).toBeEnabled());
+    fireEvent.click(submitButton);
+
+    await waitFor(() => {
+      const patchCalls = fetchMock.mock.calls.filter(
+        (call: [RequestInfo, RequestInit?]) =>
+          typeof call[0] === "string" &&
+          call[0].includes("/api/entries/entry-rich") &&
+          call[1]?.method === "PATCH",
+      );
+      expect(patchCalls.length).toBeGreaterThan(0);
+      const body = JSON.parse(patchCalls[0][1]?.body as string);
+
+      // Parse and validate JSON structure, not just string content
+      const parsedText = JSON.parse(body.text);
+      expect(parsedText.type).toBe("doc");
+      expect(parsedText.content).toHaveLength(1);
+
+      const paragraph = parsedText.content[0];
+      expect(paragraph.type).toBe("paragraph");
+      expect(paragraph.content).toHaveLength(3);
+
+      // Verify bold mark
+      const boldText = paragraph.content.find((node: any) => node.text === "Bold");
+      expect(boldText).toBeDefined();
+      expect(boldText.marks).toEqual([{ type: "bold" }]);
+
+      // Verify italic mark
+      const italicText = paragraph.content.find((node: any) => node.text === "Italic");
+      expect(italicText).toBeDefined();
+      expect(italicText.marks).toEqual([{ type: "italic" }]);
     });
   });
 
