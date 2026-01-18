@@ -58,7 +58,7 @@ const requireAdministrator = async (request: NextRequest) => {
 export const GET = async (request: NextRequest) => {
   try {
     const auth = await requireAdministrator(request);
-    if (auth.error) {
+    if ("error" in auth) {
       return auth.error;
     }
 
