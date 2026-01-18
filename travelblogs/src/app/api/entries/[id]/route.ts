@@ -3,13 +3,18 @@ import { getToken } from "next-auth/jwt";
 import { z } from "zod";
 
 import { prisma } from "../../../../utils/db";
-import { extractInlineImageUrls } from "../../../../utils/entry-content";
+import {
+  extractInlineImageUrls,
+  removeInlineImageByUrl,
+} from "../../../../utils/entry-content";
+import { detectEntryFormat } from "../../../../utils/entry-format";
 import {
   buildTagInputs,
   normalizeTagName,
   tagMaxLength,
 } from "../../../../utils/entry-tags";
 import { sortTagNames } from "../../../../utils/tag-sort";
+import { removeEntryImageNodesFromJson } from "../../../../utils/tiptap-image-helpers";
 import { canContributeToTrip, hasTripAccess } from "../../../../utils/trip-access";
 import { ensureActiveAccount, isAdminOrCreator } from "../../../../utils/roles";
 
@@ -22,6 +27,31 @@ const jsonError = (status: number, code: string, message: string) => {
       error: { code, message },
     },
     { status },
+  );
+};
+
+type RemovedMedia = { id: string; url: string };
+
+const scrubEntryTextForRemovedMedia = (
+  text: string,
+  removedMedia: RemovedMedia[],
+) => {
+  if (removedMedia.length === 0) {
+    return text;
+  }
+
+  const entryFormat = detectEntryFormat(text);
+  if (entryFormat === "tiptap") {
+    return removedMedia.reduce(
+      (current, item) =>
+        removeEntryImageNodesFromJson(current, item.id),
+      text,
+    );
+  }
+
+  return removedMedia.reduce(
+    (current, item) => removeInlineImageByUrl(current, item.url),
+    text,
   );
 };
 
@@ -319,8 +349,16 @@ export const PATCH = async (
       }
     }
 
-    const inlineImages = extractInlineImageUrls(parsed.data.text);
     const nextMediaUrls = parsed.data.mediaUrls;
+    const removedMedia =
+      nextMediaUrls !== undefined
+        ? entry.media.filter((item) => !nextMediaUrls.includes(item.url))
+        : [];
+    const scrubbedText = scrubEntryTextForRemovedMedia(
+      parsed.data.text,
+      removedMedia,
+    );
+    const inlineImages = extractInlineImageUrls(scrubbedText);
     const hasMedia =
       nextMediaUrls !== undefined
         ? nextMediaUrls.length > 0
@@ -351,7 +389,7 @@ export const PATCH = async (
       where: { id },
       data: {
         title: parsed.data.title,
-        text: parsed.data.text,
+        text: scrubbedText,
         updatedAt: new Date(),
         ...(parsed.data.coverImageUrl !== undefined
           ? { coverImageUrl: parsed.data.coverImageUrl }
@@ -430,6 +468,49 @@ export const PATCH = async (
         },
       },
     });
+
+    if (removedMedia.length > 0) {
+      // Only search entries in the same trip to limit scope
+      const affectedEntries = await prisma.entry.findMany({
+        where: {
+          id: { not: id },
+          tripId: entry.tripId,
+        },
+        select: {
+          id: true,
+          text: true,
+        },
+      });
+
+      const updates = affectedEntries
+        .map((candidate) => {
+          const nextText = scrubEntryTextForRemovedMedia(
+            candidate.text,
+            removedMedia,
+          );
+          if (nextText === candidate.text) {
+            return null;
+          }
+          // Use optimistic locking: only update if text hasn't changed
+          return prisma.entry.updateMany({
+            where: {
+              id: candidate.id,
+              text: candidate.text, // Only update if text matches what we read
+            },
+            data: { text: nextText },
+          });
+        })
+        .filter(
+          (
+            update,
+          ): update is ReturnType<typeof prisma.entry.updateMany> =>
+            update !== null,
+        );
+
+      if (updates.length > 0) {
+        await prisma.$transaction(updates);
+      }
+    }
 
     return NextResponse.json(
       {

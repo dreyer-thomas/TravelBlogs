@@ -158,6 +158,243 @@ describe("PATCH /api/entries/[id]", () => {
     expect(updatedEntry?.media).toHaveLength(2);
   });
 
+  it("removes entryImage nodes when media is deleted and GET reflects changes", async () => {
+    const trip = await prisma.trip.create({
+      data: {
+        title: "Inline Media Cleanup",
+        startDate: new Date("2025-05-01"),
+        endDate: new Date("2025-05-10"),
+        ownerId: "creator",
+      },
+    });
+    const entry = await prisma.entry.create({
+      data: {
+        tripId: trip.id,
+        title: "Inline Entry",
+        text: "Placeholder",
+        media: {
+          create: [
+            { url: "/uploads/entries/keep.jpg" },
+            { url: "/uploads/entries/remove.jpg" },
+          ],
+        },
+      },
+      include: { media: true },
+    });
+
+    const removedMedia = entry.media.find(
+      (item) => item.url === "/uploads/entries/remove.jpg",
+    );
+    if (!removedMedia) {
+      throw new Error("Missing media to remove.");
+    }
+
+    const tiptapJson = JSON.stringify({
+      type: "doc",
+      content: [
+        {
+          type: "paragraph",
+          content: [{ type: "text", text: "Inline" }],
+        },
+        {
+          type: "entryImage",
+          attrs: {
+            entryMediaId: removedMedia.id,
+            src: removedMedia.url,
+            alt: "Inline",
+          },
+        },
+      ],
+    });
+
+    await prisma.entry.update({
+      where: { id: entry.id },
+      data: { text: tiptapJson },
+    });
+
+    const otherEntry = await prisma.entry.create({
+      data: {
+        tripId: trip.id,
+        title: "Other Entry",
+        text: tiptapJson,
+        media: {
+          create: [{ url: "/uploads/entries/other.jpg" }],
+        },
+      },
+    });
+
+    const request = new Request(`http://localhost/api/entries/${entry.id}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        title: "Inline Entry",
+        text: tiptapJson,
+        mediaUrls: ["/uploads/entries/keep.jpg"],
+      }),
+    });
+
+    const response = await patch(request, { params: { id: entry.id } });
+    expect(response.status).toBe(200);
+
+    const updatedEntry = await prisma.entry.findUnique({
+      where: { id: entry.id },
+    });
+    const updatedOther = await prisma.entry.findUnique({
+      where: { id: otherEntry.id },
+    });
+
+    const updatedJson = JSON.parse(updatedEntry?.text ?? "{}");
+    const updatedOtherJson = JSON.parse(updatedOther?.text ?? "{}");
+    const entryImages = updatedJson.content?.filter(
+      (node: any) => node.type === "entryImage",
+    );
+    const otherImages = updatedOtherJson.content?.filter(
+      (node: any) => node.type === "entryImage",
+    );
+
+    expect(entryImages).toHaveLength(0);
+    expect(otherImages).toHaveLength(0);
+
+    // Verify document structure integrity - paragraph nodes should still exist
+    const entryParagraphs = updatedJson.content?.filter(
+      (node: any) => node.type === "paragraph",
+    );
+    const otherParagraphs = updatedOtherJson.content?.filter(
+      (node: any) => node.type === "paragraph",
+    );
+    expect(entryParagraphs).toHaveLength(1);
+    expect(otherParagraphs).toHaveLength(1);
+    expect(entryParagraphs?.[0]?.content?.[0]?.text).toBe("Inline");
+
+    // Verify AC #2: GET endpoint returns entry with removed images
+    const routeModule = await import("../../../src/app/api/entries/[id]/route");
+    const get = routeModule.GET;
+
+    const getRequest = new Request(`http://localhost/api/entries/${entry.id}`, {
+      method: "GET",
+    });
+    const getResponse = await get(getRequest, { params: { id: entry.id } });
+    const getBody = await getResponse.json();
+
+    expect(getResponse.status).toBe(200);
+    const returnedJson = JSON.parse(getBody.data.text);
+    const returnedImages = returnedJson.content?.filter(
+      (node: any) => node.type === "entryImage",
+    );
+    expect(returnedImages).toHaveLength(0);
+  });
+
+  it("handles corrupted JSON gracefully without data loss", async () => {
+    const trip = await prisma.trip.create({
+      data: {
+        title: "Corrupted JSON Trip",
+        startDate: new Date("2025-05-01"),
+        endDate: new Date("2025-05-10"),
+        ownerId: "creator",
+      },
+    });
+    const entry = await prisma.entry.create({
+      data: {
+        tripId: trip.id,
+        title: "Entry with corrupted JSON",
+        text: '{"type":"doc","content":[corrupt]}', // Invalid JSON
+        media: {
+          create: [
+            { url: "/uploads/entries/keep.jpg" },
+            { url: "/uploads/entries/remove.jpg" },
+          ],
+        },
+      },
+      include: { media: true },
+    });
+
+    const originalText = entry.text;
+
+    const request = new Request(`http://localhost/api/entries/${entry.id}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        title: "Entry with corrupted JSON",
+        text: originalText,
+        mediaUrls: ["/uploads/entries/keep.jpg"],
+      }),
+    });
+
+    const response = await patch(request, { params: { id: entry.id } });
+    expect(response.status).toBe(200);
+
+    const updatedEntry = await prisma.entry.findUnique({
+      where: { id: entry.id },
+    });
+
+    // Should preserve original corrupted text rather than lose data
+    expect(updatedEntry?.text).toBe(originalText);
+  });
+
+  it("removes inline image markdown from plain text entries when media is deleted", async () => {
+    const trip = await prisma.trip.create({
+      data: {
+        title: "Plain Cleanup Trip",
+        startDate: new Date("2025-05-01"),
+        endDate: new Date("2025-05-10"),
+        ownerId: "creator",
+      },
+    });
+    const entry = await prisma.entry.create({
+      data: {
+        tripId: trip.id,
+        title: "Entry With Media",
+        text: "Plain text",
+        media: {
+          create: [
+            { url: "/uploads/entries/keep.jpg" },
+            { url: "/uploads/entries/remove.jpg" },
+          ],
+        },
+      },
+    });
+
+    const otherEntry = await prisma.entry.create({
+      data: {
+        tripId: trip.id,
+        title: "Plain Entry",
+        text: "Start ![Alt](/uploads/entries/remove.jpg) End",
+        media: {
+          create: [{ url: "/uploads/entries/other.jpg" }],
+        },
+      },
+    });
+
+    const request = new Request(`http://localhost/api/entries/${entry.id}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        title: "Entry With Media",
+        text: "Plain text",
+        mediaUrls: ["/uploads/entries/keep.jpg"],
+      }),
+    });
+
+    const response = await patch(request, { params: { id: entry.id } });
+    expect(response.status).toBe(200);
+
+    const updatedOther = await prisma.entry.findUnique({
+      where: { id: otherEntry.id },
+    });
+
+    expect(updatedOther?.text).not.toContain("/uploads/entries/remove.jpg");
+    // Verify markdown structure is preserved
+    expect(updatedOther?.text).toBe("Start  End");
+    expect(updatedOther?.text).toContain("Start");
+    expect(updatedOther?.text).toContain("End");
+  });
+
   it("updates entry tags when provided", async () => {
     const trip = await prisma.trip.create({
       data: {

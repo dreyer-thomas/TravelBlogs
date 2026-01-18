@@ -7,6 +7,7 @@ import {
   insertEntryImage,
   extractEntryMediaIds,
   extractEntryMediaIdsFromJson,
+  removeEntryImageNodesFromJson,
 } from '@/utils/tiptap-image-helpers'
 
 describe('Tiptap Image Helpers', () => {
@@ -340,6 +341,99 @@ describe('Tiptap Image Helpers', () => {
       const ids = extractEntryMediaIdsFromJson(jsonString)
 
       expect(ids).toEqual(['valid'])
+    })
+  })
+
+  describe('removeEntryImageNodesFromJson', () => {
+    it('removes matching entryImage nodes from JSON', () => {
+      const jsonString = JSON.stringify({
+        type: 'doc',
+        content: [
+          {
+            type: 'entryImage',
+            attrs: { entryMediaId: 'remove', src: '/remove.jpg', alt: 'Remove' },
+          },
+          {
+            type: 'paragraph',
+            content: [{ type: 'text', text: 'Keep me' }],
+          },
+          {
+            type: 'entryImage',
+            attrs: { entryMediaId: 'keep', src: '/keep.jpg', alt: 'Keep' },
+          },
+        ],
+      })
+
+      const updated = removeEntryImageNodesFromJson(jsonString, 'remove')
+      const parsed = JSON.parse(updated)
+      const imageNodes = parsed.content?.filter((node: any) => node.type === 'entryImage')
+
+      expect(imageNodes).toHaveLength(1)
+      expect(imageNodes?.[0]?.attrs?.entryMediaId).toBe('keep')
+    })
+
+    it('preserves JSON when no matches are found', () => {
+      const jsonString = JSON.stringify({
+        type: 'doc',
+        content: [
+          {
+            type: 'entryImage',
+            attrs: { entryMediaId: 'keep', src: '/keep.jpg', alt: 'Keep' },
+          },
+        ],
+      })
+
+      const updated = removeEntryImageNodesFromJson(jsonString, 'missing')
+
+      expect(updated).toBe(jsonString)
+    })
+
+    it('returns original JSON for invalid input', () => {
+      const jsonString = '{invalid json'
+
+      const updated = removeEntryImageNodesFromJson(jsonString, 'remove')
+
+      expect(updated).toBe(jsonString)
+    })
+
+    it('removes all matching nodes including duplicates', () => {
+      const jsonString = JSON.stringify({
+        type: 'doc',
+        content: [
+          {
+            type: 'paragraph',
+            content: [{ type: 'text', text: 'Start' }],
+          },
+          {
+            type: 'entryImage',
+            attrs: { entryMediaId: 'dup', src: '/dup1.jpg', alt: 'First' },
+          },
+          {
+            type: 'paragraph',
+            content: [{ type: 'text', text: 'Middle' }],
+          },
+          {
+            type: 'entryImage',
+            attrs: { entryMediaId: 'dup', src: '/dup2.jpg', alt: 'Second' },
+          },
+          {
+            type: 'paragraph',
+            content: [{ type: 'text', text: 'End' }],
+          },
+        ],
+      })
+
+      const updated = removeEntryImageNodesFromJson(jsonString, 'dup')
+      const parsed = JSON.parse(updated)
+
+      const imageNodes = parsed.content?.filter((node: any) => node.type === 'entryImage')
+      const paragraphNodes = parsed.content?.filter((node: any) => node.type === 'paragraph')
+
+      expect(imageNodes).toHaveLength(0)
+      expect(paragraphNodes).toHaveLength(3)
+      expect(paragraphNodes?.[0]?.content?.[0]?.text).toBe('Start')
+      expect(paragraphNodes?.[1]?.content?.[0]?.text).toBe('Middle')
+      expect(paragraphNodes?.[2]?.content?.[0]?.text).toBe('End')
     })
   })
 

@@ -129,3 +129,46 @@ export const extractEntryImageNodesFromJson = (
     return []
   }
 }
+
+export const removeEntryImageNodesFromJson = (
+  tiptapJsonString: string,
+  entryMediaId: string,
+): string => {
+  try {
+    const parsed = JSON.parse(tiptapJsonString)
+    let updated = false
+
+    const visitNode = (node: any): any => {
+      if (!node || typeof node !== 'object') {
+        return node
+      }
+      if (node.type === 'entryImage' && node.attrs?.entryMediaId === entryMediaId) {
+        updated = true
+        return null
+      }
+      if (Array.isArray(node.content)) {
+        const nextContent = node.content
+          .map(visitNode)
+          .filter((child: any) => child !== null)
+        if (
+          nextContent.length !== node.content.length ||
+          nextContent.some((child: any, index: number) => child !== node.content[index])
+        ) {
+          updated = true
+          return { ...node, content: nextContent }
+        }
+      }
+      return node
+    }
+
+    const nextParsed = visitNode(parsed)
+    if (!updated || !nextParsed) {
+      return tiptapJsonString
+    }
+    return JSON.stringify(nextParsed)
+  } catch (error) {
+    // Log parse errors but return original to prevent data loss
+    console.error('Failed to parse Tiptap JSON for image removal:', error)
+    return tiptapJsonString
+  }
+}
