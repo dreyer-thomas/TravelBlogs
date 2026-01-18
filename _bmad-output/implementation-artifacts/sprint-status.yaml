@@ -146,3 +146,7 @@ development_status:
   9-12-add-format-detection-and-migration-status: done
   9-13-test-rich-text-features-end-to-end: review
   epic-9-retrospective: optional
+
+  epic-10: in-progress
+  10-1-enhanced-media-support-photos-videos: done
+  epic-10-retrospective: optional

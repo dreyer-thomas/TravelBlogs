@@ -2,6 +2,8 @@ import {
   COVER_IMAGE_ALLOWED_MIME_TYPES,
   COVER_IMAGE_FIELD_NAME,
   COVER_IMAGE_MAX_BYTES,
+  VIDEO_MAX_BYTES,
+  isVideoMimeType,
 } from "./media";
 
 export const ENTRY_MEDIA_ALLOWED_MIME_TYPES = COVER_IMAGE_ALLOWED_MIME_TYPES;
@@ -15,16 +17,26 @@ type UploadOptions = {
   translate?: (key: string) => string;
 };
 
+type UploadedMedia = {
+  url: string;
+  mediaType: "image" | "video";
+};
+
 type BatchUploadOptions = {
   onFileProgress?: (file: File, progress: number) => void;
-  uploadFn?: (file: File, options?: UploadOptions) => Promise<string>;
+  uploadFn?: (file: File, options?: UploadOptions) => Promise<UploadedMedia>;
   strategy?: "sequential" | "parallel";
   getFileId?: (file: File) => string;
   translate?: (key: string) => string;
 };
 
 type BatchUploadResult = {
-  uploads: { fileId: string; fileName: string; url: string }[];
+  uploads: {
+    fileId: string;
+    fileName: string;
+    url: string;
+    mediaType: "image" | "video";
+  }[];
   failures: { fileId: string; fileName: string; message: string }[];
 };
 
@@ -35,12 +47,19 @@ export const validateEntryMediaFile = (
   if (!ENTRY_MEDIA_ALLOWED_TYPE_SET.has(file.type)) {
     return translate
       ? translate("entries.mediaTypeError")
-      : "Media files must be a JPG, PNG, or WebP file.";
+      : "Media files must be a JPG, PNG, WebP, MP4, or WebM file.";
   }
-  if (file.size > COVER_IMAGE_MAX_BYTES) {
-    return translate
-      ? translate("entries.mediaSizeError")
-      : "Media files must be 5MB or less.";
+  const isVideo = isVideoMimeType(file.type);
+  const maxBytes = isVideo ? VIDEO_MAX_BYTES : COVER_IMAGE_MAX_BYTES;
+  if (file.size > maxBytes) {
+    if (translate) {
+      return translate(
+        isVideo ? "entries.videoSizeError" : "entries.photoSizeError",
+      );
+    }
+    return isVideo
+      ? "Video must be 100MB or less."
+      : "Photo must be 15MB or less.";
   }
   return null;
 };
@@ -49,9 +68,12 @@ export const createEntryPreviewUrl = (file: File) => {
   return URL.createObjectURL(file);
 };
 
-export const uploadEntryMedia = (file: File, options: UploadOptions = {}) => {
+export const uploadEntryMedia = (
+  file: File,
+  options: UploadOptions = {},
+) => {
   const translate = options.translate;
-  return new Promise<string>((resolve, reject) => {
+  return new Promise<UploadedMedia>((resolve, reject) => {
     const request = new XMLHttpRequest();
     const formData = new FormData();
 
@@ -97,7 +119,14 @@ export const uploadEntryMedia = (file: File, options: UploadOptions = {}) => {
           : null;
 
       if (request.status >= 200 && request.status < 300 && response?.data?.url) {
-        resolve(response.data.url as string);
+        const responseMediaType =
+          response?.data?.mediaType === "video" ||
+          response?.data?.mediaType === "image"
+            ? response.data.mediaType
+            : null;
+        const mediaType =
+          responseMediaType ?? (isVideoMimeType(file.type) ? "video" : "image");
+        resolve({ url: response.data.url as string, mediaType });
         return;
       }
 
@@ -125,11 +154,16 @@ export const uploadEntryMediaBatch = async (
   const uploadSingle = async (file: File) => {
     const fileId = getFileId(file);
     try {
-      const url = await uploadFn(file, {
+      const upload = await uploadFn(file, {
         onProgress: (progress) => options.onFileProgress?.(file, progress),
         translate: options.translate,
       });
-      uploads.push({ fileId, fileName: file.name, url });
+      uploads.push({
+        fileId,
+        fileName: file.name,
+        url: upload.url,
+        mediaType: upload.mediaType,
+      });
     } catch (error) {
       failures.push({
         fileId,

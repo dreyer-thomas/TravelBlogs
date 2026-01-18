@@ -183,7 +183,7 @@ describe("CreateEntryForm", () => {
     expect(await screen.findByText("worse.txt")).toBeInTheDocument();
     expect(
       await screen.findAllByText(
-        "Failed: Media files must be a JPG, PNG, or WebP file.",
+        "Failed: Media files must be a JPG, PNG, WebP, MP4, or WebM file.",
       ),
     ).toHaveLength(2);
     expect(uploadEntryMediaBatch).not.toHaveBeenCalled();
@@ -197,6 +197,7 @@ describe("CreateEntryForm", () => {
           fileId: options?.getFileId?.(files[0]) ?? files[0].name,
           fileName: files[0].name,
           url: "/uploads/first.jpg",
+          mediaType: "image",
         },
       ],
       failures: [
@@ -227,6 +228,47 @@ describe("CreateEntryForm", () => {
     ).toBeInTheDocument();
   });
 
+  it("renders video previews and disables inline image actions", async () => {
+    const uploadEntryMediaBatchMock = vi.mocked(uploadEntryMediaBatch);
+    uploadEntryMediaBatchMock.mockImplementation(async (files, options) => ({
+      uploads: [
+        {
+          fileId: options?.getFileId?.(files[0]) ?? files[0].name,
+          fileName: files[0].name,
+          url: "/uploads/clip.mp4",
+          mediaType: "video",
+        },
+      ],
+      failures: [],
+    }));
+
+    const { container } = renderWithLocale(
+      <CreateEntryForm tripId="trip-123" />,
+    );
+
+    const input = screen.getByLabelText(/entry image library/i);
+    const file = new File(["video"], "clip.mp4", { type: "video/mp4" });
+    fireEvent.change(input, { target: { files: [file] } });
+
+    await waitFor(() =>
+      expect(container.querySelector("video")).toBeInTheDocument(),
+    );
+
+    const insertButton = await screen.findByRole("button", {
+      name: /insert inline/i,
+    });
+    const locationButton = await screen.findByRole("button", {
+      name: /use photo location/i,
+    });
+    const setButton = await screen.findByRole("button", {
+      name: /set as story image/i,
+    });
+
+    expect(insertButton).toBeDisabled();
+    expect(locationButton).toBeDisabled();
+    expect(setButton).toBeEnabled();
+  });
+
   it("allows selecting a story image from the library", async () => {
     const uploadEntryMediaBatchMock = vi.mocked(uploadEntryMediaBatch);
     uploadEntryMediaBatchMock.mockImplementation(async (files, options) => ({
@@ -235,6 +277,7 @@ describe("CreateEntryForm", () => {
           fileId: options?.getFileId?.(files[0]) ?? files[0].name,
           fileName: files[0].name,
           url: "/uploads/story.jpg",
+          mediaType: "image",
         },
       ],
       failures: [],
@@ -270,6 +313,7 @@ describe("CreateEntryForm", () => {
           fileId: options?.getFileId?.(files[0]) ?? files[0].name,
           fileName: files[0].name,
           url: "/uploads/remove.jpg",
+          mediaType: "image",
         },
       ],
       failures: [],
@@ -358,6 +402,7 @@ describe("CreateEntryForm", () => {
           fileId: options?.getFileId?.(files[0]) ?? files[0].name,
           fileName: files[0].name,
           url: "/uploads/story.jpg",
+          mediaType: "image",
         },
       ],
       failures: [],
@@ -409,6 +454,7 @@ describe("CreateEntryForm", () => {
           fileId: options?.getFileId?.(files[0]) ?? files[0].name,
           fileName: files[0].name,
           url: "/uploads/inline.jpg",
+          mediaType: "image",
         },
       ],
       failures: [],
@@ -457,6 +503,7 @@ describe("CreateEntryForm", () => {
           fileId: options?.getFileId?.(files[0]) ?? files[0].name,
           fileName: files[0].name,
           url: "/uploads/photo.jpg",
+          mediaType: "image",
         },
       ],
       failures: [],
@@ -544,6 +591,7 @@ describe("CreateEntryForm", () => {
           fileId: options?.getFileId?.(files[0]) ?? files[0].name,
           fileName: files[0].name,
           url: "/uploads/entries/rich.jpg",
+          mediaType: "image",
         },
       ],
       failures: [],
@@ -632,6 +680,7 @@ describe("CreateEntryForm", () => {
           fileId: options?.getFileId?.(files[0]) ?? files[0].name,
           fileName: files[0].name,
           url: "/uploads/photo.jpg",
+          mediaType: "image",
         },
       ],
       failures: [],

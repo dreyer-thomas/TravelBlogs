@@ -3,6 +3,7 @@
 import { useRef } from "react";
 import Image from "next/image";
 import { DEFAULT_INLINE_ALT } from "../../utils/entry-content";
+import { getMediaTypeFromUrl } from "../../utils/media";
 import { useTranslation } from "../../utils/use-translation";
 
 export type MediaGalleryItem = {
@@ -92,8 +93,31 @@ const MediaGallery = ({
           const resolvedAlt = isDefaultCaption || !caption
             ? t("entries.entryMedia")
             : caption;
+          const mediaType = getMediaTypeFromUrl(item.url);
+          const isVideo = mediaType === "video";
 
-          const image = (
+          const mediaContent = isVideo ? (
+            <div className="relative">
+              <video
+                src={item.url}
+                className="h-auto w-full object-cover"
+                preload="none"
+                muted
+                playsInline
+                aria-label={resolvedAlt}
+              />
+              <div className="pointer-events-none absolute inset-0 flex items-center justify-center text-white/90">
+                <svg
+                  aria-hidden="true"
+                  viewBox="0 0 24 24"
+                  className="h-10 w-10 drop-shadow"
+                  fill="currentColor"
+                >
+                  <path d="M8 5v14l11-7z" />
+                </svg>
+              </div>
+            </div>
+          ) : (
             <Image
               src={item.url}
               alt={resolvedAlt}
@@ -111,12 +135,12 @@ const MediaGallery = ({
               type="button"
               onClick={() => onItemClick(item.url)}
               className="block h-full w-full focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2D2A26]"
-              aria-label={t("entries.openPhoto")}
+              aria-label={isVideo ? t("entries.openVideo") : t("entries.openPhoto")}
             >
-              {image}
+              {mediaContent}
             </button>
           ) : (
-            image
+            mediaContent
           );
 
           return (

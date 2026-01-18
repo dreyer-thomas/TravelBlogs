@@ -11,6 +11,7 @@ import {
   uploadEntryMediaBatch,
   validateEntryMediaFile,
 } from "../../utils/entry-media";
+import { getMediaTypeFromUrl, isVideoMimeType } from "../../utils/media";
 import { insertEntryImage } from "../../utils/tiptap-image-helpers";
 import { useTranslation } from "../../utils/use-translation";
 import { formatEntryLocationDisplay } from "../../utils/entry-location";
@@ -28,16 +29,23 @@ type FieldErrors = {
 };
 
 type UploadStatus = "idle" | "uploading" | "success" | "failed";
+type MediaType = "image" | "video";
 
 type UploadItem = {
   id: string;
   file: File;
   previewUrl?: string;
+  mediaType: MediaType;
   status: UploadStatus;
   progress: number;
   message?: string;
   url?: string;
   canRetry: boolean;
+};
+
+type MediaItem = {
+  url: string;
+  mediaType: MediaType;
 };
 
 type EditEntryFormProps = {
@@ -151,13 +159,23 @@ const EditEntryForm = ({
     return initialText;
   });
   const [tags, setTags] = useState<string[]>(initialTags);
-  const [mediaUrls, setMediaUrls] = useState<string[]>(initialMediaUrls);
-  const [mediaPreviews, setMediaPreviews] = useState<string[]>(initialMediaUrls);
+  const initialMediaItems = useMemo(
+    () =>
+      initialMediaUrls.map((url) => ({
+        url,
+        mediaType: getMediaTypeFromUrl(url),
+      })),
+    [initialMediaUrls],
+  );
+  const [mediaItems, setMediaItems] = useState<MediaItem[]>(initialMediaItems);
+  const [mediaPreviews, setMediaPreviews] = useState<MediaItem[]>(
+    initialMediaItems,
+  );
   const [mediaUploading, setMediaUploading] = useState(false);
   const [mediaUploadItems, setMediaUploadItems] = useState<UploadItem[]>([]);
   const [errors, setErrors] = useState<FieldErrors>({});
   const [submitting, setSubmitting] = useState(false);
-  const [hoveredImageUrl, setHoveredImageUrl] = useState<string | null>(null);
+  const [hoveredMediaUrl, setHoveredMediaUrl] = useState<string | null>(null);
   const [locationQuery, setLocationQuery] = useState(
     initialLocation?.label ?? "",
   );
@@ -194,57 +212,35 @@ const EditEntryForm = ({
   }, [initialMedia]);
 
   // Dual storage strategy (Story 9.10 lazy migration): Inline images live in Tiptap JSON
-  // as entryImage nodes with entryMediaId, while gallery images remain in mediaUrls array
-  // for the separate media library UI. See entry-format.ts plainTextToTiptapJson() for
-  // the plain-text-to-JSON migration logic that maps URLs to entryMediaIds.
-  const availableStoryImages = useMemo(() => {
-    const urls = [...mediaUrls];
+  // as entryImage nodes with entryMediaId, while gallery media remain in mediaItems.
+  // See entry-format.ts plainTextToTiptapJson() for the plain-text-to-JSON migration logic.
+  const mediaUrls = useMemo(
+    () => mediaItems.map((item) => item.url),
+    [mediaItems],
+  );
+  const libraryMediaItems = useMemo(() => {
     const seen = new Set<string>();
-    return urls.filter((url) => {
-      const value = url.trim();
+    return mediaItems.filter((item) => {
+      const value = item.url.trim();
       if (!value || seen.has(value)) {
         return false;
       }
       seen.add(value);
       return true;
     });
-  }, [mediaUrls]);
-  const libraryImageUrls = useMemo(() => {
-    const urls = [...mediaUrls];
-    const seen = new Set<string>();
-    return urls.filter((url) => {
-      const value = url.trim();
-      if (!value || seen.has(value)) {
-        return false;
-      }
-      seen.add(value);
-      return true;
-    });
-  }, [mediaUrls]);
-  const selectableImageUrls = useMemo(() => {
-    const urls = [...availableStoryImages, ...libraryImageUrls];
-    const seen = new Set<string>();
-    return urls.filter((url) => {
-      const value = url.trim();
-      if (!value || seen.has(value)) {
-        return false;
-      }
-      seen.add(value);
-      return true;
-    });
-  }, [availableStoryImages, libraryImageUrls]);
+  }, [mediaItems]);
   const validatedCoverImageUrl = useMemo(() => {
-    if (coverImageUrl && selectableImageUrls.includes(coverImageUrl)) {
+    if (coverImageUrl && mediaUrls.includes(coverImageUrl)) {
       return coverImageUrl;
     }
     return "";
-  }, [coverImageUrl, selectableImageUrls]);
+  }, [coverImageUrl, mediaUrls]);
 
   useEffect(() => {
     return () => {
       mediaPreviews.forEach((preview) => {
-        if (preview.startsWith("blob:")) {
-          URL.revokeObjectURL(preview);
+        if (preview.url.startsWith("blob:")) {
+          URL.revokeObjectURL(preview.url);
         }
       });
     };
@@ -353,16 +349,20 @@ const EditEntryForm = ({
     const invalidItems: UploadItem[] = [];
     const uploadItems: UploadItem[] = [];
     const validFiles: File[] = [];
-    const nextPreviews: string[] = [];
+    const nextPreviews: MediaItem[] = [];
 
     files.forEach((file, index) => {
       const fileId = createFileId(file, index, batchId);
       fileIdMap.set(file, fileId);
+      const mediaType: MediaType = isVideoMimeType(file.type)
+        ? "video"
+        : "image";
       const validationError = validateEntryMediaFile(file, t);
       if (validationError) {
         invalidItems.push({
           id: fileId,
           file,
+          mediaType,
           status: "failed",
           progress: 0,
           message: validationError,
@@ -372,12 +372,13 @@ const EditEntryForm = ({
       }
 
       const previewUrl = createEntryPreviewUrl(file);
-      nextPreviews.push(previewUrl);
+      nextPreviews.push({ url: previewUrl, mediaType });
       validFiles.push(file);
       uploadItems.push({
         id: fileId,
         file,
         previewUrl,
+        mediaType,
         status: "uploading",
         progress: 0,
         canRetry: true,
@@ -410,19 +411,24 @@ const EditEntryForm = ({
     });
 
     if (result.uploads.length > 0) {
-      setMediaUrls((prev) => [
+      setMediaItems((prev) => [
         ...prev,
-        ...result.uploads.map((upload) => upload.url),
+        ...result.uploads.map((upload) => ({
+          url: upload.url,
+          mediaType: upload.mediaType,
+        })),
       ]);
       setMediaPreviews((prev) =>
         prev.map((preview) => {
           const item = uploadItems.find(
-            (entry) => entry.previewUrl === preview,
+            (entry) => entry.previewUrl === preview.url,
           );
           const upload = item
             ? result.uploads.find((entry) => entry.fileId === item.id)
             : null;
-          return upload ? upload.url : preview;
+          return upload
+            ? { url: upload.url, mediaType: upload.mediaType }
+            : preview;
         }),
       );
     }
@@ -462,7 +468,7 @@ const EditEntryForm = ({
         .map((item) => item.previewUrl as string);
       if (failedPreviewUrls.length > 0) {
         setMediaPreviews((prev) =>
-          prev.filter((preview) => !failedPreviewUrls.includes(preview)),
+          prev.filter((preview) => !failedPreviewUrls.includes(preview.url)),
         );
       }
     }
@@ -531,6 +537,9 @@ const EditEntryForm = ({
     if (!editor || !url || !url.trim()) {
       return;
     }
+    if (getMediaTypeFromUrl(url) !== "image") {
+      return;
+    }
     const entryMediaId = entryMediaIdByUrl.get(url);
     if (!entryMediaId) {
       // URL not found in existing media - skip insertion
@@ -539,9 +548,9 @@ const EditEntryForm = ({
     insertEntryImage(editor, entryMediaId, url, t("entries.entryPhoto"));
   };
 
-  const handleRemoveLibraryImage = (url: string) => {
-    setMediaUrls((prev) => prev.filter((item) => item !== url));
-    setMediaPreviews((prev) => prev.filter((item) => item !== url));
+  const handleRemoveLibraryMedia = (url: string) => {
+    setMediaItems((prev) => prev.filter((item) => item.url !== url));
+    setMediaPreviews((prev) => prev.filter((item) => item.url !== url));
     setMediaUploadItems((prev) => prev.filter((item) => item.url !== url));
     if (coverImageUrl === url) {
       setCoverImageUrl("");
@@ -744,11 +753,16 @@ const EditEntryForm = ({
 
     if (result.uploads.length > 0) {
       const uploaded = result.uploads[0];
-      setMediaUrls((prev) => [...prev, uploaded.url]);
+      setMediaItems((prev) => [
+        ...prev,
+        { url: uploaded.url, mediaType: uploaded.mediaType },
+      ]);
       setMediaPreviews((prev) =>
         item.previewUrl
           ? prev.map((preview) =>
-              preview === item.previewUrl ? uploaded.url : preview,
+              preview.url === item.previewUrl
+                ? { url: uploaded.url, mediaType: uploaded.mediaType }
+                : preview,
             )
           : prev,
       );
@@ -787,7 +801,7 @@ const EditEntryForm = ({
     setMediaUploadItems((prev) => prev.filter((entry) => entry.id !== item.id));
     if (item.previewUrl) {
       setMediaPreviews((prev) =>
-        prev.filter((preview) => preview !== item.previewUrl),
+        prev.filter((preview) => preview.url !== item.previewUrl),
       );
     }
   };
@@ -844,7 +858,7 @@ const EditEntryForm = ({
 
     try {
       const mergedMediaUrls = Array.from(
-        new Set([...mediaUrls]),
+        new Set(mediaItems.map((item) => item.url)),
       );
       const submittedText = text.trim();
       const response = await fetch(`/api/entries/${entryId}`, {
@@ -1022,33 +1036,59 @@ const EditEntryForm = ({
           retryMediaUpload,
           removeMediaUpload,
         )}
-        {libraryImageUrls.length > 0 ? (
+        {libraryMediaItems.length > 0 ? (
           <div className="grid grid-cols-2 gap-2 md:grid-cols-3">
-            {libraryImageUrls.map((url, index) => {
-              const isSelected = validatedCoverImageUrl === url;
-              const isPreview = url.startsWith("blob:");
+            {libraryMediaItems.map((item, index) => {
+              const isSelected = validatedCoverImageUrl === item.url;
+              const isPreview = item.url.startsWith("blob:");
               const canSelect = !isPreview;
-              const isHovered = hoveredImageUrl === url;
+              const canInsertInline = canSelect && item.mediaType === "image";
+              const canUsePhotoLocation =
+                canSelect && item.mediaType === "image";
+              const canSelectCover = canSelect;
+              const isHovered = hoveredMediaUrl === item.url;
               return (
                 <div
-                  key={`${url}-${index}`}
-                  onMouseEnter={() => setHoveredImageUrl(url)}
-                  onMouseLeave={() => setHoveredImageUrl(null)}
+                  key={`${item.url}-${index}`}
+                  onMouseEnter={() => setHoveredMediaUrl(item.url)}
+                  onMouseLeave={() => setHoveredMediaUrl(null)}
                   className={`group relative h-28 overflow-hidden rounded-xl border bg-[#F2ECE3] transition ${
                     isSelected
                       ? "border-[#1F6F78] ring-2 ring-[#1F6F78]/30"
                       : "border-black/10"
                   }`}
                 >
-                  <Image
-                    src={url}
-                    alt={`${t("entries.libraryImage")} ${index + 1}`}
-                    fill
-                    sizes="(min-width: 768px) 25vw, 50vw"
-                    className="object-cover"
-                    loading="lazy"
-                    unoptimized={!isOptimizedImage(url)}
-                  />
+                  {item.mediaType === "image" ? (
+                    <Image
+                      src={item.url}
+                      alt={`${t("entries.libraryImage")} ${index + 1}`}
+                      fill
+                      sizes="(min-width: 768px) 25vw, 50vw"
+                      className="object-cover"
+                      loading="lazy"
+                      unoptimized={!isOptimizedImage(item.url)}
+                    />
+                  ) : (
+                    <>
+                      <video
+                        src={item.url}
+                        className="h-full w-full object-cover"
+                        preload="metadata"
+                        muted
+                        playsInline
+                      />
+                      <div className="pointer-events-none absolute inset-0 flex items-center justify-center text-white/90">
+                        <svg
+                          aria-hidden="true"
+                          viewBox="0 0 24 24"
+                          className="h-8 w-8 drop-shadow"
+                          fill="currentColor"
+                        >
+                          <path d="M8 5v14l11-7z" />
+                        </svg>
+                      </div>
+                    </>
+                  )}
                   <div
                     className={`pointer-events-none absolute inset-0 transition ${
                       isHovered ? "bg-black/20" : "bg-black/0"
@@ -1062,7 +1102,7 @@ const EditEntryForm = ({
                     <button
                       type="button"
                       onClick={() =>
-                        setCoverImageUrl(isSelected ? "" : url)
+                        setCoverImageUrl(isSelected ? "" : item.url)
                       }
                       aria-pressed={isSelected}
                       aria-label={
@@ -1070,7 +1110,7 @@ const EditEntryForm = ({
                           ? t("entries.clearStoryImage")
                           : t("entries.setStoryImage")
                       }
-                      disabled={!canSelect}
+                      disabled={!canSelectCover}
                       className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-[#1F6F78] shadow transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-70"
                     >
                       <svg
@@ -1089,9 +1129,9 @@ const EditEntryForm = ({
                     </button>
                     <button
                       type="button"
-                      onClick={() => handleInsertInlineImage(url)}
+                      onClick={() => handleInsertInlineImage(item.url)}
                       aria-label={t("entries.insertInline")}
-                      disabled={!canSelect}
+                      disabled={!canInsertInline}
                       className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-[#2D2A26] shadow transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-70"
                     >
                       <svg
@@ -1110,9 +1150,9 @@ const EditEntryForm = ({
                     </button>
                     <button
                       type="button"
-                      onClick={() => handleUsePhotoLocation(url)}
+                      onClick={() => handleUsePhotoLocation(item.url)}
                       aria-label={t("entries.usePhotoLocation")}
-                      disabled={!canSelect}
+                      disabled={!canUsePhotoLocation}
                       className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-[#2D2A26] shadow transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-70"
                     >
                       <svg
@@ -1131,7 +1171,7 @@ const EditEntryForm = ({
                     </button>
                     <button
                       type="button"
-                      onClick={() => handleRemoveLibraryImage(url)}
+                      onClick={() => handleRemoveLibraryMedia(item.url)}
                       aria-label={t("entries.remove")}
                       className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-[#B34A3C] shadow transition hover:bg-white"
                     >

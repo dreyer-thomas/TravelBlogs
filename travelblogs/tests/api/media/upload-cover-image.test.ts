@@ -2,7 +2,10 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vites
 import path from "node:path";
 import { promises as fs } from "node:fs";
 
-import { COVER_IMAGE_MAX_BYTES } from "../../../src/utils/media";
+import {
+  COVER_IMAGE_MAX_BYTES,
+  VIDEO_MAX_BYTES,
+} from "../../../src/utils/media";
 
 const getToken = vi.hoisted(() => vi.fn());
 
@@ -84,6 +87,7 @@ describe("POST /api/media/upload", () => {
     expect(response.status).toBe(201);
     expect(body.error).toBeNull();
     expect(body.data.url).toMatch(/^\/uploads\/trips\//);
+    expect(body.data.mediaType).toBe("image");
 
     const filename = body.data.url.split("/").pop();
     const storedPath = path.join(uploadRoot, "trips", filename ?? "");
@@ -108,7 +112,7 @@ describe("POST /api/media/upload", () => {
     expect(body.error.code).toBe("VALIDATION_ERROR");
   });
 
-  it("rejects files larger than 5MB", async () => {
+  it("rejects files larger than 15MB", async () => {
     getToken.mockResolvedValue({ sub: "creator" });
 
     const formData = new FormData();
@@ -127,6 +131,28 @@ describe("POST /api/media/upload", () => {
 
     expect(response.status).toBe(400);
     expect(body.error.code).toBe("VALIDATION_ERROR");
+  });
+
+  it("rejects videos larger than 100MB", async () => {
+    getToken.mockResolvedValue({ sub: "creator" });
+
+    const formData = new FormData();
+    formData.append(
+      "file",
+      buildFile(VIDEO_MAX_BYTES + 1, "video/mp4", "video.mp4"),
+    );
+
+    const request = new Request("http://localhost/api/media/upload", {
+      method: "POST",
+      body: formData,
+    });
+
+    const response = await post(request);
+    const body = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(body.error.code).toBe("VALIDATION_ERROR");
+    expect(body.error.message).toContain("100MB");
   });
 
   it("rejects unauthenticated uploads", async () => {
@@ -186,9 +212,10 @@ describe("POST /api/media/upload", () => {
     expect(body.data.failures).toHaveLength(1);
     expect(body.data.uploads[0].fileName).toBe("good.png");
     expect(body.data.uploads[0].url).toMatch(/^\/uploads\/trips\//);
+    expect(body.data.uploads[0].mediaType).toBe("image");
     expect(body.data.failures[0].fileName).toBe("bad.txt");
     expect(body.data.failures[0].message).toBe(
-      "Cover image must be a JPG, PNG, or WebP file.",
+      "Cover image must be a JPG, PNG, WebP, MP4, or WebM file.",
     );
 
     const filename = body.data.uploads[0].url.split("/").pop();

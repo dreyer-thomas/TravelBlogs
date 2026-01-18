@@ -1,14 +1,16 @@
 "use client";
 
 import type { KeyboardEvent as ReactKeyboardEvent, TouchEvent } from "react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import Image from "next/image";
 import { useTranslation } from "../../utils/use-translation";
+import { getMediaTypeFromUrl } from "../../utils/media";
 
 type PhotoViewerImage = {
   url: string;
   alt: string;
+  mediaType?: "image" | "video";
 };
 
 type FullScreenPhotoViewerProps = {
@@ -37,6 +39,7 @@ const clampIndex = (index: number, length: number) => {
 };
 
 const isOptimizedImage = (url: string) => url.startsWith("/");
+const SEEK_SECONDS = 5;
 
 const getTouchDistance = (touches: TouchListLike) => {
   const [first, second] = [touches[0], touches[1]];
@@ -65,6 +68,7 @@ const FullScreenPhotoViewer = ({
   const [progressKey, setProgressKey] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const dialogRef = useRef<HTMLDivElement | null>(null);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
   const touchStartRef = useRef<{ x: number; y: number } | null>(null);
   const pinchStartRef = useRef<{ distance: number; scale: number } | null>(
     null,
@@ -72,6 +76,26 @@ const FullScreenPhotoViewer = ({
   const ignoreClickRef = useRef(false);
   const wasPausedRef = useRef(false);
   const isSlideshow = mode === "slideshow";
+  const activeMedia = images[activeIndex] ?? images[0];
+  const activeMediaType = useMemo(() => {
+    if (!activeMedia) {
+      return "image";
+    }
+    return activeMedia.mediaType ?? getMediaTypeFromUrl(activeMedia.url);
+  }, [activeMedia]);
+  const isActiveVideo = activeMediaType === "video";
+
+  const pauseActiveVideo = useCallback(() => {
+    const video = videoRef.current;
+    if (!video) {
+      return;
+    }
+    try {
+      video.pause();
+    } catch {
+      // Ignore pause errors in non-media environments (e.g. jsdom).
+    }
+  }, []);
 
   useEffect(() => {
     if (!isOpen) {
@@ -81,7 +105,8 @@ const FullScreenPhotoViewer = ({
     setActiveIndex(safeIndex);
     setZoomScale(1);
     setIsPaused(false);
-  }, [isOpen, safeIndex]);
+    pauseActiveVideo();
+  }, [isOpen, pauseActiveVideo, safeIndex]);
 
   useEffect(() => {
     if (!isOpen) {
@@ -111,6 +136,44 @@ const FullScreenPhotoViewer = ({
         onClose();
         return;
       }
+      if (isActiveVideo && !isSlideshow) {
+        if (event.code === "Space" || event.key === " ") {
+          event.preventDefault();
+          const video = videoRef.current;
+          if (!video) {
+            return;
+          }
+          if (video.paused) {
+            void video.play();
+          } else {
+            video.pause();
+          }
+          return;
+        }
+        if (event.key === "ArrowRight") {
+          event.preventDefault();
+          const video = videoRef.current;
+          if (!video) {
+            return;
+          }
+          const nextTime = Math.min(
+            video.currentTime + SEEK_SECONDS,
+            Number.isFinite(video.duration) ? video.duration : video.currentTime,
+          );
+          video.currentTime = nextTime;
+          return;
+        }
+        if (event.key === "ArrowLeft") {
+          event.preventDefault();
+          const video = videoRef.current;
+          if (!video) {
+            return;
+          }
+          const nextTime = Math.max(video.currentTime - SEEK_SECONDS, 0);
+          video.currentTime = nextTime;
+          return;
+        }
+      }
       if (
         isSlideshow &&
         (event.code === "Space" || event.key === " ")
@@ -125,6 +188,7 @@ const FullScreenPhotoViewer = ({
           clampIndex(prev + 1, images.length),
         );
         setZoomScale(1);
+        pauseActiveVideo();
       }
       if (event.key === "ArrowLeft") {
         event.preventDefault();
@@ -132,6 +196,7 @@ const FullScreenPhotoViewer = ({
           clampIndex(prev - 1, images.length),
         );
         setZoomScale(1);
+        pauseActiveVideo();
       }
     };
 
@@ -139,7 +204,14 @@ const FullScreenPhotoViewer = ({
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [images.length, isOpen, isSlideshow, onClose]);
+  }, [
+    images.length,
+    isActiveVideo,
+    isOpen,
+    isSlideshow,
+    onClose,
+    pauseActiveVideo,
+  ]);
 
   useEffect(() => {
     if (!isOpen || !isSlideshow || images.length <= 1 || isPaused) {
@@ -185,7 +257,8 @@ const FullScreenPhotoViewer = ({
   const canGoForward = isSlideshow
     ? images.length > 1
     : activeIndex < images.length - 1;
-  const activeImage = images[activeIndex];
+  const activeImage = activeMedia ?? images[activeIndex];
+  const effectiveZoomScale = isActiveVideo ? 1 : zoomScale;
 
   const handlePrevious = () => {
     if (!canGoBack) {
@@ -197,6 +270,7 @@ const FullScreenPhotoViewer = ({
         : clampIndex(prev - 1, images.length),
     );
     setZoomScale(1);
+    pauseActiveVideo();
   };
 
   const handleNext = () => {
@@ -209,6 +283,7 @@ const FullScreenPhotoViewer = ({
         : clampIndex(prev + 1, images.length),
     );
     setZoomScale(1);
+    pauseActiveVideo();
   };
 
   const handleTouchStart = (event: TouchEvent<HTMLDivElement>) => {
@@ -403,20 +478,33 @@ const FullScreenPhotoViewer = ({
           <div
             className="relative h-full w-full"
             style={{
-              transform: `scale(${zoomScale})`,
+              transform: `scale(${effectiveZoomScale})`,
               transformOrigin: "center center",
             }}
           >
-            <Image
-              src={activeImage.url}
-              alt={activeImage.alt}
-              fill
-              sizes="100vw"
-              className="object-contain"
-              style={{ objectFit: "contain", objectPosition: "center" }}
-              loading="lazy"
-              unoptimized={!isOptimizedImage(activeImage.url)}
-            />
+            {isActiveVideo ? (
+              <video
+                ref={videoRef}
+                src={activeImage.url}
+                controls
+                preload="metadata"
+                playsInline
+                className="h-full w-full object-contain"
+                onClick={(event) => event.stopPropagation()}
+                aria-label={activeImage.alt}
+              />
+            ) : (
+              <Image
+                src={activeImage.url}
+                alt={activeImage.alt}
+                fill
+                sizes="100vw"
+                className="object-contain"
+                style={{ objectFit: "contain", objectPosition: "center" }}
+                loading="lazy"
+                unoptimized={!isOptimizedImage(activeImage.url)}
+              />
+            )}
           </div>
         </div>
       </div>

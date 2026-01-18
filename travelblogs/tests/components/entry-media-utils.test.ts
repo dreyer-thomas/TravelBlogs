@@ -15,7 +15,7 @@ describe("uploadEntryMediaBatch", () => {
       if (file.name === "bad.jpg") {
         throw new Error("Nope");
       }
-      return `/uploads/${file.name}`;
+      return { url: `/uploads/${file.name}`, mediaType: "image" };
     });
 
     const result = await uploadEntryMediaBatch(files, {
@@ -28,7 +28,12 @@ describe("uploadEntryMediaBatch", () => {
     expect(onFileProgress).toHaveBeenCalledWith(files[0], 45);
     expect(onFileProgress).toHaveBeenCalledWith(files[1], 45);
     expect(result.uploads).toEqual([
-      { fileId: "good.jpg", fileName: "good.jpg", url: "/uploads/good.jpg" },
+      {
+        fileId: "good.jpg",
+        fileName: "good.jpg",
+        url: "/uploads/good.jpg",
+        mediaType: "image",
+      },
     ]);
     expect(result.failures).toEqual([
       { fileId: "bad.jpg", fileName: "bad.jpg", message: "Nope" },
@@ -40,7 +45,10 @@ describe("uploadEntryMediaBatch", () => {
       new File(["first"], "first.jpg", { type: "image/jpeg" }),
       new File(["second"], "second.jpg", { type: "image/jpeg" }),
     ];
-    const uploadFn = vi.fn(async (file: File) => `/uploads/${file.name}`);
+    const uploadFn = vi.fn(async (file: File) => ({
+      url: `/uploads/${file.name}`,
+      mediaType: "image",
+    }));
 
     const result = await uploadEntryMediaBatch(files, {
       uploadFn,
@@ -51,11 +59,17 @@ describe("uploadEntryMediaBatch", () => {
     expect(uploadFn).toHaveBeenCalledTimes(2);
     expect(result.failures).toEqual([]);
     expect(result.uploads).toEqual([
-      { fileId: "first.jpg", fileName: "first.jpg", url: "/uploads/first.jpg" },
+      {
+        fileId: "first.jpg",
+        fileName: "first.jpg",
+        url: "/uploads/first.jpg",
+        mediaType: "image",
+      },
       {
         fileId: "second.jpg",
         fileName: "second.jpg",
         url: "/uploads/second.jpg",
+        mediaType: "image",
       },
     ]);
   });

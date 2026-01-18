@@ -14,7 +14,7 @@ import {
   tagMaxLength,
 } from "../../../../utils/entry-tags";
 import { sortTagNames } from "../../../../utils/tag-sort";
-import { removeEntryImageNodesFromJson } from "../../../../utils/tiptap-image-helpers";
+import { removeEntryImageNodesFromJson, removeEntryVideoNodesFromJson } from "../../../../utils/tiptap-image-helpers";
 import { canContributeToTrip, hasTripAccess } from "../../../../utils/trip-access";
 import { ensureActiveAccount, isAdminOrCreator } from "../../../../utils/roles";
 
@@ -43,8 +43,11 @@ const scrubEntryTextForRemovedMedia = (
   const entryFormat = detectEntryFormat(text);
   if (entryFormat === "tiptap") {
     return removedMedia.reduce(
-      (current, item) =>
-        removeEntryImageNodesFromJson(current, item.id),
+      (current, item) => {
+        // Remove both image and video nodes for the media item
+        const withoutImages = removeEntryImageNodesFromJson(current, item.id);
+        return removeEntryVideoNodesFromJson(withoutImages, item.id);
+      },
       text,
     );
   }

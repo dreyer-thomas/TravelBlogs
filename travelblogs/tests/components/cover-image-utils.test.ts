@@ -2,6 +2,7 @@ import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
 
 import {
   COVER_IMAGE_MAX_BYTES,
+  VIDEO_MAX_BYTES,
   createCoverPreviewUrl,
   isCoverImageUrl,
   validateCoverImageFile,
@@ -50,13 +51,19 @@ describe("cover image helpers", () => {
   it("rejects unsupported file types", () => {
     const file = buildFile(10, "text/plain");
 
-    expect(validateCoverImageFile(file)).toContain("JPG");
+    expect(validateCoverImageFile(file)).toContain("MP4");
   });
 
-  it("rejects files larger than 5MB", () => {
+  it("rejects images larger than 15MB", () => {
     const file = buildFile(COVER_IMAGE_MAX_BYTES + 1, "image/png");
 
-    expect(validateCoverImageFile(file)).toContain("5MB");
+    expect(validateCoverImageFile(file)).toContain("15MB");
+  });
+
+  it("rejects videos larger than 100MB", () => {
+    const file = buildFile(VIDEO_MAX_BYTES + 1, "video/mp4");
+
+    expect(validateCoverImageFile(file)).toContain("100MB");
   });
 
   it("accepts valid cover image files", () => {

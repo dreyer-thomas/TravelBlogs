@@ -251,7 +251,7 @@ describe("EditEntryForm", () => {
     expect(await screen.findByText("worse.txt")).toBeInTheDocument();
     expect(
       await screen.findAllByText(
-        "Failed: Media files must be a JPG, PNG, or WebP file.",
+        "Failed: Media files must be a JPG, PNG, WebP, MP4, or WebM file.",
       ),
     ).toHaveLength(2);
     expect(uploadEntryMediaBatch).not.toHaveBeenCalled();
@@ -265,6 +265,7 @@ describe("EditEntryForm", () => {
           fileId: options?.getFileId?.(files[0]) ?? files[0].name,
           fileName: files[0].name,
           url: "/uploads/first.jpg",
+          mediaType: "image",
         },
       ],
       failures: [
@@ -304,6 +305,36 @@ describe("EditEntryForm", () => {
     ).toBeInTheDocument();
   });
 
+  it("renders video previews and disables inline image actions", async () => {
+    const { container } = renderWithLocale(
+      <EditEntryForm
+        tripId="trip-123"
+        entryId="entry-123"
+        initialEntryDate="2025-05-03T00:00:00.000Z"
+        initialTitle="Existing title"
+        initialText="Existing text"
+        initialMediaUrls={["/uploads/clip.mp4"]}
+        initialMedia={[{ id: "media-clip", url: "/uploads/clip.mp4" }]}
+      />,
+    );
+
+    expect(container.querySelector("video")).toBeInTheDocument();
+
+    const insertButton = await screen.findByRole("button", {
+      name: /insert inline/i,
+    });
+    const locationButton = await screen.findByRole("button", {
+      name: /use photo location/i,
+    });
+    const setButton = await screen.findByRole("button", {
+      name: /set as story image/i,
+    });
+
+    expect(insertButton).toBeDisabled();
+    expect(locationButton).toBeDisabled();
+    expect(setButton).toBeEnabled();
+  });
+
   it("allows selecting a story image from the library", async () => {
     const uploadEntryMediaBatchMock = vi.mocked(uploadEntryMediaBatch);
     uploadEntryMediaBatchMock.mockImplementation(async (files, options) => ({
@@ -312,6 +343,7 @@ describe("EditEntryForm", () => {
           fileId: options?.getFileId?.(files[0]) ?? files[0].name,
           fileName: files[0].name,
           url: "/uploads/story.jpg",
+          mediaType: "image",
         },
       ],
       failures: [],
@@ -378,6 +410,7 @@ describe("EditEntryForm", () => {
           fileId: options?.getFileId?.(files[0]) ?? files[0].name,
           fileName: files[0].name,
           url: "/uploads/remove.jpg",
+          mediaType: "image",
         },
       ],
       failures: [],

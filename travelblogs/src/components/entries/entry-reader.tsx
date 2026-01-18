@@ -11,6 +11,7 @@ import { extractEntryImageNodesFromJson } from "../../utils/tiptap-image-helpers
 import type { EntryReaderData } from "../../utils/entry-reader";
 import type { EntryLocation } from "../../utils/entry-location";
 import { formatEntryLocationDisplay } from "../../utils/entry-location";
+import { getMediaTypeFromUrl } from "../../utils/media";
 import FullScreenPhotoViewer from "./full-screen-photo-viewer";
 import { useTranslation } from "../../utils/use-translation";
 import EntryHeroMap from "./entry-hero-map";
@@ -57,6 +58,11 @@ const EntryReader = ({
     return t('entries.dailyEntry');
   };
   const heroMedia = entry.media[0];
+  const heroMediaType = heroMedia
+    ? getMediaTypeFromUrl(heroMedia.url)
+    : "image";
+  const heroIsVideo = heroMediaType === "video";
+  const heroAlt = heroMedia?.alt ?? t("entries.entryHeroMedia");
   const galleryItems = entry.media;
   const entryTitle = entry.title || t("entries.dailyEntry");
   const entryDate = formatDate(new Date(entry.createdAt));
@@ -82,13 +88,17 @@ const EntryReader = ({
     [tiptapContent],
   );
   const viewerImages = useMemo(() => {
-    const images = new Map<string, { url: string; alt: string }>();
+    const images = new Map<
+      string,
+      { url: string; alt: string; mediaType?: "image" | "video" }
+    >();
 
     entry.media.forEach((media) => {
       const resolvedAlt = resolveAltText(media.alt?.trim());
       images.set(media.url, {
         url: media.url,
         alt: resolvedAlt || entry.title || t("entries.tripPhoto"),
+        mediaType: getMediaTypeFromUrl(media.url),
       });
     });
 
@@ -108,6 +118,7 @@ const EntryReader = ({
           resolveAltText(mediaItem?.alt?.trim()) ||
           entry.title ||
           t("entries.tripPhoto"),
+        mediaType: "image",
       });
     });
 
@@ -219,23 +230,36 @@ const EntryReader = ({
         <section className="overflow-hidden rounded-3xl border border-black/10 bg-white shadow-sm">
           <div className="relative isolate">
             {heroMedia ? (
-              <button
-                type="button"
-                onClick={() => openViewerAtUrl(heroMedia.url)}
-                className="relative z-0 block w-full focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2D2A26]"
-                aria-label={t("entries.openHeroPhoto")}
-              >
-                <Image
-                  src={heroMedia.url}
-                  alt={heroMedia.alt ?? t("entries.entryHeroMedia")}
-                  width={heroMedia.width ?? 1600}
-                  height={heroMedia.height ?? 1000}
-                  sizes="(min-width: 1024px) 960px, 100vw"
-                  className="h-auto w-full object-cover"
-                  loading="lazy"
-                  unoptimized={!isOptimizedImage(heroMedia.url)}
-                />
-              </button>
+              heroIsVideo ? (
+                <div className="relative z-0">
+                  <video
+                    src={heroMedia.url}
+                    controls
+                    preload="metadata"
+                    playsInline
+                    className="h-auto w-full object-cover"
+                    aria-label={heroAlt}
+                  />
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => openViewerAtUrl(heroMedia.url)}
+                  className="relative z-0 block w-full focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2D2A26]"
+                  aria-label={t("entries.openHeroPhoto")}
+                >
+                  <Image
+                    src={heroMedia.url}
+                    alt={heroAlt}
+                    width={heroMedia.width ?? 1600}
+                    height={heroMedia.height ?? 1000}
+                    sizes="(min-width: 1024px) 960px, 100vw"
+                    className="h-auto w-full object-cover"
+                    loading="lazy"
+                    unoptimized={!isOptimizedImage(heroMedia.url)}
+                  />
+                </button>
+              )
             ) : (
               <div className="flex min-h-[320px] items-center justify-center bg-[#F2ECE3] text-sm text-[#6B635B]">
                 {t("entries.noMediaAvailable")}

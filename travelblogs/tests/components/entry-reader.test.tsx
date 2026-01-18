@@ -107,6 +107,38 @@ describe("EntryReader", () => {
     ).toBeInTheDocument();
   });
 
+  it("renders a video hero with playback controls", () => {
+    const { container } = render(
+      <LocaleProvider>
+        <EntryReader
+          entry={{
+            id: "entry-video-hero",
+            title: "Video hero",
+            body: "A day in motion.",
+            createdAt: "2025-05-04T12:00:00.000Z",
+            tags: [],
+            media: [
+              {
+                id: "media-video",
+                url: "https://example.com/hero.mp4",
+              },
+              {
+                id: "media-image",
+                url: "https://example.com/gallery.jpg",
+                width: 1200,
+                height: 900,
+              },
+            ],
+          }}
+        />
+      </LocaleProvider>,
+    );
+
+    const video = container.querySelector("video");
+    expect(video).toBeInTheDocument();
+    expect(video).toHaveAttribute("controls");
+  });
+
   it("renders tags on the hero image when tags exist", () => {
     render(
       <LocaleProvider>

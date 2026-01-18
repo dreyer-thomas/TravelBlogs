@@ -182,6 +182,14 @@ Add spatial storytelling with maps and optional location extraction.
 Creators and contributors add tags to entries; viewers see tags and filter entries by tags.
 **FRs covered:** FR34, FR35, FR36, FR37, FR38
 
+### Epic 9: Rich Text Editor for Blog Entries (Phase 2 - Enhancement)
+Replace plain text entry input with rich text editor supporting formatting, inline images, and backward compatibility.
+**FRs covered:** Enhancement to FR13 (Entry text body)
+
+### Epic 10: Media & UX Improvements (Phase 2 - Enhancement)
+Improve media handling with larger file limits, video support, and UX refinements.
+**FRs covered:** Enhancement to FR14, FR16 (Entry media files)
+
 
 ## Epic 0: Lightweight Authentication (MVP)
 
@@ -1196,3 +1204,93 @@ so that I can quickly recognize what each trip is about.
 **Given** a trip has tags
 **When** I view the trip card
 **Then** tags are shown in a predictable sorted order (alphabetical)
+
+## Epic 10: Media & UX Improvements
+
+Enhance media handling capabilities and user experience with better file size limits, video support, and interface improvements.
+
+**Business Value:** Improve user experience for travel bloggers who want to share high-quality photos and video content from their trips.
+
+**Dependencies:**
+- Epic 2 (Entry media foundation)
+- Epic 9 (Rich text editor for inline media)
+
+### Story 10.1: Enhanced Media Support (Photos + Videos)
+
+**As a** creator
+**I want to** upload larger photos (up to 15MB) and video files (up to 100MB)
+**So that** I can share high-quality travel memories without compression or external hosting
+
+**Acceptance Criteria:**
+
+#### AC 1: Increased Photo File Size Limit
+**Given** I am creating or editing an entry
+**When** I select a photo file between 5MB and 15MB
+**Then** the file uploads successfully without size validation errors
+**And** the photo displays correctly in the entry gallery
+
+**Given** I select a photo file larger than 15MB
+**When** I attempt to upload
+**Then** I see a clear error message: "Photo must be 15MB or less"
+
+#### AC 2: Video File Upload Support
+**Given** I am creating or editing an entry
+**When** I select a video file in MP4 or WebM format up to 100MB
+**Then** the file uploads successfully
+**And** the video appears in the entry gallery with a video player icon
+
+**Given** I select a video file larger than 100MB
+**When** I attempt to upload
+**Then** I see a clear error message: "Video must be 100MB or less"
+
+#### AC 3: Video Playback in Entry Viewer
+**Given** an entry contains uploaded video files
+**When** I view the entry
+**Then** videos display with an HTML5 video player
+**And** I can play, pause, and control volume
+**And** videos auto-play on mute when scrolled into view (optional)
+
+#### AC 4: Video Thumbnail Generation (Optional)
+**Given** a video has been uploaded
+**When** the video processes on the server
+**Then** a thumbnail image is generated from the first frame
+**And** the thumbnail displays in the gallery before playback
+
+#### AC 5: Mixed Media Gallery
+**Given** an entry contains both photos and videos
+**When** I view the entry gallery
+**Then** photos and videos display together in chronological upload order
+**And** videos are clearly distinguished with a play icon overlay
+
+#### AC 6: Inline Video Support (Rich Text Editor)
+**Given** I have uploaded a video to an entry
+**When** I use the rich text editor
+**Then** I can insert the video inline within the text content
+**And** the video plays within the text flow in the entry viewer
+
+**Technical Requirements:**
+- Update COVER_IMAGE_MAX_BYTES from 5MB to 15MB for photos
+- Add VIDEO_MAX_BYTES = 100MB constant
+- Update COVER_IMAGE_ALLOWED_MIME_TYPES to include video/mp4 and video/webm
+- Server-side validation for file types and sizes
+- HTML5 video player component for entry viewer
+- Optional: Server-side thumbnail generation using ffmpeg or sharp
+- Update inline image insertion to support video nodes in Tiptap editor
+
+**Architecture Constraints:**
+- NAS storage must handle larger files (verify disk space)
+- Video streaming should use HTML5 video tag (no transcoding initially)
+- Bandwidth considerations for video downloads
+- Browser compatibility: MP4 (H.264) for widest support, WebM as alternative
+
+**Testing Requirements:**
+- Upload validation tests for 15MB photos and 100MB videos
+- File type validation (reject unsupported formats)
+- Video playback tests across browsers (Chrome, Safari, Firefox, Edge)
+- Gallery display tests with mixed media
+- Inline video tests in rich text editor
+- Performance tests with multiple large files
+
+**Source:** User request for enhanced media capabilities
+**Priority:** High - Improves core content creation experience
+**Story Points:** 5

@@ -3,11 +3,14 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { Editor } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import EntryImage from '@/utils/tiptap-entry-image-extension'
+import EntryVideo from '@/utils/tiptap-entry-video-extension'
 import {
   insertEntryImage,
+  insertEntryVideo,
   extractEntryMediaIds,
   extractEntryMediaIdsFromJson,
   removeEntryImageNodesFromJson,
+  removeEntryVideoNodesFromJson,
 } from '@/utils/tiptap-image-helpers'
 
 describe('Tiptap Image Helpers', () => {
@@ -15,7 +18,7 @@ describe('Tiptap Image Helpers', () => {
 
   beforeEach(() => {
     editor = new Editor({
-      extensions: [StarterKit, EntryImage],
+      extensions: [StarterKit, EntryImage, EntryVideo],
       content: '',
     })
   })
@@ -466,6 +469,96 @@ describe('Tiptap Image Helpers', () => {
 
       // Verify all IDs present
       expect(extractedIds).toEqual(testImages.map((img) => img.id))
+    })
+  })
+
+  describe('insertEntryVideo', () => {
+    it('inserts video at cursor position', () => {
+      insertEntryVideo(editor, 'video123', '/videos/travel.mp4')
+
+      const json = editor.getJSON()
+      const videoNode = json.content?.[0]
+
+      expect(videoNode?.type).toBe('entryVideo')
+      expect(videoNode?.attrs?.entryMediaId).toBe('video123')
+      expect(videoNode?.attrs?.src).toBe('/videos/travel.mp4')
+    })
+
+    it('inserts multiple videos sequentially', () => {
+      insertEntryVideo(editor, 'vid1', '/vid1.webm')
+      insertEntryVideo(editor, 'vid2', '/vid2.mp4')
+      insertEntryVideo(editor, 'vid3', '/vid3.webm')
+
+      const json = editor.getJSON()
+      const videoNodes = json.content?.filter((node: any) => node.type === 'entryVideo')
+      expect(videoNodes).toHaveLength(3)
+      expect(videoNodes?.[0]?.attrs?.entryMediaId).toBe('vid1')
+      expect(videoNodes?.[1]?.attrs?.entryMediaId).toBe('vid2')
+      expect(videoNodes?.[2]?.attrs?.entryMediaId).toBe('vid3')
+    })
+
+    it('extracts video media IDs along with images', () => {
+      insertEntryImage(editor, 'img1', '/img1.jpg')
+      insertEntryVideo(editor, 'vid1', '/vid1.mp4')
+      insertEntryImage(editor, 'img2', '/img2.jpg')
+      insertEntryVideo(editor, 'vid2', '/vid2.webm')
+
+      const ids = extractEntryMediaIds(editor)
+      expect(ids).toEqual(['img1', 'vid1', 'img2', 'vid2'])
+    })
+  })
+
+  describe('removeEntryVideoNodesFromJson', () => {
+    it('removes video node with matching entryMediaId', () => {
+      const json = JSON.stringify({
+        type: 'doc',
+        content: [
+          {
+            type: 'entryVideo',
+            attrs: {
+              entryMediaId: 'video-to-remove',
+              src: '/remove.mp4',
+            },
+          },
+          {
+            type: 'paragraph',
+            content: [{ type: 'text', text: 'Keep this' }],
+          },
+        ],
+      })
+
+      const result = removeEntryVideoNodesFromJson(json, 'video-to-remove')
+      const parsed = JSON.parse(result)
+
+      expect(parsed.content).toHaveLength(1)
+      expect(parsed.content[0].type).toBe('paragraph')
+    })
+
+    it('keeps video nodes with different entryMediaId', () => {
+      const json = JSON.stringify({
+        type: 'doc',
+        content: [
+          {
+            type: 'entryVideo',
+            attrs: {
+              entryMediaId: 'keep-this',
+              src: '/keep.webm',
+            },
+          },
+        ],
+      })
+
+      const result = removeEntryVideoNodesFromJson(json, 'different-id')
+      const parsed = JSON.parse(result)
+
+      expect(parsed.content).toHaveLength(1)
+      expect(parsed.content[0].type).toBe('entryVideo')
+    })
+
+    it('handles malformed JSON gracefully', () => {
+      const invalidJson = 'not valid json'
+      const result = removeEntryVideoNodesFromJson(invalidJson, 'vid123')
+      expect(result).toBe(invalidJson)
     })
   })
 })

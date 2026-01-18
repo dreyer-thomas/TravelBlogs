@@ -2,7 +2,7 @@
 /* eslint-disable @next/next/no-img-element, jsx-a11y/alt-text */
 import type { ImgHTMLAttributes } from "react";
 import { act, fireEvent, render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import FullScreenPhotoViewer from "../../src/components/entries/full-screen-photo-viewer";
 import { LocaleProvider } from "../../src/utils/locale-context";
@@ -27,6 +27,22 @@ const images = [
 ];
 
 describe("FullScreenPhotoViewer", () => {
+  let playSpy: ReturnType<typeof vi.spyOn>;
+  let pauseSpy: ReturnType<typeof vi.spyOn>;
+
+  beforeEach(() => {
+    playSpy = vi
+      .spyOn(window.HTMLMediaElement.prototype, "play")
+      .mockResolvedValue(undefined);
+    pauseSpy = vi
+      .spyOn(window.HTMLMediaElement.prototype, "pause")
+      .mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    playSpy.mockRestore();
+    pauseSpy.mockRestore();
+  });
   it("renders without chrome and closes on click", async () => {
     const onClose = vi.fn();
 
@@ -186,5 +202,58 @@ describe("FullScreenPhotoViewer", () => {
     fireEvent.click(dialog);
 
     expect(onClose).not.toHaveBeenCalled();
+  });
+
+  it("supports video playback and seeking via keyboard", async () => {
+    render(
+      <LocaleProvider>
+        <FullScreenPhotoViewer
+          images={[{ url: "/videos/clip.mp4", alt: "Clip", mediaType: "video" }]}
+          initialIndex={0}
+          isOpen
+          onClose={vi.fn()}
+          mode="viewer"
+        />
+      </LocaleProvider>,
+    );
+
+    const video = screen.getByLabelText("Clip");
+    Object.defineProperty(video, "paused", { value: true, configurable: true });
+
+    fireEvent.keyDown(window, { code: "Space", key: " " });
+    expect(playSpy).toHaveBeenCalled();
+
+    Object.defineProperty(video, "paused", { value: false, configurable: true });
+    fireEvent.keyDown(window, { code: "Space", key: " " });
+    expect(pauseSpy).toHaveBeenCalled();
+
+    Object.defineProperty(video, "currentTime", {
+      value: 10,
+      writable: true,
+    });
+    Object.defineProperty(video, "duration", { value: 100, configurable: true });
+
+    fireEvent.keyDown(window, { key: "ArrowRight" });
+    expect((video as HTMLVideoElement).currentTime).toBe(15);
+
+    fireEvent.keyDown(window, { key: "ArrowLeft" });
+    expect((video as HTMLVideoElement).currentTime).toBe(10);
+  });
+
+  it("renders video items in slideshow mode", async () => {
+    render(
+      <LocaleProvider>
+        <FullScreenPhotoViewer
+          images={[{ url: "/videos/clip.mp4", alt: "Clip", mediaType: "video" }]}
+          initialIndex={0}
+          isOpen
+          onClose={vi.fn()}
+          mode="slideshow"
+        />
+      </LocaleProvider>,
+    );
+
+    expect(screen.getByLabelText("Clip")).toBeInTheDocument();
+    expect(screen.getAllByTestId("slideshow-segment")).toHaveLength(1);
   });
 });

@@ -2,6 +2,7 @@ import StarterKit from '@tiptap/starter-kit'
 import TextAlign from '@tiptap/extension-text-align'
 import Link from '@tiptap/extension-link'
 import EntryImage from './tiptap-entry-image-extension'
+import EntryVideo from './tiptap-entry-video-extension'
 
 /**
  * Returns configured Tiptap extensions for the rich text editor.
@@ -11,6 +12,7 @@ import EntryImage from './tiptap-entry-image-extension'
  * - TextAlign: Left, center, right alignment for paragraphs and headings
  * - Link: Hyperlink support with custom styling
  * - EntryImage: Custom image node with entryMediaId reference (Story 9.6)
+ * - EntryVideo: Custom video node with entryMediaId reference (Story 10.1)
  *
  * Used in Story 9.3+ for editor component initialization.
  */
@@ -34,4 +36,5 @@ export const getTiptapExtensions = () => [
     },
   }),
   EntryImage, // Story 9.6 - Custom image node with entryMediaId
+  EntryVideo, // Story 10.1 - Custom video node with entryMediaId
 ]

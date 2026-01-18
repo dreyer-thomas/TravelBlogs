@@ -8,6 +8,7 @@ import {
   COVER_IMAGE_FIELD_NAME,
   COVER_IMAGE_PUBLIC_PATH,
   getCoverImageExtension,
+  isVideoMimeType,
   validateCoverImageFile,
 } from "../../../../utils/media";
 import { ensureActiveAccount, isAdminOrCreator } from "../../../../utils/roles";
@@ -56,6 +57,7 @@ const resolveUploadDir = () => {
 type UploadSuccess = {
   fileName: string;
   url: string;
+  mediaType: "image" | "video";
   location: { latitude: number; longitude: number } | null;
 };
 
@@ -79,28 +81,31 @@ const uploadFile = async (
     };
   }
 
+  const isVideo = isVideoMimeType(file.type);
   const extension = getCoverImageExtension(file.type);
   if (!extension) {
     return {
       failure: {
         fileName: file.name,
-        message: "Cover image must be a JPG, PNG, or WebP file.",
+        message: "Cover image must be a JPG, PNG, WebP, MP4, or WebM file.",
       },
     };
   }
 
   try {
-    const safeName = `cover-${Date.now()}-${crypto.randomUUID()}.${extension}`;
+    const prefix = isVideo ? "video" : "photo";
+    const safeName = `${prefix}-${Date.now()}-${crypto.randomUUID()}.${extension}`;
     const filePath = path.join(uploadDir, safeName);
     const buffer = Buffer.from(await file.arrayBuffer());
     await fs.writeFile(filePath, buffer);
 
-    const location = await extractGpsFromImage(buffer);
+    const location = isVideo ? null : await extractGpsFromImage(buffer);
 
     return {
       upload: {
         fileName: file.name,
         url: `${COVER_IMAGE_PUBLIC_PATH}/${safeName}`,
+        mediaType: isVideo ? "video" : "image",
         location,
       },
     };
@@ -163,6 +168,7 @@ export const POST = async (request: NextRequest) => {
         {
           data: {
             url: result.upload?.url ?? null,
+            mediaType: result.upload?.mediaType ?? null,
             location: result.upload?.location ?? null,
           },
           error: null,
@@ -189,6 +195,7 @@ export const POST = async (request: NextRequest) => {
           uploads: uploads.map((upload) => ({
             fileName: upload.fileName,
             url: upload.url,
+            mediaType: upload.mediaType,
             location: upload.location,
           })),
           failures,

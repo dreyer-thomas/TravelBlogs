@@ -38,7 +38,9 @@ describe("CreateTripForm cover image", () => {
     fireEvent.change(input, { target: { files: [badFile] } });
 
     expect(
-      await screen.findByText("Cover image must be a JPG, PNG, or WebP file."),
+      await screen.findByText(
+        "Cover image must be a JPG, PNG, WebP, MP4, or WebM file.",
+      ),
     ).toBeInTheDocument();
     expect(uploadCoverImage).not.toHaveBeenCalled();
   });

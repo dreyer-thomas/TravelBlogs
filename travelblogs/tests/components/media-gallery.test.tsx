@@ -96,4 +96,27 @@ describe("MediaGallery", () => {
 
     expect(startSlideshow).toHaveBeenCalledTimes(1);
   });
+
+  it("renders video items with video-specific labels", () => {
+    const onItemClick = vi.fn();
+
+    const { container } = render(
+      <LocaleProvider>
+        <MediaGallery
+          items={[
+            {
+              id: "media-video",
+              url: "https://example.com/clip.mp4",
+            },
+          ]}
+          onItemClick={onItemClick}
+        />
+      </LocaleProvider>,
+    );
+
+    expect(
+      screen.getByRole("button", { name: /open video/i }),
+    ).toBeInTheDocument();
+    expect(container.querySelector("video")).toBeInTheDocument();
+  });
 });

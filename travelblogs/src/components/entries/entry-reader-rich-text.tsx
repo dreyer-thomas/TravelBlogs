@@ -8,6 +8,7 @@ import type { NodeViewProps } from "@tiptap/react";
 import type { EntryReaderMedia } from "../../utils/entry-reader";
 import { getTiptapExtensions } from "../../utils/tiptap-config";
 import EntryImage from "../../utils/tiptap-entry-image-extension";
+import EntryVideo from "../../utils/tiptap-entry-video-extension";
 
 type EntryImageNodeOptions = {
   mediaMap: Map<string, EntryReaderMedia>;
@@ -15,6 +16,11 @@ type EntryImageNodeOptions = {
   openImageLabel: string;
   resolveAltText: (alt?: string | null) => string | null;
   onImageClick?: (url: string) => void;
+};
+
+type EntryVideoNodeOptions = {
+  mediaMap: Map<string, EntryReaderMedia>;
+  onVideoClick?: (url: string) => void;
 };
 
 type EntryReaderRichTextProps = {
@@ -73,6 +79,41 @@ const EntryImageNodeView = (props: NodeViewProps) => {
   );
 };
 
+const EntryVideoNodeView = (props: NodeViewProps) => {
+  const { entryMediaId, src } = props.node.attrs as {
+    entryMediaId?: string | null;
+    src?: string | null;
+  };
+  const options = props.extension.options as EntryVideoNodeOptions;
+  const mediaItem =
+    entryMediaId && options.mediaMap.has(entryMediaId)
+      ? options.mediaMap.get(entryMediaId)
+      : undefined;
+  const videoUrl = mediaItem?.url ?? src ?? "";
+
+  if (!videoUrl) {
+    return null;
+  }
+
+  return (
+    <NodeViewWrapper className="my-5 overflow-hidden rounded-2xl border border-black/10 bg-[#F2ECE3]">
+      <video
+        src={videoUrl}
+        controls
+        preload="metadata"
+        playsInline
+        className="h-auto w-full"
+        onClick={(e) => {
+          e.stopPropagation();
+          options.onVideoClick?.(videoUrl);
+        }}
+      >
+        Your browser does not support video playback.
+      </video>
+    </NodeViewWrapper>
+  );
+};
+
 const buildEntryImageExtension = (options: EntryImageNodeOptions) => {
   return EntryImage.extend({
     addOptions() {
@@ -80,6 +121,17 @@ const buildEntryImageExtension = (options: EntryImageNodeOptions) => {
     },
     addNodeView() {
       return ReactNodeViewRenderer(EntryImageNodeView);
+    },
+  }).configure(options);
+};
+
+const buildEntryVideoExtension = (options: EntryVideoNodeOptions) => {
+  return EntryVideo.extend({
+    addOptions() {
+      return options;
+    },
+    addNodeView() {
+      return ReactNodeViewRenderer(EntryVideoNodeView);
     },
   }).configure(options);
 };
@@ -123,12 +175,21 @@ const EntryReaderRichText = ({
     [fallbackAlt, mediaMap, onImageClick, openImageLabel, resolveAltText],
   );
 
+  const entryVideoExtension = useMemo(
+    () =>
+      buildEntryVideoExtension({
+        mediaMap,
+        onVideoClick: onImageClick, // Reuse image click handler for videos
+      }),
+    [mediaMap, onImageClick],
+  );
+
   const extensions = useMemo(() => {
     const baseExtensions = getTiptapExtensions().filter(
-      (extension) => extension.name !== "entryImage",
+      (extension) => extension.name !== "entryImage" && extension.name !== "entryVideo",
     );
-    return [...baseExtensions, entryImageExtension];
-  }, [entryImageExtension]);
+    return [...baseExtensions, entryImageExtension, entryVideoExtension];
+  }, [entryImageExtension, entryVideoExtension]);
 
   const editor = useEditor({
     extensions,

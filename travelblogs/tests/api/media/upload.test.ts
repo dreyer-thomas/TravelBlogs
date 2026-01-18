@@ -65,6 +65,7 @@ describe("POST /api/media/upload", () => {
     expect(response.status).toBe(201);
     expect(json.error).toBeNull();
     expect(json.data.url).toBeDefined();
+    expect(json.data.mediaType).toBe("image");
     expect(json.data.location).toBeDefined();
     expect(json.data.location.latitude).toBeTypeOf("number");
     expect(json.data.location.longitude).toBeTypeOf("number");
@@ -98,6 +99,30 @@ describe("POST /api/media/upload", () => {
     expect(response.status).toBe(201);
     expect(json.error).toBeNull();
     expect(json.data.url).toBeDefined();
+    expect(json.data.mediaType).toBe("image");
+    expect(json.data.location).toBeNull();
+  });
+
+  it("accepts video uploads without GPS extraction", async () => {
+    const file = new File([new Uint8Array(1024)], "clip.mp4", {
+      type: "video/mp4",
+    });
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const request = new Request("http://localhost:3000/api/media/upload", {
+      method: "POST",
+      body: formData,
+    });
+
+    const response = await post(request);
+    const json = await response.json();
+
+    expect(response.status).toBe(201);
+    expect(json.error).toBeNull();
+    expect(json.data.url).toBeDefined();
+    expect(json.data.mediaType).toBe("video");
     expect(json.data.location).toBeNull();
   });
 
@@ -138,5 +163,7 @@ describe("POST /api/media/upload", () => {
     expect(json.data.uploads).toHaveLength(2);
     expect(json.data.uploads[0].location).toBeDefined();
     expect(json.data.uploads[1].location).toBeNull();
+    expect(json.data.uploads[0].mediaType).toBe("image");
+    expect(json.data.uploads[1].mediaType).toBe("image");
   });
 });

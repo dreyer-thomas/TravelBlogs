@@ -1,4 +1,5 @@
-export const COVER_IMAGE_MAX_BYTES = 5 * 1024 * 1024;
+export const COVER_IMAGE_MAX_BYTES = 15 * 1024 * 1024;
+export const VIDEO_MAX_BYTES = 100 * 1024 * 1024;
 export const COVER_IMAGE_FIELD_NAME = "file";
 export const COVER_IMAGE_PUBLIC_PATH = "/uploads/trips";
 
@@ -6,6 +7,8 @@ export const COVER_IMAGE_ALLOWED_MIME_TYPES = [
   "image/jpeg",
   "image/png",
   "image/webp",
+  "video/mp4",
+  "video/webm",
 ] as const;
 
 const COVER_IMAGE_ALLOWED_TYPE_SET = new Set<string>(
@@ -22,7 +25,25 @@ export const getCoverImageExtension = (mimeType: string) => {
   if (mimeType === "image/webp") {
     return "webp";
   }
+  if (mimeType === "video/mp4") {
+    return "mp4";
+  }
+  if (mimeType === "video/webm") {
+    return "webm";
+  }
   return null;
+};
+
+export const isVideoMimeType = (mimeType: string) => {
+  return mimeType.startsWith("video/");
+};
+
+const VIDEO_FILE_EXTENSIONS = new Set<string>(["mp4", "webm"]);
+
+export const getMediaTypeFromUrl = (url: string): "image" | "video" => {
+  const sanitized = url.split("?")[0]?.split("#")[0] ?? "";
+  const extension = sanitized.split(".").pop()?.toLowerCase() ?? "";
+  return VIDEO_FILE_EXTENSIONS.has(extension) ? "video" : "image";
 };
 
 export const validateCoverImageFile = (
@@ -32,12 +53,19 @@ export const validateCoverImageFile = (
   if (!COVER_IMAGE_ALLOWED_TYPE_SET.has(file.type)) {
     return translate
       ? translate("trips.coverImageTypeError")
-      : "Cover image must be a JPG, PNG, or WebP file.";
+      : "Cover image must be a JPG, PNG, WebP, MP4, or WebM file.";
   }
-  if (file.size > COVER_IMAGE_MAX_BYTES) {
-    return translate
-      ? translate("trips.coverImageSizeError")
-      : "Cover image must be 5MB or less.";
+  const isVideo = isVideoMimeType(file.type);
+  const maxBytes = isVideo ? VIDEO_MAX_BYTES : COVER_IMAGE_MAX_BYTES;
+  if (file.size > maxBytes) {
+    if (translate) {
+      return translate(
+        isVideo ? "trips.coverVideoSizeError" : "trips.coverImageSizeError",
+      );
+    }
+    return isVideo
+      ? "Video must be 100MB or less."
+      : "Cover image must be 15MB or less.";
   }
   return null;
 };
