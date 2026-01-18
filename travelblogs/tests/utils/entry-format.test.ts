@@ -206,4 +206,77 @@ describe('plainTextToTiptapJson', () => {
       ]),
     )
   })
+
+  it('maps inline image urls to entryMediaId when provided', () => {
+    const mediaByUrl = new Map([
+      ['https://example.com/inline.jpg', 'media-1'],
+    ])
+    const result = plainTextToTiptapJson(
+      'Look ![Fresh](https://example.com/inline.jpg) here.',
+      mediaByUrl,
+    )
+    const parsed = JSON.parse(result)
+
+    expect(parsed.content).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: 'entryImage',
+          attrs: {
+            entryMediaId: 'media-1',
+            src: 'https://example.com/inline.jpg',
+            alt: 'Fresh',
+          },
+        }),
+      ]),
+    )
+  })
+
+  it('converts unmatched inline images to plain text nodes', () => {
+    const mediaByUrl = new Map([
+      ['https://example.com/other.jpg', 'media-2'],
+    ])
+    const result = plainTextToTiptapJson(
+      'Look ![Fresh](https://example.com/inline.jpg) here.',
+      mediaByUrl,
+    )
+    const parsed = JSON.parse(result)
+
+    const hasEntryImage = parsed.content.some(
+      (node: { type?: string }) => node.type === 'entryImage',
+    )
+    const textNodes = parsed.content
+      .flatMap((node: { content?: Array<{ text?: string }> }) =>
+        node.content ?? [],
+      )
+      .map((node: { text?: string }) => node.text)
+      .filter(Boolean)
+
+    expect(hasEntryImage).toBe(false)
+    expect(textNodes).toContain('![Fresh](https://example.com/inline.jpg)')
+  })
+
+  it('accepts EntryMediaItem array format for entryMedia', () => {
+    const mediaArray = [
+      { id: 'media-1', url: 'https://example.com/inline.jpg' },
+      { id: 'media-2', url: 'https://example.com/other.jpg' },
+    ]
+    const result = plainTextToTiptapJson(
+      'Look ![Fresh](https://example.com/inline.jpg) here.',
+      mediaArray,
+    )
+    const parsed = JSON.parse(result)
+
+    expect(parsed.content).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: 'entryImage',
+          attrs: {
+            entryMediaId: 'media-1',
+            src: 'https://example.com/inline.jpg',
+            alt: 'Fresh',
+          },
+        }),
+      ]),
+    )
+  })
 })

@@ -210,6 +210,13 @@ describe("EntryReader", () => {
               width: 1600,
               height: 1000,
             },
+            {
+              id: "media-inline",
+              url: "https://example.com/inline.jpg",
+              width: 1200,
+              height: 800,
+              alt: "Fresh produce",
+            },
           ],
         }}
         />
@@ -217,9 +224,14 @@ describe("EntryReader", () => {
     );
 
     expect(await screen.findByText(/Look/)).toBeInTheDocument();
-    expect(
-      await screen.findByRole("img", { name: /Fresh produce/i }),
-    ).toHaveAttribute("src", "https://example.com/inline.jpg");
+    const inlineImages = await screen.findAllByRole("img", {
+      name: /Fresh produce/i,
+    });
+    const inlineMatch = inlineImages.find(
+      (image) =>
+        image.getAttribute("src") === "https://example.com/inline.jpg",
+    );
+    expect(inlineMatch).toBeTruthy();
   });
 
   it("renders Tiptap JSON content as formatted text", async () => {

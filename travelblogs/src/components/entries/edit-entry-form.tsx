@@ -143,7 +143,10 @@ const EditEntryForm = ({
   const [text, setText] = useState(() => {
     const format = detectEntryFormat(initialText);
     if (format === 'plain') {
-      return plainTextToTiptapJson(initialText);
+      const entryMediaIdByUrl = initialMedia
+        ? new Map(initialMedia.map((item) => [item.url, item.id]))
+        : undefined;
+      return plainTextToTiptapJson(initialText, entryMediaIdByUrl);
     }
     return initialText;
   });

@@ -6,9 +6,16 @@
  * strategy for backward compatibility with existing plain text entries.
  */
 
-import { parseEntryContent } from "./entry-content";
+import { DEFAULT_INLINE_ALT, parseEntryContent } from "./entry-content";
 
 export type EntryFormat = 'plain' | 'tiptap'
+
+export type EntryMediaItem = {
+  id: string
+  url: string
+}
+
+export type EntryMediaLookup = Map<string, string> | EntryMediaItem[] | undefined
 
 /**
  * Detects whether entry text content is plain text or Tiptap JSON format.
@@ -124,15 +131,28 @@ export function validateTiptapStructure(json: string | unknown): boolean {
  * Empty paragraphs are filtered out.
  *
  * @param plainText - The plain text content to convert
+ * @param entryMedia - Optional media context for resolving inline image URLs to entryMediaIds.
+ *   Can be a Map<url, id>, an array of {id, url} objects, or undefined.
+ *   - If provided: inline images matching a URL are converted to entryImage nodes with entryMediaId set
+ *   - If provided but URL not found: inline images are converted to plain text markdown
+ *   - If undefined: inline images are converted to entryImage nodes with entryMediaId=null
  * @returns Tiptap JSON string with paragraph structure
  *
  * @example
  * ```typescript
  * plainTextToTiptapJson('Hello\n\nWorld')
  * // => '{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Hello"}]},{"type":"paragraph","content":[{"type":"text","text":"World"}]}]}'
+ *
+ * // With media mapping
+ * const mediaMap = new Map([['https://example.com/img.jpg', 'media-1']])
+ * plainTextToTiptapJson('Look ![Photo](https://example.com/img.jpg)', mediaMap)
+ * // => entryImage node with entryMediaId: 'media-1'
  * ```
  */
-export function plainTextToTiptapJson(plainText: string): string {
+export function plainTextToTiptapJson(
+  plainText: string,
+  entryMedia?: EntryMediaLookup,
+): string {
   if (!plainText || !plainText.trim()) {
     return JSON.stringify({
       type: 'doc',
@@ -142,6 +162,7 @@ export function plainTextToTiptapJson(plainText: string): string {
 
   const content: Array<Record<string, unknown>> = []
   const blocks = parseEntryContent(plainText)
+  const entryMediaIdByUrl = resolveEntryMediaIdMap(entryMedia)
 
   blocks.forEach(block => {
     if (block.type === 'text') {
@@ -159,13 +180,35 @@ export function plainTextToTiptapJson(plainText: string): string {
       return
     }
 
+    if (!entryMediaIdByUrl) {
+      content.push({
+        type: 'entryImage',
+        attrs: {
+          entryMediaId: null,
+          src: block.url,
+          alt: block.alt ?? ''
+        }
+      })
+      return
+    }
+
+    const entryMediaId = entryMediaIdByUrl.get(block.url)
+    if (entryMediaId) {
+      content.push({
+        type: 'entryImage',
+        attrs: {
+          entryMediaId,
+          src: block.url,
+          alt: block.alt ?? ''
+        }
+      })
+      return
+    }
+
+    const alt = block.alt ?? DEFAULT_INLINE_ALT
     content.push({
-      type: 'entryImage',
-      attrs: {
-        entryMediaId: null,
-        src: block.url,
-        alt: block.alt ?? ''
-      }
+      type: 'paragraph',
+      content: [{ type: 'text', text: `![${alt}](${block.url})` }]
     })
   })
 
@@ -173,4 +216,18 @@ export function plainTextToTiptapJson(plainText: string): string {
     type: 'doc',
     content: content.length > 0 ? content : [{ type: 'paragraph' }]
   })
+}
+
+const resolveEntryMediaIdMap = (
+  entryMedia?: EntryMediaLookup,
+): Map<string, string> | null => {
+  if (!entryMedia) {
+    return null
+  }
+
+  if (entryMedia instanceof Map) {
+    return entryMedia
+  }
+
+  return new Map(entryMedia.map((item) => [item.url, item.id]))
 }

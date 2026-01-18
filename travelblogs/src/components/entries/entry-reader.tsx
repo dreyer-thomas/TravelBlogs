@@ -63,6 +63,10 @@ const EntryReader = ({
   const showSharedHeroOverlay = isSharedView;
   const hasTags = entry.tags.length > 0;
   const entryBody = entry.body ?? "";
+  const entryMediaIdByUrl = useMemo(
+    () => new Map(entry.media.map((media) => [media.url, media.id])),
+    [entry.media],
+  );
   const entryFormat = useMemo(
     () => detectEntryFormat(entryBody),
     [entryBody],
@@ -71,8 +75,8 @@ const EntryReader = ({
     if (entryFormat === "tiptap") {
       return entryBody;
     }
-    return plainTextToTiptapJson(entryBody);
-  }, [entryBody, entryFormat]);
+    return plainTextToTiptapJson(entryBody, entryMediaIdByUrl);
+  }, [entryBody, entryFormat, entryMediaIdByUrl]);
   const inlineImages = useMemo(
     () => extractEntryImageNodesFromJson(tiptapContent),
     [tiptapContent],
