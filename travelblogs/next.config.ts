@@ -8,6 +8,12 @@ const nextConfig: NextConfig = {
   turbopack: {
     root: projectRoot,
   },
+  experimental: {
+    // Increase body size limit for video uploads (100MB)
+    serverActions: {
+      bodySizeLimit: '100mb',
+    },
+  },
 };
 
 export default nextConfig;

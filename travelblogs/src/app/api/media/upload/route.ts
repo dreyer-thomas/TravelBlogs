@@ -16,6 +16,9 @@ import { extractGpsFromImage } from "../../../../utils/entry-location";
 
 export const runtime = "nodejs";
 
+// Allow large file uploads (100MB for videos)
+export const maxDuration = 60; // 60 seconds timeout for large uploads
+
 const jsonError = (status: number, code: string, message: string) => {
   return NextResponse.json(
     {
@@ -138,7 +141,13 @@ export const POST = async (request: NextRequest) => {
     let formData: FormData;
     try {
       formData = await request.formData();
-    } catch {
+    } catch (error) {
+      console.error("Failed to parse form data:", error);
+      // Check if it's a body size error
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      if (errorMessage.includes("Body exceeded") || errorMessage.includes("PayloadTooLargeError")) {
+        return jsonError(413, "PAYLOAD_TOO_LARGE", "File size exceeds server limit. Maximum total upload size is 100MB.");
+      }
       return jsonError(400, "INVALID_FORM_DATA", "Invalid form submission.");
     }
 
