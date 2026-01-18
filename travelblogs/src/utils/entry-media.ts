@@ -47,7 +47,7 @@ export const validateEntryMediaFile = (
   if (!ENTRY_MEDIA_ALLOWED_TYPE_SET.has(file.type)) {
     return translate
       ? translate("entries.mediaTypeError")
-      : "Media files must be a JPG, PNG, WebP, MP4, or WebM file.";
+      : "Media files must be a JPG, PNG, WebP, MP4, WebM, or MOV file.";
   }
   const isVideo = isVideoMimeType(file.type);
   const maxBytes = isVideo ? VIDEO_MAX_BYTES : COVER_IMAGE_MAX_BYTES;

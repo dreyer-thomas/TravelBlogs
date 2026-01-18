@@ -87,7 +87,7 @@ const uploadFile = async (
     return {
       failure: {
         fileName: file.name,
-        message: "Cover image must be a JPG, PNG, WebP, MP4, or WebM file.",
+        message: "Cover image must be a JPG, PNG, WebP, MP4, WebM, or MOV file.",
       },
     };
   }

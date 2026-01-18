@@ -9,6 +9,7 @@ export const COVER_IMAGE_ALLOWED_MIME_TYPES = [
   "image/webp",
   "video/mp4",
   "video/webm",
+  "video/quicktime", // MOV files
 ] as const;
 
 const COVER_IMAGE_ALLOWED_TYPE_SET = new Set<string>(
@@ -31,6 +32,9 @@ export const getCoverImageExtension = (mimeType: string) => {
   if (mimeType === "video/webm") {
     return "webm";
   }
+  if (mimeType === "video/quicktime") {
+    return "mov";
+  }
   return null;
 };
 
@@ -38,7 +42,7 @@ export const isVideoMimeType = (mimeType: string) => {
   return mimeType.startsWith("video/");
 };
 
-const VIDEO_FILE_EXTENSIONS = new Set<string>(["mp4", "webm"]);
+const VIDEO_FILE_EXTENSIONS = new Set<string>(["mp4", "webm", "mov"]);
 
 export const getMediaTypeFromUrl = (url: string): "image" | "video" => {
   const sanitized = url.split("?")[0]?.split("#")[0] ?? "";
@@ -53,7 +57,7 @@ export const validateCoverImageFile = (
   if (!COVER_IMAGE_ALLOWED_TYPE_SET.has(file.type)) {
     return translate
       ? translate("trips.coverImageTypeError")
-      : "Cover image must be a JPG, PNG, WebP, MP4, or WebM file.";
+      : "Cover image must be a JPG, PNG, WebP, MP4, WebM, or MOV file.";
   }
   const isVideo = isVideoMimeType(file.type);
   const maxBytes = isVideo ? VIDEO_MAX_BYTES : COVER_IMAGE_MAX_BYTES;

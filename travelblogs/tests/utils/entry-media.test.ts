@@ -65,4 +65,10 @@ describe("entry media validation", () => {
 
     expect(validateEntryMediaFile(file)).toBeNull();
   });
+
+  it("accepts MOV video files", () => {
+    const file = buildFile(1024, "video/quicktime");
+
+    expect(validateEntryMediaFile(file)).toBeNull();
+  });
 });

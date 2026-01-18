@@ -215,7 +215,7 @@ describe("POST /api/media/upload", () => {
     expect(body.data.uploads[0].mediaType).toBe("image");
     expect(body.data.failures[0].fileName).toBe("bad.txt");
     expect(body.data.failures[0].message).toBe(
-      "Cover image must be a JPG, PNG, WebP, MP4, or WebM file.",
+      "Cover image must be a JPG, PNG, WebP, MP4, WebM, or MOV file.",
     );
 
     const filename = body.data.uploads[0].url.split("/").pop();
