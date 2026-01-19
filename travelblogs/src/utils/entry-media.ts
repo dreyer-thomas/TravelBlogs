@@ -5,7 +5,6 @@ import {
   VIDEO_MAX_BYTES,
   isVideoMimeType,
 } from "./media";
-import { uploadMediaAction } from "../actions/upload-media";
 
 export const ENTRY_MEDIA_ALLOWED_MIME_TYPES = COVER_IMAGE_ALLOWED_MIME_TYPES;
 
@@ -74,6 +73,10 @@ export const uploadEntryMedia = async (
   options: UploadOptions = {},
 ): Promise<UploadedMedia> => {
   const translate = options.translate;
+
+  // Dynamically import the Server Action only when needed
+  // This prevents the import from being bundled with client components
+  const { uploadMediaAction } = await import("../actions/upload-media");
 
   try {
     // Report progress at start (Server Actions don't support real-time progress)
