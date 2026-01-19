@@ -8,6 +8,7 @@ import TripMap from "./trip-map";
 import { useTranslation } from "../../utils/use-translation";
 import { filterEntriesWithLocation } from "../../utils/entry-location";
 import { getDistinctTagList, normalizeTagName } from "../../utils/entry-tags";
+import { getMediaTypeFromUrl } from "../../utils/media";
 import type { TripOverviewEntry, TripOverviewTrip } from "../../types/trip-overview";
 
 type TripOverviewProps = {
@@ -120,6 +121,9 @@ const TripOverview = ({
   }, [filteredEntries, selectedEntryId]);
   const mapActionLabel = t("trips.viewFullMap");
   const hasSelectedTags = selectedTags.length > 0;
+  const tripCoverIsVideo = trip.coverImageUrl
+    ? getMediaTypeFromUrl(trip.coverImageUrl) === "video"
+    : false;
 
   const toggleTag = useCallback((tag: string) => {
     setSelectedTags((prev) =>
@@ -207,15 +211,30 @@ const TripOverview = ({
           {trip.coverImageUrl ? (
             <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
               <div className="relative h-64 w-full overflow-hidden rounded-2xl bg-[#F2ECE3]">
-                <Image
-                  src={trip.coverImageUrl}
-                  alt={`${t('trips.coverFor')} ${trip.title}`}
-                  fill
-                  sizes="(min-width: 1024px) 50vw, 100vw"
-                  className="object-cover"
-                  loading="lazy"
-                  unoptimized={!isOptimizedImage(trip.coverImageUrl)}
-                />
+                {tripCoverIsVideo ? (
+                  <video
+                    src={trip.coverImageUrl}
+                    className="h-full w-full object-cover"
+                    preload="metadata"
+                    muted
+                    playsInline
+                    onLoadedMetadata={(event) => {
+                      const video = event.currentTarget;
+                      video.currentTime = 0.5;
+                    }}
+                    aria-label={`${t('trips.coverFor')} ${trip.title}`}
+                  />
+                ) : (
+                  <Image
+                    src={trip.coverImageUrl}
+                    alt={`${t('trips.coverFor')} ${trip.title}`}
+                    fill
+                    sizes="(min-width: 1024px) 50vw, 100vw"
+                    className="object-cover"
+                    loading="lazy"
+                    unoptimized={!isOptimizedImage(trip.coverImageUrl)}
+                  />
+                )}
               </div>
               <div className="space-y-3">
                 {mapContent}
@@ -320,6 +339,7 @@ const TripOverview = ({
               ) : null}
               {filteredEntries.map((entry) => {
                 const previewImage = getPreviewImage(entry);
+                const previewIsVideo = getMediaTypeFromUrl(previewImage) === "video";
                 const isSelected = resolvedSelectedEntryId === entry.id;
                 const content = (
                   <>
@@ -327,15 +347,30 @@ const TripOverview = ({
                       className="relative h-[96px] w-[140px] shrink-0 overflow-hidden rounded-xl border border-black/10 bg-[#F2ECE3]"
                       aria-hidden
                     >
-                      <Image
-                        src={previewImage}
-                        alt={`${t('trips.previewFor')} ${entry.title}`}
-                        fill
-                        sizes="140px"
-                        className="object-cover"
-                        loading="lazy"
-                        unoptimized={!isOptimizedImage(previewImage)}
-                      />
+                      {previewIsVideo ? (
+                        <video
+                          src={previewImage}
+                          className="h-full w-full object-cover"
+                          preload="metadata"
+                          muted
+                          playsInline
+                          onLoadedMetadata={(event) => {
+                            const video = event.currentTarget;
+                            video.currentTime = 0.5;
+                          }}
+                          aria-label={`${t('trips.previewFor')} ${entry.title}`}
+                        />
+                      ) : (
+                        <Image
+                          src={previewImage}
+                          alt={`${t('trips.previewFor')} ${entry.title}`}
+                          fill
+                          sizes="140px"
+                          className="object-cover"
+                          loading="lazy"
+                          unoptimized={!isOptimizedImage(previewImage)}
+                        />
+                      )}
                     </div>
                     <div className="min-w-0 flex-1">
                       <p className="text-xs uppercase tracking-[0.2em] text-[#6B635B]">

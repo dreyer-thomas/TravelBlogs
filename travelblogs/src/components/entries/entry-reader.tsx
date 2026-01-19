@@ -262,8 +262,17 @@ const EntryReader = ({
                     controls
                     preload="metadata"
                     playsInline
+                    autoPlay={isSharedView}
+                    muted={isSharedView}
                     className="h-auto w-full object-cover"
                     aria-label={heroAlt}
+                    onLoadedMetadata={(event) => {
+                      if (!isSharedView) {
+                        return;
+                      }
+                      const video = event.currentTarget;
+                      video.play().catch(() => undefined);
+                    }}
                   />
                 </div>
               ) : (

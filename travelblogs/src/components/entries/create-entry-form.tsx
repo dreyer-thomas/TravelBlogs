@@ -1190,7 +1190,7 @@ const CreateEntryForm = ({ tripId, onEntryCreated }: CreateEntryFormProps) => {
                 <button
                   type="button"
                   onClick={() => handleLocationSelect(result)}
-                  className="w-full rounded-lg px-3 py-2 text-left text-sm hover:bg-[#1F6F78]/10"
+                  className="w-full rounded-lg px-3 py-2 text-left text-sm text-[#2D2A26] hover:bg-[#1F6F78]/10"
                 >
                   {result.displayName}
                 </button>
