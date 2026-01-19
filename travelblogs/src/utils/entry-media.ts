@@ -5,6 +5,7 @@ import {
   VIDEO_MAX_BYTES,
   isVideoMimeType,
 } from "./media";
+import { uploadMediaAction } from "../actions/upload-media";
 
 export const ENTRY_MEDIA_ALLOWED_MIME_TYPES = COVER_IMAGE_ALLOWED_MIME_TYPES;
 
@@ -68,78 +69,51 @@ export const createEntryPreviewUrl = (file: File) => {
   return URL.createObjectURL(file);
 };
 
-export const uploadEntryMedia = (
+export const uploadEntryMedia = async (
   file: File,
   options: UploadOptions = {},
-) => {
+): Promise<UploadedMedia> => {
   const translate = options.translate;
-  return new Promise<UploadedMedia>((resolve, reject) => {
-    const request = new XMLHttpRequest();
-    const formData = new FormData();
 
+  try {
+    // Report progress at start (Server Actions don't support real-time progress)
+    options.onProgress?.(0);
+
+    const formData = new FormData();
     formData.append(COVER_IMAGE_FIELD_NAME, file);
 
-    request.open("POST", "/api/media/upload");
-    request.responseType = "json";
+    const result = await uploadMediaAction(formData);
 
-    if (request.upload && options.onProgress) {
-      request.upload.onprogress = (event) => {
-        if (!event.lengthComputable) {
-          return;
-        }
-        const percent = Math.round((event.loaded / event.total) * 100);
-        options.onProgress?.(percent);
-      };
+    if (result.success && result.data?.url) {
+      // Report progress at completion
+      options.onProgress?.(100);
+
+      const responseMediaType =
+        result.data.mediaType === "video" || result.data.mediaType === "image"
+          ? result.data.mediaType
+          : null;
+      const mediaType =
+        responseMediaType ?? (isVideoMimeType(file.type) ? "video" : "image");
+
+      return { url: result.data.url, mediaType };
     }
 
-    request.onerror = () => {
-      reject(
-        new Error(
-          translate
-            ? translate("entries.mediaUploadError")
-            : "Unable to upload media file.",
-        ),
-      );
-    };
-
-    request.onabort = () => {
-      reject(
-        new Error(
-          translate
-            ? translate("entries.mediaUploadCancelled")
-            : "Media upload was cancelled.",
-        ),
-      );
-    };
-
-    request.onload = () => {
-      const response =
-        typeof request.response === "object" && request.response
-          ? request.response
-          : null;
-
-      if (request.status >= 200 && request.status < 300 && response?.data?.url) {
-        const responseMediaType =
-          response?.data?.mediaType === "video" ||
-          response?.data?.mediaType === "image"
-            ? response.data.mediaType
-            : null;
-        const mediaType =
-          responseMediaType ?? (isVideoMimeType(file.type) ? "video" : "image");
-        resolve({ url: response.data.url as string, mediaType });
-        return;
-      }
-
-      const message =
-        response?.error?.message ??
-        (translate
-          ? translate("entries.mediaUploadRetryError")
-          : "Unable to upload media file. Please try again.");
-      reject(new Error(message));
-    };
-
-    request.send(formData);
-  });
+    const message =
+      result.error?.message ??
+      (translate
+        ? translate("entries.mediaUploadRetryError")
+        : "Unable to upload media file. Please try again.");
+    throw new Error(message);
+  } catch (error) {
+    if (error instanceof Error) {
+      throw error;
+    }
+    throw new Error(
+      translate
+        ? translate("entries.mediaUploadError")
+        : "Unable to upload media file.",
+    );
+  }
 };
 
 export const uploadEntryMediaBatch = async (
