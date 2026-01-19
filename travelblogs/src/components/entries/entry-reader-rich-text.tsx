@@ -1,5 +1,6 @@
 "use client";
 
+// Force recompile - video support added
 import { useMemo } from "react";
 import Image from "next/image";
 import { EditorContent, NodeViewWrapper, ReactNodeViewRenderer, useEditor } from "@tiptap/react";
@@ -7,6 +8,7 @@ import type { NodeViewProps } from "@tiptap/react";
 
 import type { EntryReaderMedia } from "../../utils/entry-reader";
 import { getTiptapExtensions } from "../../utils/tiptap-config";
+import { getMediaTypeFromUrl } from "../../utils/media";
 import EntryImage from "../../utils/tiptap-entry-image-extension";
 import EntryVideo from "../../utils/tiptap-entry-video-extension";
 
@@ -56,6 +58,8 @@ const EntryImageNodeView = (props: NodeViewProps) => {
     options.resolveAltText(mediaItem?.alt) ||
     options.fallbackAlt;
 
+  const isVideo = getMediaTypeFromUrl(imageUrl) === "video";
+
   return (
     <NodeViewWrapper className="my-5 overflow-hidden rounded-2xl border border-black/10 bg-[#F2ECE3]">
       <button
@@ -64,16 +68,30 @@ const EntryImageNodeView = (props: NodeViewProps) => {
         className="block h-full w-full focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2D2A26]"
         aria-label={options.openImageLabel}
       >
-        <Image
-          src={imageUrl}
-          alt={resolvedAlt}
-          width={mediaItem?.width ?? 1200}
-          height={mediaItem?.height ?? 800}
-          sizes="100vw"
-          className="h-auto w-full object-cover"
-          loading="lazy"
-          unoptimized={!isOptimizedImage(imageUrl)}
-        />
+        {isVideo ? (
+          <video
+            src={imageUrl}
+            className="h-auto w-full object-cover"
+            preload="metadata"
+            muted
+            playsInline
+            onLoadedMetadata={(e) => {
+              const video = e.currentTarget;
+              video.currentTime = 0.5;
+            }}
+          />
+        ) : (
+          <Image
+            src={imageUrl}
+            alt={resolvedAlt}
+            width={mediaItem?.width ?? 1200}
+            height={mediaItem?.height ?? 800}
+            sizes="100vw"
+            className="h-auto w-full object-cover"
+            loading="lazy"
+            unoptimized={!isOptimizedImage(imageUrl)}
+          />
+        )}
       </button>
     </NodeViewWrapper>
   );

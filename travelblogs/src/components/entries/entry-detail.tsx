@@ -21,6 +21,7 @@ import {
 import { detectEntryFormat, plainTextToTiptapJson } from "../../utils/entry-format";
 import type { EntryReaderMedia } from "../../utils/entry-reader";
 import { extractEntryImageNodesFromJson } from "../../utils/tiptap-image-helpers";
+import { getMediaTypeFromUrl } from "../../utils/media";
 import { useTranslation } from "../../utils/use-translation";
 import EntryReaderRichText from "./entry-reader-rich-text";
 
@@ -287,6 +288,8 @@ const EntryDetail = ({
                   );
                 }
 
+                const isVideo = getMediaTypeFromUrl(block.url) === "video";
+
                 return (
                   <div
                     key={`image-${block.url}-${index}`}
@@ -302,16 +305,30 @@ const EntryDetail = ({
                         ) + 1
                       }`}
                     >
-                      <Image
-                        src={block.url}
-                        alt={resolveAltText(block.alt)}
-                        width={1200}
-                        height={800}
-                        sizes="100vw"
-                        className="h-auto w-full object-cover"
-                        loading="lazy"
-                        unoptimized={!isOptimizedImage(block.url)}
-                      />
+                      {isVideo ? (
+                        <video
+                          src={block.url}
+                          className="h-auto w-full object-cover"
+                          preload="metadata"
+                          muted
+                          playsInline
+                          onLoadedMetadata={(e) => {
+                            const video = e.currentTarget;
+                            video.currentTime = 0.5;
+                          }}
+                        />
+                      ) : (
+                        <Image
+                          src={block.url}
+                          alt={resolveAltText(block.alt)}
+                          width={1200}
+                          height={800}
+                          sizes="100vw"
+                          className="h-auto w-full object-cover"
+                          loading="lazy"
+                          unoptimized={!isOptimizedImage(block.url)}
+                        />
+                      )}
                     </button>
                   </div>
                 );
@@ -347,32 +364,49 @@ const EntryDetail = ({
             </p>
           ) : (
             <div className="mt-4 grid gap-3 md:grid-cols-2">
-              {galleryItems.map((item) => (
-                <div
-                  key={item.id ?? item.url}
-                  className="relative h-48 overflow-hidden rounded-2xl bg-[#F2ECE3]"
-                >
-                  <button
-                    type="button"
-                    onClick={() => openViewerAtUrl(item.url)}
-                    className="relative h-full w-full focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2D2A26]"
-                    aria-label={`${t("entries.openPhoto")} ${
-                      viewerImages.findIndex(
-                        (photo) => photo.url === item.url,
-                      ) + 1
-                    }`}
+              {galleryItems.map((item) => {
+                const isVideo = getMediaTypeFromUrl(item.url) === "video";
+                return (
+                  <div
+                    key={item.id ?? item.url}
+                    className="relative h-48 overflow-hidden rounded-2xl bg-[#F2ECE3]"
                   >
-                    <Image
-                      src={item.url}
-                      alt={t("entries.entryMedia")}
-                      fill
-                      sizes="(min-width: 768px) 50vw, 100vw"
-                      className="object-cover"
-                      loading="lazy"
-                    />
-                  </button>
-                </div>
-              ))}
+                    <button
+                      type="button"
+                      onClick={() => openViewerAtUrl(item.url)}
+                      className="relative h-full w-full focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2D2A26]"
+                      aria-label={`${t("entries.openPhoto")} ${
+                        viewerImages.findIndex(
+                          (photo) => photo.url === item.url,
+                        ) + 1
+                      }`}
+                    >
+                      {isVideo ? (
+                        <video
+                          src={item.url}
+                          className="h-full w-full object-cover"
+                          preload="metadata"
+                          muted
+                          playsInline
+                          onLoadedMetadata={(e) => {
+                            const video = e.currentTarget;
+                            video.currentTime = 0.5;
+                          }}
+                        />
+                      ) : (
+                        <Image
+                          src={item.url}
+                          alt={t("entries.entryMedia")}
+                          fill
+                          sizes="(min-width: 768px) 50vw, 100vw"
+                          className="object-cover"
+                          loading="lazy"
+                        />
+                      )}
+                    </button>
+                  </div>
+                );
+              })}
             </div>
           )}
         </section>

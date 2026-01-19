@@ -1,10 +1,11 @@
 "use client";
 
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { DEFAULT_INLINE_ALT } from "../../utils/entry-content";
 import { getMediaTypeFromUrl } from "../../utils/media";
 import { useTranslation } from "../../utils/use-translation";
+import { generateVideoThumbnail } from "../../utils/video-thumbnail";
 
 export type MediaGalleryItem = {
   id?: string | null;
@@ -23,6 +24,74 @@ type MediaGalleryProps = {
 const SCROLL_AMOUNT = 320;
 
 const isOptimizedImage = (url: string) => url.startsWith("/");
+
+const VideoThumbnail = ({
+  url,
+  alt,
+}: {
+  url: string;
+  alt: string;
+}) => {
+  const [poster, setPoster] = useState<string | null>(null);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+
+  useEffect(() => {
+    let mounted = true;
+
+    generateVideoThumbnail(url, 0.5)
+      .then((thumbnailUrl) => {
+        if (mounted) {
+          console.log("Generated thumbnail for", url);
+          setPoster(thumbnailUrl);
+        }
+      })
+      .catch((error) => {
+        console.error("Failed to generate video thumbnail for", url, ":", error);
+        // If thumbnail generation fails, try to capture from the video element itself
+        if (mounted && videoRef.current) {
+          const video = videoRef.current;
+          video.currentTime = 0.5;
+        }
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, [url]);
+
+  const handleLoadedMetadata = () => {
+    // If we don't have a poster yet, try to seek to 0.5 seconds to show a frame
+    if (!poster && videoRef.current) {
+      videoRef.current.currentTime = 0.5;
+    }
+  };
+
+  return (
+    <div className="relative">
+      <video
+        ref={videoRef}
+        src={url}
+        poster={poster ?? undefined}
+        className="h-auto w-full object-cover"
+        preload="metadata"
+        muted
+        playsInline
+        aria-label={alt}
+        onLoadedMetadata={handleLoadedMetadata}
+      />
+      <div className="pointer-events-none absolute inset-0 flex items-center justify-center text-white/90">
+        <svg
+          aria-hidden="true"
+          viewBox="0 0 24 24"
+          className="h-10 w-10 drop-shadow"
+          fill="currentColor"
+        >
+          <path d="M8 5v14l11-7z" />
+        </svg>
+      </div>
+    </div>
+  );
+};
 
 const MediaGallery = ({
   items,
@@ -97,26 +166,7 @@ const MediaGallery = ({
           const isVideo = mediaType === "video";
 
           const mediaContent = isVideo ? (
-            <div className="relative">
-              <video
-                src={item.url}
-                className="h-auto w-full object-cover"
-                preload="none"
-                muted
-                playsInline
-                aria-label={resolvedAlt}
-              />
-              <div className="pointer-events-none absolute inset-0 flex items-center justify-center text-white/90">
-                <svg
-                  aria-hidden="true"
-                  viewBox="0 0 24 24"
-                  className="h-10 w-10 drop-shadow"
-                  fill="currentColor"
-                >
-                  <path d="M8 5v14l11-7z" />
-                </svg>
-              </div>
-            </div>
+            <VideoThumbnail url={item.url} alt={resolvedAlt} />
           ) : (
             <Image
               src={item.url}

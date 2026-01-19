@@ -1076,6 +1076,10 @@ const EditEntryForm = ({
                         preload="metadata"
                         muted
                         playsInline
+                        onLoadedMetadata={(e) => {
+                          const video = e.currentTarget;
+                          video.currentTime = 0.5;
+                        }}
                       />
                       <div className="pointer-events-none absolute inset-0 flex items-center justify-center text-white/90">
                         <svg

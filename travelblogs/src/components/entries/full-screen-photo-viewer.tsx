@@ -67,6 +67,8 @@ const FullScreenPhotoViewer = ({
   const [zoomScale, setZoomScale] = useState(1);
   const [progressKey, setProgressKey] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
+  const [isVideoPlaying, setIsVideoPlaying] = useState(false);
+  const [videoDuration, setVideoDuration] = useState<number | null>(null);
   const dialogRef = useRef<HTMLDivElement | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const touchStartRef = useRef<{ x: number; y: number } | null>(null);
@@ -214,7 +216,7 @@ const FullScreenPhotoViewer = ({
   ]);
 
   useEffect(() => {
-    if (!isOpen || !isSlideshow || images.length <= 1 || isPaused) {
+    if (!isOpen || !isSlideshow || images.length <= 1 || isPaused || isVideoPlaying) {
       return;
     }
     const timer = window.setTimeout(() => {
@@ -226,7 +228,7 @@ const FullScreenPhotoViewer = ({
     return () => {
       window.clearTimeout(timer);
     };
-  }, [activeIndex, images.length, isOpen, isPaused, isSlideshow]);
+  }, [activeIndex, images.length, isOpen, isPaused, isSlideshow, isVideoPlaying]);
 
   useEffect(() => {
     if (!isOpen || !isSlideshow) {
@@ -404,7 +406,7 @@ const FullScreenPhotoViewer = ({
       aria-modal="true"
       aria-label={t("entries.photoViewer")}
       onKeyDown={handleDialogKeyDown}
-      onClick={handleOverlayClick}
+      onClick={isActiveVideo ? undefined : handleOverlayClick}
       tabIndex={-1}
       style={{ backgroundColor: "#000000" }}
     >
@@ -412,6 +414,25 @@ const FullScreenPhotoViewer = ({
         @keyframes slideshowProgressFill {
           from { transform: scaleX(0); }
           to { transform: scaleX(1); }
+        }
+
+        /* Remove dark overlay from video controls completely */
+        video[data-fullscreen]::-webkit-media-controls-overlay-enclosure {
+          display: none !important;
+        }
+
+        video[data-fullscreen]::-webkit-media-controls-enclosure {
+          background: transparent !important;
+        }
+
+        video[data-fullscreen]::-webkit-media-controls-panel {
+          background-image: none !important;
+          background: rgba(0, 0, 0, 0.4) !important;
+        }
+
+        /* For other WebKit browsers */
+        video[data-fullscreen]::-webkit-media-controls {
+          filter: none !important;
         }
       `}</style>
 
@@ -455,7 +476,7 @@ const FullScreenPhotoViewer = ({
                       transformOrigin: "left",
                       transform: "scaleX(0)",
                       animation:
-                        "slideshowProgressFill 5s linear forwards",
+                        `slideshowProgressFill ${isActiveVideo && videoDuration ? videoDuration : 5}s linear forwards`,
                       animationPlayState: isPaused ? "paused" : "running",
                     }}
                   />
@@ -467,33 +488,22 @@ const FullScreenPhotoViewer = ({
       ) : null}
 
       <div className="relative z-10 flex flex-1 items-center justify-center">
-        <div
-          data-testid="photo-viewer-gesture-layer"
-          className="absolute inset-0 flex items-center justify-center"
-          onTouchStart={handleTouchStart}
-          onTouchMove={handleTouchMove}
-          onTouchEnd={handleTouchEnd}
-          style={{ touchAction: "none" }}
-        >
+        {!isActiveVideo && (
           <div
-            className="relative h-full w-full"
-            style={{
-              transform: `scale(${effectiveZoomScale})`,
-              transformOrigin: "center center",
-            }}
+            data-testid="photo-viewer-gesture-layer"
+            className="absolute inset-0 flex items-center justify-center"
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
+            style={{ touchAction: "none" }}
           >
-            {isActiveVideo ? (
-              <video
-                ref={videoRef}
-                src={activeImage.url}
-                controls
-                preload="metadata"
-                playsInline
-                className="h-full w-full object-contain"
-                onClick={(event) => event.stopPropagation()}
-                aria-label={activeImage.alt}
-              />
-            ) : (
+            <div
+              className="relative h-full w-full"
+              style={{
+                transform: `scale(${effectiveZoomScale})`,
+                transformOrigin: "center center",
+              }}
+            >
               <Image
                 src={activeImage.url}
                 alt={activeImage.alt}
@@ -504,9 +514,46 @@ const FullScreenPhotoViewer = ({
                 loading="lazy"
                 unoptimized={!isOptimizedImage(activeImage.url)}
               />
-            )}
+            </div>
           </div>
-        </div>
+        )}
+        {isActiveVideo && (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <video
+              ref={videoRef}
+              src={activeImage.url}
+              controls
+              preload="metadata"
+              playsInline
+              autoPlay={isSlideshow}
+              muted={isSlideshow}
+              data-fullscreen="true"
+              className="h-full w-full object-contain"
+              onClick={(event) => event.stopPropagation()}
+              onLoadedMetadata={(e) => {
+                const video = e.currentTarget;
+                setVideoDuration(video.duration);
+                // Force play in slideshow mode after metadata loads
+                if (isSlideshow) {
+                  video.play().catch((error) => {
+                    console.log('Autoplay failed:', error);
+                  });
+                }
+              }}
+              onPlay={() => setIsVideoPlaying(true)}
+              onPause={() => setIsVideoPlaying(false)}
+              onEnded={() => {
+                setIsVideoPlaying(false);
+                setVideoDuration(null);
+                if (isSlideshow && images.length > 1) {
+                  setActiveIndex((prev) => (prev + 1) % images.length);
+                  setZoomScale(1);
+                }
+              }}
+              aria-label={activeImage.alt}
+            />
+          </div>
+        )}
       </div>
 
     </div>,

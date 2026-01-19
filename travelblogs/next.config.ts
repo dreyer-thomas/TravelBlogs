@@ -19,6 +19,8 @@ const nextConfig: NextConfig = {
     serverActions: {
       bodySizeLimit: '100mb',
     },
+    // Increase proxy/middleware body size limit for video uploads (100MB)
+    proxyClientMaxBodySize: '100mb',
   },
 };
 

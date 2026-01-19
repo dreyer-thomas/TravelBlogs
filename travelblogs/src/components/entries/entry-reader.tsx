@@ -12,6 +12,7 @@ import type { EntryReaderData } from "../../utils/entry-reader";
 import type { EntryLocation } from "../../utils/entry-location";
 import { formatEntryLocationDisplay } from "../../utils/entry-location";
 import { getMediaTypeFromUrl } from "../../utils/media";
+import { generateVideoThumbnail } from "../../utils/video-thumbnail";
 import FullScreenPhotoViewer from "./full-screen-photo-viewer";
 import { useTranslation } from "../../utils/use-translation";
 import EntryHeroMap from "./entry-hero-map";
@@ -38,6 +39,8 @@ const EntryReader = ({
   heroMapLocations,
 }: EntryReaderProps) => {
   const { t, formatDate } = useTranslation();
+  const [heroVideoPoster, setHeroVideoPoster] = useState<string | null>(null);
+
   const resolveAltText = useCallback((alt?: string | null) => {
     if (!alt) {
       return null;
@@ -63,6 +66,27 @@ const EntryReader = ({
     : "image";
   const heroIsVideo = heroMediaType === "video";
   const heroAlt = heroMedia?.alt ?? t("entries.entryHeroMedia");
+
+  // Generate thumbnail for hero video
+  useEffect(() => {
+    if (heroIsVideo && heroMedia) {
+      let mounted = true;
+
+      generateVideoThumbnail(heroMedia.url, 0.5)
+        .then((thumbnailUrl) => {
+          if (mounted) {
+            setHeroVideoPoster(thumbnailUrl);
+          }
+        })
+        .catch((error) => {
+          console.error("Failed to generate hero video thumbnail for", heroMedia.url, ":", error);
+        });
+
+      return () => {
+        mounted = false;
+      };
+    }
+  }, [heroIsVideo, heroMedia]);
   const galleryItems = entry.media;
   const entryTitle = entry.title || t("entries.dailyEntry");
   const entryDate = formatDate(new Date(entry.createdAt));
@@ -234,6 +258,7 @@ const EntryReader = ({
                 <div className="relative z-0">
                   <video
                     src={heroMedia.url}
+                    poster={heroVideoPoster ?? undefined}
                     controls
                     preload="metadata"
                     playsInline

@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import DeleteTripModal from "./delete-trip-modal";
 import TripMap from "./trip-map";
-import { isCoverImageUrl } from "../../utils/media";
+import { isCoverImageUrl, getMediaTypeFromUrl } from "../../utils/media";
 import { extractInlineImageUrls, stripInlineImages } from "../../utils/entry-content";
 import { useTranslation } from "../../utils/use-translation";
 import { filterEntriesWithLocation } from "../../utils/entry-location";
@@ -1096,14 +1096,28 @@ const TripDetail = ({
           {trip.coverImageUrl && isCoverImageUrl(trip.coverImageUrl) ? (
             <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
               <div className="relative h-64 w-full overflow-hidden rounded-2xl bg-[#F2ECE3]">
-                <Image
-                  src={trip.coverImageUrl}
-                  alt={`Cover for ${trip.title}`}
-                  fill
-                  sizes="(min-width: 1024px) 50vw, 100vw"
-                  className="object-cover"
-                  loading="lazy"
-                />
+                {getMediaTypeFromUrl(trip.coverImageUrl) === "video" ? (
+                  <video
+                    src={trip.coverImageUrl}
+                    className="h-full w-full object-cover"
+                    preload="metadata"
+                    muted
+                    playsInline
+                    onLoadedMetadata={(e) => {
+                      const video = e.currentTarget;
+                      video.currentTime = 0.5;
+                    }}
+                  />
+                ) : (
+                  <Image
+                    src={trip.coverImageUrl}
+                    alt={`Cover for ${trip.title}`}
+                    fill
+                    sizes="(min-width: 1024px) 50vw, 100vw"
+                    className="object-cover"
+                    loading="lazy"
+                  />
+                )}
               </div>
               <div className="space-y-3">
                 {mapContent}
@@ -1525,15 +1539,29 @@ const TripDetail = ({
                         className="relative shrink-0 overflow-hidden rounded-xl border border-black/10 bg-[#F2ECE3]"
                         style={{ width: 139, height: 97 }}
                       >
-                        <Image
-                          src={cardImageUrl}
-                          alt={`${t("trips.storyCoverFor")} ${displayTitle}`}
-                          fill
-                          sizes="140px"
-                          className="object-cover"
-                          loading="lazy"
-                          unoptimized={!isOptimizedImage(cardImageUrl)}
-                        />
+                        {getMediaTypeFromUrl(cardImageUrl) === "video" ? (
+                          <video
+                            src={cardImageUrl}
+                            className="h-full w-full object-cover"
+                            preload="metadata"
+                            muted
+                            playsInline
+                            onLoadedMetadata={(e) => {
+                              const video = e.currentTarget;
+                              video.currentTime = 0.5;
+                            }}
+                          />
+                        ) : (
+                          <Image
+                            src={cardImageUrl}
+                            alt={`${t("trips.storyCoverFor")} ${displayTitle}`}
+                            fill
+                            sizes="140px"
+                            className="object-cover"
+                            loading="lazy"
+                            unoptimized={!isOptimizedImage(cardImageUrl)}
+                          />
+                        )}
                       </div>
                     ) : null}
                     <div className="min-w-0 flex-1">
