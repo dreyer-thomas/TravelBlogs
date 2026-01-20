@@ -101,7 +101,7 @@ const uploadFile = async (
     const safeName = `${prefix}-${Date.now()}-${crypto.randomUUID()}.${extension}`;
     const filePath = path.join(uploadDir, safeName);
     const buffer = Buffer.from(await file.arrayBuffer());
-    let finalBuffer = buffer;
+    let finalBuffer: Buffer = buffer;
 
     if (!isVideo) {
       try {

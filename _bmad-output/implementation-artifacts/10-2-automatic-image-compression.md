@@ -658,6 +658,7 @@ GPT-5 (Codex CLI)
 3. **AC2 Clarified:** Changed from "show UI feedback" to "server-side compression without UI feedback" since compression is fast (<1s per image)
 4. **Story Status Fixed:** Updated from "ready-for-dev" to "done" (was out of sync with sprint status)
 5. **Test Updated:** Changed EXIF stripping test to EXIF preservation test, now validates camera make/model are kept
+6. **TypeScript Fix:** Added explicit `Buffer` type annotation to `finalBuffer` in upload route to resolve build error
 
 **Issues Resolved:**
 - ✅ HIGH: EXIF metadata preservation (orientation, DateTime, camera info)
