@@ -1371,3 +1371,71 @@ Enhance media handling capabilities and user experience with better file size li
 **Source:** User request for performance optimization
 **Priority:** High - Improves page load performance
 **Story Points:** 3
+
+### Story 10.3: Slideshow Crossfade Transitions
+
+**As a** viewer watching a slideshow
+**I want** smooth crossfade transitions between images instead of hard cuts
+**So that** the slideshow experience feels more polished and professional
+
+**Acceptance Criteria:**
+
+#### AC 1: Image Crossfade Transitions
+**Given** I am watching a slideshow with multiple images
+**When** the slideshow transitions from one image to the next image
+**Then** the new image fades in over the old image with a 1-second crossfade
+**And** the transition uses CSS opacity animation for smooth performance
+**And** the crossfade effect applies only when both media are images
+
+#### AC 2: Video Hard Cut
+**Given** I am watching a slideshow that includes video files
+**When** the slideshow transitions to or from a video
+**Then** the transition is an instant hard cut (no crossfade)
+**And** the video plays normally without fade effects
+
+#### AC 3: Manual Navigation Crossfade
+**Given** I am in slideshow mode
+**When** I manually navigate using arrow keys or swipe gestures
+**Then** the image transitions use the same 1-second crossfade
+**And** the crossfade works consistently with auto-advance transitions
+
+#### AC 4: Crossfade Always Enabled
+**Given** I am using slideshow mode
+**When** the slideshow is active
+**Then** crossfade is always enabled (no user settings to toggle)
+**And** there are no UI controls to enable/disable crossfade
+
+#### AC 5: No Viewer Mode Changes
+**Given** I am in regular viewer mode (not slideshow)
+**When** I navigate between images
+**Then** navigation behavior remains unchanged (instant switching)
+**And** crossfade only applies to slideshow mode
+
+**Technical Requirements:**
+- Modify existing `full-screen-photo-viewer.tsx` component
+- Use CSS opacity transitions (no animation libraries)
+- Two-layer rendering: previous image fading out + current image fading in
+- 1 second crossfade duration with `ease-in-out` timing
+- Track `previousIndex` and `isTransitioning` state
+- Apply only to image-to-image transitions in slideshow mode
+- Videos keep hard cut behavior (no crossfade)
+- Viewer mode unchanged (no crossfade)
+
+**Architecture Constraints:**
+- No new components or files needed
+- Modify only `full-screen-photo-viewer.tsx` and its test file
+- No breaking changes to component API
+- No global CSS changes (use inline styles)
+- GPU-accelerated CSS transitions for performance
+- No new dependencies required
+
+**Testing Requirements:**
+- Unit tests for crossfade state management
+- Component tests for two-layer rendering
+- Tests for video hard cut behavior
+- Tests for viewer mode (no crossfade)
+- Manual testing on mobile devices for performance
+
+**Source:** User request for better slideshow UX
+**Priority:** Medium - UX enhancement, not critical functionality
+**Story Points:** 2

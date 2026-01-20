@@ -50,7 +50,7 @@ vi.mock("leaflet", () => ({
 
 vi.mock("next/image", () => ({
   default: (props: ImgHTMLAttributes<HTMLImageElement>) => {
-    const { fill, unoptimized, ...rest } = props;
+    const { fill, priority, unoptimized, ...rest } = props;
     return (
       <img
         {...rest}
@@ -288,26 +288,44 @@ describe("EntryDetail", () => {
       await act(async () => {});
 
       expect(screen.getByRole("dialog")).toBeInTheDocument();
-      expect(screen.getByRole("img", { name: "Entry photo" })).toHaveAttribute(
-        "src",
-        "https://example.com/photo-1700000200-media.jpg",
-      );
+      const firstImages = screen.getAllByRole("img", {
+        name: "Entry photo",
+      });
+      expect(
+        firstImages.some(
+          (img) =>
+            img.getAttribute("src") ===
+            "https://example.com/photo-1700000200-media.jpg",
+        ),
+      ).toBe(true);
 
       await act(async () => {
         vi.advanceTimersByTime(5000);
       });
-      expect(screen.getByRole("img", { name: "Entry photo" })).toHaveAttribute(
-        "src",
-        "https://example.com/photo-1700000300-media.jpg",
-      );
+      const secondImages = screen.getAllByRole("img", {
+        name: "Entry photo",
+      });
+      expect(
+        secondImages.some(
+          (img) =>
+            img.getAttribute("src") ===
+            "https://example.com/photo-1700000300-media.jpg",
+        ),
+      ).toBe(true);
 
       await act(async () => {
         vi.advanceTimersByTime(5000);
       });
-      expect(screen.getByRole("img", { name: "Entry photo" })).toHaveAttribute(
-        "src",
-        "https://example.com/photo-1700000200-media.jpg",
-      );
+      const loopImages = screen.getAllByRole("img", {
+        name: "Entry photo",
+      });
+      expect(
+        loopImages.some(
+          (img) =>
+            img.getAttribute("src") ===
+            "https://example.com/photo-1700000200-media.jpg",
+        ),
+      ).toBe(true);
     } finally {
       vi.useRealTimers();
     }

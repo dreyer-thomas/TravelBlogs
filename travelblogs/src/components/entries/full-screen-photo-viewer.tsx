@@ -69,12 +69,22 @@ const FullScreenPhotoViewer = ({
   const [isPaused, setIsPaused] = useState(false);
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
   const [videoDuration, setVideoDuration] = useState<number | null>(null);
+  const [previousIndex, setPreviousIndex] = useState<number | null>(null);
+  const [transitionPhase, setTransitionPhase] = useState<
+    "idle" | "preparing" | "active"
+  >("idle");
   const dialogRef = useRef<HTMLDivElement | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
+  const transitionTimeoutRef = useRef<number | null>(null);
+  const transitionRafRef = useRef<number | null>(null);
+  const transitionRaf2Ref = useRef<number | null>(null);
   const touchStartRef = useRef<{ x: number; y: number } | null>(null);
   const pinchStartRef = useRef<{ distance: number; scale: number } | null>(
     null,
   );
+  const activeIndexRef = useRef(activeIndex);
+  const previousIndexRef = useRef<number | null>(null);
+  const previousMediaRef = useRef<PhotoViewerImage | null>(null);
   const ignoreClickRef = useRef(false);
   const wasPausedRef = useRef(false);
   const isSlideshow = mode === "slideshow";
@@ -99,16 +109,120 @@ const FullScreenPhotoViewer = ({
     }
   }, []);
 
+  const clearTransitionTimers = useCallback(() => {
+    if (transitionTimeoutRef.current) {
+      window.clearTimeout(transitionTimeoutRef.current);
+      transitionTimeoutRef.current = null;
+    }
+    if (transitionRafRef.current) {
+      window.cancelAnimationFrame(transitionRafRef.current);
+      transitionRafRef.current = null;
+    }
+    if (transitionRaf2Ref.current) {
+      window.cancelAnimationFrame(transitionRaf2Ref.current);
+      transitionRaf2Ref.current = null;
+    }
+  }, []);
+
   useEffect(() => {
     if (!isOpen) {
       return;
     }
+    clearTransitionTimers();
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setActiveIndex(safeIndex);
     setZoomScale(1);
     setIsPaused(false);
+    setPreviousIndex(null);
+    setTransitionPhase("idle");
+    previousIndexRef.current = null;
+    previousMediaRef.current = null;
     pauseActiveVideo();
-  }, [isOpen, pauseActiveVideo, safeIndex]);
+  }, [clearTransitionTimers, isOpen, pauseActiveVideo, safeIndex]);
+
+  useEffect(() => {
+    activeIndexRef.current = activeIndex;
+  }, [activeIndex]);
+
+  useEffect(() => {
+    return () => {
+      clearTransitionTimers();
+    };
+  }, [clearTransitionTimers]);
+
+  const triggerTransition = useCallback(
+    (currentIndex: number, nextIndex: number) => {
+      if (!isSlideshow || images.length <= 1) {
+        clearTransitionTimers();
+        setPreviousIndex(null);
+        setTransitionPhase("idle");
+        previousIndexRef.current = null;
+        previousMediaRef.current = null;
+        return false;
+      }
+      const currentMedia = images[currentIndex];
+      const nextMedia = images[nextIndex];
+      if (!currentMedia || !nextMedia) {
+        clearTransitionTimers();
+        setPreviousIndex(null);
+        setTransitionPhase("idle");
+        previousIndexRef.current = null;
+        previousMediaRef.current = null;
+        return false;
+      }
+      const currentType =
+        currentMedia.mediaType ?? getMediaTypeFromUrl(currentMedia.url);
+      const nextType =
+        nextMedia.mediaType ?? getMediaTypeFromUrl(nextMedia.url);
+      if (currentType !== "image" || nextType !== "image") {
+        clearTransitionTimers();
+        setPreviousIndex(null);
+        setTransitionPhase("idle");
+        previousIndexRef.current = null;
+        previousMediaRef.current = null;
+        return false;
+      }
+      clearTransitionTimers();
+      setPreviousIndex(currentIndex);
+      previousIndexRef.current = currentIndex;
+      previousMediaRef.current = currentMedia;
+      setTransitionPhase("preparing");
+      transitionTimeoutRef.current = window.setTimeout(() => {
+        setTransitionPhase("idle");
+        setPreviousIndex(null);
+        previousIndexRef.current = null;
+        previousMediaRef.current = null;
+        transitionTimeoutRef.current = null;
+      }, 1000);
+      return true;
+    },
+    [clearTransitionTimers, images, isSlideshow],
+  );
+
+  useEffect(() => {
+    if (transitionPhase !== "preparing") {
+      return;
+    }
+    transitionRafRef.current = window.requestAnimationFrame(() => {
+      transitionRaf2Ref.current = window.requestAnimationFrame(() => {
+        setTransitionPhase("active");
+        transitionRaf2Ref.current = null;
+      });
+      transitionRafRef.current = null;
+    });
+  }, [transitionPhase]);
+
+  const updateActiveIndex = useCallback(
+    (getNextIndex: (currentIndex: number) => number) => {
+      const currentIndex = activeIndexRef.current;
+      const nextIndex = getNextIndex(currentIndex);
+      triggerTransition(currentIndex, nextIndex);
+      setActiveIndex(nextIndex);
+      setZoomScale(1);
+      pauseActiveVideo();
+    },
+    [pauseActiveVideo, triggerTransition],
+  );
 
   useEffect(() => {
     if (!isOpen) {
@@ -186,19 +300,11 @@ const FullScreenPhotoViewer = ({
       }
       if (event.key === "ArrowRight") {
         event.preventDefault();
-        setActiveIndex((prev) =>
-          clampIndex(prev + 1, images.length),
-        );
-        setZoomScale(1);
-        pauseActiveVideo();
+        updateActiveIndex((prev) => clampIndex(prev + 1, images.length));
       }
       if (event.key === "ArrowLeft") {
         event.preventDefault();
-        setActiveIndex((prev) =>
-          clampIndex(prev - 1, images.length),
-        );
-        setZoomScale(1);
-        pauseActiveVideo();
+        updateActiveIndex((prev) => clampIndex(prev - 1, images.length));
       }
     };
 
@@ -213,6 +319,7 @@ const FullScreenPhotoViewer = ({
     isSlideshow,
     onClose,
     pauseActiveVideo,
+    updateActiveIndex,
   ]);
 
   useEffect(() => {
@@ -220,15 +327,22 @@ const FullScreenPhotoViewer = ({
       return;
     }
     const timer = window.setTimeout(() => {
-      setActiveIndex((prev) =>
+      updateActiveIndex((prev) =>
         images.length === 0 ? prev : (prev + 1) % images.length,
       );
-      setZoomScale(1);
     }, 5000);
     return () => {
       window.clearTimeout(timer);
     };
-  }, [activeIndex, images.length, isOpen, isPaused, isSlideshow, isVideoPlaying]);
+  }, [
+    activeIndex,
+    images.length,
+    isOpen,
+    isPaused,
+    isSlideshow,
+    isVideoPlaying,
+    updateActiveIndex,
+  ]);
 
   useEffect(() => {
     if (!isOpen || !isSlideshow) {
@@ -260,32 +374,39 @@ const FullScreenPhotoViewer = ({
     ? images.length > 1
     : activeIndex < images.length - 1;
   const activeImage = activeMedia ?? images[activeIndex];
+  const effectivePreviousIndex =
+    previousIndex !== null ? previousIndex : previousIndexRef.current;
+  const previousMedia =
+    previousMediaRef.current ??
+    (effectivePreviousIndex !== null
+      ? images[effectivePreviousIndex] ?? null
+      : null);
+  const isTransitioning = transitionPhase !== "idle";
+  const isTransitionActive = transitionPhase === "active";
+  const shouldCrossfade =
+    isSlideshow && !isActiveVideo && previousMedia !== null && isTransitioning;
   const effectiveZoomScale = isActiveVideo ? 1 : zoomScale;
 
   const handlePrevious = () => {
     if (!canGoBack) {
       return;
     }
-    setActiveIndex((prev) =>
+    updateActiveIndex((prev) =>
       isSlideshow
         ? (prev - 1 + images.length) % images.length
         : clampIndex(prev - 1, images.length),
     );
-    setZoomScale(1);
-    pauseActiveVideo();
   };
 
   const handleNext = () => {
     if (!canGoForward) {
       return;
     }
-    setActiveIndex((prev) =>
+    updateActiveIndex((prev) =>
       isSlideshow
         ? (prev + 1) % images.length
         : clampIndex(prev + 1, images.length),
     );
-    setZoomScale(1);
-    pauseActiveVideo();
   };
 
   const handleTouchStart = (event: TouchEvent<HTMLDivElement>) => {
@@ -495,25 +616,75 @@ const FullScreenPhotoViewer = ({
             onTouchStart={handleTouchStart}
             onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}
+            data-transitioning={isTransitioning ? "true" : undefined}
+            data-previous-index={
+              previousIndex !== null ? String(previousIndex) : undefined
+            }
             style={{ touchAction: "none" }}
           >
-            <div
-              className="relative h-full w-full"
-              style={{
-                transform: `scale(${effectiveZoomScale})`,
-                transformOrigin: "center center",
-              }}
-            >
-              <Image
-                src={activeImage.url}
-                alt={activeImage.alt}
-                fill
-                sizes="100vw"
-                className="object-contain"
-                style={{ objectFit: "contain", objectPosition: "center" }}
-                loading="lazy"
-                unoptimized={!isOptimizedImage(activeImage.url)}
-              />
+            <div className="absolute inset-0">
+              {shouldCrossfade && previousMedia ? (
+                <div
+                  data-testid="photo-viewer-previous-layer"
+                  className="absolute inset-0 flex items-center justify-center"
+                  style={{
+                    opacity: isTransitionActive ? 0 : 1,
+                    transition: isTransitionActive
+                      ? "opacity 1s ease-in-out"
+                      : "none",
+                    pointerEvents: "none",
+                  }}
+                >
+                  <div className="relative h-full w-full">
+                    <Image
+                      src={previousMedia.url}
+                      alt={previousMedia.alt}
+                      fill
+                      sizes="100vw"
+                      className="object-contain"
+                      style={{ objectFit: "contain", objectPosition: "center" }}
+                      loading={isTransitioning ? "eager" : "lazy"}
+                      priority={isTransitioning ? true : undefined}
+                      unoptimized={!isOptimizedImage(previousMedia.url)}
+                    />
+                  </div>
+                </div>
+              ) : null}
+              <div
+                data-testid="photo-viewer-current-layer"
+                className="absolute inset-0 flex items-center justify-center"
+                style={{
+                  opacity: shouldCrossfade
+                    ? isTransitionActive
+                      ? 1
+                      : 0
+                    : 1,
+                  transition:
+                    shouldCrossfade && isTransitionActive
+                      ? "opacity 1s ease-in-out"
+                      : "none",
+                }}
+              >
+                <div
+                  className="relative h-full w-full"
+                  style={{
+                    transform: `scale(${effectiveZoomScale})`,
+                    transformOrigin: "center center",
+                  }}
+                >
+                  <Image
+                    src={activeImage.url}
+                    alt={activeImage.alt}
+                    fill
+                    sizes="100vw"
+                    className="object-contain"
+                    style={{ objectFit: "contain", objectPosition: "center" }}
+                    loading={isTransitioning ? "eager" : "lazy"}
+                    priority={isTransitioning ? true : undefined}
+                    unoptimized={!isOptimizedImage(activeImage.url)}
+                  />
+                </div>
+              </div>
             </div>
           </div>
         )}
@@ -546,8 +717,7 @@ const FullScreenPhotoViewer = ({
                 setIsVideoPlaying(false);
                 setVideoDuration(null);
                 if (isSlideshow && images.length > 1) {
-                  setActiveIndex((prev) => (prev + 1) % images.length);
-                  setZoomScale(1);
+                  updateActiveIndex((prev) => (prev + 1) % images.length);
                 }
               }}
               aria-label={activeImage.alt}

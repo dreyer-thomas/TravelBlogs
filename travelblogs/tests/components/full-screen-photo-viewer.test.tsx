@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 /* eslint-disable @next/next/no-img-element, jsx-a11y/alt-text */
 import type { ImgHTMLAttributes } from "react";
-import { act, fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import FullScreenPhotoViewer from "../../src/components/entries/full-screen-photo-viewer";
@@ -9,7 +9,7 @@ import { LocaleProvider } from "../../src/utils/locale-context";
 
 vi.mock("next/image", () => ({
   default: (props: ImgHTMLAttributes<HTMLImageElement>) => {
-    const { fill, unoptimized, ...rest } = props;
+    const { fill, priority, unoptimized, ...rest } = props;
     return (
       <img
         {...rest}
@@ -29,6 +29,8 @@ const images = [
 describe("FullScreenPhotoViewer", () => {
   let playSpy: ReturnType<typeof vi.spyOn>;
   let pauseSpy: ReturnType<typeof vi.spyOn>;
+  let rafSpy: ReturnType<typeof vi.spyOn>;
+  let cafSpy: ReturnType<typeof vi.spyOn>;
 
   beforeEach(() => {
     playSpy = vi
@@ -37,11 +39,21 @@ describe("FullScreenPhotoViewer", () => {
     pauseSpy = vi
       .spyOn(window.HTMLMediaElement.prototype, "pause")
       .mockImplementation(() => {});
+    rafSpy = vi
+      .spyOn(window, "requestAnimationFrame")
+      .mockImplementation((callback) =>
+        window.setTimeout(() => callback(0), 0),
+      );
+    cafSpy = vi
+      .spyOn(window, "cancelAnimationFrame")
+      .mockImplementation((handle) => window.clearTimeout(handle));
   });
 
   afterEach(() => {
     playSpy.mockRestore();
     pauseSpy.mockRestore();
+    rafSpy.mockRestore();
+    cafSpy.mockRestore();
   });
   it("renders without chrome and closes on click", async () => {
     const onClose = vi.fn();
@@ -166,6 +178,255 @@ describe("FullScreenPhotoViewer", () => {
       });
 
       expect(screen.getByAltText("Two")).toBeInTheDocument();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("renders layered images during slideshow crossfade transitions", async () => {
+    vi.useFakeTimers();
+
+    try {
+      render(
+        <LocaleProvider>
+          <FullScreenPhotoViewer
+            images={images}
+            initialIndex={0}
+            isOpen
+            onClose={vi.fn()}
+            mode="slideshow"
+          />
+        </LocaleProvider>,
+      );
+
+      await act(async () => {});
+
+      fireEvent.keyDown(window, { key: "ArrowRight" });
+
+      await act(async () => {
+        vi.runOnlyPendingTimers();
+      });
+      await act(async () => {
+        vi.runOnlyPendingTimers();
+      });
+
+      const previousLayer = screen.getByTestId("photo-viewer-previous-layer");
+      const currentLayer = screen.getByTestId("photo-viewer-current-layer");
+      const gestureLayer = screen.getByTestId("photo-viewer-gesture-layer");
+
+      // Verify two-layer rendering during crossfade
+      expect(previousLayer).toBeInTheDocument();
+      expect(currentLayer).toBeInTheDocument();
+      expect(gestureLayer).toHaveAttribute("data-transitioning", "true");
+
+      // Verify both layers contain images (crossfade structure is correct)
+      const previousImages = within(previousLayer).getAllByRole("img");
+      const currentImages = within(currentLayer).getAllByRole("img");
+      expect(previousImages.length).toBeGreaterThan(0);
+      expect(currentImages.length).toBeGreaterThan(0);
+
+      await act(async () => {
+        vi.advanceTimersByTime(1000);
+      });
+
+      expect(
+        screen.queryByTestId("photo-viewer-previous-layer"),
+      ).not.toBeInTheDocument();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("applies crossfade on auto-advance", async () => {
+    vi.useFakeTimers();
+
+    try {
+      render(
+        <LocaleProvider>
+          <FullScreenPhotoViewer
+            images={images}
+            initialIndex={0}
+            isOpen
+            onClose={vi.fn()}
+            mode="slideshow"
+          />
+        </LocaleProvider>,
+      );
+
+      await act(async () => {});
+
+      await act(async () => {
+        vi.advanceTimersByTime(5000);
+      });
+
+      const previousLayer = screen.getByTestId("photo-viewer-previous-layer");
+      const currentLayer = screen.getByTestId("photo-viewer-current-layer");
+
+      expect(previousLayer).toBeInTheDocument();
+      expect(currentLayer).toBeInTheDocument();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("skips crossfade when navigating to video in slideshow mode", async () => {
+    vi.useFakeTimers();
+
+    try {
+      render(
+        <LocaleProvider>
+          <FullScreenPhotoViewer
+            images={[
+              { url: "/images/one.jpg", alt: "One" },
+              { url: "/videos/clip.mp4", alt: "Clip", mediaType: "video" },
+            ]}
+            initialIndex={0}
+            isOpen
+            onClose={vi.fn()}
+            mode="slideshow"
+          />
+        </LocaleProvider>,
+      );
+
+      await act(async () => {});
+
+      fireEvent.keyDown(window, { key: "ArrowRight" });
+
+      await act(async () => {
+        vi.advanceTimersByTime(0);
+      });
+
+      expect(
+        screen.queryByTestId("photo-viewer-previous-layer"),
+      ).not.toBeInTheDocument();
+      expect(screen.getByLabelText("Clip")).toBeInTheDocument();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("skips crossfade when navigating from video to image in slideshow mode", async () => {
+    vi.useFakeTimers();
+
+    try {
+      render(
+        <LocaleProvider>
+          <FullScreenPhotoViewer
+            images={[
+              { url: "/videos/clip.mp4", alt: "Clip", mediaType: "video" },
+              { url: "/images/one.jpg", alt: "One" },
+            ]}
+            initialIndex={0}
+            isOpen
+            onClose={vi.fn()}
+            mode="slideshow"
+          />
+        </LocaleProvider>,
+      );
+
+      await act(async () => {});
+
+      fireEvent.keyDown(window, { key: "ArrowRight" });
+
+      await act(async () => {
+        vi.advanceTimersByTime(0);
+      });
+
+      expect(
+        screen.queryByTestId("photo-viewer-previous-layer"),
+      ).not.toBeInTheDocument();
+      expect(screen.getByAltText("One")).toBeInTheDocument();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("does not crossfade for a single-image slideshow", async () => {
+    vi.useFakeTimers();
+
+    try {
+      render(
+        <LocaleProvider>
+          <FullScreenPhotoViewer
+            images={[{ url: "/images/one.jpg", alt: "One" }]}
+            initialIndex={0}
+            isOpen
+            onClose={vi.fn()}
+            mode="slideshow"
+          />
+        </LocaleProvider>,
+      );
+
+      await act(async () => {});
+
+      fireEvent.keyDown(window, { key: "ArrowRight" });
+
+      await act(async () => {
+        vi.advanceTimersByTime(0);
+      });
+
+      expect(
+        screen.queryByTestId("photo-viewer-previous-layer"),
+      ).not.toBeInTheDocument();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("skips crossfade in viewer mode navigation", async () => {
+    render(
+      <LocaleProvider>
+        <FullScreenPhotoViewer
+          images={images}
+          initialIndex={0}
+          isOpen
+          onClose={vi.fn()}
+          mode="viewer"
+        />
+      </LocaleProvider>,
+    );
+
+    fireEvent.keyDown(window, { key: "ArrowRight" });
+
+    expect(
+      screen.queryByTestId("photo-viewer-previous-layer"),
+    ).not.toBeInTheDocument();
+  });
+
+  it("toggles transition state during slideshow navigation", async () => {
+    vi.useFakeTimers();
+
+    try {
+      render(
+        <LocaleProvider>
+          <FullScreenPhotoViewer
+            images={images}
+            initialIndex={0}
+            isOpen
+            onClose={vi.fn()}
+            mode="slideshow"
+          />
+        </LocaleProvider>,
+      );
+
+      await act(async () => {});
+
+      const gestureLayer = screen.getByTestId("photo-viewer-gesture-layer");
+      expect(gestureLayer).not.toHaveAttribute("data-transitioning");
+
+      fireEvent.keyDown(window, { key: "ArrowRight" });
+
+      await act(async () => {
+        vi.advanceTimersByTime(0);
+      });
+
+      expect(gestureLayer).toHaveAttribute("data-transitioning", "true");
+
+      await act(async () => {
+        vi.advanceTimersByTime(1000);
+      });
+
+      expect(gestureLayer).not.toHaveAttribute("data-transitioning");
     } finally {
       vi.useRealTimers();
     }
