@@ -9,6 +9,7 @@ import {
 } from "vitest";
 import { promises as fs } from "node:fs";
 import path from "node:path";
+import sharp from "sharp";
 
 const getToken = vi.hoisted(() => vi.fn());
 
@@ -18,6 +19,26 @@ vi.mock("next-auth/jwt", () => ({
 
 describe("POST /api/media/upload", () => {
   let post: (request: Request) => Promise<Response>;
+  const uploadDir = path.join(process.cwd(), "public", "uploads", "trips");
+
+  const buildImageBuffer = async (
+    width: number,
+    height: number,
+    format: "jpeg" | "png" = "jpeg",
+  ) => {
+    let pipeline = sharp({
+      create: {
+        width,
+        height,
+        channels: 3,
+        background: { r: 50, g: 60, b: 70 },
+      },
+    });
+    if (format === "png") {
+      return pipeline.png().toBuffer();
+    }
+    return pipeline.jpeg({ quality: 95 }).toBuffer();
+  };
 
   beforeAll(async () => {
     const routeModule = await import("../../../src/app/api/media/upload/route");
@@ -30,7 +51,6 @@ describe("POST /api/media/upload", () => {
   });
 
   afterAll(async () => {
-    const uploadDir = path.join(process.cwd(), "public", "uploads", "trips");
     try {
       const files = await fs.readdir(uploadDir);
       await Promise.all(
@@ -101,6 +121,66 @@ describe("POST /api/media/upload", () => {
     expect(json.data.url).toBeDefined();
     expect(json.data.mediaType).toBe("image");
     expect(json.data.location).toBeNull();
+  });
+
+  it("compresses large images before saving", async () => {
+    const buffer = await buildImageBuffer(2400, 1600);
+    const file = new File([buffer], "large-photo.jpg", {
+      type: "image/jpeg",
+    });
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const request = new Request("http://localhost:3000/api/media/upload", {
+      method: "POST",
+      body: formData,
+    });
+
+    const response = await post(request);
+    const json = await response.json();
+
+    expect(response.status).toBe(201);
+    expect(json.error).toBeNull();
+
+    const filename = json.data.url.split("/").pop();
+    const storedPath = path.join(uploadDir, filename ?? "");
+    const storedBuffer = await fs.readFile(storedPath);
+    const metadata = await sharp(storedBuffer).metadata();
+
+    expect(metadata.width).toBe(1920);
+    expect(metadata.height).toBe(1280);
+    expect(storedBuffer.length).toBeLessThan(buffer.length);
+  });
+
+  it("skips compression for small images", async () => {
+    const buffer = await buildImageBuffer(800, 600, "png");
+    const file = new File([buffer], "small-photo.png", {
+      type: "image/png",
+    });
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const request = new Request("http://localhost:3000/api/media/upload", {
+      method: "POST",
+      body: formData,
+    });
+
+    const response = await post(request);
+    const json = await response.json();
+
+    expect(response.status).toBe(201);
+    expect(json.error).toBeNull();
+
+    const filename = json.data.url.split("/").pop();
+    const storedPath = path.join(uploadDir, filename ?? "");
+    const storedBuffer = await fs.readFile(storedPath);
+    const metadata = await sharp(storedBuffer).metadata();
+
+    expect(metadata.width).toBe(800);
+    expect(metadata.height).toBe(600);
+    expect(metadata.format).toBe("png");
   });
 
   it("accepts video uploads without GPS extraction", async () => {

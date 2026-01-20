@@ -1,6 +1,7 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import path from "node:path";
 import { promises as fs } from "node:fs";
+import sharp from "sharp";
 
 import {
   COVER_IMAGE_MAX_BYTES,
@@ -40,6 +41,19 @@ const buildFile = (size: number, type: string, name = "cover") => {
   ensureFileConstructor();
   const content = new Uint8Array(size);
   return new File([content], name, { type });
+};
+
+const buildImageBuffer = async (width: number, height: number) => {
+  return sharp({
+    create: {
+      width,
+      height,
+      channels: 3,
+      background: { r: 90, g: 20, b: 50 },
+    },
+  })
+    .jpeg({ quality: 95 })
+    .toBuffer();
 };
 
 describe("POST /api/media/upload", () => {
@@ -92,6 +106,33 @@ describe("POST /api/media/upload", () => {
     const filename = body.data.url.split("/").pop();
     const storedPath = path.join(uploadRoot, "trips", filename ?? "");
     await expect(fs.stat(storedPath)).resolves.toBeDefined();
+  });
+
+  it("compresses large cover uploads before saving", async () => {
+    getToken.mockResolvedValue({ sub: "creator" });
+
+    const buffer = await buildImageBuffer(2400, 1600);
+    const formData = new FormData();
+    formData.append("file", new File([buffer], "cover.jpg", { type: "image/jpeg" }));
+
+    const request = new Request("http://localhost/api/media/upload", {
+      method: "POST",
+      body: formData,
+    });
+
+    const response = await post(request);
+    const body = await response.json();
+
+    expect(response.status).toBe(201);
+    expect(body.error).toBeNull();
+
+    const filename = body.data.url.split("/").pop();
+    const storedPath = path.join(uploadRoot, "trips", filename ?? "");
+    const storedBuffer = await fs.readFile(storedPath);
+    const metadata = await sharp(storedBuffer).metadata();
+
+    expect(metadata.width).toBe(1920);
+    expect(metadata.height).toBe(1280);
   });
 
   it("rejects non-image uploads", async () => {

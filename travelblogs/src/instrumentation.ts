@@ -3,6 +3,9 @@ export async function register() {
     const { PrismaClient } = await import("@prisma/client");
     const { PrismaBetterSqlite3 } = await import("@prisma/adapter-better-sqlite3");
     const { backfillGpsData } = await import("./utils/backfill-gps");
+    const { backfillImageCompression } = await import(
+      "./utils/backfill-image-compression",
+    );
 
     const databaseUrl = process.env.DATABASE_URL ?? "file:./prisma/dev.db";
     const databasePath = databaseUrl.replace(/^file:/, "");
@@ -11,9 +14,13 @@ export async function register() {
 
     try {
       await backfillGpsData(prisma);
+      void backfillImageCompression(prisma)
+        .catch((compressionError) => {
+          console.error("Image compression backfill failed:", compressionError);
+        })
+        .finally(() => prisma.$disconnect());
     } catch (error) {
       console.error("GPS backfill failed:", error);
-    } finally {
       await prisma.$disconnect();
     }
   }

@@ -1294,3 +1294,80 @@ Enhance media handling capabilities and user experience with better file size li
 **Source:** User request for enhanced media capabilities
 **Priority:** High - Improves core content creation experience
 **Story Points:** 5
+
+### Story 10.2: Automatic Image Compression
+
+**As a** creator
+**I want** images automatically compressed to a reasonable size during upload and on app startup
+**So that** page loads are faster and storage is optimized without sacrificing visual quality
+
+**Acceptance Criteria:**
+
+#### AC 1: Compress Images During Upload
+**Given** I am uploading a photo to an entry
+**When** the photo dimensions exceed 1920x1080 or contains HDR/unnecessary metadata
+**Then** the image is automatically compressed before saving to disk
+**And** the compressed version replaces the uploaded file
+**And** the aspect ratio is preserved during scaling
+
+#### AC 2: Upload Progress Shows Compression Phase
+**Given** I am uploading a photo that requires compression
+**When** the upload completes (100%)
+**Then** I see the existing progress indicator transition to show compression is happening
+**And** the UI does not freeze during compression
+**And** the compression happens after the upload progress reaches 100%
+
+#### AC 3: Startup Migration Compresses Existing Images
+**Given** the app starts up and there are existing uncompressed images in the system
+**When** the startup migration runs
+**Then** all existing images larger than 1920x1080 are compressed automatically
+**And** compression progress is logged to the console
+**And** the migration runs only once (uses a flag to prevent re-running)
+**And** the migration is non-blocking (server starts immediately)
+
+#### AC 4: Compression Settings
+**Given** any image compression operation
+**When** the compression executes
+**Then** the maximum dimensions are 1920x1080 (width or height, aspect ratio preserved)
+**And** JPEG quality is set to 85 (lossy compression acceptable)
+**And** HDR and unnecessary EXIF metadata are stripped (except GPS if present)
+**And** the output format is JPEG for compatibility
+
+#### AC 5: No Originals Kept
+**Given** an image has been compressed
+**When** I view the entry or check the file system
+**Then** only the compressed version exists
+**And** the original uploaded file is not stored
+
+#### AC 6: Skip Already-Compressed Images
+**Given** an image is already 1920x1080 or smaller
+**When** the compression logic processes it
+**Then** the image is not re-compressed
+**And** the file is kept as-is
+
+**Technical Requirements:**
+- Use `sharp` library for image processing (already in dependencies)
+- Maximum dimensions: 1920x1080 (preserve aspect ratio)
+- JPEG quality: 85 (lossy compression acceptable)
+- Strip HDR and unnecessary EXIF metadata (preserve GPS if present)
+- Compress during upload AND on app startup for existing images
+- Server-side compression after upload completes
+- No originals kept (replace uploaded file)
+- Follow GPS backfill pattern for startup migration
+
+**Architecture Constraints:**
+- Follow existing backfill pattern from `backfill-gps.ts`
+- Use `hasRun` flag to prevent re-running migration
+- Non-blocking startup (migration runs async)
+- Graceful error handling (log warnings, don't crash server)
+- In-place file replacement (no backup copies)
+
+**Testing Requirements:**
+- Unit tests for compression utility
+- API tests for upload compression
+- Migration tests for startup backfill
+- Manual testing for image quality and page load speed
+
+**Source:** User request for performance optimization
+**Priority:** High - Improves page load performance
+**Story Points:** 3

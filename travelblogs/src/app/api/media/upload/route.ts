@@ -13,6 +13,7 @@ import {
 } from "../../../../utils/media";
 import { ensureActiveAccount, isAdminOrCreator } from "../../../../utils/roles";
 import { extractGpsFromImage } from "../../../../utils/entry-location";
+import { compressImage } from "../../../../utils/compress-image";
 
 export const runtime = "nodejs";
 
@@ -100,9 +101,25 @@ const uploadFile = async (
     const safeName = `${prefix}-${Date.now()}-${crypto.randomUUID()}.${extension}`;
     const filePath = path.join(uploadDir, safeName);
     const buffer = Buffer.from(await file.arrayBuffer());
-    await fs.writeFile(filePath, buffer);
+    let finalBuffer = buffer;
 
-    const location = isVideo ? null : await extractGpsFromImage(buffer);
+    if (!isVideo) {
+      try {
+        const compressed = await compressImage(buffer);
+        if (compressed.wasCompressed) {
+          console.log(
+            `[Image Compression] ${file.name}: ${buffer.length} -> ${compressed.buffer.length}`,
+          );
+          finalBuffer = compressed.buffer;
+        }
+      } catch (error) {
+        console.warn("[Image Compression] Upload compression failed:", error);
+      }
+    }
+
+    await fs.writeFile(filePath, finalBuffer);
+
+    const location = isVideo ? null : await extractGpsFromImage(finalBuffer);
 
     return {
       upload: {
