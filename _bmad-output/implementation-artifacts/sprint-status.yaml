@@ -152,3 +152,10 @@ development_status:
   10-2-automatic-image-compression: done
   10-3-slideshow-crossfade-transitions: done
   epic-10-retrospective: optional
+
+  epic-11: in-progress
+  11-1-add-country-code-storage-extraction: done
+  11-2-display-flags-on-entry-cards: backlog
+  11-3-display-flags-on-entry-detail-pages: backlog
+  11-4-aggregate-trip-country-flags: backlog
+  epic-11-retrospective: optional

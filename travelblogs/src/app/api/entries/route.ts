@@ -12,6 +12,7 @@ import {
 import { canContributeToTrip, hasTripAccess } from "../../../utils/trip-access";
 import { ensureActiveAccount, isAdminOrCreator } from "../../../utils/roles";
 import { sortTagNames } from "../../../utils/tag-sort";
+import { reverseGeocode } from "../../../utils/reverse-geocode";
 
 export const runtime = "nodejs";
 
@@ -237,6 +238,17 @@ export const POST = async (request: NextRequest) => {
       },
     });
 
+    let countryCode: string | null = null;
+    let updatedAt = entry.updatedAt;
+    if (entry.latitude !== null && entry.longitude !== null) {
+      countryCode = await reverseGeocode(entry.latitude, entry.longitude);
+      updatedAt = new Date();
+      await prisma.entry.update({
+        where: { id: entry.id },
+        data: { countryCode, updatedAt },
+      });
+    }
+
     return NextResponse.json(
       {
         data: {
@@ -246,7 +258,7 @@ export const POST = async (request: NextRequest) => {
           coverImageUrl: entry.coverImageUrl,
           text: entry.text,
           createdAt: entry.createdAt.toISOString(),
-          updatedAt: entry.updatedAt.toISOString(),
+          updatedAt: updatedAt.toISOString(),
           media: entry.media.map(
             (item: { id: string; url: string; createdAt: Date }) => ({
             id: item.id,
@@ -265,6 +277,7 @@ export const POST = async (request: NextRequest) => {
                   latitude: entry.latitude,
                   longitude: entry.longitude,
                   label: entry.locationName,
+                  countryCode,
                 }
               : null,
         },
@@ -351,6 +364,7 @@ export const GET = async (request: NextRequest) => {
             latitude: number | null;
             longitude: number | null;
             locationName: string | null;
+            countryCode: string | null;
             media: { id: string; url: string; createdAt: Date }[];
             tags: { tag: { name: string } }[];
           }) => ({
@@ -373,6 +387,7 @@ export const GET = async (request: NextRequest) => {
                   latitude: entry.latitude,
                   longitude: entry.longitude,
                   label: entry.locationName,
+                  countryCode: entry.countryCode ?? null,
                 }
               : null,
         }),

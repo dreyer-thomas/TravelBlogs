@@ -17,6 +17,7 @@ import { sortTagNames } from "../../../../utils/tag-sort";
 import { removeEntryImageNodesFromJson, removeEntryVideoNodesFromJson } from "../../../../utils/tiptap-image-helpers";
 import { canContributeToTrip, hasTripAccess } from "../../../../utils/trip-access";
 import { ensureActiveAccount, isAdminOrCreator } from "../../../../utils/roles";
+import { reverseGeocode } from "../../../../utils/reverse-geocode";
 
 export const runtime = "nodejs";
 
@@ -177,6 +178,7 @@ export const GET = async (
         latitude: true,
         longitude: true,
         locationName: true,
+        countryCode: true,
         media: {
           orderBy: {
             createdAt: "asc",
@@ -279,6 +281,7 @@ export const GET = async (
                   latitude: entry.latitude,
                   longitude: entry.longitude,
                   label: entry.locationName,
+                  countryCode: entry.countryCode,
                 }
               : null,
           navigation: {
@@ -409,6 +412,9 @@ export const PATCH = async (
         ...(parsed.data.locationName !== undefined
           ? { locationName: parsed.data.locationName }
           : {}),
+        ...(parsed.data.latitude === null || parsed.data.longitude === null
+          ? { countryCode: null }
+          : {}),
         ...(nextMediaUrls !== undefined
           ? {
               media: {
@@ -453,6 +459,7 @@ export const PATCH = async (
         latitude: true,
         longitude: true,
         locationName: true,
+        countryCode: true,
         media: {
           select: {
             id: true,
@@ -471,6 +478,35 @@ export const PATCH = async (
         },
       },
     });
+
+    const coordinatesChanged =
+      parsed.data.latitude !== undefined || parsed.data.longitude !== undefined
+        ? updated.latitude !== entry.latitude ||
+          updated.longitude !== entry.longitude
+        : false;
+    const locationCleared =
+      updated.latitude === null || updated.longitude === null;
+
+    let countryCode = updated.countryCode ?? null;
+
+    if (locationCleared) {
+      if (updated.countryCode !== null) {
+        await prisma.entry.update({
+          where: { id: updated.id },
+          data: { countryCode: null },
+        });
+      }
+      countryCode = null;
+    } else if (coordinatesChanged) {
+      countryCode = await reverseGeocode(
+        updated.latitude as number,
+        updated.longitude as number,
+      );
+      await prisma.entry.update({
+        where: { id: updated.id },
+        data: { countryCode },
+      });
+    }
 
     if (removedMedia.length > 0) {
       // Only search entries in the same trip to limit scope
@@ -543,6 +579,7 @@ export const PATCH = async (
                   latitude: updated.latitude,
                   longitude: updated.longitude,
                   label: updated.locationName,
+                  countryCode,
                 }
               : null,
         },

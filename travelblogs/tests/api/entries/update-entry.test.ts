@@ -4,9 +4,14 @@ import type { PrismaClient } from "@prisma/client";
 import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
 
 const getToken = vi.hoisted(() => vi.fn());
+const reverseGeocode = vi.hoisted(() => vi.fn());
 
 vi.mock("next-auth/jwt", () => ({
   getToken,
+}));
+
+vi.mock("../../../src/utils/reverse-geocode", () => ({
+  reverseGeocode,
 }));
 
 describe("PATCH /api/entries/[id]", () => {
@@ -40,6 +45,8 @@ describe("PATCH /api/entries/[id]", () => {
   beforeEach(async () => {
     getToken.mockReset();
     getToken.mockResolvedValue({ sub: "creator" });
+    reverseGeocode.mockReset();
+    reverseGeocode.mockResolvedValue(null);
     await prisma.entryTag.deleteMany();
     await prisma.tag.deleteMany();
     await prisma.entryMedia.deleteMany();
@@ -95,6 +102,7 @@ describe("PATCH /api/entries/[id]", () => {
       latitude: 48.8566,
       longitude: 2.3522,
       label: "Paris, France",
+      countryCode: null,
     });
 
     const updatedEntry = await prisma.entry.findUnique({
@@ -104,6 +112,180 @@ describe("PATCH /api/entries/[id]", () => {
     expect(updatedEntry?.latitude).toBe(48.8566);
     expect(updatedEntry?.longitude).toBe(2.3522);
     expect(updatedEntry?.locationName).toBe("Paris, France");
+  });
+
+  it("updates country code when location changes", async () => {
+    reverseGeocode.mockResolvedValue("JP");
+
+    const trip = await prisma.trip.create({
+      data: {
+        title: "Location update trip",
+        startDate: new Date("2025-07-01"),
+        endDate: new Date("2025-07-02"),
+        ownerId: "creator",
+      },
+    });
+
+    const entry = await prisma.entry.create({
+      data: {
+        tripId: trip.id,
+        title: "Entry with location",
+        text: "Before update",
+        latitude: 35.6586,
+        longitude: 139.7454,
+        locationName: "Tokyo Tower",
+        countryCode: "US",
+        media: {
+          create: [{ url: "/uploads/entries/tokyo.jpg" }],
+        },
+      },
+    });
+
+    const request = new Request(`http://localhost/api/entries/${entry.id}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        title: entry.title,
+        text: entry.text,
+        mediaUrls: ["/uploads/entries/tokyo.jpg"],
+        latitude: 35.6762,
+        longitude: 139.6503,
+        locationName: "Tokyo",
+      }),
+    });
+
+    const response = await patch(request, { params: { id: entry.id } });
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.error).toBeNull();
+    expect(body.data.location).toEqual({
+      latitude: 35.6762,
+      longitude: 139.6503,
+      label: "Tokyo",
+      countryCode: "JP",
+    });
+    expect(reverseGeocode).toHaveBeenCalledWith(35.6762, 139.6503);
+
+    const updatedEntry = await prisma.entry.findUnique({
+      where: { id: entry.id },
+    });
+
+    expect(updatedEntry?.countryCode).toBe("JP");
+  });
+
+  it("clears country code when location is removed", async () => {
+    const trip = await prisma.trip.create({
+      data: {
+        title: "Location removal trip",
+        startDate: new Date("2025-07-03"),
+        endDate: new Date("2025-07-04"),
+        ownerId: "creator",
+      },
+    });
+
+    const entry = await prisma.entry.create({
+      data: {
+        tripId: trip.id,
+        title: "Entry with location",
+        text: "Before removal",
+        latitude: 40.7128,
+        longitude: -74.006,
+        locationName: "NYC",
+        countryCode: "US",
+        media: {
+          create: [{ url: "/uploads/entries/nyc.jpg" }],
+        },
+      },
+    });
+
+    const request = new Request(`http://localhost/api/entries/${entry.id}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        title: entry.title,
+        text: entry.text,
+        mediaUrls: ["/uploads/entries/nyc.jpg"],
+        latitude: null,
+        longitude: null,
+        locationName: null,
+      }),
+    });
+
+    const response = await patch(request, { params: { id: entry.id } });
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.error).toBeNull();
+    expect(body.data.location).toBeNull();
+    expect(reverseGeocode).not.toHaveBeenCalled();
+
+    const updatedEntry = await prisma.entry.findUnique({
+      where: { id: entry.id },
+    });
+
+    expect(updatedEntry?.countryCode).toBeNull();
+  });
+
+  it("keeps country code when location is unchanged", async () => {
+    const trip = await prisma.trip.create({
+      data: {
+        title: "Location unchanged trip",
+        startDate: new Date("2025-07-05"),
+        endDate: new Date("2025-07-06"),
+        ownerId: "creator",
+      },
+    });
+
+    const entry = await prisma.entry.create({
+      data: {
+        tripId: trip.id,
+        title: "Entry with location",
+        text: "No location change",
+        latitude: 52.52,
+        longitude: 13.405,
+        locationName: "Berlin",
+        countryCode: "DE",
+        media: {
+          create: [{ url: "/uploads/entries/berlin.jpg" }],
+        },
+      },
+    });
+
+    const request = new Request(`http://localhost/api/entries/${entry.id}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        title: "Updated title",
+        text: "Updated text",
+        mediaUrls: ["/uploads/entries/berlin.jpg"],
+      }),
+    });
+
+    const response = await patch(request, { params: { id: entry.id } });
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.error).toBeNull();
+    expect(body.data.location).toEqual({
+      latitude: 52.52,
+      longitude: 13.405,
+      label: "Berlin",
+      countryCode: "DE",
+    });
+    expect(reverseGeocode).not.toHaveBeenCalled();
+
+    const updatedEntry = await prisma.entry.findUnique({
+      where: { id: entry.id },
+    });
+
+    expect(updatedEntry?.countryCode).toBe("DE");
   });
 
   it("updates an entry with new text and media", async () => {

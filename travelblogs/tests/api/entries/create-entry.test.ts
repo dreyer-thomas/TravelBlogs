@@ -2,11 +2,15 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vites
 import { execSync } from "node:child_process";
 import type { PrismaClient } from "@prisma/client";
 import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
-
 const getToken = vi.hoisted(() => vi.fn());
+const reverseGeocode = vi.hoisted(() => vi.fn());
 
 vi.mock("next-auth/jwt", () => ({
   getToken,
+}));
+
+vi.mock("../../../src/utils/reverse-geocode", () => ({
+  reverseGeocode,
 }));
 
 describe("POST /api/entries", () => {
@@ -37,6 +41,8 @@ describe("POST /api/entries", () => {
   beforeEach(async () => {
     getToken.mockReset();
     getToken.mockResolvedValue({ sub: "creator" });
+    reverseGeocode.mockReset();
+    reverseGeocode.mockResolvedValue(null);
     await prisma.entryTag.deleteMany();
     await prisma.tag.deleteMany();
     await prisma.entryMedia.deleteMany();
@@ -84,6 +90,7 @@ describe("POST /api/entries", () => {
       latitude: 51.5055,
       longitude: -0.075406,
       label: "Tower Bridge, London, UK",
+      countryCode: null,
     });
 
     const createdEntry = await prisma.entry.findUnique({
@@ -93,6 +100,99 @@ describe("POST /api/entries", () => {
     expect(createdEntry?.latitude).toBe(51.5055);
     expect(createdEntry?.longitude).toBe(-0.075406);
     expect(createdEntry?.locationName).toBe("Tower Bridge, London, UK");
+  });
+
+  it("extracts country code for entries created with coordinates", async () => {
+    reverseGeocode.mockResolvedValue("US");
+
+    const trip = await prisma.trip.create({
+      data: {
+        title: "Country Code Trip",
+        startDate: new Date("2025-07-01"),
+        endDate: new Date("2025-07-10"),
+        ownerId: "creator",
+      },
+    });
+
+    const request = new Request("http://localhost/api/entries", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        tripId: trip.id,
+        title: "NYC entry",
+        text: "Times Square.",
+        mediaUrls: ["/uploads/entries/nyc.jpg"],
+        latitude: 40.7128,
+        longitude: -74.006,
+      }),
+    });
+
+    const response = await post(request);
+    const body = await response.json();
+
+    expect(response.status).toBe(201);
+    expect(body.error).toBeNull();
+    expect(body.data.location).toEqual({
+      latitude: 40.7128,
+      longitude: -74.006,
+      label: null,
+      countryCode: "US",
+    });
+    expect(reverseGeocode).toHaveBeenCalledWith(40.7128, -74.006);
+
+    const createdEntry = await prisma.entry.findUnique({
+      where: { id: body.data.id },
+    });
+
+    expect(createdEntry?.countryCode).toBe("US");
+  });
+
+  it("creates an entry even when reverse geocoding fails", async () => {
+    reverseGeocode.mockResolvedValue(null);
+
+    const trip = await prisma.trip.create({
+      data: {
+        title: "Geocode Failure Trip",
+        startDate: new Date("2025-07-11"),
+        endDate: new Date("2025-07-12"),
+        ownerId: "creator",
+      },
+    });
+
+    const request = new Request("http://localhost/api/entries", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        tripId: trip.id,
+        title: "Null country entry",
+        text: "No country available.",
+        mediaUrls: ["/uploads/entries/null-country.jpg"],
+        latitude: 35.6762,
+        longitude: 139.6503,
+      }),
+    });
+
+    const response = await post(request);
+    const body = await response.json();
+
+    expect(response.status).toBe(201);
+    expect(body.error).toBeNull();
+    expect(body.data.location).toEqual({
+      latitude: 35.6762,
+      longitude: 139.6503,
+      label: null,
+      countryCode: null,
+    });
+
+    const createdEntry = await prisma.entry.findUnique({
+      where: { id: body.data.id },
+    });
+
+    expect(createdEntry?.countryCode).toBeNull();
   });
 
   it("creates an entry with tags", async () => {

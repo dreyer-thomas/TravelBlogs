@@ -104,6 +104,7 @@ describe("GET /api/trips/[id]/overview", () => {
         latitude: 37.7749,
         longitude: -122.4194,
         locationName: "San Francisco",
+        countryCode: "US",
         media: {
           create: [{ url: "/uploads/entries/new.jpg" }],
         },
@@ -154,6 +155,7 @@ describe("GET /api/trips/[id]/overview", () => {
         latitude: 37.7749,
         longitude: -122.4194,
         label: "San Francisco",
+        countryCode: "US",
       },
     });
     expect(body.data.entries[1].location).toBeNull();

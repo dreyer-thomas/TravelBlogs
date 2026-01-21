@@ -7,6 +7,7 @@ export type EntryLocation = {
   latitude: number;
   longitude: number;
   label?: string | null;
+  countryCode?: string | null;
 };
 
 export type EntryWithLocation = {

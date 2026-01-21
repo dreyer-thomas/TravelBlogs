@@ -6,6 +6,9 @@ export async function register() {
     const { backfillImageCompression } = await import(
       "./utils/backfill-image-compression",
     );
+    const { backfillCountryCodes } = await import(
+      "./utils/backfill-country-codes",
+    );
 
     const databaseUrl = process.env.DATABASE_URL ?? "file:./prisma/dev.db";
     const databasePath = databaseUrl.replace(/^file:/, "");
@@ -17,6 +20,10 @@ export async function register() {
       void backfillImageCompression(prisma)
         .catch((compressionError) => {
           console.error("Image compression backfill failed:", compressionError);
+        })
+        .then(() => backfillCountryCodes(prisma))
+        .catch((countryError) => {
+          console.error("Country code backfill failed:", countryError);
         })
         .finally(() => prisma.$disconnect());
     } catch (error) {

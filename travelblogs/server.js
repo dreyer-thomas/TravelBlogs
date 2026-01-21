@@ -60,6 +60,7 @@ const startHttpsServer = async () => {
     const { PrismaBetterSqlite3 } = require("@prisma/adapter-better-sqlite3");
     const { backfillGpsData } = require("./src/utils/backfill-gps");
     const { backfillImageCompression } = require("./src/utils/backfill-image-compression");
+    const { backfillCountryCodes } = require("./src/utils/backfill-country-codes");
 
     const databaseUrl = process.env.DATABASE_URL ?? "file:./prisma/dev.db";
     const databasePath = databaseUrl.replace(/^file:/, "");
@@ -70,6 +71,10 @@ const startHttpsServer = async () => {
     void backfillImageCompression(prisma)
       .catch((compressionError) => {
         console.error("Image compression backfill failed:", compressionError);
+      })
+      .then(() => backfillCountryCodes(prisma))
+      .catch((countryError) => {
+        console.error("Country code backfill failed:", countryError);
       })
       .finally(() => prisma.$disconnect());
   } catch (error) {
