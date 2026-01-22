@@ -132,6 +132,7 @@ export const GET = async (
               latitude: number | null;
               longitude: number | null;
               locationName: string | null;
+              countryCode: string | null;
               media: { url: string }[];
               tags: { tag: { name: string } }[];
             }) => ({
