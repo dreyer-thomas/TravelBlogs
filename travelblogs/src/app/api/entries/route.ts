@@ -242,7 +242,9 @@ export const POST = async (request: NextRequest) => {
     let countryCode: string | null = null;
     let updatedAt = entry.updatedAt;
     if (entry.latitude !== null && entry.longitude !== null) {
-      countryCode = await reverseGeocode(entry.latitude, entry.longitude);
+      const latitude = entry.latitude;
+      const longitude = entry.longitude;
+      countryCode = await reverseGeocode(latitude, longitude);
       updatedAt = new Date();
       await prisma.entry.update({
         where: { id: entry.id },
@@ -252,8 +254,8 @@ export const POST = async (request: NextRequest) => {
       void (async () => {
         try {
           const weatherData = await fetchHistoricalWeather(
-            entry.latitude,
-            entry.longitude,
+            latitude,
+            longitude,
             createdAt,
           );
           if (weatherData) {
