@@ -23,6 +23,7 @@ import { detectEntryFormat, plainTextToTiptapJson } from "../../utils/entry-form
 import type { EntryReaderMedia } from "../../utils/entry-reader";
 import { extractEntryImageNodesFromJson } from "../../utils/tiptap-image-helpers";
 import { getMediaTypeFromUrl } from "../../utils/media";
+import { formatWeatherDisplay } from "../../utils/weather-display";
 import { useTranslation } from "../../utils/use-translation";
 import EntryReaderRichText from "./entry-reader-rich-text";
 
@@ -42,6 +43,9 @@ type EntryData = {
   updatedAt: string;
   media: EntryMedia[];
   location?: EntryLocation | null;
+  weatherCondition?: string | null;
+  weatherTemperature?: number | null;
+  weatherIconCode?: string | null;
 };
 
 type EntryMapLocation = {
@@ -167,6 +171,22 @@ const EntryDetail = ({
         : null,
     [entry.location?.countryCode, locale],
   );
+  const weatherDisplay = useMemo(
+    () =>
+      formatWeatherDisplay(
+        entry.weatherCondition ?? null,
+        entry.weatherTemperature ?? null,
+        entry.weatherIconCode ?? null,
+        locale,
+      ),
+    [
+      entry.weatherCondition,
+      entry.weatherTemperature,
+      entry.weatherIconCode,
+      locale,
+    ],
+  );
+  const showLocationMeta = Boolean(countryFlag || countryName || weatherDisplay);
   const entryMapLocations = useMemo(() => {
     if (!entry.location) {
       return [];
@@ -268,12 +288,20 @@ const EntryDetail = ({
               <p className="text-xs uppercase tracking-[0.2em] text-[#6B635B]">
                 {formatDate(new Date(entry.createdAt))}
               </p>
-              {countryFlag ? (
+              {showLocationMeta ? (
                 <div className="mt-2 flex flex-wrap items-center gap-2 text-lg text-[#2D2A26]">
-                  <span className="text-2xl leading-none" aria-hidden="true">
-                    {countryFlag}
-                  </span>
+                  {countryFlag ? (
+                    <span className="text-2xl leading-none" aria-hidden="true">
+                      {countryFlag}
+                    </span>
+                  ) : null}
                   {countryName ? <span>{countryName}</span> : null}
+                  {weatherDisplay ? (
+                    <span className="flex items-center gap-1">
+                      <span aria-hidden="true">{weatherDisplay.icon}</span>
+                      <span>{weatherDisplay.temperature}</span>
+                    </span>
+                  ) : null}
                 </div>
               ) : null}
               <h1 className="mt-1 text-3xl font-semibold text-[#2D2A26]">

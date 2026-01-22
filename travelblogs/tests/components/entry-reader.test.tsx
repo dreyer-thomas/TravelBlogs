@@ -822,6 +822,149 @@ describe("EntryReader", () => {
     }
   });
 
+  it("renders shared weather details in English locale", () => {
+    const originalLanguage = navigator.language;
+    Object.defineProperty(window.navigator, "language", {
+      value: "en-US",
+      configurable: true,
+    });
+
+    try {
+      render(
+        <LocaleProvider initialLocale="en">
+          <EntryReader
+            isSharedView
+            entry={{
+              id: "entry-weather-shared-en",
+              title: "Desert sun",
+              body: "Bright skies.",
+              createdAt: "2025-05-03T12:00:00.000Z",
+              tags: [],
+              media: [
+                {
+                  id: "media-weather-en",
+                  url: "https://example.com/hero-weather.jpg",
+                  width: 1600,
+                  height: 1000,
+                },
+              ],
+              location: {
+                latitude: 36.1699,
+                longitude: -115.1398,
+                label: "Las Vegas",
+                countryCode: "US",
+              },
+              weatherCondition: "Clear",
+              weatherTemperature: 24,
+              weatherIconCode: "0",
+            }}
+          />
+        </LocaleProvider>,
+      );
+
+      expect(screen.getByText("☀️")).toBeInTheDocument();
+      expect(screen.getByText("75°F")).toBeInTheDocument();
+    } finally {
+      Object.defineProperty(window.navigator, "language", {
+        value: originalLanguage,
+        configurable: true,
+      });
+    }
+  });
+
+  it("renders shared weather details in German locale", () => {
+    const originalLanguage = navigator.language;
+    Object.defineProperty(window.navigator, "language", {
+      value: "de-DE",
+      configurable: true,
+    });
+    const countryName = countryCodeToName("DE", "de");
+
+    try {
+      render(
+        <LocaleProvider initialLocale="de">
+          <EntryReader
+            isSharedView
+            entry={{
+              id: "entry-weather-shared-de",
+              title: "Berlin breeze",
+              body: "Cool morning.",
+              createdAt: "2025-05-03T12:00:00.000Z",
+              tags: [],
+              media: [
+                {
+                  id: "media-weather-de",
+                  url: "https://example.com/hero-weather-de.jpg",
+                  width: 1600,
+                  height: 1000,
+                },
+              ],
+              location: {
+                latitude: 52.52,
+                longitude: 13.405,
+                label: "Berlin",
+                countryCode: "DE",
+              },
+              weatherCondition: "Clear",
+              weatherTemperature: 24,
+              weatherIconCode: "0",
+            }}
+          />
+        </LocaleProvider>,
+      );
+
+      expect(screen.getByText("☀️")).toBeInTheDocument();
+      expect(screen.getByText("24°C")).toBeInTheDocument();
+      if (countryName) {
+        const locationMeta =
+          screen.getByText(countryName).parentElement?.parentElement;
+        expect(locationMeta).toContainElement(screen.getByText("24°C"));
+      }
+    } finally {
+      Object.defineProperty(window.navigator, "language", {
+        value: originalLanguage,
+        configurable: true,
+      });
+    }
+  });
+
+  it("hides shared weather when data is missing", () => {
+    render(
+      <LocaleProvider initialLocale="en">
+        <EntryReader
+          isSharedView
+          entry={{
+            id: "entry-weather-shared-missing",
+            title: "Cloudy",
+            body: "No weather data.",
+            createdAt: "2025-05-03T12:00:00.000Z",
+            tags: [],
+            media: [
+              {
+                id: "media-weather-missing",
+                url: "https://example.com/hero-weather-missing.jpg",
+                width: 1600,
+                height: 1000,
+              },
+            ],
+            location: {
+              latitude: 52.52,
+              longitude: 13.405,
+              label: "Berlin",
+              countryCode: "DE",
+            },
+            weatherCondition: null,
+            weatherTemperature: 24,
+            weatherIconCode: "0",
+          }}
+        />
+      </LocaleProvider>,
+    );
+
+    expect(screen.queryByText("☀️")).not.toBeInTheDocument();
+    expect(screen.queryByText("75°F")).not.toBeInTheDocument();
+  });
+
   it("does not render a country flag when no country code exists", () => {
     const flag = countryCodeToFlag("US");
     if (!flag) {

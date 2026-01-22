@@ -19,6 +19,8 @@ import EntryHeroMap from "./entry-hero-map";
 import TripMap from "../trips/trip-map";
 import EntryReaderRichText from "./entry-reader-rich-text";
 import { countryCodeToFlag, countryCodeToName } from "../../utils/country-flag";
+import { formatWeatherDisplay } from "../../utils/weather-display";
+import { detectBrowserLocale } from "../../utils/i18n";
 
 type EntryReaderProps = {
   entry: EntryReaderData;
@@ -102,6 +104,26 @@ const EntryReader = ({
         : null,
     [entry.location?.countryCode, locale],
   );
+  const weatherLocale = useMemo(
+    () => (isSharedView ? detectBrowserLocale() : locale),
+    [isSharedView, locale],
+  );
+  const weatherDisplay = useMemo(
+    () =>
+      formatWeatherDisplay(
+        entry.weatherCondition ?? null,
+        entry.weatherTemperature ?? null,
+        entry.weatherIconCode ?? null,
+        weatherLocale,
+      ),
+    [
+      entry.weatherCondition,
+      entry.weatherTemperature,
+      entry.weatherIconCode,
+      weatherLocale,
+    ],
+  );
+  const showLocationMeta = Boolean(countryFlag || countryName || weatherDisplay);
   const showSharedHeroOverlay = isSharedView;
   const hasTags = entry.tags.length > 0;
   const entryBody = entry.body ?? "";
@@ -257,12 +279,20 @@ const EntryReader = ({
             <p className="text-xs uppercase tracking-[0.2em] text-[#6B635B]">
               {entryDate}
             </p>
-            {countryFlag ? (
+            {showLocationMeta ? (
               <div className="mt-3 flex flex-wrap items-center gap-2 text-lg text-[#2D2A26]">
-                <span className="text-2xl leading-none" aria-hidden="true">
-                  {countryFlag}
-                </span>
+                {countryFlag ? (
+                  <span className="text-2xl leading-none" aria-hidden="true">
+                    {countryFlag}
+                  </span>
+                ) : null}
                 {countryName ? <span>{countryName}</span> : null}
+                {weatherDisplay ? (
+                  <span className="flex items-center gap-1">
+                    <span aria-hidden="true">{weatherDisplay.icon}</span>
+                    <span>{weatherDisplay.temperature}</span>
+                  </span>
+                ) : null}
               </div>
             ) : null}
             <h1 className="mt-2 text-4xl font-semibold text-[#2D2A26] sm:text-5xl">
@@ -330,12 +360,22 @@ const EntryReader = ({
                     <p className="text-xs uppercase tracking-[0.3em] text-white drop-shadow-sm">
                       {entryDate}
                     </p>
-                    {countryFlag ? (
-                      <div className="mt-2 flex flex-wrap items-center gap-2 text-lg text-white">
-                        <span className="text-2xl leading-none" aria-hidden="true">
-                          {countryFlag}
-                        </span>
-                        {countryName ? <span>{countryName}</span> : null}
+                    {showLocationMeta ? (
+                      <div className="mt-2 flex w-full flex-wrap items-center gap-2 text-lg text-white">
+                        <div className="flex flex-wrap items-center gap-2">
+                          {countryFlag ? (
+                            <span className="text-2xl leading-none" aria-hidden="true">
+                              {countryFlag}
+                            </span>
+                          ) : null}
+                          {countryName ? <span>{countryName}</span> : null}
+                        </div>
+                        {weatherDisplay ? (
+                          <span className="ml-auto flex items-center gap-1">
+                            <span aria-hidden="true">{weatherDisplay.icon}</span>
+                            <span>{weatherDisplay.temperature}</span>
+                          </span>
+                        ) : null}
                       </div>
                     ) : null}
                     <h1 className="mt-1 text-3xl font-semibold text-white drop-shadow-sm sm:text-4xl">

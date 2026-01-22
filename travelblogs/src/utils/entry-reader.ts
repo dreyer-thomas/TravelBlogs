@@ -18,6 +18,9 @@ export type EntryApiData = {
   tags?: string[];
   location?: EntryLocation | null;
   navigation?: EntryApiNavigation;
+  weatherCondition?: string | null;
+  weatherTemperature?: number | null;
+  weatherIconCode?: string | null;
 };
 
 export type EntryApiNavigation = {
@@ -56,6 +59,9 @@ export type EntryReaderData = {
   tags: string[];
   location?: EntryLocation | null;
   navigation?: EntryReaderNavigation;
+  weatherCondition?: string | null;
+  weatherTemperature?: number | null;
+  weatherIconCode?: string | null;
 };
 
 const imageExtensions = new Set(["jpg", "jpeg", "png", "webp", "gif", "avif"]);
@@ -109,6 +115,9 @@ export const mapEntryToReader = (entry: EntryApiData): EntryReaderData => {
       alt: findInlineImageAlt(entry.text, item.url),
     })),
     location: entry.location ?? null,
+    weatherCondition: entry.weatherCondition ?? null,
+    weatherTemperature: entry.weatherTemperature ?? null,
+    weatherIconCode: entry.weatherIconCode ?? null,
     navigation: {
       previousEntryId: entry.navigation?.previousEntryId ?? null,
       nextEntryId: entry.navigation?.nextEntryId ?? null,

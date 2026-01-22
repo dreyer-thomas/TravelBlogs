@@ -13,6 +13,7 @@ import { canContributeToTrip, hasTripAccess } from "../../../utils/trip-access";
 import { ensureActiveAccount, isAdminOrCreator } from "../../../utils/roles";
 import { sortTagNames } from "../../../utils/tag-sort";
 import { reverseGeocode } from "../../../utils/reverse-geocode";
+import { fetchHistoricalWeather } from "../../../utils/fetch-weather";
 
 export const runtime = "nodejs";
 
@@ -247,6 +248,28 @@ export const POST = async (request: NextRequest) => {
         where: { id: entry.id },
         data: { countryCode, updatedAt },
       });
+
+      void (async () => {
+        try {
+          const weatherData = await fetchHistoricalWeather(
+            entry.latitude,
+            entry.longitude,
+            createdAt,
+          );
+          if (weatherData) {
+            await prisma.entry.update({
+              where: { id: entry.id },
+              data: {
+                weatherCondition: weatherData.condition,
+                weatherTemperature: weatherData.temperature,
+                weatherIconCode: weatherData.iconCode,
+              },
+            });
+          }
+        } catch (error) {
+          console.error("Failed to fetch weather for entry", error);
+        }
+      })();
     }
 
     return NextResponse.json(

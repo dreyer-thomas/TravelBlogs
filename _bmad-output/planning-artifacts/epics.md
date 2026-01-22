@@ -3468,3 +3468,236 @@ Extract country information from entry coordinates and display country flags thr
 **Story Points:** 3
 
 ---
+## Epic 12: Historical Weather Data
+
+Display historical weather conditions (icon + temperature) for each entry based on the date and location of the story.
+
+**Business Value:** Enrich travel memories with contextual weather information, helping readers understand the conditions during the trip.
+
+**Dependencies:** Epic 11 (Country Flags) - requires location data (lat/long) and date fields
+
+### Story 12.1: Add Weather Fields to Database Schema
+
+**As a** developer
+**I want to** add weather data fields to the Entry model
+**So that** I can store historical weather information for each entry
+
+**Acceptance Criteria:**
+
+#### AC 1: Database Schema Update
+**Given** the Entry model in Prisma schema
+**When** I add weather fields
+**Then** the following optional fields are added:
+- `weatherCondition` (String, optional) - e.g., "Clear", "Cloudy", "Rain"
+- `weatherTemperature` (Float, optional) - temperature in Celsius
+- `weatherIconCode` (String, optional) - weather icon code from API
+
+#### AC 2: Database Migration
+**Given** the schema has been updated
+**When** I generate and run the migration
+**Then** the database is updated without data loss
+**And** existing entries have null weather fields
+
+**Technical Requirements:**
+- Update `travelblogs/prisma/schema.prisma`
+- Add three optional fields to Entry model:
+  - `weatherCondition String?`
+  - `weatherTemperature Float?`
+  - `weatherIconCode String?`
+- Generate migration: `npx prisma migrate dev --name add_weather_fields`
+- Run migration to update database
+
+**Testing Requirements:**
+- Migration runs successfully
+- Existing entries preserved with null weather fields
+- New entries can store weather data
+
+**Source:** Foundation for weather feature
+**Priority:** Critical - Required for all weather stories
+**Story Points:** 1
+
+### Story 12.2: Create Weather Backfill Utility
+
+**As a** developer
+**I want to** fetch and store historical weather data for all existing entries
+**So that** all entries have weather information without manual API calls
+
+**Acceptance Criteria:**
+
+#### AC 1: Weather Fetching Function
+**Given** an entry has a date and location (lat/long)
+**When** I call the weather fetch function
+**Then** it queries Open-Meteo API for historical weather
+**And** returns temperature and weather condition code
+
+#### AC 2: Backfill Script
+**Given** entries exist in the database
+**When** I run the backfill script
+**Then** it processes all entries with location data
+**And** fetches historical weather for each entry's date/location
+**And** updates the database with weather data
+
+#### AC 3: Error Handling
+**Given** an entry has no location data or API fails
+**When** the backfill script processes it
+**Then** it skips that entry gracefully
+**And** logs the skip reason
+**And** continues processing other entries
+
+#### AC 4: Rate Limiting
+**Given** the backfill script is processing many entries
+**When** making API requests
+**Then** it respects rate limits (max 1 request/second)
+**And** doesn't overwhelm the free API tier
+
+**Technical Requirements:**
+- Create utility file: `travelblogs/src/utils/fetch-weather.ts`
+  - Function: `fetchHistoricalWeather(lat: number, lon: number, date: Date): Promise<WeatherData | null>`
+  - Uses Open-Meteo API: `https://archive-api.open-meteo.com/v1/archive`
+  - Query params: `latitude`, `longitude`, `start_date`, `end_date`, `daily=temperature_2m_max,weathercode`
+  - Returns: `{ temperature: number, condition: string, iconCode: string }`
+- Create backfill script: `travelblogs/src/utils/backfill-weather.ts`
+  - Fetch all entries with `latitude` and `longitude`
+  - For each entry, call `fetchHistoricalWeather()`
+  - Update entry with weather data
+  - Add delay between requests (1000ms)
+- Weather icon code mapping (WMO Weather interpretation codes):
+  - 0: Clear sky → "☀️"
+  - 1-3: Partly cloudy → "⛅"
+  - 45,48: Fog → "🌫️"
+  - 51-67: Rain → "🌧️"
+  - 71-77: Snow → "❄️"
+  - 80-99: Thunderstorm → "⛈️"
+
+**Testing Requirements:**
+- Weather fetch function returns correct data for known date/location
+- Backfill script processes all entries
+- Entries without location are skipped
+- API errors are handled gracefully
+- Rate limiting prevents API overload
+
+**Source:** Data population for weather display
+**Priority:** High - Required before UI display
+**Story Points:** 5
+
+### Story 12.3: Display Weather on Entry Detail Pages
+
+**As a** viewer
+**I want to** see the weather conditions on entry detail pages
+**So that** I know what the weather was like during that part of the trip
+
+**Acceptance Criteria:**
+
+#### AC 1: Weather Display Next to Country Flag
+**Given** I am viewing an entry detail page
+**And** the entry has weather data
+**When** the page loads
+**Then** I see the weather icon and temperature displayed to the right of the country flag and country name
+**And** the format is: "🇺🇸 United States  ☀️ 75°F" (for English)
+**And** the format is: "🇺🇸 United States  ☀️ 24°C" (for German)
+
+#### AC 2: Temperature Unit Based on Language
+**Given** I am viewing an entry
+**And** my language is set to English
+**When** the weather is displayed
+**Then** the temperature is shown in Fahrenheit
+
+**Given** my language is set to German
+**When** the weather is displayed
+**Then** the temperature is shown in Celsius
+
+#### AC 3: Hide Weather if Not Available
+**Given** an entry has no weather data
+**When** the entry detail page loads
+**Then** no weather icon or temperature is displayed
+**And** only the country flag and name are shown
+
+#### AC 4: Weather Display on Shared Entry Pages
+**Given** I am viewing a shared entry page
+**And** the entry has weather data
+**When** the page loads
+**Then** I see the same weather display as in authenticated view
+**And** temperature unit matches the viewer's browser language
+
+**Technical Requirements:**
+- Update `travelblogs/src/components/entries/entry-detail.tsx`
+  - Add weather display after country name (lines ~271-278)
+  - Format: `{countryFlag} {countryName}  {weatherIcon} {temperature}°{unit}`
+- Update `travelblogs/src/components/entries/entry-reader.tsx` (shared view)
+  - Same weather display logic
+- Create utility: `travelblogs/src/utils/weather-display.ts`
+  - Function: `formatTemperature(tempCelsius: number, locale: string): string`
+    - Convert to Fahrenheit if locale is 'en' or 'en-US'
+    - Return Celsius for 'de' or other locales
+    - Formula: F = (C × 9/5) + 32
+  - Function: `getWeatherIcon(iconCode: string): string`
+    - Map WMO code to emoji icon
+- Pass locale from Next.js i18n or browser language
+
+**Testing Requirements:**
+- Weather displays correctly next to country flag
+- Fahrenheit shown for English locale
+- Celsius shown for German locale
+- No weather shown if data is missing
+- Shared pages display weather correctly
+
+**Source:** Weather visualization for users
+**Priority:** High
+**Story Points:** 3
+
+### Story 12.5: Auto-Fetch Weather for New Entries
+
+**As a** creator
+**I want** weather data to be automatically fetched when I create a new entry with location
+**So that** I don't need to manually run backfill scripts for new content
+
+**Acceptance Criteria:**
+
+#### AC 1: Weather Fetched on Entry Creation
+**Given** I create a new entry with location (lat/long)
+**When** the entry is saved
+**Then** the system automatically fetches historical weather for that date/location
+**And** stores the weather data in the database
+
+#### AC 2: Weather Updated When Location Changes
+**Given** I edit an existing entry and change the location
+**When** I save the entry
+**Then** the system fetches new weather data for the updated location
+**And** updates the weather fields in the database
+
+#### AC 3: Weather Cleared When Location Removed
+**Given** I edit an entry and remove the location
+**When** I save the entry
+**Then** the weather fields are cleared (set to null)
+
+#### AC 4: Graceful Handling of API Failures
+**Given** I create/update an entry with location
+**And** the weather API is unavailable or fails
+**When** the entry is saved
+**Then** the entry is still saved successfully
+**And** weather fields remain null
+**And** an error is logged (but not shown to user)
+
+**Technical Requirements:**
+- Update `travelblogs/src/app/api/entries/route.ts` (POST endpoint)
+  - After reverse geocoding (lines 241-250), call `fetchHistoricalWeather()`
+  - Store weather data in entry creation
+- Update `travelblogs/src/app/api/entries/[id]/route.ts` (PATCH endpoint)
+  - When location changes (lines 500-509), fetch new weather data
+  - When location is removed (lines 492-499), clear weather fields
+- Reuse `fetchHistoricalWeather()` function from Story 12.2
+- Handle API errors gracefully (try/catch, log but don't throw)
+- Weather fetch should not block entry save operation
+
+**Testing Requirements:**
+- New entries with location get weather data
+- Editing location updates weather data
+- Removing location clears weather data
+- Entry saves successfully even if weather API fails
+- No user-facing errors if weather fetch fails
+
+**Source:** Automated weather data management
+**Priority:** High - Ensures ongoing data population
+**Story Points:** 3
+
+---

@@ -18,6 +18,7 @@ import { removeEntryImageNodesFromJson, removeEntryVideoNodesFromJson } from "..
 import { canContributeToTrip, hasTripAccess } from "../../../../utils/trip-access";
 import { ensureActiveAccount, isAdminOrCreator } from "../../../../utils/roles";
 import { reverseGeocode } from "../../../../utils/reverse-geocode";
+import { fetchHistoricalWeather } from "../../../../utils/fetch-weather";
 
 export const runtime = "nodejs";
 
@@ -490,12 +491,15 @@ export const PATCH = async (
     let countryCode = updated.countryCode ?? null;
 
     if (locationCleared) {
-      if (updated.countryCode !== null) {
-        await prisma.entry.update({
-          where: { id: updated.id },
-          data: { countryCode: null },
-        });
-      }
+      await prisma.entry.update({
+        where: { id: updated.id },
+        data: {
+          countryCode: null,
+          weatherCondition: null,
+          weatherTemperature: null,
+          weatherIconCode: null,
+        },
+      });
       countryCode = null;
     } else if (coordinatesChanged) {
       countryCode = await reverseGeocode(
@@ -504,8 +508,35 @@ export const PATCH = async (
       );
       await prisma.entry.update({
         where: { id: updated.id },
-        data: { countryCode },
+        data: {
+          countryCode,
+          weatherCondition: null,
+          weatherTemperature: null,
+          weatherIconCode: null,
+        },
       });
+
+      void (async () => {
+        try {
+          const weatherData = await fetchHistoricalWeather(
+            updated.latitude as number,
+            updated.longitude as number,
+            updated.createdAt,
+          );
+          if (weatherData) {
+            await prisma.entry.update({
+              where: { id: updated.id },
+              data: {
+                weatherCondition: weatherData.condition,
+                weatherTemperature: weatherData.temperature,
+                weatherIconCode: weatherData.iconCode,
+              },
+            });
+          }
+        } catch (error) {
+          console.error("Failed to fetch weather for entry update", error);
+        }
+      })();
     }
 
     if (removedMedia.length > 0) {

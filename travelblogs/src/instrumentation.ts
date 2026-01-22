@@ -9,6 +9,7 @@ export async function register() {
     const { backfillCountryCodes } = await import(
       "./utils/backfill-country-codes",
     );
+    const { backfillWeather } = await import("./utils/backfill-weather");
 
     const databaseUrl = process.env.DATABASE_URL ?? "file:./prisma/dev.db";
     const databasePath = databaseUrl.replace(/^file:/, "");
@@ -24,6 +25,10 @@ export async function register() {
         .then(() => backfillCountryCodes(prisma))
         .catch((countryError) => {
           console.error("Country code backfill failed:", countryError);
+        })
+        .then(() => backfillWeather(prisma))
+        .catch((weatherError) => {
+          console.error("Weather backfill failed:", weatherError);
         })
         .finally(() => prisma.$disconnect());
     } catch (error) {

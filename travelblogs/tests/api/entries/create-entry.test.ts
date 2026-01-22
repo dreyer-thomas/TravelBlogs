@@ -4,6 +4,7 @@ import type { PrismaClient } from "@prisma/client";
 import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
 const getToken = vi.hoisted(() => vi.fn());
 const reverseGeocode = vi.hoisted(() => vi.fn());
+const fetchHistoricalWeather = vi.hoisted(() => vi.fn());
 
 vi.mock("next-auth/jwt", () => ({
   getToken,
@@ -13,10 +14,28 @@ vi.mock("../../../src/utils/reverse-geocode", () => ({
   reverseGeocode,
 }));
 
+vi.mock("../../../src/utils/fetch-weather", () => ({
+  fetchHistoricalWeather,
+}));
+
 describe("POST /api/entries", () => {
   let post: (request: Request) => Promise<Response>;
   let prisma: PrismaClient;
   const testDatabaseUrl = "file:./prisma/test-entries.db";
+  const waitForWeatherUpdate = async (entryId: string) => {
+    for (let attempt = 0; attempt < 5; attempt += 1) {
+      const entry = await prisma.entry.findUnique({ where: { id: entryId } });
+      if (
+        entry?.weatherCondition !== null ||
+        entry?.weatherTemperature !== null ||
+        entry?.weatherIconCode !== null
+      ) {
+        return entry;
+      }
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    }
+    return prisma.entry.findUnique({ where: { id: entryId } });
+  };
 
   beforeAll(async () => {
     process.env.DATABASE_URL = testDatabaseUrl;
@@ -43,6 +62,8 @@ describe("POST /api/entries", () => {
     getToken.mockResolvedValue({ sub: "creator" });
     reverseGeocode.mockReset();
     reverseGeocode.mockResolvedValue(null);
+    fetchHistoricalWeather.mockReset();
+    fetchHistoricalWeather.mockResolvedValue(null);
     await prisma.entryTag.deleteMany();
     await prisma.tag.deleteMany();
     await prisma.entryMedia.deleteMany();
@@ -93,13 +114,101 @@ describe("POST /api/entries", () => {
       countryCode: null,
     });
 
-    const createdEntry = await prisma.entry.findUnique({
-      where: { id: body.data.id },
-    });
+    const createdEntry = await waitForWeatherUpdate(body.data.id);
 
     expect(createdEntry?.latitude).toBe(51.5055);
     expect(createdEntry?.longitude).toBe(-0.075406);
     expect(createdEntry?.locationName).toBe("Tower Bridge, London, UK");
+  });
+
+  it("persists weather data when weather fetch succeeds", async () => {
+    fetchHistoricalWeather.mockResolvedValue({
+      condition: "Clear",
+      temperature: 22.5,
+      iconCode: "0",
+    });
+
+    const trip = await prisma.trip.create({
+      data: {
+        title: "Weather Trip",
+        startDate: new Date("2025-06-01"),
+        endDate: new Date("2025-06-10"),
+        ownerId: "creator",
+      },
+    });
+
+    const request = new Request("http://localhost/api/entries", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        tripId: trip.id,
+        entryDate: "2025-06-03",
+        title: "Clear day",
+        text: "Sunny and warm.",
+        mediaUrls: ["/uploads/entries/clear.jpg"],
+        latitude: 37.7749,
+        longitude: -122.4194,
+      }),
+    });
+
+    const response = await post(request);
+    const body = await response.json();
+
+    expect(response.status).toBe(201);
+    expect(body.error).toBeNull();
+    expect(fetchHistoricalWeather).toHaveBeenCalledWith(
+      37.7749,
+      -122.4194,
+      expect.any(Date),
+    );
+
+    const createdEntry = await waitForWeatherUpdate(body.data.id);
+
+    expect(createdEntry?.weatherCondition).toBe("Clear");
+    expect(createdEntry?.weatherTemperature).toBe(22.5);
+    expect(createdEntry?.weatherIconCode).toBe("0");
+  });
+
+  it("keeps weather fields null when weather fetch fails", async () => {
+    fetchHistoricalWeather.mockResolvedValue(null);
+
+    const trip = await prisma.trip.create({
+      data: {
+        title: "Weather Failure Trip",
+        startDate: new Date("2025-06-11"),
+        endDate: new Date("2025-06-12"),
+        ownerId: "creator",
+      },
+    });
+
+    const request = new Request("http://localhost/api/entries", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        tripId: trip.id,
+        title: "Weather unavailable",
+        text: "Still saved.",
+        mediaUrls: ["/uploads/entries/weather-fail.jpg"],
+        latitude: 34.0522,
+        longitude: -118.2437,
+      }),
+    });
+
+    const response = await post(request);
+    const body = await response.json();
+
+    expect(response.status).toBe(201);
+    expect(body.error).toBeNull();
+
+    const createdEntry = await waitForWeatherUpdate(body.data.id);
+
+    expect(createdEntry?.weatherCondition).toBeNull();
+    expect(createdEntry?.weatherTemperature).toBeNull();
+    expect(createdEntry?.weatherIconCode).toBeNull();
   });
 
   it("extracts country code for entries created with coordinates", async () => {

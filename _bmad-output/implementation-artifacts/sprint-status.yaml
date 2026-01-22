@@ -159,3 +159,10 @@ development_status:
   11-3-display-flags-on-entry-detail-pages: done
   11-4-aggregate-trip-country-flags: done
   epic-11-retrospective: optional
+
+  epic-12: in-progress
+  12-1-add-weather-fields-to-database-schema: done
+  12-2-create-weather-backfill-utility: done
+  12-3-display-weather-on-entry-detail-pages: done
+  12-5-auto-fetch-weather-for-new-entries: done
+  epic-12-retrospective: optional

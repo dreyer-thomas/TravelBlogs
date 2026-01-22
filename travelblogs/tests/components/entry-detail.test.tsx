@@ -139,6 +139,109 @@ describe("EntryDetail", () => {
     }
   });
 
+  it("renders weather details in English when weather data exists", () => {
+    const countryName = countryCodeToName("US", "en");
+
+    render(
+      <LocaleProvider initialLocale="en">
+        <EntryDetail
+          entry={{
+            id: "entry-weather-en",
+            tripId: "trip-weather",
+            title: "Desert sun",
+            coverImageUrl: null,
+            text: "Bright skies.",
+            createdAt: "2025-05-03T12:00:00.000Z",
+            updatedAt: "2025-05-03T00:00:00.000Z",
+            media: [],
+            location: {
+              latitude: 36.1699,
+              longitude: -115.1398,
+              label: "Las Vegas",
+              countryCode: "US",
+            },
+            weatherCondition: "Clear",
+            weatherTemperature: 24,
+            weatherIconCode: "0",
+          }}
+          canEdit={false}
+          canDelete={false}
+        />
+      </LocaleProvider>,
+    );
+
+    expect(screen.getByText("☀️")).toBeInTheDocument();
+    expect(screen.getByText("75°F")).toBeInTheDocument();
+    if (countryName) {
+      const locationMeta = screen.getByText(countryName).parentElement;
+      expect(locationMeta).toContainElement(screen.getByText("75°F"));
+    }
+  });
+
+  it("renders weather details in German when locale is de", () => {
+    render(
+      <LocaleProvider initialLocale="de">
+        <EntryDetail
+          entry={{
+            id: "entry-weather-de",
+            tripId: "trip-weather",
+            title: "Berlin breeze",
+            coverImageUrl: null,
+            text: "Cool morning.",
+            createdAt: "2025-05-03T12:00:00.000Z",
+            updatedAt: "2025-05-03T00:00:00.000Z",
+            media: [],
+            location: {
+              latitude: 52.52,
+              longitude: 13.405,
+              label: "Berlin",
+              countryCode: "DE",
+            },
+            weatherCondition: "Clear",
+            weatherTemperature: 24,
+            weatherIconCode: "0",
+          }}
+          canEdit={false}
+          canDelete={false}
+        />
+      </LocaleProvider>,
+    );
+
+    expect(screen.getByText("☀️")).toBeInTheDocument();
+    expect(screen.getByText("24°C")).toBeInTheDocument();
+  });
+
+  it("does not render weather when data is missing", () => {
+    renderWithProvider(
+      <EntryDetail
+        entry={{
+          id: "entry-weather-missing",
+          tripId: "trip-weather",
+          title: "Cloudy",
+          coverImageUrl: null,
+          text: "No weather data.",
+          createdAt: "2025-05-03T12:00:00.000Z",
+          updatedAt: "2025-05-03T00:00:00.000Z",
+          media: [],
+          location: {
+            latitude: 52.52,
+            longitude: 13.405,
+            label: "Berlin",
+            countryCode: "DE",
+          },
+          weatherCondition: null,
+          weatherTemperature: 24,
+          weatherIconCode: "0",
+        }}
+        canEdit={false}
+        canDelete={false}
+      />,
+    );
+
+    expect(screen.queryByText("☀️")).not.toBeInTheDocument();
+    expect(screen.queryByText("24°C")).not.toBeInTheDocument();
+  });
+
   it("does not render a country flag when no country code exists", () => {
     const flag = countryCodeToFlag("US");
     if (!flag) {

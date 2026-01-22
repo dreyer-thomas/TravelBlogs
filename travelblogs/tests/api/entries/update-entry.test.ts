@@ -5,6 +5,7 @@ import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
 
 const getToken = vi.hoisted(() => vi.fn());
 const reverseGeocode = vi.hoisted(() => vi.fn());
+const fetchHistoricalWeather = vi.hoisted(() => vi.fn());
 
 vi.mock("next-auth/jwt", () => ({
   getToken,
@@ -14,6 +15,10 @@ vi.mock("../../../src/utils/reverse-geocode", () => ({
   reverseGeocode,
 }));
 
+vi.mock("../../../src/utils/fetch-weather", () => ({
+  fetchHistoricalWeather,
+}));
+
 describe("PATCH /api/entries/[id]", () => {
   let patch: (
     request: Request,
@@ -21,6 +26,20 @@ describe("PATCH /api/entries/[id]", () => {
   ) => Promise<Response>;
   let prisma: PrismaClient;
   const testDatabaseUrl = "file:./prisma/test-update-entry.db";
+  const waitForWeatherUpdate = async (entryId: string) => {
+    for (let attempt = 0; attempt < 5; attempt += 1) {
+      const entry = await prisma.entry.findUnique({ where: { id: entryId } });
+      if (
+        entry?.weatherCondition !== null ||
+        entry?.weatherTemperature !== null ||
+        entry?.weatherIconCode !== null
+      ) {
+        return entry;
+      }
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    }
+    return prisma.entry.findUnique({ where: { id: entryId } });
+  };
 
   beforeAll(async () => {
     process.env.DATABASE_URL = testDatabaseUrl;
@@ -47,6 +66,8 @@ describe("PATCH /api/entries/[id]", () => {
     getToken.mockResolvedValue({ sub: "creator" });
     reverseGeocode.mockReset();
     reverseGeocode.mockResolvedValue(null);
+    fetchHistoricalWeather.mockReset();
+    fetchHistoricalWeather.mockResolvedValue(null);
     await prisma.entryTag.deleteMany();
     await prisma.tag.deleteMany();
     await prisma.entryMedia.deleteMany();
@@ -105,9 +126,7 @@ describe("PATCH /api/entries/[id]", () => {
       countryCode: null,
     });
 
-    const updatedEntry = await prisma.entry.findUnique({
-      where: { id: entry.id },
-    });
+    const updatedEntry = await waitForWeatherUpdate(entry.id);
 
     expect(updatedEntry?.latitude).toBe(48.8566);
     expect(updatedEntry?.longitude).toBe(2.3522);
@@ -116,6 +135,11 @@ describe("PATCH /api/entries/[id]", () => {
 
   it("updates country code when location changes", async () => {
     reverseGeocode.mockResolvedValue("JP");
+    fetchHistoricalWeather.mockResolvedValue({
+      condition: "Rain",
+      temperature: 18.2,
+      iconCode: "61",
+    });
 
     const trip = await prisma.trip.create({
       data: {
@@ -168,12 +192,18 @@ describe("PATCH /api/entries/[id]", () => {
       countryCode: "JP",
     });
     expect(reverseGeocode).toHaveBeenCalledWith(35.6762, 139.6503);
+    expect(fetchHistoricalWeather).toHaveBeenCalledWith(
+      35.6762,
+      139.6503,
+      expect.any(Date),
+    );
 
-    const updatedEntry = await prisma.entry.findUnique({
-      where: { id: entry.id },
-    });
+    const updatedEntry = await waitForWeatherUpdate(entry.id);
 
     expect(updatedEntry?.countryCode).toBe("JP");
+    expect(updatedEntry?.weatherCondition).toBe("Rain");
+    expect(updatedEntry?.weatherTemperature).toBe(18.2);
+    expect(updatedEntry?.weatherIconCode).toBe("61");
   });
 
   it("clears country code when location is removed", async () => {
@@ -195,6 +225,9 @@ describe("PATCH /api/entries/[id]", () => {
         longitude: -74.006,
         locationName: "NYC",
         countryCode: "US",
+        weatherCondition: "Clear",
+        weatherTemperature: 24.1,
+        weatherIconCode: "0",
         media: {
           create: [{ url: "/uploads/entries/nyc.jpg" }],
         },
@@ -223,12 +256,16 @@ describe("PATCH /api/entries/[id]", () => {
     expect(body.error).toBeNull();
     expect(body.data.location).toBeNull();
     expect(reverseGeocode).not.toHaveBeenCalled();
+    expect(fetchHistoricalWeather).not.toHaveBeenCalled();
 
     const updatedEntry = await prisma.entry.findUnique({
       where: { id: entry.id },
     });
 
     expect(updatedEntry?.countryCode).toBeNull();
+    expect(updatedEntry?.weatherCondition).toBeNull();
+    expect(updatedEntry?.weatherTemperature).toBeNull();
+    expect(updatedEntry?.weatherIconCode).toBeNull();
   });
 
   it("keeps country code when location is unchanged", async () => {
@@ -250,6 +287,9 @@ describe("PATCH /api/entries/[id]", () => {
         longitude: 13.405,
         locationName: "Berlin",
         countryCode: "DE",
+        weatherCondition: "Partly Cloudy",
+        weatherTemperature: 19.3,
+        weatherIconCode: "2",
         media: {
           create: [{ url: "/uploads/entries/berlin.jpg" }],
         },
@@ -280,12 +320,16 @@ describe("PATCH /api/entries/[id]", () => {
       countryCode: "DE",
     });
     expect(reverseGeocode).not.toHaveBeenCalled();
+    expect(fetchHistoricalWeather).not.toHaveBeenCalled();
 
     const updatedEntry = await prisma.entry.findUnique({
       where: { id: entry.id },
     });
 
     expect(updatedEntry?.countryCode).toBe("DE");
+    expect(updatedEntry?.weatherCondition).toBe("Partly Cloudy");
+    expect(updatedEntry?.weatherTemperature).toBe(19.3);
+    expect(updatedEntry?.weatherIconCode).toBe("2");
   });
 
   it("updates an entry with new text and media", async () => {

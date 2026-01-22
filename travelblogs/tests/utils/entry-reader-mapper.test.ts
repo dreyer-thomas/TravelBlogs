@@ -27,6 +27,9 @@ describe("mapEntryToReader", () => {
       createdAt: "2025-05-03T00:00:00.000Z",
       tags: ["Coffee", "Rain"],
       location: null,
+      weatherCondition: null,
+      weatherTemperature: null,
+      weatherIconCode: null,
       media: [
         {
           id: "media-1",
