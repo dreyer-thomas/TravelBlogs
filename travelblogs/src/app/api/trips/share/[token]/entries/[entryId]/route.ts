@@ -64,6 +64,7 @@ export const GET = async (
         latitude: true,
         longitude: true,
         locationName: true,
+        countryCode: true,
         media: {
           orderBy: {
             createdAt: "asc",
@@ -148,6 +149,7 @@ export const GET = async (
                   latitude: entry.latitude,
                   longitude: entry.longitude,
                   label: entry.locationName,
+                  countryCode: entry.countryCode,
                 }
               : null,
           navigation: {

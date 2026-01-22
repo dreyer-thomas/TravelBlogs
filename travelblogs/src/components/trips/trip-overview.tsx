@@ -9,6 +9,8 @@ import { useTranslation } from "../../utils/use-translation";
 import { filterEntriesWithLocation } from "../../utils/entry-location";
 import { getDistinctTagList, normalizeTagName } from "../../utils/entry-tags";
 import { getMediaTypeFromUrl } from "../../utils/media";
+import { countryCodeToFlag } from "../../utils/country-flag";
+import { getTripCountries } from "../../utils/trip-countries";
 import type { TripOverviewEntry, TripOverviewTrip } from "../../types/trip-overview";
 
 type TripOverviewProps = {
@@ -77,6 +79,10 @@ const TripOverview = ({
       .map(({ normalizedTags, ...entry }) => entry);
   }, [entries, entriesWithNormalizedTags, normalizedSelectedTags, selectedTags.length]);
 
+  const tripCountries = useMemo(
+    () => getTripCountries(filteredEntries),
+    [filteredEntries],
+  );
   const entriesWithLocation = useMemo(
     () => filterEntriesWithLocation(filteredEntries),
     [filteredEntries],
@@ -202,6 +208,29 @@ const TripOverview = ({
             <h1 className="text-3xl font-semibold text-[#2D2A26]">
               {trip.title}
             </h1>
+            {tripCountries.length > 0 ? (
+              <div
+                className="flex flex-wrap gap-2 text-lg"
+                data-testid="trip-country-flags"
+              >
+                {tripCountries.map((countryCode) => {
+                  const flag = countryCodeToFlag(countryCode);
+                  if (!flag) {
+                    return null;
+                  }
+                  return (
+                    <span
+                      key={countryCode}
+                      className="leading-none"
+                      aria-hidden="true"
+                      data-testid="trip-country-flag"
+                    >
+                      {flag}
+                    </span>
+                  );
+                })}
+              </div>
+            ) : null}
             <p className="text-sm text-[#6B635B]">
               {formatDate(new Date(trip.startDate))} –{" "}
               {formatDate(new Date(trip.endDate))}
@@ -341,6 +370,7 @@ const TripOverview = ({
                 const previewImage = getPreviewImage(entry);
                 const previewIsVideo = getMediaTypeFromUrl(previewImage) === "video";
                 const isSelected = resolvedSelectedEntryId === entry.id;
+                const countryFlag = countryCodeToFlag(entry.location?.countryCode ?? "");
                 const content = (
                   <>
                     <div
@@ -376,9 +406,16 @@ const TripOverview = ({
                       <p className="text-xs uppercase tracking-[0.2em] text-[#6B635B]">
                         {formatDate(new Date(entry.createdAt))}
                       </p>
-                      <p className="mt-1 text-base font-semibold text-[#2D2A26]">
-                        {entry.title}
-                      </p>
+                      <div className="mt-1 flex items-center gap-2">
+                        {countryFlag ? (
+                          <span className="text-base leading-none" aria-hidden="true">
+                            {countryFlag}
+                          </span>
+                        ) : null}
+                        <p className="min-w-0 text-base font-semibold text-[#2D2A26]">
+                          {entry.title}
+                        </p>
+                      </div>
                       {entry.tags.length > 0 ? (
                         <div className="mt-2 flex flex-wrap gap-2">
                           {entry.tags.map((tag) => (

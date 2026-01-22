@@ -111,6 +111,7 @@ describe("GET /api/entries", () => {
       latitude: 35.6762,
       longitude: 139.6503,
       label: null,
+      countryCode: null,
     });
     expect(body.data[1].location).toBeNull();
   });

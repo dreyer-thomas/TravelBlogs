@@ -56,6 +56,7 @@ export const GET = async (
                 latitude: true,
                 longitude: true,
                 locationName: true,
+                countryCode: true,
                 media: {
                   orderBy: {
                     createdAt: "asc",
@@ -104,14 +105,15 @@ export const GET = async (
             coverImageUrl: entry.coverImageUrl,
             media: entry.media.map((item) => ({ url: item.url })),
             tags: sortTagNames(entry.tags.map((item) => item.tag.name)),
-            location:
-              entry.latitude !== null && entry.longitude !== null
-                ? {
-                    latitude: entry.latitude,
-                    longitude: entry.longitude,
-                    label: entry.locationName,
-                  }
-                : null,
+              location:
+                entry.latitude !== null && entry.longitude !== null
+                  ? {
+                      latitude: entry.latitude,
+                      longitude: entry.longitude,
+                      label: entry.locationName,
+                      countryCode: entry.countryCode,
+                    }
+                  : null,
           })),
         },
         error: null,

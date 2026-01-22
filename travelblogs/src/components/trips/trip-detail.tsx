@@ -10,6 +10,7 @@ import { isCoverImageUrl, getMediaTypeFromUrl } from "../../utils/media";
 import { extractInlineImageUrls, stripInlineImages } from "../../utils/entry-content";
 import { useTranslation } from "../../utils/use-translation";
 import { filterEntriesWithLocation } from "../../utils/entry-location";
+import { countryCodeToFlag } from "../../utils/country-flag";
 import type { EntryLocation } from "../../utils/entry-location";
 
 type TripDetail = {
@@ -80,6 +81,7 @@ type EntrySummary = {
   updatedAt: string;
   media: EntryMedia[];
   tags: string[];
+  location?: EntryLocation | null;
 };
 
 type TripOverviewData = {
@@ -1521,6 +1523,9 @@ const TripDetail = ({
                   entry.media[0]?.url ||
                   inlineImages[0];
                 const entryTags = entry.tags ?? [];
+                const countryFlag = countryCodeToFlag(
+                  entry.location?.countryCode ?? "",
+                );
 
                 const isSelected = entry.id === selectedEntryId;
                 return (
@@ -1568,9 +1573,16 @@ const TripDetail = ({
                       <p className="text-xs uppercase tracking-[0.2em] text-[#6B635B]">
                         {formatDateLocalized(new Date(entry.createdAt))}
                       </p>
-                      <p className="mt-1 truncate text-sm text-[#2D2A26]">
-                        {displayTitle}
-                      </p>
+                      <div className="mt-1 flex min-w-0 items-center gap-2">
+                        {countryFlag ? (
+                          <span className="text-sm leading-none" aria-hidden="true">
+                            {countryFlag}
+                          </span>
+                        ) : null}
+                        <p className="min-w-0 truncate text-sm text-[#2D2A26]">
+                          {displayTitle}
+                        </p>
+                      </div>
                       {entryTags.length > 0 ? (
                         <div className="mt-2 flex flex-wrap gap-2">
                           {entryTags.map((tag) => (

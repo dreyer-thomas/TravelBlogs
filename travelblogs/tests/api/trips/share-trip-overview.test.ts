@@ -92,6 +92,7 @@ describe("GET /api/trips/share/[token]", () => {
         latitude: 52.52,
         longitude: 13.405,
         locationName: "Berlin",
+        countryCode: "DE",
         media: {
           create: [{ url: "/uploads/entries/public-new.jpg" }],
         },
@@ -147,6 +148,7 @@ describe("GET /api/trips/share/[token]", () => {
         latitude: 52.52,
         longitude: 13.405,
         label: "Berlin",
+        countryCode: "DE",
       },
     });
     expect(body.data.entries[1].location).toBeNull();

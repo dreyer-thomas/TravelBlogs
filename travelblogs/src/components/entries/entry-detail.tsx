@@ -18,6 +18,7 @@ import {
   formatEntryLocationDisplay,
   type EntryLocation,
 } from "../../utils/entry-location";
+import { countryCodeToFlag, countryCodeToName } from "../../utils/country-flag";
 import { detectEntryFormat, plainTextToTiptapJson } from "../../utils/entry-format";
 import type { EntryReaderMedia } from "../../utils/entry-reader";
 import { extractEntryImageNodesFromJson } from "../../utils/tiptap-image-helpers";
@@ -64,7 +65,7 @@ const EntryDetail = ({
   canDelete,
   tripLocations = [],
 }: EntryDetailProps) => {
-  const { t, formatDate } = useTranslation();
+  const { t, formatDate, locale } = useTranslation();
   const [viewerIndex, setViewerIndex] = useState(0);
   const [isViewerOpen, setIsViewerOpen] = useState(false);
   const [viewerMode, setViewerMode] = useState<"viewer" | "slideshow">(
@@ -154,6 +155,17 @@ const EntryDetail = ({
   const locationDisplay = useMemo(
     () => formatEntryLocationDisplay(entry.location),
     [entry.location],
+  );
+  const countryFlag = useMemo(
+    () => countryCodeToFlag(entry.location?.countryCode ?? ""),
+    [entry.location?.countryCode],
+  );
+  const countryName = useMemo(
+    () =>
+      entry.location?.countryCode
+        ? countryCodeToName(entry.location.countryCode, locale)
+        : null,
+    [entry.location?.countryCode, locale],
   );
   const entryMapLocations = useMemo(() => {
     if (!entry.location) {
@@ -250,13 +262,21 @@ const EntryDetail = ({
           ← {t("entries.backToTrip")}
         </Link>
 
-        <section className="rounded-2xl border border-black/10 bg-white p-8 shadow-sm">
+        <section className="rounded-2xl border border-black/10 bg-white px-2 py-8 shadow-sm sm:px-3">
           <header className="flex flex-wrap items-start justify-between gap-4">
-            <div className="space-y-2">
+            <div className="flex flex-col">
               <p className="text-xs uppercase tracking-[0.2em] text-[#6B635B]">
                 {formatDate(new Date(entry.createdAt))}
               </p>
-              <h1 className="text-3xl font-semibold text-[#2D2A26]">
+              {countryFlag ? (
+                <div className="mt-2 flex flex-wrap items-center gap-2 text-lg text-[#2D2A26]">
+                  <span className="text-2xl leading-none" aria-hidden="true">
+                    {countryFlag}
+                  </span>
+                  {countryName ? <span>{countryName}</span> : null}
+                </div>
+              ) : null}
+              <h1 className="mt-1 text-3xl font-semibold text-[#2D2A26]">
                 {entry.title || t("entries.dailyEntry")}
               </h1>
             </div>

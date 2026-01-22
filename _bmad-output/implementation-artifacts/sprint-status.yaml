@@ -155,7 +155,7 @@ development_status:
 
   epic-11: in-progress
   11-1-add-country-code-storage-extraction: done
-  11-2-display-flags-on-entry-cards: backlog
-  11-3-display-flags-on-entry-detail-pages: backlog
-  11-4-aggregate-trip-country-flags: backlog
+  11-2-display-flags-on-entry-cards: done
+  11-3-display-flags-on-entry-detail-pages: done
+  11-4-aggregate-trip-country-flags: done
   epic-11-retrospective: optional

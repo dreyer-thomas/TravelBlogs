@@ -2,7 +2,7 @@
 /* eslint-disable @next/next/no-img-element, jsx-a11y/alt-text */
 import type { ImgHTMLAttributes, ReactNode } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { act, fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen, within } from "@testing-library/react";
 
 import TripOverview from "../../src/components/trips/trip-overview";
 import { LocaleProvider } from "../../src/utils/locale-context";
@@ -44,6 +44,9 @@ vi.mock("next/navigation", () => ({
   }),
 }));
 
+const buildFlag = (...codePoints: number[]) =>
+  String.fromCodePoint(...codePoints);
+
 describe("TripOverview", () => {
   afterEach(() => {
     localStorage.clear();
@@ -82,6 +85,320 @@ describe("TripOverview", () => {
       "href",
       "/entries/entry-2",
     );
+  });
+
+  it("renders a country flag when the entry has a country code", () => {
+    const usFlag = buildFlag(0x1f1fa, 0x1f1f8);
+
+    render(
+      <LocaleProvider>
+        <TripOverview
+          trip={{
+            id: "trip-flag",
+            title: "Flag trip",
+            startDate: "2025-06-01T00:00:00.000Z",
+            endDate: "2025-06-08T00:00:00.000Z",
+            coverImageUrl: null,
+          }}
+          entries={[
+            {
+              id: "entry-flag",
+              tripId: "trip-flag",
+              title: "Flag day",
+              createdAt: "2025-06-03T12:00:00.000Z",
+              coverImageUrl: "/uploads/entries/flag-day.jpg",
+              tags: [],
+              media: [{ url: "/uploads/entries/flag-day-media.jpg" }],
+              location: {
+                latitude: 37.7749,
+                longitude: -122.4194,
+                label: "San Francisco",
+                countryCode: "US",
+              },
+            },
+          ]}
+        />
+      </LocaleProvider>,
+    );
+
+    expect(screen.getAllByText(usFlag).length).toBeGreaterThan(0);
+  });
+
+  it("does not render a flag when the entry lacks a country code", () => {
+    const usFlag = buildFlag(0x1f1fa, 0x1f1f8);
+
+    render(
+      <LocaleProvider>
+        <TripOverview
+          trip={{
+            id: "trip-no-flag",
+            title: "No flag trip",
+            startDate: "2025-06-01T00:00:00.000Z",
+            endDate: "2025-06-08T00:00:00.000Z",
+            coverImageUrl: null,
+          }}
+          entries={[
+            {
+              id: "entry-no-flag",
+              tripId: "trip-no-flag",
+              title: "No flag day",
+              createdAt: "2025-06-03T12:00:00.000Z",
+              coverImageUrl: "/uploads/entries/no-flag-day.jpg",
+              tags: [],
+              media: [{ url: "/uploads/entries/no-flag-day-media.jpg" }],
+              location: {
+                latitude: 52.52,
+                longitude: 13.405,
+                label: "Berlin",
+              },
+            },
+          ]}
+        />
+      </LocaleProvider>,
+    );
+
+    expect(screen.queryByText(usFlag)).not.toBeInTheDocument();
+  });
+
+  it("renders unique trip country flags in chronological order", () => {
+    const deFlag = buildFlag(0x1f1e9, 0x1f1ea);
+    const usFlag = buildFlag(0x1f1fa, 0x1f1f8);
+
+    render(
+      <LocaleProvider>
+        <TripOverview
+          trip={{
+            id: "trip-country-order",
+            title: "Country order trip",
+            startDate: "2025-06-01T00:00:00.000Z",
+            endDate: "2025-06-08T00:00:00.000Z",
+            coverImageUrl: null,
+          }}
+          entries={[
+            {
+              id: "entry-late-us",
+              tripId: "trip-country-order",
+              title: "Later US",
+              createdAt: "2025-06-04T12:00:00.000Z",
+              coverImageUrl: "/uploads/entries/us.jpg",
+              tags: [],
+              media: [{ url: "/uploads/entries/us.jpg" }],
+              location: {
+                latitude: 37.7749,
+                longitude: -122.4194,
+                label: "San Francisco",
+                countryCode: "US",
+              },
+            },
+            {
+              id: "entry-early-de",
+              tripId: "trip-country-order",
+              title: "Early DE",
+              createdAt: "2025-06-02T12:00:00.000Z",
+              coverImageUrl: "/uploads/entries/de.jpg",
+              tags: [],
+              media: [{ url: "/uploads/entries/de.jpg" }],
+              location: {
+                latitude: 52.52,
+                longitude: 13.405,
+                label: "Berlin",
+                countryCode: "DE",
+              },
+            },
+            {
+              id: "entry-mid-us",
+              tripId: "trip-country-order",
+              title: "Mid US",
+              createdAt: "2025-06-03T12:00:00.000Z",
+              coverImageUrl: "/uploads/entries/us-2.jpg",
+              tags: [],
+              media: [{ url: "/uploads/entries/us-2.jpg" }],
+              location: {
+                latitude: 40.7128,
+                longitude: -74.006,
+                label: "New York",
+                countryCode: "US",
+              },
+            },
+          ]}
+        />
+      </LocaleProvider>,
+    );
+
+    const flagList = screen.getByTestId("trip-country-flags");
+    const flags = within(flagList)
+      .getAllByTestId("trip-country-flag")
+      .map((flag) => flag.textContent);
+
+    expect(flags).toEqual([deFlag, usFlag]);
+  });
+
+  it("ignores invalid country codes in the trip flag list", () => {
+    const deFlag = buildFlag(0x1f1e9, 0x1f1ea);
+
+    render(
+      <LocaleProvider>
+        <TripOverview
+          trip={{
+            id: "trip-invalid-codes",
+            title: "Invalid codes",
+            startDate: "2025-06-01T00:00:00.000Z",
+            endDate: "2025-06-08T00:00:00.000Z",
+            coverImageUrl: null,
+          }}
+          entries={[
+            {
+              id: "entry-invalid-1",
+              tripId: "trip-invalid-codes",
+              title: "Invalid 1",
+              createdAt: "2025-06-02T12:00:00.000Z",
+              coverImageUrl: "/uploads/entries/invalid-1.jpg",
+              tags: [],
+              media: [{ url: "/uploads/entries/invalid-1.jpg" }],
+              location: {
+                latitude: 51.5074,
+                longitude: -0.1278,
+                label: "London",
+                countryCode: "USA",
+              },
+            },
+            {
+              id: "entry-invalid-2",
+              tripId: "trip-invalid-codes",
+              title: "Invalid 2",
+              createdAt: "2025-06-03T12:00:00.000Z",
+              coverImageUrl: "/uploads/entries/invalid-2.jpg",
+              tags: [],
+              media: [{ url: "/uploads/entries/invalid-2.jpg" }],
+              location: {
+                latitude: 37.7749,
+                longitude: -122.4194,
+                label: "San Francisco",
+                countryCode: "u$",
+              },
+            },
+            {
+              id: "entry-valid",
+              tripId: "trip-invalid-codes",
+              title: "Valid",
+              createdAt: "2025-06-04T12:00:00.000Z",
+              coverImageUrl: "/uploads/entries/valid.jpg",
+              tags: [],
+              media: [{ url: "/uploads/entries/valid.jpg" }],
+              location: {
+                latitude: 52.52,
+                longitude: 13.405,
+                label: "Berlin",
+                countryCode: "de",
+              },
+            },
+          ]}
+        />
+      </LocaleProvider>,
+    );
+
+    const flagList = screen.getByTestId("trip-country-flags");
+    const flags = within(flagList)
+      .getAllByTestId("trip-country-flag")
+      .map((flag) => flag.textContent);
+
+    expect(flags).toEqual([deFlag]);
+  });
+
+  it("hides trip country flags when no valid country codes exist", () => {
+    render(
+      <LocaleProvider>
+        <TripOverview
+          trip={{
+            id: "trip-no-country",
+            title: "No country trip",
+            startDate: "2025-06-01T00:00:00.000Z",
+            endDate: "2025-06-08T00:00:00.000Z",
+            coverImageUrl: null,
+          }}
+          entries={[
+            {
+              id: "entry-no-country",
+              tripId: "trip-no-country",
+              title: "No country",
+              createdAt: "2025-06-03T12:00:00.000Z",
+              coverImageUrl: "/uploads/entries/none.jpg",
+              tags: [],
+              media: [{ url: "/uploads/entries/none.jpg" }],
+              location: {
+                latitude: 51.5074,
+                longitude: -0.1278,
+                label: "London",
+              },
+            },
+          ]}
+        />
+      </LocaleProvider>,
+    );
+
+    expect(screen.queryByTestId("trip-country-flags")).not.toBeInTheDocument();
+  });
+
+  it("updates trip country flags based on the active tag filter", () => {
+    const deFlag = buildFlag(0x1f1e9, 0x1f1ea);
+    const usFlag = buildFlag(0x1f1fa, 0x1f1f8);
+
+    render(
+      <LocaleProvider>
+        <TripOverview
+          trip={{
+            id: "trip-filtered-flags",
+            title: "Filtered flags",
+            startDate: "2025-06-01T00:00:00.000Z",
+            endDate: "2025-06-08T00:00:00.000Z",
+            coverImageUrl: null,
+          }}
+          entries={[
+            {
+              id: "entry-food-de",
+              tripId: "trip-filtered-flags",
+              title: "Food Berlin",
+              createdAt: "2025-06-02T12:00:00.000Z",
+              coverImageUrl: "/uploads/entries/food-de.jpg",
+              tags: ["Food"],
+              media: [{ url: "/uploads/entries/food-de.jpg" }],
+              location: {
+                latitude: 52.52,
+                longitude: 13.405,
+                label: "Berlin",
+                countryCode: "DE",
+              },
+            },
+            {
+              id: "entry-hike-us",
+              tripId: "trip-filtered-flags",
+              title: "Hike US",
+              createdAt: "2025-06-03T12:00:00.000Z",
+              coverImageUrl: "/uploads/entries/hike-us.jpg",
+              tags: ["Hike"],
+              media: [{ url: "/uploads/entries/hike-us.jpg" }],
+              location: {
+                latitude: 37.7749,
+                longitude: -122.4194,
+                label: "San Francisco",
+                countryCode: "US",
+              },
+            },
+          ]}
+        />
+      </LocaleProvider>,
+    );
+
+    const foodChip = screen.getByRole("button", { name: "Food" });
+    fireEvent.click(foodChip);
+
+    const flagList = screen.getByTestId("trip-country-flags");
+    const flags = within(flagList)
+      .getAllByTestId("trip-country-flag")
+      .map((flag) => flag.textContent);
+
+    expect(flags).toEqual([deFlag]);
+    expect(flags).not.toContain(usFlag);
   });
 
   it("renders German dates when locale is de", async () => {

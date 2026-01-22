@@ -5,6 +5,7 @@ import { describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/react";
 
 import EntryReader from "../../src/components/entries/entry-reader";
+import { countryCodeToFlag, countryCodeToName } from "../../src/utils/country-flag";
 import { LocaleProvider } from "../../src/utils/locale-context";
 import * as entryFormat from "../../src/utils/entry-format";
 
@@ -736,6 +737,126 @@ describe("EntryReader", () => {
     expect(
       screen.getByRole("heading", { name: "Morning in Kyoto" }),
     ).toBeInTheDocument();
+  });
+
+  it("renders a country flag alongside the title in non-shared view", () => {
+    const flag = countryCodeToFlag("FR");
+    if (!flag) {
+      throw new Error("Expected country flag for FR");
+    }
+    const name = countryCodeToName("FR", "en");
+
+    render(
+      <LocaleProvider>
+        <EntryReader
+          entry={{
+            id: "entry-flag-non-shared",
+            title: "Paris stroll",
+            body: "City of lights.",
+            createdAt: "2025-05-08T00:00:00.000Z",
+            tags: [],
+            media: [
+              {
+                id: "media-flag-non-shared",
+                url: "https://example.com/hero-paris.jpg",
+                width: 1600,
+                height: 1000,
+              },
+            ],
+            location: {
+              latitude: 48.8566,
+              longitude: 2.3522,
+              label: "Paris",
+              countryCode: "FR",
+            },
+          }}
+        />
+      </LocaleProvider>,
+    );
+
+    expect(screen.getByText(flag)).toBeInTheDocument();
+    if (name) {
+      expect(screen.getByText(name)).toBeInTheDocument();
+    }
+  });
+
+  it("renders a country flag alongside the title in shared view", () => {
+    const flag = countryCodeToFlag("BR");
+    if (!flag) {
+      throw new Error("Expected country flag for BR");
+    }
+    const name = countryCodeToName("BR", "en");
+
+    render(
+      <LocaleProvider>
+        <EntryReader
+          isSharedView
+          entry={{
+            id: "entry-flag-shared",
+            title: "Rio sunrise",
+            body: "Beach walk.",
+            createdAt: "2025-05-08T00:00:00.000Z",
+            tags: [],
+            media: [
+              {
+                id: "media-flag-shared",
+                url: "https://example.com/hero-rio.jpg",
+                width: 1600,
+                height: 1000,
+              },
+            ],
+            location: {
+              latitude: -22.9068,
+              longitude: -43.1729,
+              label: "Rio",
+              countryCode: "BR",
+            },
+          }}
+        />
+      </LocaleProvider>,
+    );
+
+    expect(screen.getByText(flag)).toBeInTheDocument();
+    if (name) {
+      expect(screen.getByText(name)).toBeInTheDocument();
+    }
+  });
+
+  it("does not render a country flag when no country code exists", () => {
+    const flag = countryCodeToFlag("US");
+    if (!flag) {
+      throw new Error("Expected country flag for US");
+    }
+
+    render(
+      <LocaleProvider>
+        <EntryReader
+          entry={{
+            id: "entry-no-flag",
+            title: "Unknown location",
+            body: "No country code.",
+            createdAt: "2025-05-08T00:00:00.000Z",
+            tags: [],
+            media: [
+              {
+                id: "media-no-flag",
+                url: "https://example.com/hero-unknown.jpg",
+                width: 1600,
+                height: 1000,
+              },
+            ],
+            location: {
+              latitude: 0,
+              longitude: 0,
+              label: "Somewhere",
+              countryCode: null,
+            },
+          }}
+        />
+      </LocaleProvider>,
+    );
+
+    expect(screen.queryByText(flag)).not.toBeInTheDocument();
   });
 
   it("shows a location map overlay only when location exists", () => {

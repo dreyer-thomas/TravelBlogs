@@ -5,6 +5,7 @@ import { describe, expect, it, vi } from "vitest";
 import { act, fireEvent, render, screen, within } from "@testing-library/react";
 
 import EntryDetail from "../../src/components/entries/entry-detail";
+import { countryCodeToFlag, countryCodeToName } from "../../src/utils/country-flag";
 import { LocaleProvider } from "../../src/utils/locale-context";
 
 const mapMock = vi.fn(() => ({
@@ -100,6 +101,74 @@ describe("EntryDetail", () => {
       screen.getByRole("heading", { name: "Sunset in Positano" }),
     ).toBeInTheDocument();
     expect(screen.getByText("May 3rd, 2025")).toBeInTheDocument();
+  });
+
+  it("renders a country flag when location country code is available", () => {
+    const flag = countryCodeToFlag("JP");
+    if (!flag) {
+      throw new Error("Expected country flag for JP");
+    }
+    const name = countryCodeToName("JP", "en");
+
+    renderWithProvider(
+      <EntryDetail
+        entry={{
+          id: "entry-flag",
+          tripId: "trip-flag",
+          title: "Tokyo night",
+          coverImageUrl: null,
+          text: "Shibuya crossing.",
+          createdAt: "2025-05-03T12:00:00.000Z",
+          updatedAt: "2025-05-03T00:00:00.000Z",
+          media: [],
+          location: {
+            latitude: 35.6762,
+            longitude: 139.6503,
+            label: "Tokyo",
+            countryCode: "JP",
+          },
+        }}
+        canEdit={false}
+        canDelete={false}
+      />,
+    );
+
+    expect(screen.getByText(flag)).toBeInTheDocument();
+    if (name) {
+      expect(screen.getByText(name)).toBeInTheDocument();
+    }
+  });
+
+  it("does not render a country flag when no country code exists", () => {
+    const flag = countryCodeToFlag("US");
+    if (!flag) {
+      throw new Error("Expected country flag for US");
+    }
+
+    renderWithProvider(
+      <EntryDetail
+        entry={{
+          id: "entry-no-flag",
+          tripId: "trip-no-flag",
+          title: "Unknown country",
+          coverImageUrl: null,
+          text: "No country attached.",
+          createdAt: "2025-05-03T12:00:00.000Z",
+          updatedAt: "2025-05-03T00:00:00.000Z",
+          media: [],
+          location: {
+            latitude: 0,
+            longitude: 0,
+            label: "Somewhere",
+            countryCode: null,
+          },
+        }}
+        canEdit={false}
+        canDelete={false}
+      />,
+    );
+
+    expect(screen.queryByText(flag)).not.toBeInTheDocument();
   });
 
   it("renders Tiptap JSON content as rich text", async () => {

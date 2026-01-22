@@ -18,6 +18,7 @@ import { useTranslation } from "../../utils/use-translation";
 import EntryHeroMap from "./entry-hero-map";
 import TripMap from "../trips/trip-map";
 import EntryReaderRichText from "./entry-reader-rich-text";
+import { countryCodeToFlag, countryCodeToName } from "../../utils/country-flag";
 
 type EntryReaderProps = {
   entry: EntryReaderData;
@@ -38,7 +39,7 @@ const EntryReader = ({
   isSharedView = false,
   heroMapLocations,
 }: EntryReaderProps) => {
-  const { t, formatDate } = useTranslation();
+  const { t, formatDate, locale } = useTranslation();
   const [heroVideoPoster, setHeroVideoPoster] = useState<string | null>(null);
 
   const resolveAltText = useCallback((alt?: string | null) => {
@@ -90,6 +91,17 @@ const EntryReader = ({
   const galleryItems = entry.media;
   const entryTitle = entry.title || t("entries.dailyEntry");
   const entryDate = formatDate(new Date(entry.createdAt));
+  const countryFlag = useMemo(
+    () => countryCodeToFlag(entry.location?.countryCode ?? ""),
+    [entry.location?.countryCode],
+  );
+  const countryName = useMemo(
+    () =>
+      entry.location?.countryCode
+        ? countryCodeToName(entry.location.countryCode, locale)
+        : null,
+    [entry.location?.countryCode, locale],
+  );
   const showSharedHeroOverlay = isSharedView;
   const hasTags = entry.tags.length > 0;
   const entryBody = entry.body ?? "";
@@ -241,11 +253,19 @@ const EntryReader = ({
           </Link>
         ) : null}
         {!isSharedView ? (
-          <header className="space-y-3">
+          <header className="flex flex-col">
             <p className="text-xs uppercase tracking-[0.2em] text-[#6B635B]">
               {entryDate}
             </p>
-            <h1 className="text-4xl font-semibold text-[#2D2A26] sm:text-5xl">
+            {countryFlag ? (
+              <div className="mt-3 flex flex-wrap items-center gap-2 text-lg text-[#2D2A26]">
+                <span className="text-2xl leading-none" aria-hidden="true">
+                  {countryFlag}
+                </span>
+                {countryName ? <span>{countryName}</span> : null}
+              </div>
+            ) : null}
+            <h1 className="mt-2 text-4xl font-semibold text-[#2D2A26] sm:text-5xl">
               {entryTitle}
             </h1>
           </header>
@@ -306,13 +326,19 @@ const EntryReader = ({
                   aria-label={t("entries.entryHeroOverlay")}
                   className="pointer-events-none absolute left-0 top-0 z-30 px-6 pt-6 sm:px-8 sm:pt-8"
                 >
-                  <div
-                    className="max-w-[32rem] space-y-2 rounded-2xl bg-black/45 px-4 py-3 shadow-xl shadow-black/40 backdrop-blur-sm sm:px-5 sm:py-4"
-                  >
+                  <div className="flex max-w-[32rem] flex-col rounded-2xl bg-black/45 px-4 py-3 shadow-xl shadow-black/40 backdrop-blur-sm sm:px-5 sm:py-4">
                     <p className="text-xs uppercase tracking-[0.3em] text-white drop-shadow-sm">
                       {entryDate}
                     </p>
-                    <h1 className="text-3xl font-semibold text-white drop-shadow-sm sm:text-4xl">
+                    {countryFlag ? (
+                      <div className="mt-2 flex flex-wrap items-center gap-2 text-lg text-white">
+                        <span className="text-2xl leading-none" aria-hidden="true">
+                          {countryFlag}
+                        </span>
+                        {countryName ? <span>{countryName}</span> : null}
+                      </div>
+                    ) : null}
+                    <h1 className="mt-1 text-3xl font-semibold text-white drop-shadow-sm sm:text-4xl">
                       {entryTitle}
                     </h1>
                   </div>
@@ -351,8 +377,14 @@ const EntryReader = ({
           </div>
         </section>
 
-        <section className="rounded-3xl border border-black/10 bg-white p-8 shadow-sm">
-          <div className="mx-auto max-w-[42rem] space-y-5">
+        <section
+          className={`rounded-3xl bg-white shadow-sm ${
+            isSharedView
+              ? "border-2 border-black/10 px-12 py-8 sm:px-14"
+              : "border border-black/10 px-2 py-8 sm:px-3"
+          }`}
+        >
+          <div className="space-y-5">
             {hasBodyContent ? (
               <EntryReaderRichText
                 content={tiptapContent}

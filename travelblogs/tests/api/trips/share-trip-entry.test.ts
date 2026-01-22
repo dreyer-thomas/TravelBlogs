@@ -64,6 +64,7 @@ describe("GET /api/trips/share/[token]/entries/[entryId]", () => {
         latitude: 59.3293,
         longitude: 18.0686,
         locationName: "Stockholm",
+        countryCode: "SE",
         media: {
           create: [{ url: "/uploads/entries/shared-entry.jpg" }],
         },
@@ -112,6 +113,7 @@ describe("GET /api/trips/share/[token]/entries/[entryId]", () => {
       latitude: 59.3293,
       longitude: 18.0686,
       label: "Stockholm",
+      countryCode: "SE",
     });
   });
 

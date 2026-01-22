@@ -26,6 +26,9 @@ vi.mock("next/navigation", () => ({
   }),
 }));
 
+const buildFlag = (...codePoints: number[]) =>
+  String.fromCodePoint(...codePoints);
+
 const renderWithProvider = (component: React.ReactElement) => {
   return render(<LocaleProvider>{component}</LocaleProvider>);
 };
@@ -134,6 +137,77 @@ describe("TripDetail", () => {
 
     expect(await screen.findByText("Roman morning")).toBeInTheDocument();
     expect(await screen.findByText("Alex Owner")).toBeInTheDocument();
+  });
+
+  it("renders a country flag in the entry list when country code exists", async () => {
+    const deFlag = buildFlag(0x1f1e9, 0x1f1ea);
+    const fetchMock = createFetchMock([
+      {
+        match: "/api/trips/trip-flag/overview",
+        respond: () =>
+          jsonResponse({
+            trip: {
+              id: "trip-flag",
+              title: "Flagged Trip",
+              startDate: "2025-05-01T00:00:00.000Z",
+              endDate: "2025-05-10T00:00:00.000Z",
+              coverImageUrl: null,
+            },
+            entries: [],
+          }),
+      },
+      {
+        match: "/api/entries?tripId=trip-flag",
+        respond: () =>
+          jsonResponse([
+            {
+              id: "entry-flag",
+              tripId: "trip-flag",
+              title: "Berlin day",
+              coverImageUrl: null,
+              text: "Great day in Berlin.",
+              createdAt: "2025-05-02T00:00:00.000Z",
+              updatedAt: "2025-05-02T00:00:00.000Z",
+              media: [],
+              tags: [],
+              location: {
+                latitude: 52.52,
+                longitude: 13.405,
+                label: "Berlin",
+                countryCode: "DE",
+              },
+            },
+          ]),
+      },
+      {
+        match: "/api/trips/trip-flag",
+        respond: () =>
+          jsonResponse({
+            id: "trip-flag",
+            title: "Flagged Trip",
+            startDate: "2025-05-01T00:00:00.000Z",
+            endDate: "2025-05-10T00:00:00.000Z",
+            coverImageUrl: null,
+          }),
+      },
+    ]);
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    renderWithProvider(
+      <TripDetail
+        tripId="trip-flag"
+        canAddEntry
+        canEditTrip
+        canDeleteTrip={false}
+        canManageShare={false}
+        canManageViewers={false}
+        canTransferOwnership={false}
+      />,
+    );
+
+    expect(await screen.findByText("Berlin day")).toBeInTheDocument();
+    expect(screen.getByText(deFlag)).toBeInTheDocument();
   });
 
   it("renders entry tags when present", async () => {
