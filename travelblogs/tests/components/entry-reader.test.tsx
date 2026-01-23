@@ -140,7 +140,7 @@ describe("EntryReader", () => {
     expect(video).toHaveAttribute("controls");
   });
 
-  it("renders tags on the hero image when tags exist", () => {
+  it("renders tags below title in non-shared view when tags exist", () => {
     render(
       <LocaleProvider>
         <EntryReader
@@ -165,12 +165,16 @@ describe("EntryReader", () => {
 
     const tagList = screen.getByLabelText("Tags");
     expect(tagList).toBeInTheDocument();
-    expect(tagList.parentElement).toHaveClass("absolute", "right-0", "top-0");
+
+    // Check for flex and wrap classes to verify layout behavior
+    expect(tagList.className).toMatch(/flex/);
+    expect(tagList.className).toMatch(/flex-wrap/);
+
     expect(screen.getByText("Cafes")).toBeInTheDocument();
     expect(screen.getByText("Night")).toBeInTheDocument();
   });
 
-  it("renders tags on the hero image in shared view", () => {
+  it("renders tags below title inside gray overlay in shared view", () => {
     render(
       <LocaleProvider>
         <EntryReader
@@ -196,9 +200,99 @@ describe("EntryReader", () => {
 
     const tagList = screen.getByLabelText("Tags");
     expect(tagList).toBeInTheDocument();
-    expect(tagList.parentElement).toHaveClass("absolute", "right-0", "top-0");
+
+    // Check for flex and wrap classes to verify layout behavior
+    expect(tagList.className).toMatch(/flex/);
+    expect(tagList.className).toMatch(/flex-wrap/);
+
     expect(screen.getByText("Beach")).toBeInTheDocument();
     expect(screen.getByText("Sunset")).toBeInTheDocument();
+  });
+
+  it("renders multiple tags with wrapping behavior in shared view", () => {
+    const manyTags = [
+      "Adventure",
+      "Beach",
+      "Cafes",
+      "Desert",
+      "Exploration",
+      "Food",
+      "History",
+      "Mountains",
+      "Nature",
+      "Photography",
+    ];
+
+    render(
+      <LocaleProvider>
+        <EntryReader
+          isSharedView
+          entry={{
+            id: "entry-many-tags",
+            title: "Many tags test",
+            body: "Testing wrapping with many tags.",
+            createdAt: "2025-05-10T00:00:00.000Z",
+            tags: manyTags,
+            media: [
+              {
+                id: "media-many-tags",
+                url: "https://example.com/hero-many-tags.jpg",
+                width: 1600,
+                height: 1000,
+              },
+            ],
+          }}
+        />
+      </LocaleProvider>,
+    );
+
+    const tagList = screen.getByLabelText("Tags");
+    expect(tagList).toBeInTheDocument();
+
+    // Verify all tags are rendered
+    manyTags.forEach((tag) => {
+      expect(screen.getByText(tag)).toBeInTheDocument();
+    });
+
+    // Verify wrapping behavior by checking class
+    expect(tagList.className).toMatch(/flex-wrap/);
+  });
+
+  it("ensures shared overlay gray box has max-height constraint", () => {
+    const { container } = render(
+      <LocaleProvider>
+        <EntryReader
+          isSharedView
+          entry={{
+            id: "entry-overlay-height",
+            title: "Height test",
+            body: "Testing max-height.",
+            createdAt: "2025-05-10T00:00:00.000Z",
+            tags: ["Tag1", "Tag2"],
+            media: [
+              {
+                id: "media-overlay-height",
+                url: "https://example.com/hero-height.jpg",
+                width: 1600,
+                height: 1000,
+              },
+            ],
+          }}
+        />
+      </LocaleProvider>,
+    );
+
+    const overlay = screen.getByLabelText("Entry details");
+    expect(overlay).toBeInTheDocument();
+
+    // Find the inner scrollable div - it's the first child of overlay
+    const innerDiv = overlay.firstElementChild;
+    expect(innerDiv).toBeInTheDocument();
+
+    // Verify max-height and overflow classes are present
+    expect(innerDiv?.className).toMatch(/max-h-\[50vh\]/);
+    expect(innerDiv?.className).toMatch(/overflow-y-auto/);
+    expect(innerDiv?.className).toMatch(/pointer-events-auto/);
   });
 
   it("hides tag overlay when entry has no tags", () => {

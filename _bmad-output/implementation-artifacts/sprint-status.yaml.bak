@@ -165,5 +165,4 @@ development_status:
   12-2-create-weather-backfill-utility: done
   12-3-display-weather-on-entry-detail-pages: done
   12-5-auto-fetch-weather-for-new-entries: done
-  12-6-reposition-tags-below-title: done
   epic-12-retrospective: optional

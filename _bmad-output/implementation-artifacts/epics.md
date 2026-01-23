@@ -1506,3 +1506,213 @@ So that the rich text editor is production-ready.
 **Given** I test on different browsers (Chrome, Safari, Firefox, Edge)
 **When** I use the rich text editor
 **Then** all features work consistently across browsers
+
+
+## Epic 10: Media & UX Improvements
+
+**Goal:** Enhance media handling with video support, larger file sizes, automatic compression, and polished slideshow transitions.
+
+**Stories:**
+
+### Story 10.1: Enhanced Media Support (Photos + Videos)
+
+As a creator,
+I want to upload larger photos (up to 15MB) and video files (up to 100MB),
+So that I can share high-quality travel memories without compression or external hosting.
+
+**Acceptance Criteria:**
+
+**Given** I am creating or editing an entry
+**When** I select a photo file between 5MB and 15MB
+**Then** the file uploads successfully without size validation errors
+**And** the photo displays correctly in the entry gallery
+
+**Given** I select a photo file larger than 15MB
+**When** I attempt to upload
+**Then** I see a clear error message: "Photo must be 15MB or less"
+
+**Given** I select a video file up to 100MB
+**When** I upload the video
+**Then** the video uploads successfully and displays in the entry
+**And** the video supports MP4, WebM, and MOV formats
+
+**Given** I select a video file larger than 100MB
+**When** I attempt to upload
+**Then** I see a clear error message: "Video must be 100MB or less"
+
+### Story 10.2: Automatic Image Compression
+
+As a creator,
+I want images automatically compressed to a reasonable size during upload and on app startup,
+So that page loads are faster and storage is optimized without sacrificing visual quality.
+
+**Acceptance Criteria:**
+
+**Given** I am uploading a photo to an entry
+**When** the photo dimensions exceed 1920x1080 or contains HDR/unnecessary metadata
+**Then** the image is automatically compressed before saving to disk
+**And** the compressed version replaces the uploaded file
+**And** the aspect ratio is preserved during scaling
+
+**Given** I am uploading a photo that requires compression
+**When** the upload completes (100%)
+**Then** the server automatically compresses the image before saving to disk
+**And** EXIF metadata (including GPS) is preserved
+
+**Given** existing uncompressed images in the uploads folder
+**When** the app starts up
+**Then** a background backfill utility scans and compresses all oversized images
+**And** the backfill runs only once per image
+
+### Story 10.3: Slideshow Crossfade Transitions
+
+As a viewer watching a slideshow,
+I want smooth crossfade transitions between images instead of hard cuts,
+So that the slideshow experience feels more polished and professional.
+
+**Acceptance Criteria:**
+
+**Given** I am watching a slideshow with multiple images
+**When** the slideshow transitions from one image to the next image
+**Then** the new image fades in over the old image with a 1-second crossfade
+**And** the transition uses CSS opacity animation for smooth performance
+**And** the crossfade effect applies only when both media are images
+
+**Given** I am watching a slideshow that includes video files
+**When** the slideshow transitions to or from a video
+**Then** the transition is an instant hard cut (no crossfade)
+**And** videos play automatically in slideshow mode
+
+## Epic 11: Country Flags
+
+**Goal:** Display country flags throughout the app based on entry location coordinates to provide geographic context.
+
+**Stories:**
+
+### Story 11.1: Add Country Code Storage & Extraction
+
+As a system,
+I want to extract and store country codes from entry coordinates,
+So that country information is available for display throughout the app.
+
+**Acceptance Criteria:**
+
+**Given** the Entry location schema
+**When** the schema is updated
+**Then** a `countryCode` field (ISO 3166-1 alpha-2) is added to the location object
+
+**Given** I create an entry with lat/long coordinates
+**When** the entry is saved
+**Then** the system reverse geocodes the coordinates to determine the country
+**And** the country code (e.g., "US", "DE", "JP") is stored with the entry location
+
+**Given** I edit an entry and change the location
+**When** the entry is saved
+**Then** the country code is updated based on the new coordinates
+
+### Story 11.2: Display Flags on Entry Cards
+
+As a viewer,
+I want to see country flag emojis on entry cards,
+So that I can quickly identify the country for each entry.
+
+**Acceptance Criteria:**
+
+**Given** I am viewing the trip overview page
+**When** entry cards are displayed
+**Then** I see a country flag emoji next to each entry title (if country code exists)
+
+**Given** I am viewing a shared trip overview page
+**When** entry cards are displayed
+**Then** I see country flag emojis on entry cards (same as authenticated view)
+
+**Given** an entry has no country code
+**When** the entry card is displayed
+**Then** no flag is shown (graceful degradation)
+
+### Story 11.3: Display Flags on Entry Detail Pages
+
+As a viewer,
+I want to see the country flag on entry detail pages,
+So that I know which country the entry is from while reading.
+
+**Acceptance Criteria:**
+
+**Given** I am viewing an entry detail page
+**When** the page loads
+**Then** I see the country flag emoji displayed below or next to the entry title
+
+**Given** I am viewing a shared entry page
+**When** the page loads
+**Then** I see the country flag emoji (same as authenticated view)
+
+**Given** an entry has no country code
+**When** the entry detail page loads
+**Then** no flag is shown (graceful degradation)
+
+### Story 11.4: Aggregate Trip Country Flags
+
+As a viewer,
+I want to see a list of country flags for all countries visited in a trip,
+So that I can quickly see which countries the trip covers.
+
+**Acceptance Criteria:**
+
+**Given** I am viewing a trip overview page
+**When** the page loads
+**Then** I see a list of country flags below the trip title
+**And** flags are displayed in chronological order (first appearance in trip)
+**And** each country appears only once (no duplicates)
+
+**Given** I am viewing a shared trip overview page
+**When** the page loads
+**Then** I see the same country flag list as in the authenticated view
+
+**Given** a trip has no entries with location data
+**When** the trip overview loads
+**Then** no country flag list is displayed
+## Epic 12: Weather Integration
+
+**Goal:** Display historical weather information for entry locations to provide richer context.
+
+**Stories:**
+
+### Story 12.1: Add Weather Fields to Database Schema
+Database schema update to support weather data storage.
+
+### Story 12.2: Create Weather Backfill Utility
+Utility to fetch historical weather for existing entries.
+
+### Story 12.3: Display Weather on Entry Detail Pages
+Show weather icons and temperature on entry pages.
+
+### Story 12.5: Auto-Fetch Weather for New Entries
+Automatically fetch weather when creating/editing entries with locations.
+
+### Story 12.6: Reposition Tags Below Title
+
+As a viewer,
+I want to see entry tags displayed below the title instead of in the hero image,
+So that tags are easier to read and don't obscure the hero media.
+
+**Acceptance Criteria:**
+
+**Given** I view an entry with tags (signed-in or shared view)
+**When** the page loads
+**Then** tags are NOT displayed overlaid on the hero image at top-right
+
+**Given** I view an entry with tags in signed-in view
+**When** the page loads
+**Then** tags appear below the entry title (h1)
+**And** tags are displayed as a horizontal list with flex-wrap
+**And** tags wrap to multiple lines if needed
+
+**Given** I view an entry with tags via shared link
+**When** the page loads
+**Then** tags appear below the entry title inside the gray overlay box
+**And** tags are displayed as a horizontal list with flex-wrap
+**And** the gray overlay box remains ≤ 50vh in height
+
+**Given** tags are repositioned
+**When** I interact with the page using screen reader or keyboard
+**Then** tags remain accessible with proper ARIA labels

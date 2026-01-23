@@ -298,6 +298,24 @@ const EntryReader = ({
             <h1 className="mt-2 text-4xl font-semibold text-[#2D2A26] sm:text-5xl">
               {entryTitle}
             </h1>
+            {hasTags ? (
+              <div
+                role="list"
+                aria-label={t("entries.tags")}
+                className="mt-3 flex flex-wrap gap-2 sm:gap-3"
+              >
+                {entry.tags.map((tag) => (
+                  <span
+                    key={tag}
+                    role="listitem"
+                    title={tag}
+                    className="inline-flex max-w-[12rem] items-center rounded-full bg-[#F2ECE3] px-3 py-1 text-xs font-semibold text-[#2D2A26] sm:max-w-[16rem]"
+                  >
+                    <span className="truncate" dir="auto">{tag}</span>
+                  </span>
+                ))}
+              </div>
+            ) : null}
           </header>
         ) : null}
 
@@ -356,7 +374,7 @@ const EntryReader = ({
                   aria-label={t("entries.entryHeroOverlay")}
                   className="pointer-events-none absolute left-0 top-0 z-30 px-6 pt-6 sm:px-8 sm:pt-8"
                 >
-                  <div className="flex max-w-[32rem] flex-col rounded-2xl bg-black/45 px-4 py-3 shadow-xl shadow-black/40 backdrop-blur-sm sm:px-5 sm:py-4">
+                  <div className="pointer-events-auto flex max-h-[50vh] max-w-[32rem] flex-col overflow-y-auto rounded-2xl bg-black/45 px-4 py-3 shadow-xl shadow-black/40 backdrop-blur-sm sm:px-5 sm:py-4">
                     <p className="text-xs uppercase tracking-[0.3em] text-white drop-shadow-sm">
                       {entryDate}
                     </p>
@@ -381,6 +399,24 @@ const EntryReader = ({
                     <h1 className="mt-1 text-3xl font-semibold text-white drop-shadow-sm sm:text-4xl">
                       {entryTitle}
                     </h1>
+                    {hasTags ? (
+                      <div
+                        role="list"
+                        aria-label={t("entries.tags")}
+                        className="mt-3 flex flex-wrap gap-2 sm:gap-3"
+                      >
+                        {entry.tags.map((tag) => (
+                          <span
+                            key={tag}
+                            role="listitem"
+                            title={tag}
+                            className="inline-flex max-w-[12rem] items-center rounded-full bg-[#F2ECE3] px-3 py-1 text-xs font-semibold text-[#2D2A26] sm:max-w-[16rem]"
+                          >
+                            <span className="truncate" dir="auto">{tag}</span>
+                          </span>
+                        ))}
+                      </div>
+                    ) : null}
                   </div>
                 </div>
                 {entry.location ? (
@@ -393,26 +429,6 @@ const EntryReader = ({
                   </div>
                 ) : null}
               </>
-            ) : null}
-            {hasTags ? (
-              <div className="pointer-events-none absolute right-0 top-0 z-30 px-4 pt-4 sm:px-6 sm:pt-6">
-                <div
-                  role="list"
-                  aria-label={t("entries.tags")}
-                  className="flex max-w-[18rem] flex-col items-end gap-2 overflow-hidden rounded-2xl bg-black/60 px-3 py-3 shadow-xl shadow-black/40 backdrop-blur-sm sm:max-w-[22rem]"
-                >
-                  {entry.tags.map((tag) => (
-                    <span
-                      key={tag}
-                      role="listitem"
-                      title={tag}
-                      className="inline-flex max-w-[12rem] items-center rounded-full bg-[#F2ECE3] px-3 py-1 text-xs font-semibold text-[#2D2A26] sm:max-w-[16rem]"
-                    >
-                      <span className="truncate" dir="auto">{tag}</span>
-                    </span>
-                  ))}
-                </div>
-              </div>
             ) : null}
           </div>
         </section>
