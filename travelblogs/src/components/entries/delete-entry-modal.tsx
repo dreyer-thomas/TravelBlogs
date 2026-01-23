@@ -75,7 +75,7 @@ const DeleteEntryModal = ({
       </button>
 
       {isOpen ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 px-4">
           <div
             role="dialog"
             aria-modal="true"
