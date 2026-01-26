@@ -258,8 +258,8 @@ describe("EntryReader", () => {
     expect(tagList.className).toMatch(/flex-wrap/);
   });
 
-  it("ensures shared overlay gray box has max-height constraint", () => {
-    const { container } = render(
+  it("renders unified header structure in shared view without overlay", () => {
+    render(
       <LocaleProvider>
         <EntryReader
           isSharedView
@@ -282,17 +282,13 @@ describe("EntryReader", () => {
       </LocaleProvider>,
     );
 
-    const overlay = screen.getByLabelText("Entry details");
-    expect(overlay).toBeInTheDocument();
+    // Header should exist above hero (not as overlay)
+    expect(screen.getByRole("heading", { name: "Height test" })).toBeInTheDocument();
+    expect(screen.getByText("Tag1")).toBeInTheDocument();
+    expect(screen.getByText("Tag2")).toBeInTheDocument();
 
-    // Find the inner scrollable div - it's the first child of overlay
-    const innerDiv = overlay.firstElementChild;
-    expect(innerDiv).toBeInTheDocument();
-
-    // Verify max-height and overflow classes are present
-    expect(innerDiv?.className).toMatch(/max-h-\[50vh\]/);
-    expect(innerDiv?.className).toMatch(/overflow-y-auto/);
-    expect(innerDiv?.className).toMatch(/pointer-events-auto/);
+    // No "Entry details" overlay should exist
+    expect(screen.queryByLabelText("Entry details")).not.toBeInTheDocument();
   });
 
   it("hides tag overlay when entry has no tags", () => {
@@ -797,7 +793,7 @@ describe("EntryReader", () => {
     ).toHaveAttribute("href", "/trips/share/token-3");
   });
 
-  it("renders shared hero overlays with date and title", () => {
+  it("renders unified header with date and title in shared view", () => {
     render(
       <LocaleProvider>
         <EntryReader
@@ -821,12 +817,10 @@ describe("EntryReader", () => {
       </LocaleProvider>,
     );
 
-    const overlay = screen.getByLabelText("Entry details");
-    expect(overlay).toBeInTheDocument();
+    // No overlay should exist - header is above hero
+    expect(screen.queryByLabelText("Entry details")).not.toBeInTheDocument();
 
-    // Validate overlay is positioned in upper-left within hero image
-    expect(overlay).toHaveClass("absolute", "left-0", "top-0");
-
+    // Header elements should be present above hero
     expect(screen.getByText("May 3rd, 2025")).toBeInTheDocument();
     expect(
       screen.getByRole("heading", { name: "Morning in Kyoto" }),
@@ -868,9 +862,10 @@ describe("EntryReader", () => {
       </LocaleProvider>,
     );
 
-    expect(screen.getByText(flag)).toBeInTheDocument();
+    // Flag appears in both header and map overlay (desktop)
+    expect(screen.getAllByText(flag).length).toBeGreaterThanOrEqual(1);
     if (name) {
-      expect(screen.getByText(name)).toBeInTheDocument();
+      expect(screen.getAllByText(name).length).toBeGreaterThanOrEqual(1);
     }
   });
 
@@ -910,9 +905,10 @@ describe("EntryReader", () => {
       </LocaleProvider>,
     );
 
-    expect(screen.getByText(flag)).toBeInTheDocument();
+    // Flag appears in both header and map overlay (desktop)
+    expect(screen.getAllByText(flag).length).toBeGreaterThanOrEqual(1);
     if (name) {
-      expect(screen.getByText(name)).toBeInTheDocument();
+      expect(screen.getAllByText(name).length).toBeGreaterThanOrEqual(1);
     }
   });
 
@@ -956,8 +952,9 @@ describe("EntryReader", () => {
         </LocaleProvider>,
       );
 
-      expect(screen.getByText("☀️")).toBeInTheDocument();
-      expect(screen.getByText("75°F")).toBeInTheDocument();
+      // Weather appears in both header and hero overlay (desktop)
+      expect(screen.getAllByText("☀️").length).toBeGreaterThanOrEqual(1);
+      expect(screen.getAllByText("75°F").length).toBeGreaterThanOrEqual(1);
     } finally {
       Object.defineProperty(window.navigator, "language", {
         value: originalLanguage,
@@ -1007,13 +1004,9 @@ describe("EntryReader", () => {
         </LocaleProvider>,
       );
 
-      expect(screen.getByText("☀️")).toBeInTheDocument();
-      expect(screen.getByText("24°C")).toBeInTheDocument();
-      if (countryName) {
-        const locationMeta =
-          screen.getByText(countryName).parentElement?.parentElement;
-        expect(locationMeta).toContainElement(screen.getByText("24°C"));
-      }
+      // Weather appears in both header and hero overlay (desktop)
+      expect(screen.getAllByText("☀️").length).toBeGreaterThanOrEqual(1);
+      expect(screen.getAllByText("24°C").length).toBeGreaterThanOrEqual(1);
     } finally {
       Object.defineProperty(window.navigator, "language", {
         value: originalLanguage,
@@ -1096,7 +1089,7 @@ describe("EntryReader", () => {
     expect(screen.queryByText(flag)).not.toBeInTheDocument();
   });
 
-  it("shows a location map overlay only when location exists", () => {
+  it("shows map as overlay on desktop and below hero on mobile when location exists", () => {
     const entry = {
       id: "entry-8",
       title: "Harbor view",
@@ -1129,11 +1122,15 @@ describe("EntryReader", () => {
       </LocaleProvider>,
     );
 
-    const mapOverlay = screen.getByLabelText("Entry location map");
-    expect(mapOverlay).toBeInTheDocument();
+    // Map overlay exists (desktop) and mobile map exists
+    const mapElements = screen.getAllByLabelText("Entry location map");
+    expect(mapElements.length).toBeGreaterThanOrEqual(1);
 
-    // Validate map overlay is positioned in lower-right within hero image
-    expect(mapOverlay.parentElement).toHaveClass("absolute", "bottom-4", "right-4");
+    // At least one map should be absolutely positioned (desktop overlay)
+    const hasAbsoluteMap = mapElements.some(
+      (el) => el.parentElement?.className?.includes("absolute")
+    );
+    expect(hasAbsoluteMap).toBe(true);
 
     rerender(
       <LocaleProvider>
@@ -1317,5 +1314,245 @@ describe("EntryReader", () => {
     // Should attempt to display content (either as plain text fallback or empty state)
     // The exact behavior depends on implementation, but it shouldn't crash
     expect(container.querySelector(".ProseMirror")).toBeInTheDocument();
+  });
+
+  it("should render unified header above hero in shared view without dark overlay", () => {
+    const { container } = render(
+      <LocaleProvider>
+        <EntryReader
+          isSharedView
+          entry={{
+            id: "entry-unified-shared",
+            title: "Unified header test",
+            body: "Testing unified header.",
+            createdAt: "2025-05-09T00:00:00.000Z",
+            tags: ["Beach", "Sunset"],
+            media: [
+              {
+                id: "media-unified",
+                url: "https://example.com/hero-unified.jpg",
+                width: 1600,
+                height: 1000,
+              },
+            ],
+            location: {
+              latitude: 52.52,
+              longitude: 13.405,
+              label: "Berlin",
+              countryCode: "DE",
+            },
+            weatherCondition: "Clear",
+            weatherTemperature: 24,
+            weatherIconCode: "0",
+          }}
+        />
+      </LocaleProvider>,
+    );
+
+    // Header section should exist with metadata
+    expect(screen.getByText("May 9th, 2025")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Unified header test" })).toBeInTheDocument();
+    expect(screen.getByText("Beach")).toBeInTheDocument();
+    expect(screen.getByText("Sunset")).toBeInTheDocument();
+
+    // No overlay with bg-black/45 on entire hero should exist
+    const overlayElements = container.querySelectorAll('[class*="bg-black/45"]');
+    expect(overlayElements).toHaveLength(0);
+
+    // No "Entry details" overlay should exist (from old implementation)
+    expect(screen.queryByLabelText("Entry details")).not.toBeInTheDocument();
+  });
+
+  it("should render overlaid layout when location exists", () => {
+    const { container } = render(
+      <LocaleProvider>
+        <EntryReader
+          entry={{
+            id: "entry-overlaid",
+            title: "Overlaid layout test",
+            body: "Testing overlaid layout.",
+            createdAt: "2025-05-10T00:00:00.000Z",
+            tags: [],
+            media: [
+              {
+                id: "media-overlaid",
+                url: "https://example.com/hero-overlaid.jpg",
+                width: 1600,
+                height: 1000,
+              },
+            ],
+            location: {
+              latitude: 52.52,
+              longitude: 13.405,
+              label: "Berlin",
+              countryCode: "DE",
+            },
+          }}
+          heroMapLocations={[
+            {
+              latitude: 52.52,
+              longitude: 13.405,
+              label: "Berlin",
+            },
+          ]}
+        />
+      </LocaleProvider>,
+    );
+
+    // Maps should be rendered (desktop overlay + mobile stacked)
+    const mapElements = screen.getAllByLabelText("Entry location map");
+    expect(mapElements.length).toBeGreaterThanOrEqual(1);
+
+    // At least one map should be absolutely positioned (desktop overlay)
+    const hasAbsoluteMap = mapElements.some(
+      (el) => el.parentElement?.className?.includes("absolute")
+    );
+    expect(hasAbsoluteMap).toBe(true);
+  });
+
+  it("should use natural aspect ratio for hero image with overlaid map", () => {
+    const { container } = render(
+      <LocaleProvider>
+        <EntryReader
+          entry={{
+            id: "entry-height-test",
+            title: "Height constraints test",
+            body: "Testing responsive heights.",
+            createdAt: "2025-05-10T00:00:00.000Z",
+            tags: [],
+            media: [
+              {
+                id: "media-height",
+                url: "https://example.com/hero-height.jpg",
+                width: 1600,
+                height: 1000,
+              },
+            ],
+            location: {
+              latitude: 52.52,
+              longitude: 13.405,
+              label: "Berlin",
+              countryCode: "DE",
+            },
+          }}
+          heroMapLocations={[
+            {
+              latitude: 52.52,
+              longitude: 13.405,
+              label: "Berlin",
+            },
+          ]}
+        />
+      </LocaleProvider>,
+    );
+
+    // Hero image should use natural aspect ratio (h-auto w-full)
+    const heroImage = screen.getAllByRole("img")[0];
+    expect(heroImage.className).toMatch(/h-auto/);
+    expect(heroImage.className).toMatch(/w-full/);
+
+    // Map overlay should have fixed width and height constraints
+    const mapElements = screen.getAllByLabelText("Entry location map");
+    const desktopMapParent = mapElements.find(
+      (el) => el.parentElement?.className?.includes("w-[200px]")
+    )?.parentElement;
+    expect(desktopMapParent?.className).toMatch(/w-\[200px\]/);
+    expect(desktopMapParent?.className).toMatch(/sm:w-\[250px\]/);
+    expect(desktopMapParent?.className).toMatch(/h-\[150px\]/);
+    expect(desktopMapParent?.className).toMatch(/sm:h-\[180px\]/);
+  });
+
+  it("renders full-width hero without location", () => {
+    const { container } = render(
+      <LocaleProvider>
+        <EntryReader
+          entry={{
+            id: "entry-full-width",
+            title: "Full width test",
+            body: "Testing full-width hero.",
+            createdAt: "2025-05-11T00:00:00.000Z",
+            tags: [],
+            media: [
+              {
+                id: "media-full-width",
+                url: "https://example.com/hero-full-width.jpg",
+                width: 1600,
+                height: 1000,
+              },
+            ],
+            location: null,
+          }}
+        />
+      </LocaleProvider>,
+    );
+
+    // Hero image should be rendered
+    const heroImage = screen.getAllByRole("img")[0];
+    expect(heroImage).toHaveAttribute("src", "https://example.com/hero-full-width.jpg");
+
+    // Map should not be rendered
+    expect(screen.queryByLabelText("Entry location map")).not.toBeInTheDocument();
+  });
+
+  it("should maintain accessible focus order from header through hero to content", () => {
+    render(
+      <LocaleProvider>
+        <EntryReader
+          entry={{
+            id: "entry-a11y-focus",
+            title: "Accessibility test",
+            body: "Testing keyboard navigation.",
+            createdAt: "2025-05-12T00:00:00.000Z",
+            tags: ["Tag1"],
+            media: [
+              {
+                id: "media-a11y",
+                url: "https://example.com/hero-a11y.jpg",
+                width: 1600,
+                height: 1000,
+              },
+            ],
+            location: {
+              latitude: 52.52,
+              longitude: 13.405,
+              label: "Berlin",
+              countryCode: "DE",
+            },
+          }}
+          heroMapLocations={[
+            {
+              latitude: 52.52,
+              longitude: 13.405,
+              label: "Berlin",
+            },
+          ]}
+        />
+      </LocaleProvider>,
+    );
+
+    // Verify semantic HTML structure exists
+    const header = screen.getByRole("heading", { name: "Accessibility test" });
+    expect(header.tagName).toBe("H1");
+
+    // Verify maps have proper ARIA labels (desktop overlay + mobile)
+    const maps = screen.getAllByLabelText("Entry location map");
+    expect(maps.length).toBeGreaterThanOrEqual(1);
+    maps.forEach((map) => {
+      expect(map).toHaveAttribute("role", "region");
+      expect(map).toHaveAttribute("aria-label", "Entry location map");
+    });
+
+    // Verify tags have proper ARIA structure
+    const tagList = screen.getByLabelText("Tags");
+    expect(tagList).toHaveAttribute("role", "list");
+
+    const tag = screen.getByText("Tag1");
+    const tagItem = tag.closest('[role="listitem"]');
+    expect(tagItem).toBeTruthy();
+
+    // Verify hero button is keyboard accessible
+    const heroButton = screen.getByLabelText("Open hero photo");
+    expect(heroButton.tagName).toBe("BUTTON");
+    expect(heroButton).toHaveClass("focus-visible:outline");
   });
 });

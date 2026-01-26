@@ -104,7 +104,7 @@ const EntryHeroMap = ({
       ref={mapContainerRef}
       role="region"
       aria-label={ariaLabel}
-      className="h-36 w-48 overflow-hidden rounded-2xl border border-white/40 bg-[#F2ECE3] shadow-lg sm:h-40 sm:w-60"
+      className="h-full w-full bg-[#F2ECE3]"
     />
   );
 };

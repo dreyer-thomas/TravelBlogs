@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useEditor, EditorContent } from "@tiptap/react";
 import type { Editor } from "@tiptap/core";
 import Placeholder from "@tiptap/extension-placeholder";
@@ -87,6 +87,11 @@ export default function TiptapEditor({
   const [linkUrl, setLinkUrl] = useState("");
   const [showLinkDialog, setShowLinkDialog] = useState(false);
 
+  // Track real mouse clicks vs programmatic clicks for formatting buttons
+  const boldButtonMouseDownRef = useRef(false);
+  const italicButtonMouseDownRef = useRef(false);
+  const underlineButtonMouseDownRef = useRef(false);
+
   // Default placeholder from i18n if not provided
   const editorPlaceholder = placeholder ?? t("editor.placeholder");
 
@@ -110,6 +115,15 @@ export default function TiptapEditor({
         class:
           "prose prose-lg max-w-none focus:outline-none min-h-[200px] p-4 [&_h1]:text-3xl [&_h1]:font-semibold [&_h2]:text-2xl [&_h2]:font-semibold [&_h3]:text-xl [&_h3]:font-semibold",
         "aria-label": t("editor.contentArea"),
+      },
+      // Strip all formatting from pasted HTML
+      transformPastedHTML: (html) => {
+        // Remove all <strong>, <b>, <em>, <i> tags but keep their text content
+        return html
+          .replace(/<\/?strong>/gi, '')
+          .replace(/<\/?b>/gi, '')
+          .replace(/<\/?em>/gi, '')
+          .replace(/<\/?i>/gi, '');
       },
     },
   });
@@ -178,7 +192,7 @@ export default function TiptapEditor({
   // Toolbar button styling constants
   const buttonBaseClass =
     "p-2 text-base font-medium rounded focus:ring-2 focus:ring-[#1F6F78] focus:outline-none transition-colors";
-  const activeClass = "text-[#1F6F78]";
+  const activeClass = "bg-gray-300 text-gray-900";
   const inactiveClass = "text-gray-700 hover:bg-gray-200";
 
   return (
@@ -194,7 +208,19 @@ export default function TiptapEditor({
         {/* Text Formatting Group */}
         <div className="flex gap-1" role="group" aria-label={t("editor.textFormatting")}>
           <button
-            onClick={() => editor.chain().focus().toggleBold().run()}
+            onClick={(e) => {
+              // Only allow REAL mouse clicks, not programmatic clicks
+              if (!boldButtonMouseDownRef.current) {
+                e.preventDefault();
+                e.stopPropagation();
+                return;
+              }
+              boldButtonMouseDownRef.current = false;
+              editor.chain().focus().toggleBold().run();
+            }}
+            onMouseDown={() => {
+              boldButtonMouseDownRef.current = true;
+            }}
             className={`${buttonBaseClass} ${
               editor.isActive("bold") ? activeClass : inactiveClass
             }`}
@@ -205,7 +231,18 @@ export default function TiptapEditor({
             B
           </button>
           <button
-            onClick={() => editor.chain().focus().toggleItalic().run()}
+            onClick={(e) => {
+              if (!italicButtonMouseDownRef.current) {
+                e.preventDefault();
+                e.stopPropagation();
+                return;
+              }
+              italicButtonMouseDownRef.current = false;
+              editor.chain().focus().toggleItalic().run();
+            }}
+            onMouseDown={() => {
+              italicButtonMouseDownRef.current = true;
+            }}
             className={`${buttonBaseClass} ${
               editor.isActive("italic") ? activeClass : inactiveClass
             }`}
@@ -216,7 +253,18 @@ export default function TiptapEditor({
             I
           </button>
           <button
-            onClick={() => editor.chain().focus().toggleUnderline().run()}
+            onClick={(e) => {
+              if (!underlineButtonMouseDownRef.current) {
+                e.preventDefault();
+                e.stopPropagation();
+                return;
+              }
+              underlineButtonMouseDownRef.current = false;
+              editor.chain().focus().toggleUnderline().run();
+            }}
+            onMouseDown={() => {
+              underlineButtonMouseDownRef.current = true;
+            }}
             className={`${buttonBaseClass} ${
               editor.isActive("underline") ? activeClass : inactiveClass
             }`}
@@ -235,12 +283,14 @@ export default function TiptapEditor({
           aria-label={t("editor.headings")}
         >
           <button
-            onClick={() => editor.chain().focus().setParagraph().run()}
+            onClick={() => editor.chain().focus().clearNodes().setParagraph().run()}
             className={`${buttonBaseClass} ${
-              editor.isActive("paragraph") ? activeClass : inactiveClass
+              editor.isActive("paragraph") && !editor.isActive("heading")
+                ? activeClass
+                : inactiveClass
             }`}
             aria-label={t("editor.paragraph")}
-            aria-pressed={editor.isActive("paragraph")}
+            aria-pressed={editor.isActive("paragraph") && !editor.isActive("heading")}
             type="button"
           >
             P

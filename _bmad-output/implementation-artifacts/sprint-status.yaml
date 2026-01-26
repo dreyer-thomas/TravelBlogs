@@ -167,3 +167,8 @@ development_status:
   12-5-auto-fetch-weather-for-new-entries: done
   12-6-reposition-tags-below-title: done
   epic-12-retrospective: optional
+
+  epic-13: in-progress
+  13-1-entry-hero-two-column-layout: done
+  13-2-entry-hero-overlaid-map-layout: review
+  epic-13-retrospective: optional

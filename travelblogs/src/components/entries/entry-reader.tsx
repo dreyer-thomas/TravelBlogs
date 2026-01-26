@@ -123,8 +123,6 @@ const EntryReader = ({
       weatherLocale,
     ],
   );
-  const showLocationMeta = Boolean(countryFlag || countryName || weatherDisplay);
-  const showSharedHeroOverlay = isSharedView;
   const hasTags = entry.tags.length > 0;
   const entryBody = entry.body ?? "";
   const entryMediaIdByUrl = useMemo(
@@ -265,7 +263,7 @@ const EntryReader = ({
 
   return (
     <div className="min-h-screen bg-[#FBF7F1]">
-      <main className="mx-auto flex w-full max-w-5xl flex-col gap-10 px-6 py-12">
+      <main className="mx-auto flex w-full max-w-5xl flex-col gap-8 px-6 py-12">
         {backToTripHref ? (
           <Link
             href={backToTripHref}
@@ -274,56 +272,62 @@ const EntryReader = ({
             ← {t('entries.backToTrip')}
           </Link>
         ) : null}
-        {!isSharedView ? (
-          <header className="flex flex-col">
+        <section className="overflow-hidden rounded-3xl border border-black/10 bg-white shadow-sm">
+          <header className="px-6 pb-3 pt-5 sm:px-8 sm:pb-4 sm:pt-6">
             <p className="text-xs uppercase tracking-[0.2em] text-[#6B635B]">
               {entryDate}
             </p>
-            {showLocationMeta ? (
-              <div className="mt-3 flex flex-wrap items-center gap-2 text-lg text-[#2D2A26]">
-                {countryFlag ? (
-                  <span className="text-2xl leading-none" aria-hidden="true">
-                    {countryFlag}
-                  </span>
-                ) : null}
-                {countryName ? <span>{countryName}</span> : null}
-                {weatherDisplay ? (
-                  <span className="flex items-center gap-1">
-                    <span aria-hidden="true">{weatherDisplay.icon}</span>
-                    <span>{weatherDisplay.temperature}</span>
-                  </span>
-                ) : null}
-              </div>
-            ) : null}
-            <h1 className="mt-2 text-4xl font-semibold text-[#2D2A26] sm:text-5xl">
-              {entryTitle}
-            </h1>
-            {hasTags ? (
-              <div
-                role="list"
-                aria-label={t("entries.tags")}
-                className="mt-3 flex flex-wrap gap-2 sm:gap-3"
-              >
-                {entry.tags.map((tag) => (
-                  <span
-                    key={tag}
-                    role="listitem"
-                    title={tag}
-                    className="inline-flex max-w-[12rem] items-center rounded-full bg-[#F2ECE3] px-3 py-1 text-xs font-semibold text-[#2D2A26] sm:max-w-[16rem]"
+            <div className="mt-1 flex items-start justify-between gap-4">
+              <div className="flex flex-col gap-1">
+                <h1 className="text-3xl font-semibold text-[#2D2A26] sm:text-4xl">
+                  {entryTitle}
+                </h1>
+                {hasTags ? (
+                  <div
+                    role="list"
+                    aria-label={t("entries.tags")}
+                    className="flex flex-wrap gap-2 sm:gap-3"
                   >
-                    <span className="truncate" dir="auto">{tag}</span>
-                  </span>
-                ))}
+                    {entry.tags.map((tag) => (
+                      <span
+                        key={tag}
+                        role="listitem"
+                        title={tag}
+                        className="inline-flex max-w-[12rem] items-center rounded-full bg-[#F2ECE3] px-3 py-1 text-xs font-semibold text-[#2D2A26] sm:max-w-[16rem]"
+                      >
+                        <span className="truncate" dir="auto">{tag}</span>
+                      </span>
+                    ))}
+                  </div>
+                ) : null}
               </div>
-            ) : null}
+              <div className="flex flex-col items-end gap-1.5">
+                {entry.location && (countryFlag || countryName) ? (
+                  <div className="flex items-center gap-2 text-lg text-[#2D2A26]">
+                    {countryFlag ? (
+                      <span className="text-3xl leading-none" aria-hidden="true">
+                        {countryFlag}
+                      </span>
+                    ) : null}
+                    {countryName ? (
+                      <span className="font-medium">{countryName}</span>
+                    ) : null}
+                  </div>
+                ) : null}
+                {weatherDisplay ? (
+                  <div className="flex items-center gap-2 text-lg text-[#2D2A26]">
+                    <span className="text-3xl leading-none" aria-hidden="true">{weatherDisplay.icon}</span>
+                    <span className="font-medium">{weatherDisplay.temperature}</span>
+                  </div>
+                ) : null}
+              </div>
+            </div>
           </header>
-        ) : null}
 
-        <section className="overflow-hidden rounded-3xl border border-black/10 bg-white shadow-sm">
-          <div className="relative isolate">
-            {heroMedia ? (
-              heroIsVideo ? (
-                <div className="relative z-0">
+          <div className="pt-0">
+            <div className="relative isolate overflow-hidden">
+              {heroMedia ? (
+                heroIsVideo ? (
                   <video
                     src={heroMedia.url}
                     poster={heroVideoPoster ?? undefined}
@@ -342,95 +346,56 @@ const EntryReader = ({
                       video.play().catch(() => undefined);
                     }}
                   />
-                </div>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => openViewerAtUrl(heroMedia.url)}
-                  className="relative z-0 block w-full focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2D2A26]"
-                  aria-label={t("entries.openHeroPhoto")}
-                >
-                  <Image
-                    src={heroMedia.url}
-                    alt={heroAlt}
-                    width={heroMedia.width ?? 1600}
-                    height={heroMedia.height ?? 1000}
-                    sizes="(min-width: 1024px) 960px, 100vw"
-                    className="h-auto w-full object-cover"
-                    loading="lazy"
-                    unoptimized={!isOptimizedImage(heroMedia.url)}
-                  />
-                </button>
-              )
-            ) : (
-              <div className="flex min-h-[320px] items-center justify-center bg-[#F2ECE3] text-sm text-[#6B635B]">
-                {t("entries.noMediaAvailable")}
-              </div>
-            )}
-            {showSharedHeroOverlay ? (
-              <>
-                <div
-                  role="group"
-                  aria-label={t("entries.entryHeroOverlay")}
-                  className="pointer-events-none absolute left-0 top-0 z-30 px-6 pt-6 sm:px-8 sm:pt-8"
-                >
-                  <div className="pointer-events-auto flex max-h-[50vh] max-w-[32rem] flex-col overflow-y-auto rounded-2xl bg-black/45 px-4 py-3 shadow-xl shadow-black/40 backdrop-blur-sm sm:px-5 sm:py-4">
-                    <p className="text-xs uppercase tracking-[0.3em] text-white drop-shadow-sm">
-                      {entryDate}
-                    </p>
-                    {showLocationMeta ? (
-                      <div className="mt-2 flex w-full flex-wrap items-center gap-2 text-lg text-white">
-                        <div className="flex flex-wrap items-center gap-2">
-                          {countryFlag ? (
-                            <span className="text-2xl leading-none" aria-hidden="true">
-                              {countryFlag}
-                            </span>
-                          ) : null}
-                          {countryName ? <span>{countryName}</span> : null}
-                        </div>
-                        {weatherDisplay ? (
-                          <span className="ml-auto flex items-center gap-1">
-                            <span aria-hidden="true">{weatherDisplay.icon}</span>
-                            <span>{weatherDisplay.temperature}</span>
-                          </span>
-                        ) : null}
-                      </div>
-                    ) : null}
-                    <h1 className="mt-1 text-3xl font-semibold text-white drop-shadow-sm sm:text-4xl">
-                      {entryTitle}
-                    </h1>
-                    {hasTags ? (
-                      <div
-                        role="list"
-                        aria-label={t("entries.tags")}
-                        className="mt-3 flex flex-wrap gap-2 sm:gap-3"
-                      >
-                        {entry.tags.map((tag) => (
-                          <span
-                            key={tag}
-                            role="listitem"
-                            title={tag}
-                            className="inline-flex max-w-[12rem] items-center rounded-full bg-[#F2ECE3] px-3 py-1 text-xs font-semibold text-[#2D2A26] sm:max-w-[16rem]"
-                          >
-                            <span className="truncate" dir="auto">{tag}</span>
-                          </span>
-                        ))}
-                      </div>
-                    ) : null}
-                  </div>
-                </div>
-                {entry.location ? (
-                  <div className="absolute bottom-4 right-4 z-30 sm:bottom-6 sm:right-6">
-                    <EntryHeroMap
-                      location={entry.location}
-                      boundsLocations={heroMapLocations}
-                      ariaLabel={t("entries.entryLocationMap")}
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => openViewerAtUrl(heroMedia.url)}
+                    className="relative z-0 block w-full focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2D2A26]"
+                    aria-label={t("entries.openHeroPhoto")}
+                  >
+                    <Image
+                      src={heroMedia.url}
+                      alt={heroAlt}
+                      width={heroMedia.width ?? 1600}
+                      height={heroMedia.height ?? 1000}
+                      sizes="(min-width: 1024px) 960px, 100vw"
+                      className="h-auto w-full object-cover"
+                      loading="lazy"
+                      unoptimized={!isOptimizedImage(heroMedia.url)}
                     />
-                  </div>
-                ) : null}
-              </>
-            ) : null}
+                  </button>
+                )
+              ) : (
+                <div className="flex min-h-[320px] items-center justify-center bg-[#F2ECE3] text-sm text-[#6B635B]">
+                  {t("entries.noMediaAvailable")}
+                </div>
+              )}
+
+              {/* Map Overlay - Lower Right (Desktop Only) */}
+              {entry.location ? (
+                <div className="absolute bottom-4 right-4 z-30 hidden h-[150px] w-[200px] overflow-hidden rounded-xl border border-black/10 bg-white sm:block sm:h-[180px] sm:w-[250px]">
+                  <EntryHeroMap
+                    location={entry.location}
+                    boundsLocations={heroMapLocations}
+                    ariaLabel={t("entries.entryLocationMap")}
+                  />
+                </div>
+              ) : null}
+            </div>
           </div>
+
+          {/* Mobile Map Section (Visible only on mobile when location exists) */}
+          {entry.location ? (
+            <div className="sm:hidden">
+              <div className="h-[250px] overflow-hidden">
+                <EntryHeroMap
+                  location={entry.location}
+                  boundsLocations={heroMapLocations}
+                  ariaLabel={t("entries.entryLocationMap")}
+                />
+              </div>
+            </div>
+          ) : null}
         </section>
 
         <section
