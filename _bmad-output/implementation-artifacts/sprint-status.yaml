@@ -170,5 +170,8 @@ development_status:
 
   epic-13: in-progress
   13-1-entry-hero-two-column-layout: done
-  13-2-entry-hero-overlaid-map-layout: review
+  13-2-entry-hero-overlaid-map-layout: done
+  13-3-optimize-entry-image-loading-lcp: done
+  13-4-migrate-middleware-to-proxy: backlog
+  13-5-improve-entry-card-hover-interactions: backlog
   epic-13-retrospective: optional

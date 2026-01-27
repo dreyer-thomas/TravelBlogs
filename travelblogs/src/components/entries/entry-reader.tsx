@@ -360,7 +360,7 @@ const EntryReader = ({
                       height={heroMedia.height ?? 1000}
                       sizes="(min-width: 1024px) 960px, 100vw"
                       className="h-auto w-full object-cover"
-                      loading="lazy"
+                      loading="eager"
                       unoptimized={!isOptimizedImage(heroMedia.url)}
                     />
                   </button>

@@ -260,7 +260,7 @@ const TripOverview = ({
                     fill
                     sizes="(min-width: 1024px) 50vw, 100vw"
                     className="object-cover"
-                    loading="lazy"
+                    loading="eager"
                     unoptimized={!isOptimizedImage(trip.coverImageUrl)}
                   />
                 )}

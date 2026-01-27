@@ -100,12 +100,42 @@ describe("EntryReader", () => {
     expect(images[0]).toHaveAttribute("src", "https://example.com/hero.jpg");
     expect(images[0]).toHaveAttribute("width", "1600");
     expect(images[0]).toHaveAttribute("height", "1000");
-    expect(images[0]).toHaveAttribute("loading", "lazy");
+    expect(images[0]).toHaveAttribute("loading", "eager");
 
     expect(screen.getByText("May 3rd, 2025")).toBeInTheDocument();
     expect(
       screen.getByRole("heading", { name: "More moments" }),
     ).toBeInTheDocument();
+  });
+
+  it("renders hero image with eager loading for LCP optimization", () => {
+    render(
+      <LocaleProvider>
+        <EntryReader
+          entry={{
+            id: "entry-lcp",
+            title: "LCP test",
+            body: "Testing eager loading for hero.",
+            createdAt: "2025-05-03T12:00:00.000Z",
+            tags: [],
+            media: [
+              {
+                id: "media-lcp",
+                url: "https://example.com/hero-lcp.jpg",
+                width: 1600,
+                height: 1000,
+                alt: "LCP hero image",
+              },
+            ],
+          }}
+        />
+      </LocaleProvider>,
+    );
+
+    const images = screen.getAllByAltText("LCP hero image");
+    const heroImage = images.find(img => img.getAttribute("loading") === "eager");
+    expect(heroImage).toBeTruthy();
+    expect(heroImage).toHaveAttribute("loading", "eager");
   });
 
   it("renders a video hero with playback controls", () => {

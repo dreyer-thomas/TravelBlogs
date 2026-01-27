@@ -1,6 +1,6 @@
 # Story 13.2: Entry Hero Overlaid Map Layout
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 

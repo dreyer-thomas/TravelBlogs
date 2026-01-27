@@ -373,7 +373,7 @@ const EntryDetail = ({
                           height={800}
                           sizes="100vw"
                           className="h-auto w-full object-cover"
-                          loading="lazy"
+                          loading="eager"
                           unoptimized={!isOptimizedImage(block.url)}
                         />
                       )}
@@ -448,7 +448,7 @@ const EntryDetail = ({
                           fill
                           sizes="(min-width: 768px) 50vw, 100vw"
                           className="object-cover"
-                          loading="lazy"
+                          loading="eager"
                         />
                       )}
                     </button>
