@@ -2,6 +2,11 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
 
+interface AuthToken {
+  mustChangePassword?: boolean;
+  sub?: string;
+}
+
 const publicTripEntryView = (pathname: string) => {
   if (pathname.startsWith("/trips/share/")) {
     const segments = pathname.split("/").filter(Boolean);
@@ -65,7 +70,6 @@ const getCallbackUrl = (request: NextRequest) =>
 
 const buildRelativeRedirect = (pathname: string, request: NextRequest) => {
   const callbackUrl = getCallbackUrl(request);
-  const redirectPath = `${pathname}?callbackUrl=${encodeURIComponent(callbackUrl)}`;
   const absoluteRedirectUrl = new URL(pathname, request.nextUrl.origin);
   absoluteRedirectUrl.searchParams.set("callbackUrl", callbackUrl);
   return NextResponse.redirect(absoluteRedirectUrl);
@@ -83,10 +87,22 @@ const isAllowedMustChangeApi = (pathname: string) => {
   return false;
 };
 
-export const middleware = async (request: NextRequest) => {
+/**
+ * Next.js proxy function that handles authentication and route protection.
+ *
+ * This proxy:
+ * - Redirects users with mustChangePassword flag to /account/password
+ * - Protects authenticated routes (trips, entries, account pages)
+ * - Allows public access to shared trip views
+ * - Redirects unauthenticated users to sign-in with callback URL
+ *
+ * @param request - The incoming Next.js request
+ * @returns NextResponse with redirect or next() to continue
+ */
+export const proxy = async (request: NextRequest) => {
   const { pathname } = request.nextUrl;
 
-  const token = await getToken({ req: request });
+  const token = (await getToken({ req: request })) as AuthToken | null;
   if (token?.mustChangePassword) {
     if (
       pathname !== "/account/password" &&

@@ -7,7 +7,7 @@ vi.mock("next-auth/jwt", () => ({
   getToken,
 }));
 
-import { middleware } from "../../../src/middleware";
+import { proxy as middleware } from "../../../src/proxy";
 
 const makeRequest = (path: string) => {
   return new NextRequest(new Request(`http://localhost${path}`));

@@ -3701,3 +3701,85 @@ Display historical weather conditions (icon + temperature) for each entry based 
 **Story Points:** 3
 
 ---
+
+## Epic 13: Performance & UX Polish
+
+Final polish for entry detail page performance and user experience improvements, including layout refinements, image loading optimization, and interaction enhancements.
+
+**Business Value:** Improve page load performance metrics (LCP), enhance visual presentation of entry content, and create smoother user interactions.
+
+**Dependencies:** Epic 2 (Blog Entries), Epic 7 (Maps), Epic 10 (Media), Epic 11 (Country Flags), Epic 12 (Weather)
+
+### Story 13.6: Preload Slideshow Images for Smooth Playback
+
+**As a** viewer
+**I want** slideshow images to be preloaded before the slideshow starts
+**So that** transitions are smooth without delays or blank screens, especially on slower network connections
+
+**Acceptance Criteria:**
+
+#### AC 1: Preload All Slideshow Images Before Starting
+**Given** I open a slideshow with multiple images
+**When** the slideshow initializes
+**Then** all images in the slideshow are preloaded before playback begins
+**And** a loading indicator is displayed during preload
+**And** the slideshow only starts after all images are loaded
+**And** the progress bar does not start until images are ready
+
+#### AC 2: Show Loading State During Preload
+**Given** slideshow images are being preloaded
+**When** I view the slideshow interface
+**Then** I see a loading indicator (spinner or progress bar)
+**And** the indicator shows preload progress (e.g., "Loading 3 of 8 images")
+**And** slideshow controls are disabled until preload completes
+
+#### AC 3: Handle Preload Failures Gracefully
+**Given** one or more images fail to load during preload
+**When** the preload timeout expires or an error occurs
+**Then** the slideshow starts with successfully loaded images
+**And** failed images are skipped or show a placeholder
+**And** an error is logged but not shown to the user
+**And** slideshow continues to function with available images
+
+#### AC 4: Smooth Transitions After First Loop
+**Given** the slideshow has completed one full loop
+**When** the slideshow repeats from the beginning
+**Then** all transitions are instant (images already cached)
+**And** no loading delays occur on subsequent loops
+
+#### AC 5: Maintain Existing Slideshow Functionality
+**Given** images are preloaded
+**When** I interact with slideshow controls (play/pause, next/prev)
+**Then** all existing functionality works as before
+**And** crossfade transitions still work smoothly
+**And** keyboard navigation still works
+**And** progress indicators still update correctly
+
+**Technical Requirements:**
+- Update slideshow component (likely `travelblogs/src/components/media/slideshow.tsx` or similar)
+- Implement image preloading using `Image` preload or `new Image()` pattern
+- Add loading state management (useState hook)
+- Display loading UI during preload (spinner or progress indicator)
+- Track preload progress (loaded count / total count)
+- Implement preload timeout (e.g., 30 seconds max)
+- Handle image load errors gracefully
+- Disable slideshow start until preload completes
+- Maintain existing slideshow timing and transition logic
+- Preserve accessibility (ARIA labels, keyboard controls)
+
+**Testing Requirements:**
+- Preload initiates when slideshow opens
+- Loading indicator displays during preload
+- Slideshow starts only after images loaded
+- Progress bar synchronized with image readiness
+- Failed images don't block slideshow start
+- All controls work correctly after preload
+- Transitions smooth on first loop
+- Second loop has instant transitions (cached)
+- Test on simulated slow network (throttling)
+
+**Source:** Production performance issue - slideshow delays on slow networks
+**Priority:** High - Affects production UX on slower connections
+**Story Points:** 5
+
+---
