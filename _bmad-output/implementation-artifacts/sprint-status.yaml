@@ -176,5 +176,13 @@ development_status:
   13-5-improve-entry-card-hover-interactions: done
   13-6-preload-slideshow-images-for-smooth-playback: done
   13-7-improve-trip-card-hover-interactions: done
-  13-8-simplify-share-link-ui-layout: ready-for-dev
+  13-8-simplify-share-link-ui-layout: done
   epic-13-retrospective: optional
+
+  epic-14: backlog
+  14-1-render-trips-page-world-map: backlog
+  14-2-highlight-countries-with-visible-trips: backlog
+  14-3-show-trip-list-on-country-hover: backlog
+  14-4-navigate-to-trip-from-map-popup: backlog
+  14-5-enforce-access-control-in-map-visibility: backlog
+  epic-14-retrospective: optional

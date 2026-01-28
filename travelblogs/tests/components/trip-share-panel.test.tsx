@@ -196,13 +196,18 @@ describe("TripDetail share panel", () => {
     });
     fireEvent.click(createButton);
 
-    const shareInput = await screen.findByLabelText("Share URL");
-    expect(shareInput).toHaveValue(shareUrl);
+    await screen.findByRole("button", { name: /copy link/i });
+    expect(screen.queryByLabelText("Share URL")).toBeNull();
 
     fireEvent.click(
       screen.getByRole("button", { name: /copy link/i }),
     );
 
+    await waitFor(() => {
+      expect(
+        screen.getByRole("button", { name: /copied/i }),
+      ).toBeInTheDocument();
+    });
     expect(writeText).toHaveBeenCalledWith(shareUrl);
   });
 
@@ -290,14 +295,24 @@ describe("TripDetail share panel", () => {
     });
     fireEvent.click(shareTrigger);
 
-    const shareInput = await screen.findByDisplayValue(shareUrl);
-    expect(shareInput).toHaveValue(shareUrl);
+    const copyButton = await screen.findByRole("button", { name: /copy link/i });
+    const revokeButton = await screen.findByRole("button", {
+      name: /revoke share link/i,
+    });
+    const shareActions = copyButton.closest("div");
+    expect(shareActions).not.toBeNull();
+    if (shareActions) {
+      expect(shareActions).toHaveClass("flex", "flex-wrap", "gap-3");
+    }
+    expect(copyButton).toHaveClass("text-xs");
+    expect(revokeButton).toHaveClass("text-xs");
+    expect(screen.queryByLabelText("Share URL")).toBeNull();
     expect(
       screen.queryByRole("button", { name: /regenerate link/i }),
     ).toBeNull();
   });
 
-  it("revokes a share link from the Trip Actions area", async () => {
+  it("revokes a share link from the Share Link panel", async () => {
     const shareUrl = "http://localhost/trips/share/existing-token";
     const viewersResponse = [];
     const fetchMock = vi
@@ -343,10 +358,7 @@ describe("TripDetail share panel", () => {
       .mockResolvedValueOnce(
         new Response(
           JSON.stringify({
-            data: {
-              revoked: true,
-              tripId: "trip-1",
-            },
+            data: viewersResponse,
             error: null,
           }),
           { status: 200 },
@@ -355,21 +367,24 @@ describe("TripDetail share panel", () => {
       .mockResolvedValueOnce(
         new Response(
           JSON.stringify({
-            data: viewersResponse,
+            data: [],
+            error: null,
+          }),
+          { status: 200 },
+        ),
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            data: {
+              revoked: true,
+              tripId: "trip-1",
+            },
             error: null,
           }),
           { status: 200 },
         ),
       );
-    fetchMock.mockResolvedValueOnce(
-      new Response(
-        JSON.stringify({
-          data: [],
-          error: null,
-        }),
-        { status: 200 },
-      ),
-    );
 
     vi.stubGlobal("fetch", fetchMock);
 
@@ -378,12 +393,20 @@ describe("TripDetail share panel", () => {
     const actionsHeader = await screen.findByText(/trip actions/i);
     const actionsSection = actionsHeader.closest("section");
     expect(actionsSection).not.toBeNull();
-
-    if (!actionsSection) {
-      return;
+    if (actionsSection) {
+      expect(
+        within(actionsSection).queryByRole("button", {
+          name: /revoke share link/i,
+        }),
+      ).toBeNull();
     }
 
-    const revokeButton = within(actionsSection).getByRole("button", {
+    const shareTrigger = await screen.findByRole("button", {
+      name: /share trip/i,
+    });
+    fireEvent.click(shareTrigger);
+
+    const revokeButton = await screen.findByRole("button", {
       name: /revoke share link/i,
     });
     fireEvent.click(revokeButton);
@@ -393,12 +416,7 @@ describe("TripDetail share panel", () => {
     });
     fireEvent.click(confirmButton);
 
-    const shareTrigger = await screen.findByRole("button", {
-      name: /share trip/i,
-    });
-    fireEvent.click(shareTrigger);
-
-    await screen.findByText(/link revoked/i);
+    expect(await screen.findByRole("button", { name: /generate link/i })).toBeInTheDocument();
     expect(screen.queryByLabelText("Share URL")).toBeNull();
   });
 

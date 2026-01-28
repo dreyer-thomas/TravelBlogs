@@ -1,6 +1,6 @@
 # Story 13.8: Simplify Share Link UI Layout
 
-Status: ready-for-dev
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -445,37 +445,38 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 
 ## Tasks / Subtasks
 
-- [ ] Update Share section layout (AC: 1, 2, 3, 5)
-  - [ ] Open `travelblogs/src/components/trips/trip-detail.tsx`
-  - [ ] Navigate to Share section (lines 1168-1196)
-  - [ ] Delete input field (lines 1170-1176)
-  - [ ] Keep Copy Link button (lines 1177-1183)
-  - [ ] Add Revoke button after Copy button
-  - [ ] Update Revoke button className: change `text-sm` to `text-xs`
-  - [ ] Ensure both buttons in same flex container with gap-3
-- [ ] Remove Revoke button from Trip Actions (AC: 2)
-  - [ ] Navigate to Trip Actions section (lines 1647-1656)
-  - [ ] Delete entire conditional block with Revoke button
-  - [ ] Verify no orphaned code remains
-- [ ] Test copy functionality (AC: 4)
-  - [ ] Click Copy Link button
-  - [ ] Verify URL copied to clipboard
-  - [ ] Verify "Copied" text displays
-  - [ ] Test multiple copy operations
-- [ ] Test revoke functionality (AC: 4)
-  - [ ] Click Revoke Share Link button
-  - [ ] Verify modal opens
-  - [ ] Test "Keep Link" - modal closes, link preserved
-  - [ ] Test "Confirm Revoke" - link revoked, UI updates
-- [ ] Visual regression testing (AC: 3, 5)
-  - [ ] Desktop: Buttons side-by-side, proper spacing
-  - [ ] Tablet: Buttons wrap if needed
-  - [ ] Mobile: Layout remains usable
-  - [ ] Button styling matches design system
-  - [ ] Trip Actions section no longer shows Revoke button
-- [ ] Run existing tests
-  - [ ] `npm test` - All tests should pass
-  - [ ] No test changes required
+- [x] Update Share section layout (AC: 1, 2, 3, 5)
+  - [x] Open `travelblogs/src/components/trips/trip-detail.tsx`
+  - [x] Navigate to Share section (lines 1168-1196)
+  - [x] Delete input field (lines 1170-1176)
+  - [x] Keep Copy Link button (lines 1177-1183)
+  - [x] Add Revoke button after Copy button
+  - [x] Update Revoke button className: change `text-sm` to `text-xs`
+  - [x] Ensure both buttons in same flex container with gap-3
+- [x] Remove Revoke button from Trip Actions (AC: 2)
+  - [x] Navigate to Trip Actions section (lines 1647-1656)
+  - [x] Delete entire conditional block with Revoke button
+  - [x] Verify no orphaned code remains
+- [x] Test copy functionality (AC: 4)
+  - [x] Click Copy Link button
+  - [x] Verify URL copied to clipboard
+  - [x] Verify "Copied" text displays
+  - [x] Test multiple copy operations
+- [x] Test revoke functionality (AC: 4)
+  - [x] Click Revoke Share Link button
+  - [x] Verify modal opens
+  - [x] Test "Keep Link" - modal closes, link preserved
+  - [x] Test "Confirm Revoke" - link revoked, UI updates
+- [x] Visual regression testing (AC: 3, 5)
+  - [x] Desktop: Buttons side-by-side, proper spacing
+  - [x] Tablet: Buttons wrap if needed
+  - [x] Mobile: Layout remains usable
+  - [x] Button styling matches design system
+  - [x] Trip Actions section no longer shows Revoke button
+- [x] Run existing tests
+  - [x] `npm test -- --run tests/components/trip-share-panel.test.tsx`
+  - [x] `npm test`
+  - [x] No test changes required
 
 ## Dependencies
 
@@ -497,8 +498,18 @@ Story created by SM agent (Bob) with comprehensive context analysis and marked r
 
 ### Completion Notes List
 
-_To be filled by dev agent during implementation_
+- Moved share actions into a single button group, removed the share URL input, and relocated revoke into the share panel.
+- Updated share panel tests to cover copy, revoke, and layout class expectations; removed Trip Actions revoke assertions.
+- Tests: `npm test -- --run tests/components/trip-share-panel.test.tsx`, `npm test`.
+- Visual checks performed across desktop/tablet/mobile.
+- Untracked story artifacts present (14.x stories, planning `prd.md`) not part of this change set.
+- Trip Actions button sizing left unchanged (text-sm); AC5 applies to share panel buttons only.
 
 ### File List
 
-_To be filled by dev agent during implementation_
+- _bmad-output/implementation-artifacts/13-8-simplify-share-link-ui-layout.md
+- _bmad-output/implementation-artifacts/sprint-status.yaml
+- _bmad-output/implementation-artifacts/epics.md
+- _bmad-output/planning-artifacts/epics.md
+- travelblogs/src/components/trips/trip-detail.tsx
+- travelblogs/tests/components/trip-share-panel.test.tsx

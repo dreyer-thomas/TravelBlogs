@@ -126,7 +126,6 @@ const TripDetail = ({
   const [shareError, setShareError] = useState<string | null>(null);
   const [shareLoading, setShareLoading] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
-  const [shareRevoked, setShareRevoked] = useState(false);
   const [viewError, setViewError] = useState<string | null>(null);
   const [viewLoading, setViewLoading] = useState(false);
   const [isSharePanelOpen, setIsSharePanelOpen] = useState(false);
@@ -287,7 +286,6 @@ const TripDetail = ({
     let isActive = true;
     setShareError(null);
     setShareCopied(false);
-    setShareRevoked(false);
 
     if (!canManageShare) {
       setShareLoading(false);
@@ -339,7 +337,6 @@ const TripDetail = ({
     setShareLink(null);
     setShareError(null);
     setShareCopied(false);
-    setShareRevoked(false);
     setViewError(null);
     setViewLoading(false);
   }, [tripId]);
@@ -701,7 +698,6 @@ const TripDetail = ({
     setShareLoading(true);
     setShareError(null);
     setShareCopied(false);
-    setShareRevoked(false);
 
     try {
       const response = await fetch(`/api/trips/${trip.id}/share-link`, {
@@ -991,7 +987,6 @@ const TripDetail = ({
       }
 
       setShareLink(null);
-      setShareRevoked(true);
       setShareCopied(false);
       setIsRevokeOpen(false);
       setIsRevoking(false);
@@ -1062,7 +1057,6 @@ const TripDetail = ({
       }
 
       setShareLink(shareUrl as string);
-      setShareRevoked(false);
       openSharedView(shareUrl as string);
     } catch (err) {
       setViewError(
@@ -1161,25 +1155,22 @@ const TripDetail = ({
                 <p className="mt-3 text-sm text-[#B34A3C]">{shareError}</p>
               ) : null}
 
-              {shareRevoked && !shareLink ? (
-                <p className="mt-3">{t("trips.linkRevoked")}</p>
-              ) : null}
-
               {shareLink ? (
                 <div className="mt-3 flex flex-wrap items-center gap-3">
-                  <input
-                    type="text"
-                    value={shareLink}
-                    readOnly
-                    className="w-full flex-1 rounded-xl border border-black/10 bg-white px-3 py-2 text-sm text-[#2D2A26]"
-                    aria-label={t("trips.shareUrlLabel")}
-                  />
                   <button
                     type="button"
                     onClick={handleCopyShareLink}
                     className="rounded-xl border border-[#1F6F78] px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-[#1F6F78] transition hover:bg-[#1F6F78] hover:text-white"
                   >
                     {shareCopied ? t("common.copied") : t("trips.copyLink")}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleOpenRevoke}
+                    className="rounded-xl border border-[#B64A3A] px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-[#B64A3A] transition hover:bg-[#B64A3A]/10"
+                    disabled={shareLoading || isRevoking}
+                  >
+                    {t('trips.revokeShareLink')}
                   </button>
                 </div>
               ) : (
@@ -1643,16 +1634,6 @@ const TripDetail = ({
               ) : null}
               {canDeleteTrip ? (
                 <DeleteTripModal tripId={trip.id} tripTitle={trip.title} />
-              ) : null}
-              {canManageShare && shareLink ? (
-                <button
-                  type="button"
-                  onClick={handleOpenRevoke}
-                  className="rounded-xl border border-[#B64A3A] px-4 py-2 text-sm font-semibold text-[#B64A3A] transition hover:bg-[#B64A3A]/10"
-                  disabled={shareLoading || isRevoking}
-                >
-                  {t('trips.revokeShareLink')}
-                </button>
               ) : null}
             </div>
           </div>

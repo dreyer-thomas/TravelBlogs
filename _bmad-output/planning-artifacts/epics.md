@@ -3910,3 +3910,93 @@ Final polish for entry detail page performance and user experience improvements,
 **Story Points:** 3
 
 ---
+
+## Epic 14: Trips Page World Map (Phase 3)
+
+Add a scratch-map style world map above the Trips list for country-based navigation.
+
+### Story 14.1: Render Trips Page World Map
+
+**As a** viewer  
+**I want** to see a world map above the Trips list  
+**So that** I can scan countries at a glance before choosing a trip
+
+**Acceptance Criteria:**
+
+#### AC 1: Map Renders Above Trips List
+**Given** I open the Trips page  
+**When** the page loads  
+**Then** a world map renders above the trip card list  
+**And** all countries are shown in a dark base state by default  
+**And** the existing trip list remains visible and usable
+
+---
+
+### Story 14.2: Highlight Countries With Visible Trips
+
+**As a** viewer  
+**I want** countries with visible trips to appear lighter  
+**So that** I can quickly see where trips are available to me
+
+**Acceptance Criteria:**
+
+#### AC 1: Highlight Countries With Visible Trips
+**Given** I can view one or more trips with stories in a country  
+**When** the map renders  
+**Then** that country appears in a lighter state
+
+#### AC 2: Multi-Country Trips Highlight Multiple Countries
+**Given** a trip contains stories from multiple countries  
+**When** the map renders  
+**Then** each relevant country is highlighted
+
+---
+
+### Story 14.3: Show Trip List on Country Hover
+
+**As a** viewer  
+**I want** a popup list of trips when I hover a country  
+**So that** I can select a trip directly from the map
+
+**Acceptance Criteria:**
+
+#### AC 1: Popup Lists Trips for Hovered Country
+**Given** I hover a country with at least one visible trip  
+**When** the hover state is active  
+**Then** a popup lists the titles of trips that include at least one story in that country
+
+#### AC 2: No Popup for Countries Without Visible Trips
+**Given** I hover a country with no visible trips  
+**When** the hover state is active  
+**Then** no trip list is shown
+
+---
+
+### Story 14.4: Navigate to Trip From Map Popup
+
+**As a** viewer  
+**I want** to click a trip in the popup  
+**So that** I can navigate directly to that trip detail page
+
+**Acceptance Criteria:**
+
+#### AC 1: Click Trip Title Navigates to Trip Detail
+**Given** I see a trip list in the country popup  
+**When** I click a trip title  
+**Then** I am navigated to that trip’s detail page
+
+---
+
+### Story 14.5: Enforce Access Control in Map Visibility
+
+**As a** viewer  
+**I want** the map to reflect only trips I’m allowed to see  
+**So that** no hidden trip information is exposed
+
+**Acceptance Criteria:**
+
+#### AC 1: Hidden Trips Do Not Affect Country Highlighting
+**Given** I do not have access to any trips in a country  
+**When** the map renders  
+**Then** that country remains in the dark base state  
+**And** no trips from that country appear in hover popups

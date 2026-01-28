@@ -49,21 +49,22 @@ FR30: Users can open an entry in a single-page view. (Phase 1)
 FR31: Users can navigate between entries in a trip. (Phase 1)
 FR32: Admin can manage user access and roles. (Phase 2)
 FR33: Admin can deactivate users. (Phase 2)
-FR34: Epic 8 - Entry tags & filtering
-FR35: Epic 8 - Entry tags & filtering
-FR36: Epic 8 - Entry tags & filtering
-FR37: Epic 8 - Entry tags & filtering
-FR38: Epic 8 - Entry tags & filtering
-FR34: Creators/contributors can add free-text tags to entries with typeahead for existing tags. (Phase 2)
-FR35: Tags display on entry cards in trip overview (signed-in + shared). (Phase 2)
-FR36: Tags display in entry reader hero (top-right). (Phase 2)
-FR37: Users can filter entries by tags (multi-select OR). (Phase 2)
-FR38: Tag filter uses chips up to 8 tags, then a multi-select control. (Phase 2)
-FR39: Creators can format entry text with bold, italic, headings (H1/H2/H3), lists, links, and text alignment. (Phase 2)
-FR40: Entry text is stored in structured rich format (Tiptap JSON) with backward compatibility for plain text. (Phase 2)
-FR41: Inline images in entries reference EntryMedia records by ID to maintain connection with gallery. (Phase 2)
-FR42: Plain text entries are automatically rendered as rich format on view without permanent conversion. (Phase 2)
-FR43: Plain text entries are converted to rich format on edit and saved as JSON permanently. (Phase 2)
+FR34: System can display a world map above the Trips list with all countries shown in a dark base state. (Phase 3)
+FR35: Countries with at least one visible trip (based on story country) render in a lighter state. (Phase 3)
+FR36: Hovering a country shows a popup list of trip titles that include at least one story in that country. (Phase 3)
+FR37: Clicking a trip in the popup navigates directly to that trip’s detail page. (Phase 3)
+FR38: Access control is enforced so countries only reflect trips visible to the current viewer. (Phase 3)
+FR39: Map navigation is additive; the existing Trips list remains fully usable. (Phase 3)
+FR40: Creators/contributors can add free-text tags to entries with typeahead for existing tags. (Phase 2)
+FR41: Tags display on entry cards in trip overview (signed-in + shared). (Phase 2)
+FR42: Tags display in entry reader hero (top-right). (Phase 2)
+FR43: Users can filter entries by tags (multi-select OR). (Phase 2)
+FR44: Tag filter uses chips up to 8 tags, then a multi-select control. (Phase 2)
+FR45: Creators can format entry text with bold, italic, headings (H1/H2/H3), lists, links, and text alignment. (Phase 2)
+FR46: Entry text is stored in structured rich format (Tiptap JSON) with backward compatibility for plain text. (Phase 2)
+FR47: Inline images in entries reference EntryMedia records by ID to maintain connection with gallery. (Phase 2)
+FR48: Plain text entries are automatically rendered as rich format on view without permanent conversion. (Phase 2)
+FR49: Plain text entries are converted to rich format on edit and saved as JSON permanently. (Phase 2)
 
 ### MVP Scope Adjustment
 
@@ -149,11 +150,22 @@ FR30: Epic 3 - Single-page entry view
 FR31: Epic 3 - Entry navigation  
 FR32: Epic 5 - Admin manage roles
 FR33: Epic 5 - Admin deactivate users
-FR39: Epic 9 - Rich text formatting (bold, italic, headings, lists, links, alignment)
-FR40: Epic 9 - Structured rich format storage (Tiptap JSON)
-FR41: Epic 9 - Image nodes with entryMediaId references
-FR42: Epic 9 - Plain text render as rich format on view
-FR43: Epic 9 - Plain text conversion to rich format on edit
+FR34: Epic 14 - Trips page world map (scratch-map navigation)
+FR35: Epic 14 - Trips page world map (country visibility)
+FR36: Epic 14 - Trips page world map (hover trip list)
+FR37: Epic 14 - Trips page world map (navigate to trip)
+FR38: Epic 14 - Trips page world map (access control)
+FR39: Epic 14 - Trips page world map (list remains usable)
+FR40: Epic 8 - Entry tags & filtering
+FR41: Epic 8 - Entry tags & filtering
+FR42: Epic 8 - Entry tags & filtering
+FR43: Epic 8 - Entry tags & filtering
+FR44: Epic 8 - Entry tags & filtering
+FR45: Epic 9 - Rich text formatting (bold, italic, headings, lists, links, alignment)
+FR46: Epic 9 - Structured rich format storage (Tiptap JSON)
+FR47: Epic 9 - Image nodes with entryMediaId references
+FR48: Epic 9 - Plain text render as rich format on view
+FR49: Epic 9 - Plain text conversion to rich format on edit
 
 ## Epic List
 
@@ -188,13 +200,21 @@ Add timeline storytelling to show the journey in order.
 ### Epic 7: Map Handling (Phase 3)
 Add spatial storytelling with maps and optional location extraction.
 **FRs covered:** FR26, FR28
+### Epic 13: UX & Performance Refinements (Phase 3)
+Polish entry/trip UI interactions, hero layouts, and performance for a smoother viewing experience.
+**FRs covered:** N/A (UX/performance improvements)
+
+### Epic 14: Trips Page World Map (Phase 3)
+Add a scratch-map style world map above the Trips list for country-based navigation.
+**FRs covered:** FR34, FR35, FR36, FR37, FR38, FR39
+
 ### Epic 8: Entry Tags & Filtering (Phase 2 - New)
 Creators and contributors add tags to entries; viewers see tags and filter entries by tags.
-**FRs covered:** FR34, FR35, FR36, FR37, FR38
+**FRs covered:** FR40, FR41, FR42, FR43, FR44
 
 ### Epic 9: Rich Text Editor for Blog Entries (Phase 2 - New)
 Replace plain text entry editor with rich text editing capabilities (bold, italic, headings, lists, links, alignment) while maintaining existing image library and gallery workflow.
-**FRs covered:** FR39, FR40, FR41, FR42, FR43
+**FRs covered:** FR45, FR46, FR47, FR48, FR49
 
 
 ## Epic 0: Lightweight Authentication (MVP)
@@ -1716,3 +1736,114 @@ So that tags are easier to read and don't obscure the hero media.
 **Given** tags are repositioned
 **When** I interact with the page using screen reader or keyboard
 **Then** tags remain accessible with proper ARIA labels
+
+## Epic 13: UX & Performance Refinements (Phase 3)
+
+Polish entry/trip UI interactions, hero layouts, and performance for a smoother viewing experience.
+
+### Story 13.1: Entry Hero Two-Column Layout
+
+Imported from implementation story file: 13-1-entry-hero-two-column-layout.md
+
+### Story 13.2: Entry Hero Overlaid Map Layout
+
+Imported from implementation story file: 13-2-entry-hero-overlaid-map-layout.md
+
+### Story 13.3: Optimize Entry Image Loading for LCP
+
+Imported from implementation story file: 13-3-optimize-entry-image-loading-lcp.md
+
+### Story 13.4: Migrate Middleware to Proxy Convention
+
+Imported from implementation story file: 13-4-migrate-middleware-to-proxy.md
+
+### Story 13.5: Improve Entry Card Hover Interactions
+
+Imported from implementation story file: 13-5-improve-entry-card-hover-interactions.md
+
+### Story 13.6: Preload Slideshow Images for Smooth Playback
+
+Imported from implementation story file: 13-6-preload-slideshow-images-for-smooth-playback.md
+
+### Story 13.7: Improve Trip Card Hover Interactions
+
+Imported from implementation story file: 13-7-improve-trip-card-hover-interactions.md
+
+### Story 13.8: Simplify Share Link UI Layout
+
+Imported from implementation story file: 13-8-simplify-share-link-ui-layout.md
+
+## Epic 14: Trips Page World Map (Phase 3)
+
+Add a scratch-map style world map above the Trips list for country-based navigation.
+
+### Story 14.1: Render Trips Page World Map
+
+As a viewer,
+I want to see a world map above the Trips list,
+So that I can scan countries at a glance before choosing a trip.
+
+**Acceptance Criteria:**
+
+**Given** I open the Trips page
+**When** the page loads
+**Then** a world map renders above the trip card list
+**And** all countries are shown in a dark base state by default
+**And** the existing trip list remains visible and usable
+
+### Story 14.2: Highlight Countries With Visible Trips
+
+As a viewer,
+I want countries with visible trips to appear lighter,
+So that I can quickly see where trips are available to me.
+
+**Acceptance Criteria:**
+
+**Given** I can view one or more trips with stories in a country
+**When** the map renders
+**Then** that country appears in a lighter state
+
+**Given** a trip contains stories from multiple countries
+**When** the map renders
+**Then** each relevant country is highlighted
+
+### Story 14.3: Show Trip List on Country Hover
+
+As a viewer,
+I want a popup list of trips when I hover a country,
+So that I can select a trip directly from the map.
+
+**Acceptance Criteria:**
+
+**Given** I hover a country with at least one visible trip
+**When** the hover state is active
+**Then** a popup lists the titles of trips that include at least one story in that country
+
+**Given** I hover a country with no visible trips
+**When** the hover state is active
+**Then** no trip list is shown
+
+### Story 14.4: Navigate to Trip From Map Popup
+
+As a viewer,
+I want to click a trip in the popup,
+So that I can navigate directly to that trip detail page.
+
+**Acceptance Criteria:**
+
+**Given** I see a trip list in the country popup
+**When** I click a trip title
+**Then** I am navigated to that trip’s detail page
+
+### Story 14.5: Enforce Access Control in Map Visibility
+
+As a viewer,
+I want the map to reflect only trips I’m allowed to see,
+So that no hidden trip information is exposed.
+
+**Acceptance Criteria:**
+
+**Given** I do not have access to any trips in a country
+**When** the map renders
+**Then** that country remains in the dark base state
+**And** no trips from that country appear in hover popups
