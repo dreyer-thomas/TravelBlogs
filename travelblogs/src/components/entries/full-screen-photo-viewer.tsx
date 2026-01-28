@@ -811,7 +811,7 @@ const FullScreenPhotoViewer = ({
               data-preload="true"
               onLoad={() => markPreloadProgress(`${index}-${url}`, url)}
               onError={(event) =>
-                markPreloadProgress(`${index}-${url}`, url, event)
+                markPreloadProgress(`${index}-${url}`, url, event.nativeEvent)
               }
               style={{ opacity: 0 }}
             />
