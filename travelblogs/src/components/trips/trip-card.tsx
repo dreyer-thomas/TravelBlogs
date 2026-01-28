@@ -126,15 +126,23 @@ const TripCard = ({
   };
 
   return (
-    <article className="group rounded-2xl border border-black/10 bg-white p-5 transition hover:border-[#1F6F78]/40 hover:shadow-sm">
+    <article className="group rounded-2xl border border-black/10 bg-white p-5 transition-colors duration-200 hover:border-[#1F6F78]/40 hover:bg-[#F2ECE3] hover:shadow-sm focus-within:border-[#1F6F78]/40 focus-within:bg-[#F2ECE3] cursor-pointer">
       <div className="flex flex-wrap items-center gap-5">
-        <button
-          type="button"
-          onClick={handleOpenSharedView}
-          disabled={viewLoading}
+        <Link
+          href={`/trips/${id}`}
+          onClick={(event) => {
+            event.preventDefault();
+            if (viewLoading) {
+              return;
+            }
+            handleOpenSharedView();
+          }}
+          aria-disabled={viewLoading}
           data-testid={`trip-card-${id}`}
           aria-label={`Open shared view for ${title}`}
-          className="flex flex-1 items-center gap-5 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F6F78]/40 disabled:cursor-not-allowed"
+          className={`flex flex-1 items-center gap-5 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F6F78]/40 ${
+            viewLoading ? "cursor-not-allowed opacity-70" : ""
+          }`}
         >
           <div className="relative h-20 w-28 overflow-hidden rounded-xl bg-[#F2ECE3]">
             {coverImageUrl && isCoverImageUrl(coverImageUrl) ? (
@@ -163,7 +171,7 @@ const TripCard = ({
               <p className="mt-2 text-xs text-[#B34A3C]">{viewError}</p>
             ) : null}
           </div>
-        </button>
+        </Link>
         <div className="flex flex-wrap items-center gap-3">
           <button
             type="button"

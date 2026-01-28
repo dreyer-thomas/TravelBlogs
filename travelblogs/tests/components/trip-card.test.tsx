@@ -97,6 +97,31 @@ describe("TripCard", () => {
     expect(editLink).toHaveAttribute("href", "/trips/trip-2");
   });
 
+  it("applies enhanced hover and focus-visible styling to the card container", () => {
+    const { container } = renderWithProvider(
+      <TripCard
+        id="trip-hover"
+        title="Hover Trip"
+        startDate="2025-06-01T00:00:00.000Z"
+        endDate="2025-06-05T00:00:00.000Z"
+        coverImageUrl={null}
+        canEditTrip={false}
+      />,
+    );
+
+    expect(
+      screen.getByRole("link", { name: "Open shared view for Hover Trip" }),
+    ).toBeInTheDocument();
+
+    const article = container.querySelector("article");
+    expect(article).toBeInTheDocument();
+    expect(article).toHaveClass("transition-colors");
+    expect(article).toHaveClass("duration-200");
+    expect(article).toHaveClass("hover:bg-[#F2ECE3]");
+    expect(article).toHaveClass("focus-within:bg-[#F2ECE3]");
+    expect(article).toHaveClass("cursor-pointer");
+  });
+
   it("opens the shared view when the card is clicked", async () => {
     const fetchMock = vi.fn().mockResolvedValueOnce(
       new Response(
