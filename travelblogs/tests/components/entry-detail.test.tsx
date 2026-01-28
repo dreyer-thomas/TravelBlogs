@@ -77,6 +77,11 @@ vi.mock("next/link", () => ({
 
 const renderWithProvider = (component: JSX.Element) =>
   render(<LocaleProvider>{component}</LocaleProvider>);
+const completePreload = () => {
+  document
+    .querySelectorAll<HTMLImageElement>('img[data-preload="true"]')
+    .forEach((img) => fireEvent.load(img));
+};
 
 describe("EntryDetail", () => {
   it("renders the entry title in the header", async () => {
@@ -458,6 +463,11 @@ describe("EntryDetail", () => {
         screen.getByRole("button", { name: /start slideshow/i }),
       );
       await act(async () => {});
+
+      // Wait for preload to complete
+      await act(async () => {
+        completePreload();
+      });
 
       expect(screen.getByRole("dialog")).toBeInTheDocument();
       const firstImages = screen.getAllByRole("img", {

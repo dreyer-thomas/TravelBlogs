@@ -73,6 +73,12 @@ const FullScreenPhotoViewer = ({
   const [transitionPhase, setTransitionPhase] = useState<
     "idle" | "preparing" | "active"
   >("idle");
+  const [isPreloading, setIsPreloading] = useState(false);
+  const [preloadProgress, setPreloadProgress] = useState({ loaded: 0, total: 0 });
+  const [preloadComplete, setPreloadComplete] = useState(false);
+  const [failedPreloadUrls, setFailedPreloadUrls] = useState<Set<string>>(
+    () => new Set(),
+  );
   const dialogRef = useRef<HTMLDivElement | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const transitionTimeoutRef = useRef<number | null>(null);
@@ -87,8 +93,32 @@ const FullScreenPhotoViewer = ({
   const previousMediaRef = useRef<PhotoViewerImage | null>(null);
   const ignoreClickRef = useRef(false);
   const wasPausedRef = useRef(false);
+  const preloadTimeoutRef = useRef<number | null>(null);
+  const preloadActiveRef = useRef(false);
+  const preloadedTokenSetRef = useRef<Set<string>>(new Set());
+  const preloadTokensRef = useRef<Array<{ token: string; url: string }>>([]);
   const isSlideshow = mode === "slideshow";
+  const slideshowImageUrls = useMemo(
+    () =>
+      images
+        .filter((img) => {
+          const type = img.mediaType ?? getMediaTypeFromUrl(img.url);
+          return type === "image";
+        })
+        .map((img) => img.url),
+    [images],
+  );
   const activeMedia = images[activeIndex] ?? images[0];
+  const shouldShowFailedPlaceholder = useCallback(
+    (media: PhotoViewerImage | null | undefined) =>
+      Boolean(
+        media &&
+          isSlideshow &&
+          preloadComplete &&
+          failedPreloadUrls.has(media.url),
+      ),
+    [failedPreloadUrls, isSlideshow, preloadComplete],
+  );
   const activeMediaType = useMemo(() => {
     if (!activeMedia) {
       return "image";
@@ -149,6 +179,100 @@ const FullScreenPhotoViewer = ({
       clearTransitionTimers();
     };
   }, [clearTransitionTimers]);
+
+  const markPreloadProgress = useCallback(
+    (token: string, url: string, error?: Event | string) => {
+      if (!preloadActiveRef.current) {
+        return;
+      }
+      if (preloadedTokenSetRef.current.has(token)) {
+        return;
+      }
+      preloadedTokenSetRef.current.add(token);
+      if (error) {
+        console.error(`[Preload] Failed to load image: ${url}`, error);
+        setFailedPreloadUrls((prev) => {
+          const next = new Set(prev);
+          next.add(url);
+          return next;
+        });
+      }
+      setPreloadProgress((prev) => {
+        const loaded = Math.min(prev.loaded + 1, prev.total);
+        if (loaded >= prev.total) {
+          preloadActiveRef.current = false;
+          if (preloadTimeoutRef.current) {
+            window.clearTimeout(preloadTimeoutRef.current);
+            preloadTimeoutRef.current = null;
+          }
+          setIsPreloading(false);
+          setPreloadComplete(true);
+        }
+        return { ...prev, loaded };
+      });
+    },
+    [],
+  );
+
+  useEffect(() => {
+    if (!isOpen || !isSlideshow || images.length === 0) {
+      return;
+    }
+
+    const totalImages = slideshowImageUrls.length;
+    preloadActiveRef.current = true;
+    preloadedTokenSetRef.current = new Set();
+    preloadTokensRef.current = slideshowImageUrls.map((url, index) => ({
+      token: `${index}-${url}`,
+      url,
+    }));
+
+    setIsPreloading(true);
+    setPreloadComplete(false);
+    setPreloadProgress({ loaded: 0, total: totalImages });
+    setFailedPreloadUrls(new Set());
+
+    if (totalImages === 0) {
+      preloadActiveRef.current = false;
+      setIsPreloading(false);
+      setPreloadComplete(true);
+      return;
+    }
+
+    if (preloadTimeoutRef.current) {
+      window.clearTimeout(preloadTimeoutRef.current);
+    }
+    preloadTimeoutRef.current = window.setTimeout(() => {
+      if (!preloadActiveRef.current) {
+        return;
+      }
+      console.warn("[Preload] Timeout - starting with loaded images");
+      const timedOutUrls = preloadTokensRef.current
+        .filter(({ token }) => !preloadedTokenSetRef.current.has(token))
+        .map(({ url }) => url);
+      if (timedOutUrls.length > 0) {
+        setFailedPreloadUrls((prev) => {
+          const next = new Set(prev);
+          timedOutUrls.forEach((url) => next.add(url));
+          return next;
+        });
+      }
+      preloadActiveRef.current = false;
+      setIsPreloading(false);
+      setPreloadComplete(true);
+      preloadTimeoutRef.current = null;
+    }, 30000);
+
+    return () => {
+      preloadActiveRef.current = false;
+      if (preloadTimeoutRef.current) {
+        window.clearTimeout(preloadTimeoutRef.current);
+        preloadTimeoutRef.current = null;
+      }
+      preloadedTokenSetRef.current = new Set();
+      preloadTokensRef.current = [];
+    };
+  }, [isOpen, isSlideshow, images.length, slideshowImageUrls]);
 
   const triggerTransition = useCallback(
     (currentIndex: number, nextIndex: number) => {
@@ -252,6 +376,9 @@ const FullScreenPhotoViewer = ({
         onClose();
         return;
       }
+      if (isSlideshow && (isPreloading || !preloadComplete)) {
+        return;
+      }
       if (isActiveVideo && !isSlideshow) {
         if (event.code === "Space" || event.key === " ") {
           event.preventDefault();
@@ -316,14 +443,16 @@ const FullScreenPhotoViewer = ({
     images.length,
     isActiveVideo,
     isOpen,
+    isPreloading,
     isSlideshow,
     onClose,
     pauseActiveVideo,
+    preloadComplete,
     updateActiveIndex,
   ]);
 
   useEffect(() => {
-    if (!isOpen || !isSlideshow || images.length <= 1 || isPaused || isVideoPlaying) {
+    if (!isOpen || !isSlideshow || images.length <= 1 || isPaused || isVideoPlaying || isPreloading || !preloadComplete) {
       return;
     }
     const timer = window.setTimeout(() => {
@@ -341,6 +470,8 @@ const FullScreenPhotoViewer = ({
     isPaused,
     isSlideshow,
     isVideoPlaying,
+    isPreloading,
+    preloadComplete,
     updateActiveIndex,
   ]);
 
@@ -410,6 +541,9 @@ const FullScreenPhotoViewer = ({
   };
 
   const handleTouchStart = (event: TouchEvent<HTMLDivElement>) => {
+    if (isSlideshow && (isPreloading || !preloadComplete)) {
+      return;
+    }
     const suppressNextClick = () => {
       ignoreClickRef.current = true;
       window.setTimeout(() => {
@@ -435,6 +569,9 @@ const FullScreenPhotoViewer = ({
   };
 
   const handleTouchMove = (event: TouchEvent<HTMLDivElement>) => {
+    if (isSlideshow && (isPreloading || !preloadComplete)) {
+      return;
+    }
     if (event.touches.length === 2 && pinchStartRef.current) {
       event.preventDefault();
       const distance = getTouchDistance(event.touches);
@@ -446,6 +583,9 @@ const FullScreenPhotoViewer = ({
   };
 
   const handleTouchEnd = (event: TouchEvent<HTMLDivElement>) => {
+    if (isSlideshow && (isPreloading || !preloadComplete)) {
+      return;
+    }
     if (event.touches.length > 0) {
       return;
     }
@@ -596,8 +736,12 @@ const FullScreenPhotoViewer = ({
                       backgroundColor: "#E5E5E5",
                       transformOrigin: "left",
                       transform: "scaleX(0)",
-                      animation:
-                        `slideshowProgressFill ${isActiveVideo && videoDuration ? videoDuration : 5}s linear forwards`,
+                      animationName: preloadComplete ? "slideshowProgressFill" : "none",
+                      animationDuration: preloadComplete
+                        ? `${isActiveVideo && videoDuration ? videoDuration : 5}s`
+                        : "0s",
+                      animationTimingFunction: "linear",
+                      animationFillMode: "forwards",
                       animationPlayState: isPaused ? "paused" : "running",
                     }}
                   />
@@ -605,6 +749,73 @@ const FullScreenPhotoViewer = ({
               </div>
             );
           })}
+        </div>
+      ) : null}
+
+      {isPreloading ? (
+        <div
+          className="absolute inset-0 z-50 flex flex-col items-center justify-center gap-6"
+          role="status"
+          aria-live="polite"
+          style={{ backgroundColor: 'rgba(0, 0, 0, 0.8)' }}
+        >
+          <div
+            className="flex flex-col items-center gap-6 px-16 py-12"
+            style={{
+              backgroundColor: '#374151',
+              borderRadius: '1rem',
+              boxShadow: '0 10px 40px rgba(0, 0, 0, 0.5)'
+            }}
+          >
+            <div
+              className="animate-spin rounded-full border-4"
+              style={{
+                width: '64px',
+                height: '64px',
+                borderColor: '#6B7280',
+                borderTopColor: '#FFFFFF'
+              }}
+            />
+            <p
+              className="font-medium"
+              style={{
+                fontSize: '1.5rem',
+                color: '#FFFFFF',
+                textAlign: 'center',
+                minWidth: '300px'
+              }}
+            >
+              {t("entries.slideshowLoading")
+                .replace("{{loaded}}", String(preloadProgress.loaded))
+                .replace("{{total}}", String(preloadProgress.total))}
+            </p>
+          </div>
+        </div>
+      ) : null}
+
+      {isPreloading ? (
+        <div
+          className="absolute left-[-9999px] top-0 h-px w-px overflow-hidden"
+          aria-hidden="true"
+        >
+          {slideshowImageUrls.map((url, index) => (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              key={`preload-${url}-${index}`}
+              src={url}
+              alt=""
+              width={1}
+              height={1}
+              loading="eager"
+              decoding="async"
+              data-preload="true"
+              onLoad={() => markPreloadProgress(`${index}-${url}`, url)}
+              onError={(event) =>
+                markPreloadProgress(`${index}-${url}`, url, event)
+              }
+              style={{ opacity: 0 }}
+            />
+          ))}
         </div>
       ) : null}
 
@@ -636,17 +847,30 @@ const FullScreenPhotoViewer = ({
                   }}
                 >
                   <div className="relative h-full w-full">
-                    <Image
-                      src={previousMedia.url}
-                      alt={previousMedia.alt}
-                      fill
-                      sizes="100vw"
-                      className="object-contain"
-                      style={{ objectFit: "contain", objectPosition: "center" }}
-                      loading={isTransitioning ? "eager" : "lazy"}
-                      priority={isTransitioning ? true : undefined}
-                      unoptimized={!isOptimizedImage(previousMedia.url)}
-                    />
+                    {shouldShowFailedPlaceholder(previousMedia) ? (
+                      <div
+                        role="img"
+                        aria-label={previousMedia.alt}
+                        data-testid="slideshow-placeholder"
+                        className="flex h-full w-full items-center justify-center"
+                        style={{
+                          backgroundColor: "#111827",
+                          color: "#9CA3AF",
+                        }}
+                      />
+                    ) : (
+                      <Image
+                        src={previousMedia.url}
+                        alt={previousMedia.alt}
+                        fill
+                        sizes="100vw"
+                        className="object-contain"
+                        style={{ objectFit: "contain", objectPosition: "center" }}
+                        loading={isTransitioning ? "eager" : "lazy"}
+                        priority={isTransitioning ? true : undefined}
+                        unoptimized={!isOptimizedImage(previousMedia.url)}
+                      />
+                    )}
                   </div>
                 </div>
               ) : null}
@@ -672,17 +896,30 @@ const FullScreenPhotoViewer = ({
                     transformOrigin: "center center",
                   }}
                 >
-                  <Image
-                    src={activeImage.url}
-                    alt={activeImage.alt}
-                    fill
-                    sizes="100vw"
-                    className="object-contain"
-                    style={{ objectFit: "contain", objectPosition: "center" }}
-                    loading={isTransitioning ? "eager" : "lazy"}
-                    priority={isTransitioning ? true : undefined}
-                    unoptimized={!isOptimizedImage(activeImage.url)}
-                  />
+                  {shouldShowFailedPlaceholder(activeImage) ? (
+                    <div
+                      role="img"
+                      aria-label={activeImage.alt}
+                      data-testid="slideshow-placeholder"
+                      className="flex h-full w-full items-center justify-center"
+                      style={{
+                        backgroundColor: "#111827",
+                        color: "#9CA3AF",
+                      }}
+                    />
+                  ) : (
+                    <Image
+                      src={activeImage.url}
+                      alt={activeImage.alt}
+                      fill
+                      sizes="100vw"
+                      className="object-contain"
+                      style={{ objectFit: "contain", objectPosition: "center" }}
+                      loading={isTransitioning ? "eager" : "lazy"}
+                      priority={isTransitioning ? true : undefined}
+                      unoptimized={!isOptimizedImage(activeImage.url)}
+                    />
+                  )}
                 </div>
               </div>
             </div>

@@ -19,6 +19,27 @@ vi.mock("next/image", () => ({
     );
   },
 }));
+const getPreloadImages = () =>
+  Array.from(
+    document.querySelectorAll<HTMLImageElement>('img[data-preload="true"]'),
+  );
+const completePreload = () => {
+  getPreloadImages().forEach((img) => fireEvent.load(img));
+};
+const failPreloadImage = (index: number) => {
+  const preloadImages = getPreloadImages();
+  const target = preloadImages[index];
+  if (target) {
+    fireEvent.error(target);
+  }
+};
+const loadPreloadImage = (index: number) => {
+  const preloadImages = getPreloadImages();
+  const target = preloadImages[index];
+  if (target) {
+    fireEvent.load(target);
+  }
+};
 
 const images = [
   { url: "/images/one.jpg", alt: "One" },
@@ -100,6 +121,10 @@ describe("FullScreenPhotoViewer", () => {
       await act(async () => {});
       screen.getByRole("dialog");
 
+      await act(async () => {
+        completePreload();
+      });
+
       const segments = screen.getAllByTestId("slideshow-segment");
       expect(segments).toHaveLength(3);
       expect(segments[0]).toHaveAttribute("data-segment-state", "active");
@@ -163,6 +188,10 @@ describe("FullScreenPhotoViewer", () => {
       await act(async () => {});
       screen.getByRole("dialog");
 
+      await act(async () => {
+        completePreload();
+      });
+
       expect(screen.getByAltText("One")).toBeInTheDocument();
 
       fireEvent.keyDown(window, { code: "Space", key: " " });
@@ -200,6 +229,10 @@ describe("FullScreenPhotoViewer", () => {
       );
 
       await act(async () => {});
+
+      await act(async () => {
+        completePreload();
+      });
 
       fireEvent.keyDown(window, { key: "ArrowRight" });
 
@@ -255,6 +288,11 @@ describe("FullScreenPhotoViewer", () => {
 
       await act(async () => {});
 
+      // Wait for preload to complete
+      await act(async () => {
+        await vi.runAllTimersAsync();
+      });
+
       await act(async () => {
         vi.advanceTimersByTime(5000);
       });
@@ -289,6 +327,10 @@ describe("FullScreenPhotoViewer", () => {
       );
 
       await act(async () => {});
+
+      await act(async () => {
+        completePreload();
+      });
 
       fireEvent.keyDown(window, { key: "ArrowRight" });
 
@@ -326,6 +368,10 @@ describe("FullScreenPhotoViewer", () => {
 
       await act(async () => {});
 
+      await act(async () => {
+        completePreload();
+      });
+
       fireEvent.keyDown(window, { key: "ArrowRight" });
 
       await act(async () => {
@@ -358,6 +404,10 @@ describe("FullScreenPhotoViewer", () => {
       );
 
       await act(async () => {});
+
+      await act(async () => {
+        completePreload();
+      });
 
       fireEvent.keyDown(window, { key: "ArrowRight" });
 
@@ -410,6 +460,10 @@ describe("FullScreenPhotoViewer", () => {
       );
 
       await act(async () => {});
+
+      await act(async () => {
+        completePreload();
+      });
 
       const gestureLayer = screen.getByTestId("photo-viewer-gesture-layer");
       expect(gestureLayer).not.toHaveAttribute("data-transitioning");
@@ -516,5 +570,248 @@ describe("FullScreenPhotoViewer", () => {
 
     expect(screen.getByLabelText("Clip")).toBeInTheDocument();
     expect(screen.getAllByTestId("slideshow-segment")).toHaveLength(1);
+  });
+
+  describe("Slideshow Image Preloading", () => {
+    it("initiates preload when slideshow opens with mode=slideshow", async () => {
+      render(
+        <LocaleProvider>
+          <FullScreenPhotoViewer
+            images={images}
+            initialIndex={0}
+            isOpen
+            onClose={vi.fn()}
+            mode="slideshow"
+          />
+        </LocaleProvider>,
+      );
+
+      await act(async () => {});
+
+      // Verify loading indicator appears
+      expect(screen.getByRole("status")).toBeInTheDocument();
+    });
+
+    it("displays loading progress during preload", async () => {
+      render(
+        <LocaleProvider>
+          <FullScreenPhotoViewer
+            images={images}
+            initialIndex={0}
+            isOpen
+            onClose={vi.fn()}
+            mode="slideshow"
+          />
+        </LocaleProvider>,
+      );
+
+      await act(async () => {});
+
+      // Progress text should show format "Loading X of Y images"
+      expect(screen.getByText(/Loading \d+ of \d+ images/i)).toBeInTheDocument();
+    });
+
+    it("updates loading progress as images load", async () => {
+      render(
+        <LocaleProvider>
+          <FullScreenPhotoViewer
+            images={images}
+            initialIndex={0}
+            isOpen
+            onClose={vi.fn()}
+            mode="slideshow"
+          />
+        </LocaleProvider>,
+      );
+
+      await act(async () => {});
+
+      expect(screen.getByText(/Loading 0 of 3 images/i)).toBeInTheDocument();
+
+      await act(async () => {
+        loadPreloadImage(0);
+      });
+
+      expect(screen.getByText(/Loading 1 of 3 images/i)).toBeInTheDocument();
+    });
+
+    it("disables auto-advance during preload", async () => {
+      vi.useFakeTimers();
+
+      try {
+        render(
+          <LocaleProvider>
+            <FullScreenPhotoViewer
+              images={images}
+              initialIndex={0}
+              isOpen
+              onClose={vi.fn()}
+              mode="slideshow"
+            />
+          </LocaleProvider>,
+        );
+
+        await act(async () => {});
+
+        // Should show loading initially
+        expect(screen.getByRole("status")).toBeInTheDocument();
+
+        // Advance timer by 5 seconds (normal auto-advance interval)
+        await act(async () => {
+          vi.advanceTimersByTime(5000);
+        });
+
+        // Should still be on first image (preload not complete)
+        expect(screen.getByAltText("One")).toBeInTheDocument();
+        expect(screen.queryByAltText("Two")).not.toBeInTheDocument();
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it("disables manual navigation during preload", async () => {
+      render(
+        <LocaleProvider>
+          <FullScreenPhotoViewer
+            images={images}
+            initialIndex={0}
+            isOpen
+            onClose={vi.fn()}
+            mode="slideshow"
+          />
+        </LocaleProvider>,
+      );
+
+      await act(async () => {});
+
+      fireEvent.keyDown(window, { key: "ArrowRight" });
+
+      expect(screen.getByAltText("One")).toBeInTheDocument();
+      expect(screen.queryByAltText("Two")).not.toBeInTheDocument();
+    });
+
+    it("starts slideshow after preload completes", async () => {
+      vi.useFakeTimers();
+
+      try {
+        render(
+          <LocaleProvider>
+            <FullScreenPhotoViewer
+              images={images}
+              initialIndex={0}
+              isOpen
+              onClose={vi.fn()}
+              mode="slideshow"
+            />
+          </LocaleProvider>,
+        );
+
+        // Loading indicator should appear initially
+        expect(screen.getByRole("status")).toBeInTheDocument();
+
+        await act(async () => {
+          completePreload();
+        });
+
+        // Loading indicator should be gone after preload
+        expect(screen.queryByRole("status")).not.toBeInTheDocument();
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it("does not preload in viewer mode", () => {
+      render(
+        <LocaleProvider>
+          <FullScreenPhotoViewer
+            images={images}
+            initialIndex={0}
+            isOpen
+            onClose={vi.fn()}
+            mode="viewer"
+          />
+        </LocaleProvider>,
+      );
+
+      // Loading indicator should not appear in viewer mode
+      expect(screen.queryByRole("status")).not.toBeInTheDocument();
+    });
+
+    it("maintains existing slideshow controls after preload", async () => {
+      vi.useFakeTimers();
+
+      try {
+        const onClose = vi.fn();
+        render(
+          <LocaleProvider>
+            <FullScreenPhotoViewer
+              images={images}
+              initialIndex={0}
+              isOpen
+              onClose={onClose}
+              mode="slideshow"
+            />
+          </LocaleProvider>,
+        );
+
+        await act(async () => {});
+
+        await act(async () => {
+          completePreload();
+        });
+
+        // Test keyboard controls still work
+        fireEvent.keyDown(window, { key: "Escape" });
+        expect(onClose).toHaveBeenCalled();
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it("renders a placeholder for failed images", async () => {
+      render(
+        <LocaleProvider>
+          <FullScreenPhotoViewer
+            images={images}
+            initialIndex={0}
+            isOpen
+            onClose={vi.fn()}
+            mode="slideshow"
+          />
+        </LocaleProvider>,
+      );
+
+      await act(async () => {});
+
+      await act(async () => {
+        failPreloadImage(0);
+        loadPreloadImage(1);
+        loadPreloadImage(2);
+      });
+
+      expect(screen.queryByRole("status")).not.toBeInTheDocument();
+      expect(screen.getByTestId("slideshow-placeholder")).toBeInTheDocument();
+    });
+
+    it("only preloads images, not videos", async () => {
+      render(
+        <LocaleProvider>
+          <FullScreenPhotoViewer
+            images={[
+              { url: "/videos/clip.mp4", alt: "Video", mediaType: "video" },
+            ]}
+            initialIndex={0}
+            isOpen
+            onClose={vi.fn()}
+            mode="slideshow"
+          />
+        </LocaleProvider>,
+      );
+
+      await act(async () => {});
+
+      // No loading indicator for video-only slideshow
+      expect(screen.queryByRole("status")).not.toBeInTheDocument();
+    });
   });
 });

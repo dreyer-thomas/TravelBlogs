@@ -313,6 +313,7 @@ const translations = {
       mediaUploadError: 'Unable to upload media file.',
       mediaUploadCancelled: 'Media upload was cancelled.',
       mediaUploadRetryError: 'Unable to upload media file. Please try again.',
+      slideshowLoading: 'Loading {{loaded}} of {{total}} images...',
     },
     auth: {
       username: 'Username',
@@ -778,6 +779,7 @@ const translations = {
       mediaUploadError: 'Mediendatei konnte nicht hochgeladen werden.',
       mediaUploadCancelled: 'Medien-Upload wurde abgebrochen.',
       mediaUploadRetryError: 'Mediendatei konnte nicht hochgeladen werden. Bitte versuche es erneut.',
+      slideshowLoading: 'Lade {{loaded}} von {{total}} Bildern...',
     },
     auth: {
       username: 'Benutzername',

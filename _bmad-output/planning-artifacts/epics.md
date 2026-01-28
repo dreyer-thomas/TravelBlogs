@@ -3782,4 +3782,131 @@ Final polish for entry detail page performance and user experience improvements,
 **Priority:** High - Affects production UX on slower connections
 **Story Points:** 5
 
+### Story 13.7: Improve Trip Card Hover Interactions
+
+**As a** viewer
+**I want** trip cards on the trips list page to have the same enhanced hover feedback as entry cards
+**So that** the interface feels consistent and modern across all card interactions
+
+**Acceptance Criteria:**
+
+#### AC 1: Enhanced Hover State with Background Color
+**Given** I view the trips list page at `/trips`
+**When** I hover my mouse over a trip card
+**Then** the card background changes to the same color used for entry cards (#F2ECE3)
+**And** the hover effect is smooth with a transition
+**And** the transition timing matches entry cards (duration-200)
+
+#### AC 2: Consistent Hover Behavior with Entry Cards
+**Given** I view both the trips list and a trip overview page
+**When** I hover over cards on each page
+**Then** the hover behavior (background color, transition timing) is identical
+**And** all cards respond consistently to hover
+
+#### AC 3: Accessibility Maintained
+**Given** I use keyboard navigation on the trips list
+**When** I tab through trip cards
+**Then** focused cards also show the same visual feedback as hovered cards
+**And** screen readers still announce the cards as clickable links
+
+#### AC 4: Preserve Existing Functionality
+**Given** I interact with trip cards
+**When** I click or navigate to a trip
+**Then** all existing functionality works as before
+**And** no visual regressions occur (images, text, layout)
+
+**Technical Requirements:**
+- Locate trip card components (likely in `travelblogs/src/app/trips/page.tsx` or `travelblogs/src/components/trips/trip-cards.tsx`)
+- Apply same hover styling as entry cards from Story 13.5:
+  - `hover:bg-[#F2ECE3]` - Background color on hover (matches entry cards)
+  - `transition-colors duration-200` - Smooth color transition
+  - `focus-visible:bg-[#F2ECE3]` - Keyboard focus states
+  - `cursor-pointer` - Explicit cursor indication
+- Preserve existing border and shadow hover effects
+- Maintain card layout and structure
+- No changes to functionality, only styling enhancements
+
+**Testing Requirements:**
+- Visual verification: Trip cards have same hover effect as entry cards
+- Hover transition is smooth (200ms)
+- Keyboard navigation: Focus states match hover states
+- No layout shifts or visual regressions
+- Test on desktop, tablet, and mobile
+- Verify consistency across all trip card instances
+
+**Source:** Follow-up to Story 13.5 - Apply same hover improvements to trip cards
+**Priority:** Medium - UI consistency improvement
+**Story Points:** 2
+
+---
+
+### Story 13.8: Simplify Share Link UI Layout
+
+**As a** trip creator
+**I want** a cleaner share link interface with actions grouped together
+**So that** the UI is more intuitive and less cluttered
+
+**Acceptance Criteria:**
+
+#### AC 1: Remove Share URL Input Field
+**Given** I have generated a share link for a trip
+**When** I view the Share Link section
+**Then** the URL input field is NOT displayed
+**And** I can still access the URL via the "Copy Link" button
+**And** the share section is more compact without the input field
+
+#### AC 2: Move Revoke Button to Share Section
+**Given** I have a generated share link
+**When** I view the trip detail page
+**Then** the "Revoke Share Link" button is displayed in the Share Link section (not in Trip Actions)
+**And** the button is placed beside the "Copy Link" button
+**And** the "Revoke Share Link" button is removed from the Trip Actions section
+
+#### AC 3: Buttons Displayed Side-by-Side
+**Given** I have a generated share link
+**When** I view the Share Link section
+**Then** "Copy Link" and "Revoke Share Link" buttons are displayed horizontally beside each other
+**And** buttons have consistent sizing and spacing
+**And** buttons wrap gracefully on smaller screens (flex-wrap)
+
+#### AC 4: Maintain All Existing Functionality
+**Given** I interact with the share functionality
+**When** I click "Copy Link"
+**Then** the URL is copied to clipboard and shows "Copied" confirmation
+**When** I click "Revoke Share Link"
+**Then** the revoke confirmation modal opens as before
+**And** revoking works exactly as it did previously
+
+#### AC 5: Visual Design Consistency
+**Given** I view the share buttons
+**When** I compare them to other buttons in the interface
+**Then** the styling is consistent with the design system
+**And** "Copy Link" uses the outline button style (border-[#1F6F78])
+**And** "Revoke Share Link" uses the destructive button style (border-[#B64A3A])
+
+**Technical Requirements:**
+- Update `travelblogs/src/components/trips/trip-detail.tsx`
+- Remove input field from share section (lines ~1170-1176)
+- Move "Revoke Share Link" button from Trip Actions (lines ~1647-1656) to share section
+- Place both buttons in horizontal flex layout (gap-3, flex-wrap)
+- Preserve all button functionality (onClick handlers, disabled states)
+- Maintain button styling (classes should remain identical)
+- No changes to modal behavior or API calls
+- Update layout to accommodate both buttons side-by-side
+
+**Testing Requirements:**
+- Share link can be generated successfully
+- "Copy Link" button copies URL to clipboard
+- "Copied" confirmation displays briefly after copy
+- "Revoke Share Link" button opens confirmation modal
+- Modal allows revoking or keeping the link
+- After revoke, link is cleared and "Generate Link" button shows
+- Both buttons wrap gracefully on mobile screens
+- No visual regressions in share section layout
+- Trip Actions section no longer shows revoke button
+
+**Source:** User feedback - URL input field is redundant, actions should be grouped
+**Priority:** Medium - UX improvement and layout simplification
+**Story Points:** 3
+
 ---
