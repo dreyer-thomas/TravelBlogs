@@ -1080,4 +1080,77 @@ describe("TripOverview", () => {
     expect(screen.getAllByText("Food with location").length).toBeGreaterThan(0);
     expect(screen.queryByText("Hike with location")).not.toBeInTheDocument();
   });
+
+  it("does not render READ/LESEN text labels on entry cards", () => {
+    render(
+      <LocaleProvider>
+        <TripOverview
+          trip={{
+            id: "trip-no-labels",
+            title: "No labels trip",
+            startDate: "2025-06-01T00:00:00.000Z",
+            endDate: "2025-06-08T00:00:00.000Z",
+            coverImageUrl: null,
+          }}
+          entries={[
+            {
+              id: "entry-test",
+              tripId: "trip-no-labels",
+              title: "Test entry",
+              createdAt: "2025-06-03T12:00:00.000Z",
+              coverImageUrl: "/uploads/entries/test.jpg",
+              tags: [],
+              media: [{ url: "/uploads/entries/test.jpg" }],
+            },
+          ]}
+        />
+      </LocaleProvider>,
+    );
+
+    // Should not have READ or LESEN text
+    expect(screen.queryByText("READ")).not.toBeInTheDocument();
+    expect(screen.queryByText("LESEN")).not.toBeInTheDocument();
+  });
+
+  it("applies cursor-pointer and hover background styles to entry cards", () => {
+    render(
+      <LocaleProvider>
+        <TripOverview
+          trip={{
+            id: "trip-hover",
+            title: "Hover test",
+            startDate: "2025-06-01T00:00:00.000Z",
+            endDate: "2025-06-08T00:00:00.000Z",
+            coverImageUrl: null,
+          }}
+          entries={[
+            {
+              id: "entry-hover",
+              tripId: "trip-hover",
+              title: "Hover entry",
+              createdAt: "2025-06-03T12:00:00.000Z",
+              coverImageUrl: "/uploads/entries/hover.jpg",
+              tags: [],
+              media: [{ url: "/uploads/entries/hover.jpg" }],
+            },
+          ]}
+        />
+      </LocaleProvider>,
+    );
+
+    const link = screen.getByRole("link", { name: /hover entry/i });
+
+    // Should have cursor-pointer class
+    expect(link.className).toContain("cursor-pointer");
+
+    // Should have hover background color class
+    expect(link.className).toContain("hover:bg-[#F2ECE3]");
+
+    // Should have transition-colors for smooth animation
+    expect(link.className).toContain("transition-colors");
+    expect(link.className).toContain("duration-200");
+
+    // Should have focus-visible styles for accessibility
+    expect(link.className).toContain("focus-visible:bg-[#F2ECE3]");
+  });
 });

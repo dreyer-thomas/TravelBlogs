@@ -430,14 +430,11 @@ const TripOverview = ({
                         </div>
                       ) : null}
                     </div>
-                    <span className="text-xs font-semibold uppercase tracking-[0.2em] text-[#1F6F78]">
-                      {t('trips.read')}
-                    </span>
                   </>
                 );
                 const cardClassName = isSelected
-                  ? "flex flex-wrap items-center gap-4 rounded-2xl border border-[#1F6F78] bg-white p-4 shadow-sm"
-                  : "flex flex-wrap items-center gap-4 rounded-2xl border border-black/10 bg-white p-4 transition hover:border-[#1F6F78]/40 hover:shadow-sm";
+                  ? "flex flex-wrap items-center gap-4 rounded-2xl border border-[#1F6F78] bg-white p-4 shadow-sm cursor-pointer"
+                  : "flex flex-wrap items-center gap-4 rounded-2xl border border-black/10 bg-white p-4 transition-colors duration-200 hover:border-[#1F6F78]/40 hover:bg-[#F2ECE3] hover:shadow-sm focus-visible:border-[#1F6F78]/40 focus-visible:bg-[#F2ECE3] cursor-pointer";
 
                 if (linkEntries) {
                   const entryHref = entryLinkBase

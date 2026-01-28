@@ -1532,10 +1532,10 @@ const TripDetail = ({
                   <Link
                     key={entry.id}
                     href={`/trips/${trip.id}/entries/${entry.id}`}
-                    className={`flex items-center gap-4 rounded-xl border px-4 py-3 transition hover:shadow-sm ${
+                    className={`flex items-center gap-4 rounded-xl border px-4 py-3 transition-colors duration-200 hover:shadow-sm ${
                       isSelected
                         ? "border-[#1F6F78] bg-[#1F6F78]/5 hover:border-[#1F6F78]"
-                        : "border-black/10 bg-white hover:border-[#1F6F78]/40"
+                        : "border-black/10 bg-white hover:border-[#1F6F78]/40 hover:bg-[#F2ECE3] focus-visible:border-[#1F6F78]/40 focus-visible:bg-[#F2ECE3]"
                     }`}
                     aria-current={isSelected ? "true" : undefined}
                   >
@@ -1597,9 +1597,6 @@ const TripDetail = ({
                         </div>
                       ) : null}
                     </div>
-                    <span className="text-xs font-semibold uppercase tracking-[0.2em] text-[#1F6F78]">
-                      {t("common.open")}
-                    </span>
                   </Link>
                 );
               })}

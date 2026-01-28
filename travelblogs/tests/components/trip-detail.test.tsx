@@ -14,8 +14,18 @@ vi.mock("next/image", () => ({
 }));
 
 vi.mock("next/link", () => ({
-  default: ({ href, children }: { href: string; children: ReactNode }) => (
-    <a href={href}>{children}</a>
+  default: ({
+    href,
+    children,
+    ...rest
+  }: {
+    href: string;
+    children: ReactNode;
+    [key: string]: unknown;
+  }) => (
+    <a href={href} {...rest}>
+      {children}
+    </a>
   ),
 }));
 
@@ -619,5 +629,172 @@ describe("TripDetail", () => {
     expect(
       screen.queryByRole("option", { name: "Viewer (viewer)" }),
     ).not.toBeInTheDocument();
+  });
+
+  it("does not render OPEN text labels on entry cards", async () => {
+    const fetchMock = createFetchMock([
+      {
+        match: "/api/trips/trip-no-open/overview",
+        respond: () =>
+          jsonResponse({
+            trip: {
+              id: "trip-no-open",
+              title: "No OPEN text",
+              startDate: "2025-06-01T00:00:00.000Z",
+              endDate: "2025-06-08T00:00:00.000Z",
+              coverImageUrl: null,
+            },
+            entries: [
+              {
+                id: "entry-test",
+                tripId: "trip-no-open",
+                title: "Test entry",
+                createdAt: "2025-06-03T12:00:00.000Z",
+                coverImageUrl: "/uploads/test.jpg",
+                tags: [],
+                media: [{ url: "/uploads/test.jpg" }],
+                location: null,
+              },
+            ],
+          }),
+      },
+      {
+        match: "/api/entries?tripId=trip-no-open",
+        respond: () =>
+          jsonResponse([
+            {
+              id: "entry-test",
+              tripId: "trip-no-open",
+              title: "Test entry",
+              coverImageUrl: "/uploads/test.jpg",
+              text: "Test content",
+              createdAt: "2025-06-03T12:00:00.000Z",
+              updatedAt: "2025-06-03T12:00:00.000Z",
+              media: [{ url: "/uploads/test.jpg" }],
+              tags: [],
+            },
+          ]),
+      },
+      {
+        match: "/api/trips/trip-no-open",
+        respond: () =>
+          jsonResponse({
+            id: "trip-no-open",
+            title: "No OPEN text",
+            startDate: "2025-06-01T00:00:00.000Z",
+            endDate: "2025-06-08T00:00:00.000Z",
+            coverImageUrl: null,
+          }),
+      },
+    ]);
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    renderWithProvider(
+      <TripDetail
+        tripId="trip-no-open"
+        canAddEntry
+        canEditTrip
+        canDeleteTrip={false}
+        canManageShare={false}
+        canManageViewers={false}
+        canTransferOwnership={false}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText("Test entry")).toBeInTheDocument();
+    });
+
+    // Should not have OPEN text
+    expect(screen.queryByText("OPEN")).not.toBeInTheDocument();
+  });
+
+  it("applies enhanced hover styles to entry cards in authenticated view", async () => {
+    const fetchMock = createFetchMock([
+      {
+        match: "/api/trips/trip-hover-auth/overview",
+        respond: () =>
+          jsonResponse({
+            trip: {
+              id: "trip-hover-auth",
+              title: "Hover test",
+              startDate: "2025-06-01T00:00:00.000Z",
+              endDate: "2025-06-08T00:00:00.000Z",
+              coverImageUrl: null,
+            },
+            entries: [
+              {
+                id: "entry-hover",
+                tripId: "trip-hover-auth",
+                title: "Hover entry",
+                createdAt: "2025-06-03T12:00:00.000Z",
+                coverImageUrl: "/uploads/hover.jpg",
+                tags: [],
+                media: [{ url: "/uploads/hover.jpg" }],
+                location: null,
+              },
+            ],
+          }),
+      },
+      {
+        match: "/api/entries?tripId=trip-hover-auth",
+        respond: () =>
+          jsonResponse([
+            {
+              id: "entry-hover",
+              tripId: "trip-hover-auth",
+              title: "Hover entry",
+              coverImageUrl: "/uploads/hover.jpg",
+              text: "Hover content",
+              createdAt: "2025-06-03T12:00:00.000Z",
+              updatedAt: "2025-06-03T12:00:00.000Z",
+              media: [{ url: "/uploads/hover.jpg" }],
+              tags: [],
+            },
+          ]),
+      },
+      {
+        match: "/api/trips/trip-hover-auth",
+        respond: () =>
+          jsonResponse({
+            id: "trip-hover-auth",
+            title: "Hover test",
+            startDate: "2025-06-01T00:00:00.000Z",
+            endDate: "2025-06-08T00:00:00.000Z",
+            coverImageUrl: null,
+          }),
+      },
+    ]);
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    renderWithProvider(
+      <TripDetail
+        tripId="trip-hover-auth"
+        canAddEntry
+        canEditTrip
+        canDeleteTrip={false}
+        canManageShare={false}
+        canManageViewers={false}
+        canTransferOwnership={false}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText("Hover entry")).toBeInTheDocument();
+    });
+
+    const link = screen.getByRole("link", { name: /hover entry/i });
+
+    // Should have hover background color class
+    expect(link.className).toContain("hover:bg-[#F2ECE3]");
+
+    // Should have transition-colors for smooth animation
+    expect(link.className).toContain("transition-colors");
+    expect(link.className).toContain("duration-200");
+
+    // Should have focus-visible styles for accessibility
+    expect(link.className).toContain("focus-visible:bg-[#F2ECE3]");
   });
 });

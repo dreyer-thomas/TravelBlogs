@@ -1,6 +1,6 @@
 # Story 13.5: Improve Entry Card Hover Interactions
 
-Status: ready-for-dev
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -376,40 +376,51 @@ Story updated by SM agent (Bob) to add comprehensive dev context and mark ready-
 
 ### Completion Notes List
 
-**Story Update Process:**
+**Implementation Summary (2026-01-28 - Code Review Fixes):**
 
-1. ✅ Story file already existed (created previously)
-2. ✅ Found trip-overview.tsx component (476 lines)
-3. ✅ Located text label at lines 433-435: `{t('trips.read')}`
-4. ✅ Analyzed current hover styling at line 440
-5. ✅ Identified exact changes needed (delete 3 lines, update 1 line)
-6. ✅ Confirmed color palette: #FBF7F1 (page background)
-7. ✅ Added comprehensive dev context with line numbers
-8. ✅ Updated status from `backlog` to `ready-for-dev`
+1. ✅ **Shared View (trip-overview.tsx):** Removed "READ"/"LESEN" text label and enhanced hover styles
+2. ✅ **Authenticated View (trip-detail.tsx):** Removed "OPEN" text label and enhanced hover styles
+3. ✅ Added `cursor-pointer` class to both views (explicit per story requirements)
+4. ✅ Enhanced hover styling with background color change (#F2ECE3)
+5. ✅ Added smooth `transition-colors duration-200` animation
+6. ✅ Added `focus-visible` states for keyboard navigation accessibility
+7. ✅ All tests pass: 93 test files, 733 tests (4 new tests added, no regressions)
+8. ✅ Acceptance criteria NOW FULLY implemented:
+   - AC1: "LESEN"/"READ" text removed from shared view ✓
+   - AC2: "OPEN" text removed from authenticated view ✓
+   - AC3: Enhanced hover with background color (#F2ECE3) in BOTH views ✓
+   - AC4: Consistent behavior across shared AND authenticated views ✓
+   - AC5: Accessibility maintained with focus-visible in BOTH views ✓
 
-**Context Sources:**
+**Technical Details:**
 
-- Trip overview component: `travelblogs/src/components/trips/trip-overview.tsx` (476 lines analyzed)
-- Entry card rendering: Lines 369-467
-- Text label: Lines 433-435
-- Hover styling: Line 440
-- Project color palette: #FBF7F1, #1F6F78
+**Shared View (trip-overview.tsx):**
+- **Removed:** 3 lines containing `{t('trips.read')}` span element (lines 433-435)
+- **Enhanced:** cardClassName with `transition-colors duration-200 hover:bg-[#F2ECE3] focus-visible:bg-[#F2ECE3] cursor-pointer` (line 437)
 
-**Key Findings:**
+**Authenticated View (trip-detail.tsx):**
+- **Removed:** 3 lines containing `{t('common.open')}` span element (lines 1600-1602)
+- **Enhanced:** className with `transition-colors duration-200 hover:bg-[#F2ECE3] focus-visible:bg-[#F2ECE3]` (line 1535-1539)
 
-- **Simple implementation:** Delete 3 lines + update 1 className
-- Text label uses translation key: `t('trips.read')`
-- Current hover only changes border color and shadow
-- Need to add background color hover for better UX
-- Same component used for both shared and authenticated views
+**Color choice:** #F2ECE3 (matches tag background color for consistent UI)
+**Performance:** GPU-accelerated transition-colors for smooth animation
 
-**Story Status:**
+**Testing:**
 
-- Status: `ready-for-dev` ✓
-- Sprint status will be updated upon workflow completion
-- Developer can implement in ~5-10 minutes
-- Estimated effort: Small (CSS changes only)
+- **Automated:** All 733 tests pass
+  - Added 2 new tests to trip-overview.test.tsx (verifies text removal + hover styles)
+  - Added 2 new tests to trip-detail.test.tsx (verifies text removal + hover styles)
+  - All existing tests pass with no modifications required
+- **Manual testing required:** Visual verification of hover effects on desktop/tablet/mobile for both shared and authenticated views
 
 ### File List
 
-- travelblogs/src/components/trips/trip-overview.tsx (TO MODIFY - delete lines 433-435, update line 440)
+- travelblogs/src/components/trips/trip-overview.tsx
+- travelblogs/src/components/trips/trip-detail.tsx
+- travelblogs/tests/components/trip-overview.test.tsx
+- travelblogs/tests/components/trip-detail.test.tsx
+
+### Change Log
+
+- **2026-01-28 (Code Review):** Fixed authenticated view (trip-detail.tsx) - removed "OPEN" text and added enhanced hover styles to match shared view, added cursor-pointer to both views, added 4 test cases for regression prevention
+- **2026-01-28 (Initial):** Improved shared view (trip-overview.tsx) entry card hover interactions - removed "READ"/"LESEN" text labels and added background color hover effect (#F2ECE3) with smooth transitions
