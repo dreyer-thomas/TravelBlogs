@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useTranslation } from "../../utils/use-translation";
 import UserMenu from "../account/user-menu";
 import TripCard from "./trip-card";
+import WorldMap from "./world-map";
 
 type TripListItem = {
   id: string;
@@ -76,6 +77,8 @@ const TripsPageContent = ({
             </div>
           </div>
         </header>
+
+        <WorldMap ariaLabel={t('trips.worldMap')} />
 
         {loadError ? (
           <section className="rounded-2xl border border-black/10 bg-white p-8 text-center">
