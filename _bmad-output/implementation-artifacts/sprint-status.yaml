@@ -181,8 +181,9 @@ development_status:
 
   epic-14: in-progress
   14-1-render-trips-page-world-map: done
-  14-2-highlight-countries-with-visible-trips: backlog
+  14-2-highlight-countries-with-visible-trips: done
   14-3-show-trip-list-on-country-hover: backlog
   14-4-navigate-to-trip-from-map-popup: backlog
   14-5-enforce-access-control-in-map-visibility: backlog
+  14-6-gradient-country-highlights: done
   epic-14-retrospective: optional

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { useTranslation } from "../../utils/use-translation";
 import UserMenu from "../account/user-menu";
 import TripCard from "./trip-card";
@@ -36,6 +37,39 @@ const TripsPageContent = ({
   userEmail,
 }: TripsPageContentProps) => {
   const { t } = useTranslation();
+  const [highlightedCountries, setHighlightedCountries] = useState<string[]>([]);
+
+  useEffect(() => {
+    let isActive = true;
+
+    const loadWorldMapCountries = async () => {
+      if (typeof fetch !== "function") {
+        return;
+      }
+
+      try {
+        const response = await fetch("/api/trips/world-map");
+        if (!response.ok) {
+          return;
+        }
+        const payload = await response.json();
+        const countries = Array.isArray(payload?.data?.countries)
+          ? payload.data.countries
+          : [];
+        if (isActive) {
+          setHighlightedCountries(countries);
+        }
+      } catch (error) {
+        console.error("Failed to load trip map highlights", error);
+      }
+    };
+
+    loadWorldMapCountries();
+
+    return () => {
+      isActive = false;
+    };
+  }, []);
 
   return (
     <div className="min-h-screen bg-[#FBF7F1] px-6 py-12">
@@ -78,7 +112,10 @@ const TripsPageContent = ({
           </div>
         </header>
 
-        <WorldMap ariaLabel={t('trips.worldMap')} />
+        <WorldMap
+          ariaLabel={t('trips.worldMap')}
+          highlightedCountries={highlightedCountries}
+        />
 
         {loadError ? (
           <section className="rounded-2xl border border-black/10 bg-white p-8 text-center">

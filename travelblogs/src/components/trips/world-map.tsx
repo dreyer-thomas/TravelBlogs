@@ -1,10 +1,118 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import type { Map as LeafletMap } from "leaflet";
+import { useEffect, useMemo, useRef, useState } from "react";
+import type { GeoJSON, Map as LeafletMap } from "leaflet";
 
 type WorldMapProps = {
   ariaLabel: string;
+  highlightedCountries?: string[];
+  leafletLoader?: () => Promise<typeof import("leaflet")>;
+};
+
+type GeoFeature = {
+  properties?: Record<string, unknown>;
+  geometry?: {
+    type?: string;
+    coordinates?: unknown;
+  };
+};
+
+const BASE_FILL_COLOR = "#2D2A26";
+const GRADIENT_STOPS = [
+  { latitude: 0, color: "#D6453D" },
+  { latitude: 30, color: "#4CBF6B" },
+  { latitude: 60, color: "#F6C343" },
+  { latitude: 90, color: "#2E6BD3" },
+];
+
+const clampLatitude = (latitude: number) =>
+  Math.max(0, Math.min(90, Math.abs(latitude)));
+
+const hexToRgb = (hex: string) => {
+  const sanitized = hex.replace("#", "");
+  const value = parseInt(sanitized, 16);
+  return {
+    r: (value >> 16) & 255,
+    g: (value >> 8) & 255,
+    b: value & 255,
+  };
+};
+
+const rgbToHex = ({ r, g, b }: { r: number; g: number; b: number }) => {
+  const toHex = (channel: number) =>
+    Math.max(0, Math.min(255, Math.round(channel)))
+      .toString(16)
+      .padStart(2, "0");
+  return `#${toHex(r)}${toHex(g)}${toHex(b)}`.toUpperCase();
+};
+
+const interpolateColor = (start: string, end: string, ratio: number) => {
+  const from = hexToRgb(start);
+  const to = hexToRgb(end);
+  const clamped = Math.max(0, Math.min(1, ratio));
+  return rgbToHex({
+    r: from.r + (to.r - from.r) * clamped,
+    g: from.g + (to.g - from.g) * clamped,
+    b: from.b + (to.b - from.b) * clamped,
+  });
+};
+
+const resolveGradientColor = (latitude: number | null) => {
+  const clampedLatitude = clampLatitude(latitude ?? 0);
+  if (clampedLatitude <= GRADIENT_STOPS[0].latitude) {
+    return GRADIENT_STOPS[0].color;
+  }
+
+  for (let i = 1; i < GRADIENT_STOPS.length; i += 1) {
+    const current = GRADIENT_STOPS[i];
+    const previous = GRADIENT_STOPS[i - 1];
+    if (clampedLatitude <= current.latitude) {
+      const ratio =
+        (clampedLatitude - previous.latitude) /
+        (current.latitude - previous.latitude);
+      return interpolateColor(previous.color, current.color, ratio);
+    }
+  }
+
+  return GRADIENT_STOPS[GRADIENT_STOPS.length - 1].color;
+};
+
+const collectLatitudes = (
+  coordinates: unknown,
+  accumulator: { sum: number; count: number },
+) => {
+  if (!Array.isArray(coordinates)) {
+    return;
+  }
+
+  if (
+    coordinates.length >= 2 &&
+    typeof coordinates[0] === "number" &&
+    typeof coordinates[1] === "number"
+  ) {
+    accumulator.sum += coordinates[1];
+    accumulator.count += 1;
+    return;
+  }
+
+  for (const item of coordinates) {
+    collectLatitudes(item, accumulator);
+  }
+};
+
+const getRepresentativeLatitude = (geometry?: GeoFeature["geometry"]) => {
+  if (!geometry?.coordinates) {
+    return null;
+  }
+
+  const accumulator = { sum: 0, count: 0 };
+  collectLatitudes(geometry.coordinates, accumulator);
+
+  if (accumulator.count === 0) {
+    return null;
+  }
+
+  return accumulator.sum / accumulator.count;
 };
 
 /**
@@ -14,15 +122,47 @@ type WorldMapProps = {
  *
  * @param ariaLabel - Accessible label for the map region
  */
-const WorldMap = ({ ariaLabel }: WorldMapProps) => {
+const WorldMap = ({
+  ariaLabel,
+  highlightedCountries,
+  leafletLoader,
+}: WorldMapProps) => {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<LeafletMap | null>(null);
+  const geoJsonLayerRef = useRef<GeoJSON | null>(null);
   const [mapLoaded, setMapLoaded] = useState(false);
 
   // Final optimized settings for full world visibility
   const zoom = 1.55;
   const latitude = 33;
   const height = 40;
+  const highlightSet = useMemo(
+    () =>
+      new Set(
+        (highlightedCountries ?? []).map((country) =>
+          country.trim().toUpperCase(),
+        ),
+      ),
+    [highlightedCountries],
+  );
+
+  const getFeatureStyle = (feature?: GeoFeature) => {
+    const code = feature?.properties?.["ISO3166-1-Alpha-2"];
+    const normalized =
+      typeof code === "string" ? code.trim().toUpperCase() : null;
+    const isHighlighted = normalized ? highlightSet.has(normalized) : false;
+    const latitude = isHighlighted
+      ? getRepresentativeLatitude(feature?.geometry)
+      : null;
+
+    return {
+      fillColor: isHighlighted ? resolveGradientColor(latitude) : BASE_FILL_COLOR,
+      fillOpacity: 0.85,
+      color: BASE_FILL_COLOR,
+      weight: 0.5,
+      opacity: 0.85,
+    };
+  };
 
   // Initialize map (only once)
   useEffect(() => {
@@ -31,7 +171,8 @@ const WorldMap = ({ ariaLabel }: WorldMapProps) => {
     }
 
     // Dynamic import to avoid SSR issues with Leaflet
-    import("leaflet").then((L) => {
+    const loadLeaflet = leafletLoader ?? (() => import("leaflet"));
+    loadLeaflet().then((L) => {
       if (!mapContainerRef.current || mapRef.current) {
         return;
       }
@@ -79,15 +220,11 @@ const WorldMap = ({ ariaLabel }: WorldMapProps) => {
           return response.json();
         })
         .then((geojson) => {
-          L.geoJSON(geojson, {
-            style: {
-              fillColor: "#2D2A26",
-              fillOpacity: 0.85,
-              color: "#2D2A26",
-              weight: 0.5,
-              opacity: 0.85,
-            },
-          }).addTo(map);
+          const layer = L.geoJSON(geojson, {
+            style: getFeatureStyle,
+          });
+          layer.addTo(map);
+          geoJsonLayerRef.current = layer;
 
           setMapLoaded(true);
         })
@@ -107,6 +244,14 @@ const WorldMap = ({ ariaLabel }: WorldMapProps) => {
       }
     };
   }, []);
+
+  useEffect(() => {
+    if (!geoJsonLayerRef.current) {
+      return;
+    }
+
+    geoJsonLayerRef.current.setStyle(getFeatureStyle);
+  }, [highlightSet]);
 
   return (
     <div className="rounded-2xl border border-black/10 bg-white p-8">
