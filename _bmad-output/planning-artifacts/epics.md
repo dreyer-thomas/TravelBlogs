@@ -4000,3 +4000,35 @@ Add a scratch-map style world map above the Trips list for country-based navigat
 **When** the map renders  
 **Then** that country remains in the dark base state  
 **And** no trips from that country appear in hover popups
+
+---
+
+### Story 14.7: Enable Map Zoom Controls and Dragging
+
+**As a** viewer  
+**I want** to zoom and pan the Trips page world map  
+**So that** I can interact with small destinations more easily
+
+**Acceptance Criteria:**
+
+#### AC 1: Zoom Controls Enabled
+**Given** I view the Trips page map  
+**When** the map loads  
+**Then** visible zoom controls (+ / -) are present  
+**And** clicking them zooms the map in and out
+
+#### AC 2: Map Dragging Enabled
+**Given** I view the Trips page map  
+**When** I click/touch and drag the map  
+**Then** the map pans accordingly  
+**And** I can reposition small countries into view
+
+#### AC 3: Baseline Map Settings Remain Unchanged
+**Given** the Trips page map renders  
+**Then** the initial zoom, latitude center, height, and white ocean background remain identical to Story 14.1
+
+#### AC 4: Existing Interactions Still Work
+**Given** I interact with the map  
+**When** I click a country with visible trips  
+**Then** the trip popup still appears and links still work  
+**And** highlight styling remains unchanged

@@ -186,4 +186,5 @@ development_status:
   14-4-navigate-to-trip-from-map-popup: done
   14-5-enforce-access-control-in-map-visibility: done
   14-6-gradient-country-highlights: done
+  14-7-enable-map-zoom-and-pan: done
   epic-14-retrospective: optional

@@ -128,7 +128,7 @@ const getRepresentativeLatitude = (geometry?: GeoFeature["geometry"]) => {
 };
 
 /**
- * WorldMap component renders a static world map view.
+ * WorldMap component renders an interactive world map view with zoom and pan.
  * Uses Leaflet with GeoJSON country shapes for map rendering.
  * Shows all countries in a dark base state with transparent oceans.
  *
@@ -266,15 +266,15 @@ const WorldMap = (props: WorldMapProps) => {
       // Create map instance centered on world view with fixed zoom
       const map = L.map(mapContainerRef.current, {
         scrollWheelZoom: false,
-        dragging: false,
-        zoomControl: false,
+        dragging: true,
+        zoomControl: true,
         doubleClickZoom: false,
         boxZoom: false,
         keyboard: false,
-        touchZoom: false,
+        touchZoom: true,
         attributionControl: false,
         zoomSnap: 0.1, // Allow fractional zoom levels
-        zoomDelta: 0.1,
+        zoomDelta: 1,
       }).setView([latitude, 0], zoom);
 
       if (typeof fetch !== "function") {

@@ -150,6 +150,54 @@ describe("WorldMap", () => {
     expect(mapInstance?.setView).toHaveBeenCalledWith([33, 0], 1.55);
   });
 
+  it("initializes the map with zoom controls, dragging, and touch zoom enabled", async () => {
+    render(
+      <LocaleProvider>
+        <WorldMap ariaLabel="World map" leafletLoader={leafletLoader} />
+      </LocaleProvider>,
+    );
+
+    await waitFor(() => {
+      expect(mapMock).toHaveBeenCalled();
+    });
+
+    const mapOptions = mapMock.mock.calls[0]?.[1];
+    expect(mapOptions?.zoomControl).toBe(true);
+    expect(mapOptions?.dragging).toBe(true);
+    expect(mapOptions?.touchZoom).toBe(true);
+  });
+
+  it("keeps scroll wheel zoom disabled to avoid page scroll capture", async () => {
+    render(
+      <LocaleProvider>
+        <WorldMap ariaLabel="World map" leafletLoader={leafletLoader} />
+      </LocaleProvider>,
+    );
+
+    await waitFor(() => {
+      expect(mapMock).toHaveBeenCalled();
+    });
+
+    const mapOptions = mapMock.mock.calls[0]?.[1];
+    expect(mapOptions?.scrollWheelZoom).toBe(false);
+  });
+
+  it("sets zoomSnap to 0.1 for fractional snapping and zoomDelta to 1 for full-level zoom buttons", async () => {
+    render(
+      <LocaleProvider>
+        <WorldMap ariaLabel="World map" leafletLoader={leafletLoader} />
+      </LocaleProvider>,
+    );
+
+    await waitFor(() => {
+      expect(mapMock).toHaveBeenCalled();
+    });
+
+    const mapOptions = mapMock.mock.calls[0]?.[1];
+    expect(mapOptions?.zoomSnap).toBe(0.1);
+    expect(mapOptions?.zoomDelta).toBe(1);
+  });
+
   it("keeps the finalized map height", () => {
     render(
       <LocaleProvider>
