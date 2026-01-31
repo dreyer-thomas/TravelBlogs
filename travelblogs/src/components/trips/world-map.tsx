@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { GeoJSON, Map as LeafletMap } from "leaflet";
+import type { GeoJSON, Map as LeafletMap, PathOptions } from "leaflet";
 
 type WorldMapProps = {
   ariaLabel: string;
@@ -80,6 +80,14 @@ const resolveGradientColor = (latitude: number | null) => {
 
   return GRADIENT_STOPS[GRADIENT_STOPS.length - 1].color;
 };
+
+const getBaseStyle = (): PathOptions => ({
+  fillColor: BASE_FILL_COLOR,
+  fillOpacity: 0.85,
+  color: BASE_FILL_COLOR,
+  weight: 0.5,
+  opacity: 0.85,
+});
 
 const collectLatitudes = (
   coordinates: unknown,
@@ -170,15 +178,11 @@ const WorldMap = (props: WorldMapProps) => {
     return normalized;
   }, [tripsByCountry]);
   const tripsByCountryRef = useRef<Record<string, TripSummary[]> | null>(null);
-  const featureStyleRef = useRef<(feature?: GeoFeature) => {
-    fillColor: string;
-    fillOpacity: number;
-    color: string;
-    weight: number;
-    opacity: number;
-  } | null>(null);
+  const featureStyleRef = useRef<(feature?: GeoFeature) => PathOptions>(() =>
+    getBaseStyle(),
+  );
   const getFeatureStyle = useCallback(
-    (feature?: GeoFeature) => {
+    (feature?: GeoFeature): PathOptions => {
       const code = feature?.properties?.["ISO3166-1-Alpha-2"];
       const normalized =
         typeof code === "string" ? code.trim().toUpperCase() : null;
@@ -188,13 +192,10 @@ const WorldMap = (props: WorldMapProps) => {
         : null;
 
       return {
+        ...getBaseStyle(),
         fillColor: isHighlighted
           ? resolveGradientColor(latitude)
           : BASE_FILL_COLOR,
-        fillOpacity: 0.85,
-        color: BASE_FILL_COLOR,
-        weight: 0.5,
-        opacity: 0.85,
       };
     },
     [highlightSet],
@@ -291,16 +292,7 @@ const WorldMap = (props: WorldMapProps) => {
         })
         .then((geojson) => {
           const layer = L.geoJSON(geojson, {
-            style: (feature) =>
-              featureStyleRef.current
-                ? featureStyleRef.current(feature)
-                : {
-                    fillColor: BASE_FILL_COLOR,
-                    fillOpacity: 0.85,
-                    color: BASE_FILL_COLOR,
-                    weight: 0.5,
-                    opacity: 0.85,
-                  },
+            style: (feature) => featureStyleRef.current(feature),
             onEachFeature: (feature, layerInstance) => {
               const handleClick = (event?: {
                 target?: unknown;

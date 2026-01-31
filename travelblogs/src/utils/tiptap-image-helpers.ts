@@ -190,13 +190,14 @@ export const removeEntryImageNodesFromJson = (
         updated = true
         return null
       }
-      if (Array.isArray(node.content)) {
-        const nextContent = node.content
+      const currentContent = node.content
+      if (Array.isArray(currentContent)) {
+        const nextContent = currentContent
           .map(visitNode)
           .filter((child): child is TiptapNode => child !== null)
         if (
-          nextContent.length !== node.content.length ||
-          nextContent.some((child, index) => child !== node.content[index])
+          nextContent.length !== currentContent.length ||
+          nextContent.some((child, index) => child !== currentContent[index])
         ) {
           updated = true
           return { ...node, content: nextContent }
@@ -242,13 +243,14 @@ export const removeEntryVideoNodesFromJson = (
         updated = true
         return null
       }
-      if (Array.isArray(node.content)) {
-        const nextContent = node.content
+      const currentContent = node.content
+      if (Array.isArray(currentContent)) {
+        const nextContent = currentContent
           .map(visitNode)
           .filter((child): child is TiptapNode => child !== null)
         if (
-          nextContent.length !== node.content.length ||
-          nextContent.some((child, index) => child !== node.content[index])
+          nextContent.length !== currentContent.length ||
+          nextContent.some((child, index) => child !== currentContent[index])
         ) {
           updated = true
           return { ...node, content: nextContent }
