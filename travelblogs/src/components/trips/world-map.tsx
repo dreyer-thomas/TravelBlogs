@@ -153,7 +153,6 @@ const WorldMap = (props: WorldMapProps) => {
   // Final optimized settings for full world visibility
   const zoom = 1.55;
   const latitude = 33;
-  const height = 40;
   const highlightSet = useMemo(
     () =>
       new Set(
@@ -426,8 +425,7 @@ const WorldMap = (props: WorldMapProps) => {
         ref={mapContainerRef}
         role="region"
         aria-label={ariaLabel}
-        className="relative w-full overflow-hidden rounded-xl bg-white [&_.leaflet-container]:z-0 [&_.leaflet-container]:bg-white [&_.leaflet-pane]:z-0 [&_.leaflet-top]:z-0 [&_.leaflet-bottom]:z-0 [&_.leaflet-tile-pane]:opacity-80"
-        style={{ height: `${height}rem` }}
+        className="relative w-full aspect-[2/1] overflow-hidden rounded-xl bg-white [&_.leaflet-container]:z-0 [&_.leaflet-container]:bg-white [&_.leaflet-pane]:z-0 [&_.leaflet-top]:z-0 [&_.leaflet-bottom]:z-0 [&_.leaflet-tile-pane]:opacity-80"
       >
         {!mapLoaded && (
           <div className="absolute inset-0 flex items-center justify-center">

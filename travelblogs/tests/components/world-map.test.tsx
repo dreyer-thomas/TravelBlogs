@@ -198,7 +198,7 @@ describe("WorldMap", () => {
     expect(mapOptions?.zoomDelta).toBe(1);
   });
 
-  it("keeps the finalized map height", () => {
+  it("uses aspect ratio for responsive map sizing", () => {
     render(
       <LocaleProvider>
         <WorldMap ariaLabel="World map" leafletLoader={leafletLoader} />
@@ -207,7 +207,7 @@ describe("WorldMap", () => {
 
     const mapRegion = screen.getByRole("region", { name: "World map" });
     expect(mapRegion).toBeDefined();
-    expect(mapRegion.style.height).toBe("40rem");
+    expect(mapRegion.classList.contains("aspect-[2/1]")).toBe(true);
   });
 
   it("renders popup above the map with elevated z-index on click", async () => {
