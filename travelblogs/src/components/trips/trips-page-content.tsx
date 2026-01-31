@@ -27,6 +27,8 @@ type TripsPageContentProps = {
   userEmail: string;
 };
 
+type TripsByCountry = Record<string, { id: string; title: string }[]>;
+
 const TripsPageContent = ({
   trips,
   loadError,
@@ -38,6 +40,7 @@ const TripsPageContent = ({
 }: TripsPageContentProps) => {
   const { t } = useTranslation();
   const [highlightedCountries, setHighlightedCountries] = useState<string[]>([]);
+  const [tripsByCountry, setTripsByCountry] = useState<TripsByCountry>();
 
   useEffect(() => {
     let isActive = true;
@@ -50,17 +53,31 @@ const TripsPageContent = ({
       try {
         const response = await fetch("/api/trips/world-map");
         if (!response.ok) {
+          if (isActive) {
+            setHighlightedCountries([]);
+            setTripsByCountry(undefined);
+          }
           return;
         }
         const payload = await response.json();
         const countries = Array.isArray(payload?.data?.countries)
           ? payload.data.countries
           : [];
+        const countryTrips =
+          payload?.data?.tripsByCountry &&
+          typeof payload.data.tripsByCountry === "object"
+            ? (payload.data.tripsByCountry as TripsByCountry)
+            : undefined;
         if (isActive) {
           setHighlightedCountries(countries);
+          setTripsByCountry(countryTrips);
         }
       } catch (error) {
         console.error("Failed to load trip map highlights", error);
+        if (isActive) {
+          setHighlightedCountries([]);
+          setTripsByCountry(undefined);
+        }
       }
     };
 
@@ -115,6 +132,7 @@ const TripsPageContent = ({
         <WorldMap
           ariaLabel={t('trips.worldMap')}
           highlightedCountries={highlightedCountries}
+          tripsByCountry={tripsByCountry}
         />
 
         {loadError ? (

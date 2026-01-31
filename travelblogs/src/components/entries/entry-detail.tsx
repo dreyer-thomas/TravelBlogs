@@ -169,7 +169,7 @@ const EntryDetail = ({
       entry.location?.countryCode
         ? countryCodeToName(entry.location.countryCode, locale)
         : null,
-    [entry.location?.countryCode, locale],
+    [entry.location, locale],
   );
   const weatherDisplay = useMemo(
     () =>

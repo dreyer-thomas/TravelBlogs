@@ -208,6 +208,69 @@ describe("GET /api/trips/world-map", () => {
     });
   });
 
+  it("returns visible trip countries for administrators", async () => {
+    const admin = await prisma.user.create({
+      data: {
+        email: "admin@example.com",
+        name: "Admin",
+        role: "administrator",
+        passwordHash: "hash",
+      },
+    });
+
+    const firstTrip = await prisma.trip.create({
+      data: {
+        title: "Alpine Escape",
+        startDate: new Date("2025-06-01T00:00:00.000Z"),
+        endDate: new Date("2025-06-10T00:00:00.000Z"),
+        ownerId: "creator",
+      },
+    });
+
+    const secondTrip = await prisma.trip.create({
+      data: {
+        title: "Coastal Retreat",
+        startDate: new Date("2025-07-01T00:00:00.000Z"),
+        endDate: new Date("2025-07-05T00:00:00.000Z"),
+        ownerId: "creator",
+      },
+    });
+
+    await prisma.entry.createMany({
+      data: [
+        {
+          tripId: firstTrip.id,
+          title: "Alps Entry",
+          text: "Story",
+          countryCode: "CH",
+        },
+        {
+          tripId: secondTrip.id,
+          title: "Coast Entry",
+          text: "Story",
+          countryCode: "PT",
+        },
+      ],
+    });
+
+    getToken.mockResolvedValue({ sub: admin.id, role: "administrator" });
+
+    const request = new Request("http://localhost/api/trips/world-map", {
+      method: "GET",
+    });
+
+    const response = await get(request);
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.error).toBeNull();
+    expect(body.data.countries).toEqual(["CH", "PT"]);
+    expect(body.data.tripsByCountry).toEqual({
+      CH: [{ id: firstTrip.id, title: "Alpine Escape" }],
+      PT: [{ id: secondTrip.id, title: "Coastal Retreat" }],
+    });
+  });
+
   it("rejects unauthenticated requests", async () => {
     getToken.mockResolvedValue(null);
 

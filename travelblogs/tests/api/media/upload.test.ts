@@ -26,7 +26,7 @@ describe("POST /api/media/upload", () => {
     height: number,
     format: "jpeg" | "png" = "jpeg",
   ) => {
-    let pipeline = sharp({
+    const pipeline = sharp({
       create: {
         width,
         height,

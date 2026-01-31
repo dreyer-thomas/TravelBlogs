@@ -1,5 +1,16 @@
 import type { Editor } from '@tiptap/core'
 
+type TiptapNode = {
+  type?: string
+  attrs?: Record<string, unknown>
+  content?: TiptapNode[]
+}
+
+const getStringAttr = (node: TiptapNode, key: string): string | null => {
+  const value = node.attrs?.[key]
+  return typeof value === 'string' ? value : null
+}
+
 /**
  * Insert an entry image node into the editor at the current cursor position.
  *
@@ -74,19 +85,20 @@ export const insertEntryVideo = (
  * Used in Story 9.11 to detect which images are used inline before deletion.
  */
 export const extractEntryMediaIds = (editor: Editor): string[] => {
-  const json = editor.getJSON()
+  const json = editor.getJSON() as TiptapNode
   const ids: string[] = []
 
-  const traverse = (node: any) => {
-    if ((node.type === 'entryImage' || node.type === 'entryVideo') && node.attrs?.entryMediaId) {
-      ids.push(node.attrs.entryMediaId)
+  const traverse = (node: TiptapNode) => {
+    const entryMediaId = getStringAttr(node, 'entryMediaId')
+    if ((node.type === 'entryImage' || node.type === 'entryVideo') && entryMediaId) {
+      ids.push(entryMediaId)
     }
-    if (node.content) {
+    if (Array.isArray(node.content)) {
       node.content.forEach(traverse)
     }
   }
 
-  if (json.content) {
+  if (Array.isArray(json.content)) {
     json.content.forEach(traverse)
   }
 
@@ -103,19 +115,20 @@ export const extractEntryMediaIds = (editor: Editor): string[] => {
  */
 export const extractEntryMediaIdsFromJson = (tiptapJsonString: string): string[] => {
   try {
-    const json = JSON.parse(tiptapJsonString)
+    const json = JSON.parse(tiptapJsonString) as TiptapNode
     const ids: string[] = []
 
-    const traverse = (node: any) => {
-      if ((node.type === 'entryImage' || node.type === 'entryVideo') && node.attrs?.entryMediaId) {
-        ids.push(node.attrs.entryMediaId)
+    const traverse = (node: TiptapNode) => {
+      const entryMediaId = getStringAttr(node, 'entryMediaId')
+      if ((node.type === 'entryImage' || node.type === 'entryVideo') && entryMediaId) {
+        ids.push(entryMediaId)
       }
-      if (node.content) {
+      if (Array.isArray(node.content)) {
         node.content.forEach(traverse)
       }
     }
 
-    if (json.content) {
+    if (Array.isArray(json.content)) {
       json.content.forEach(traverse)
     }
 
@@ -135,23 +148,23 @@ export const extractEntryImageNodesFromJson = (
   tiptapJsonString: string,
 ): EntryImageNodeData[] => {
   try {
-    const json = JSON.parse(tiptapJsonString)
+    const json = JSON.parse(tiptapJsonString) as TiptapNode
     const nodes: EntryImageNodeData[] = []
 
-    const traverse = (node: any) => {
+    const traverse = (node: TiptapNode) => {
       if (node.type === 'entryImage') {
         nodes.push({
-          entryMediaId: node.attrs?.entryMediaId ?? null,
-          src: node.attrs?.src ?? null,
-          alt: node.attrs?.alt ?? null,
+          entryMediaId: getStringAttr(node, 'entryMediaId'),
+          src: getStringAttr(node, 'src'),
+          alt: getStringAttr(node, 'alt'),
         })
       }
-      if (node.content) {
+      if (Array.isArray(node.content)) {
         node.content.forEach(traverse)
       }
     }
 
-    if (json.content) {
+    if (Array.isArray(json.content)) {
       json.content.forEach(traverse)
     }
 
@@ -166,24 +179,24 @@ export const removeEntryImageNodesFromJson = (
   entryMediaId: string,
 ): string => {
   try {
-    const parsed = JSON.parse(tiptapJsonString)
+    const parsed = JSON.parse(tiptapJsonString) as TiptapNode
     let updated = false
 
-    const visitNode = (node: any): any => {
-      if (!node || typeof node !== 'object') {
+    const visitNode = (node: TiptapNode | null): TiptapNode | null => {
+      if (!node) {
         return node
       }
-      if (node.type === 'entryImage' && node.attrs?.entryMediaId === entryMediaId) {
+      if (node.type === 'entryImage' && getStringAttr(node, 'entryMediaId') === entryMediaId) {
         updated = true
         return null
       }
       if (Array.isArray(node.content)) {
         const nextContent = node.content
           .map(visitNode)
-          .filter((child: any) => child !== null)
+          .filter((child): child is TiptapNode => child !== null)
         if (
           nextContent.length !== node.content.length ||
-          nextContent.some((child: any, index: number) => child !== node.content[index])
+          nextContent.some((child, index) => child !== node.content[index])
         ) {
           updated = true
           return { ...node, content: nextContent }
@@ -218,24 +231,24 @@ export const removeEntryVideoNodesFromJson = (
   entryMediaId: string,
 ): string => {
   try {
-    const parsed = JSON.parse(tiptapJsonString)
+    const parsed = JSON.parse(tiptapJsonString) as TiptapNode
     let updated = false
 
-    const visitNode = (node: any): any => {
-      if (!node || typeof node !== 'object') {
+    const visitNode = (node: TiptapNode | null): TiptapNode | null => {
+      if (!node) {
         return node
       }
-      if (node.type === 'entryVideo' && node.attrs?.entryMediaId === entryMediaId) {
+      if (node.type === 'entryVideo' && getStringAttr(node, 'entryMediaId') === entryMediaId) {
         updated = true
         return null
       }
       if (Array.isArray(node.content)) {
         const nextContent = node.content
           .map(visitNode)
-          .filter((child: any) => child !== null)
+          .filter((child): child is TiptapNode => child !== null)
         if (
           nextContent.length !== node.content.length ||
-          nextContent.some((child: any, index: number) => child !== node.content[index])
+          nextContent.some((child, index) => child !== node.content[index])
         ) {
           updated = true
           return { ...node, content: nextContent }

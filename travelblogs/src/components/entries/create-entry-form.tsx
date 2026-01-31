@@ -45,6 +45,12 @@ type MediaItem = {
   mediaType: MediaType;
 };
 
+type TiptapContentNode = {
+  type?: string;
+  attrs?: Record<string, unknown>;
+  content?: TiptapContentNode[];
+};
+
 type CreatedEntryMedia = {
   id: string;
   url: string;
@@ -441,10 +447,14 @@ const CreateEntryForm = ({ tripId, onEntryCreated }: CreateEntryFormProps) => {
       const parsed = JSON.parse(content);
       let updated = false;
 
-      const visitNode = (node: any): any => {
-        if (node?.type === "entryImage") {
-          const entryMediaId = node.attrs?.entryMediaId;
-          const src = node.attrs?.src;
+      const visitNode = (node: TiptapContentNode): TiptapContentNode => {
+        if (node.type === "entryImage") {
+          const entryMediaId =
+            typeof node.attrs?.entryMediaId === "string"
+              ? node.attrs.entryMediaId
+              : null;
+          const src =
+            typeof node.attrs?.src === "string" ? node.attrs.src : null;
           const nextId =
             (entryMediaId && urlToIdMap.get(entryMediaId)) ||
             (src && urlToIdMap.get(src));
@@ -459,9 +469,9 @@ const CreateEntryForm = ({ tripId, onEntryCreated }: CreateEntryFormProps) => {
             };
           }
         }
-        if (Array.isArray(node?.content)) {
+        if (Array.isArray(node.content)) {
           const newContent = node.content.map(visitNode);
-          if (newContent.some((child: any, i: number) => child !== node.content[i])) {
+          if (newContent.some((child, i) => child !== node.content?.[i])) {
             updated = true;
             return { ...node, content: newContent };
           }
@@ -469,7 +479,7 @@ const CreateEntryForm = ({ tripId, onEntryCreated }: CreateEntryFormProps) => {
         return node;
       };
 
-      const newParsed = visitNode(parsed);
+      const newParsed = visitNode(parsed as TiptapContentNode);
       return updated ? JSON.stringify(newParsed) : content;
     } catch {
       return content;

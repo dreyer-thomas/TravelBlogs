@@ -28,6 +28,13 @@ type FieldErrors = {
   form?: string;
 };
 
+type TiptapContentNode = {
+  type?: string;
+  text?: string;
+  attrs?: Record<string, unknown>;
+  content?: TiptapContentNode[];
+};
+
 type UploadStatus = "idle" | "uploading" | "success" | "failed";
 type MediaType = "image" | "video";
 
@@ -84,10 +91,15 @@ const isEmptyTiptapContent = (content: string): boolean => {
     const parsed = JSON.parse(content);
     if (parsed.type === 'doc' && Array.isArray(parsed.content)) {
       if (parsed.content.length === 0) return true;
-      return parsed.content.every((node: any) =>
-        node.type === 'paragraph' &&
-        (!node.content || node.content.length === 0 ||
-         node.content.every((c: any) => c.type === 'text' && !c.text?.trim()))
+      return (parsed.content as TiptapContentNode[]).every(
+        (node) =>
+          node.type === "paragraph" &&
+          (!node.content ||
+            node.content.length === 0 ||
+            node.content.every(
+              (child) =>
+                child.type === "text" && !child.text?.trim(),
+            )),
       );
     }
     return false;
@@ -497,10 +509,14 @@ const EditEntryForm = ({
       const parsed = JSON.parse(content);
       let updated = false;
 
-      const visitNode = (node: any): any => {
-        if (node?.type === "entryImage") {
-          const entryMediaId = node.attrs?.entryMediaId;
-          const src = node.attrs?.src;
+      const visitNode = (node: TiptapContentNode): TiptapContentNode => {
+        if (node.type === "entryImage") {
+          const entryMediaId =
+            typeof node.attrs?.entryMediaId === "string"
+              ? node.attrs.entryMediaId
+              : null;
+          const src =
+            typeof node.attrs?.src === "string" ? node.attrs.src : null;
           const nextId =
             (entryMediaId && urlToIdMap.get(entryMediaId)) ||
             (src && urlToIdMap.get(src));
@@ -515,9 +531,9 @@ const EditEntryForm = ({
             };
           }
         }
-        if (Array.isArray(node?.content)) {
+        if (Array.isArray(node.content)) {
           const newContent = node.content.map(visitNode);
-          if (newContent.some((child: any, i: number) => child !== node.content[i])) {
+          if (newContent.some((child, i) => child !== node.content?.[i])) {
             updated = true;
             return { ...node, content: newContent };
           }
@@ -525,7 +541,7 @@ const EditEntryForm = ({
         return node;
       };
 
-      const newParsed = visitNode(parsed);
+      const newParsed = visitNode(parsed as TiptapContentNode);
       return updated ? JSON.stringify(newParsed) : content;
     } catch {
       return content;
@@ -661,7 +677,7 @@ const EditEntryForm = ({
   );
   const canSubmit = Boolean(
     isValidEntryDate(entryDate) &&
-      text.trim() &&
+      !isEmptyTiptapContent(text) &&
       mediaUrls.length > 0 &&
       !hasFieldErrors &&
       !submitting &&

@@ -4,6 +4,14 @@ import { Editor } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import EntryImage, { type EntryImageAttributes } from '@/utils/tiptap-entry-image-extension'
 
+type TiptapNode = {
+  type?: string
+  attrs?: { entryMediaId?: string }
+}
+
+const getEntryImageNodes = (json: { content?: TiptapNode[] }) =>
+  (json.content ?? []).filter((node) => node.type === 'entryImage')
+
 describe('EntryImage Extension', () => {
   let editor: Editor
 
@@ -107,7 +115,7 @@ describe('EntryImage Extension', () => {
       })
 
       const json = editor.getJSON()
-      const imageNodes = json.content?.filter((node: any) => node.type === 'entryImage')
+      const imageNodes = getEntryImageNodes(json)
       expect(imageNodes).toHaveLength(2)
       expect(imageNodes?.[0]?.attrs?.entryMediaId).toBe('img1')
       expect(imageNodes?.[1]?.attrs?.entryMediaId).toBe('img2')
@@ -130,7 +138,7 @@ describe('EntryImage Extension', () => {
       expect(json.type).toBe('doc')
       expect(json.content).toBeDefined()
 
-      const imageNode = json.content?.find((node: any) => node.type === 'entryImage')
+      const imageNode = getEntryImageNodes(json)[0]
       expect(imageNode).toBeDefined()
       expect(imageNode?.attrs).toEqual({
         entryMediaId: 'clxyz123',
@@ -178,7 +186,7 @@ describe('EntryImage Extension', () => {
       const json = editor.getJSON()
 
       // Should not create an entryImage node
-      const hasEntryImage = json.content?.some((node: any) => node.type === 'entryImage')
+      const hasEntryImage = getEntryImageNodes(json).length > 0
       expect(hasEntryImage).toBeFalsy()
     })
 
@@ -187,14 +195,14 @@ describe('EntryImage Extension', () => {
       editor.commands.setContent(htmlNoSrc)
 
       let json = editor.getJSON()
-      let hasEntryImage = json.content?.some((node: any) => node.type === 'entryImage')
+      let hasEntryImage = getEntryImageNodes(json).length > 0
       expect(hasEntryImage).toBeFalsy()
 
       const htmlNoId = '<img src="/test.jpg" alt="Test" />'
       editor.commands.setContent(htmlNoId)
 
       json = editor.getJSON()
-      hasEntryImage = json.content?.some((node: any) => node.type === 'entryImage')
+      hasEntryImage = getEntryImageNodes(json).length > 0
       expect(hasEntryImage).toBeFalsy()
     })
   })
@@ -244,14 +252,14 @@ describe('EntryImage Extension', () => {
         },
       })
 
-      const beforeDelete = editor.getJSON().content?.filter((node: any) => node.type === 'entryImage')
+      const beforeDelete = getEntryImageNodes(editor.getJSON())
       expect(beforeDelete).toHaveLength(1)
 
       // Select all and delete
       editor.commands.selectAll()
       editor.commands.deleteSelection()
 
-      const afterDelete = editor.getJSON().content?.filter((node: any) => node.type === 'entryImage')
+      const afterDelete = getEntryImageNodes(editor.getJSON())
       expect(afterDelete).toHaveLength(0)
     })
 
@@ -292,7 +300,7 @@ describe('EntryImage Extension', () => {
         attrs: { entryMediaId: 'img3', src: '/img3.jpg', alt: 'Third' },
       })
 
-      const beforeDelete = editor.getJSON().content?.filter((node: any) => node.type === 'entryImage')
+      const beforeDelete = getEntryImageNodes(editor.getJSON())
       expect(beforeDelete).toHaveLength(3)
 
       // Select and delete one image node
@@ -300,10 +308,10 @@ describe('EntryImage Extension', () => {
       editor.commands.deleteSelection()
 
       const json = editor.getJSON()
-      const imageNodes = json.content?.filter((node: any) => node.type === 'entryImage')
+      const imageNodes = getEntryImageNodes(json)
       expect(imageNodes).toHaveLength(2)
       // After deletion, should have 2 images remaining (don't assume order)
-      const remainingIds = imageNodes?.map((node: any) => node.attrs?.entryMediaId)
+      const remainingIds = imageNodes.map((node) => node.attrs?.entryMediaId)
       expect(remainingIds).toHaveLength(2)
       expect(remainingIds?.some((id: string) => ['img1', 'img2', 'img3'].includes(id))).toBe(true)
     })
@@ -332,7 +340,7 @@ describe('EntryImage Extension', () => {
       editor.commands.focus()
       editor.commands.keyboardShortcut('Backspace')
 
-      const imageNodes = editor.getJSON().content?.filter((node: any) => node.type === 'entryImage')
+      const imageNodes = getEntryImageNodes(editor.getJSON())
       expect(imageNodes).toHaveLength(0)
     })
 
@@ -360,7 +368,7 @@ describe('EntryImage Extension', () => {
       editor.commands.focus()
       editor.commands.keyboardShortcut('Delete')
 
-      const imageNodes = editor.getJSON().content?.filter((node: any) => node.type === 'entryImage')
+      const imageNodes = getEntryImageNodes(editor.getJSON())
       expect(imageNodes).toHaveLength(0)
     })
   })

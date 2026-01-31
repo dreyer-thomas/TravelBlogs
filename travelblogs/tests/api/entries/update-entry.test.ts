@@ -473,22 +473,22 @@ describe("PATCH /api/entries/[id]", () => {
 
     const updatedJson = JSON.parse(updatedEntry?.text ?? "{}");
     const updatedOtherJson = JSON.parse(updatedOther?.text ?? "{}");
-    const entryImages = updatedJson.content?.filter(
-      (node: any) => node.type === "entryImage",
+    const entryImages = (updatedJson.content as Array<{ type?: string }> | undefined)?.filter(
+      (node) => node.type === "entryImage",
     );
-    const otherImages = updatedOtherJson.content?.filter(
-      (node: any) => node.type === "entryImage",
+    const otherImages = (updatedOtherJson.content as Array<{ type?: string }> | undefined)?.filter(
+      (node) => node.type === "entryImage",
     );
 
     expect(entryImages).toHaveLength(0);
     expect(otherImages).toHaveLength(0);
 
     // Verify document structure integrity - paragraph nodes should still exist
-    const entryParagraphs = updatedJson.content?.filter(
-      (node: any) => node.type === "paragraph",
+    const entryParagraphs = (updatedJson.content as Array<{ type?: string; content?: Array<{ text?: string }> }> | undefined)?.filter(
+      (node) => node.type === "paragraph",
     );
-    const otherParagraphs = updatedOtherJson.content?.filter(
-      (node: any) => node.type === "paragraph",
+    const otherParagraphs = (updatedOtherJson.content as Array<{ type?: string }> | undefined)?.filter(
+      (node) => node.type === "paragraph",
     );
     expect(entryParagraphs).toHaveLength(1);
     expect(otherParagraphs).toHaveLength(1);
@@ -506,8 +506,8 @@ describe("PATCH /api/entries/[id]", () => {
 
     expect(getResponse.status).toBe(200);
     const returnedJson = JSON.parse(getBody.data.text);
-    const returnedImages = returnedJson.content?.filter(
-      (node: any) => node.type === "entryImage",
+    const returnedImages = (returnedJson.content as Array<{ type?: string }> | undefined)?.filter(
+      (node) => node.type === "entryImage",
     );
     expect(returnedImages).toHaveLength(0);
   });

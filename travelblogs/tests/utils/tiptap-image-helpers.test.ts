@@ -13,6 +13,17 @@ import {
   removeEntryVideoNodesFromJson,
 } from '@/utils/tiptap-image-helpers'
 
+type TiptapNode = {
+  type?: string
+  attrs?: Record<string, unknown>
+}
+
+const getEntryImageNodes = (json: { content?: TiptapNode[] }) =>
+  (json.content ?? []).filter((node) => node.type === 'entryImage')
+
+const getEntryVideoNodes = (json: { content?: TiptapNode[] }) =>
+  (json.content ?? []).filter((node) => node.type === 'entryVideo')
+
 describe('Tiptap Image Helpers', () => {
   let editor: Editor
 
@@ -64,7 +75,7 @@ describe('Tiptap Image Helpers', () => {
       insertEntryImage(editor, 'img3', '/img3.jpg', 'Third')
 
       const json = editor.getJSON()
-      const imageNodes = json.content?.filter((node: any) => node.type === 'entryImage')
+      const imageNodes = getEntryImageNodes(json)
       expect(imageNodes).toHaveLength(3)
       expect(imageNodes?.[0]?.attrs?.entryMediaId).toBe('img1')
       expect(imageNodes?.[1]?.attrs?.entryMediaId).toBe('img2')
@@ -92,7 +103,7 @@ describe('Tiptap Image Helpers', () => {
 
       // Verify image was inserted
       const json = editor.getJSON()
-      const imageNode = json.content?.find((node: any) => node.type === 'entryImage')
+      const imageNode = getEntryImageNodes(json)[0]
       expect(imageNode).toBeDefined()
       expect(imageNode?.attrs?.entryMediaId).toBe('test')
     })
@@ -369,7 +380,7 @@ describe('Tiptap Image Helpers', () => {
 
       const updated = removeEntryImageNodesFromJson(jsonString, 'remove')
       const parsed = JSON.parse(updated)
-      const imageNodes = parsed.content?.filter((node: any) => node.type === 'entryImage')
+      const imageNodes = getEntryImageNodes(parsed)
 
       expect(imageNodes).toHaveLength(1)
       expect(imageNodes?.[0]?.attrs?.entryMediaId).toBe('keep')
@@ -429,8 +440,10 @@ describe('Tiptap Image Helpers', () => {
       const updated = removeEntryImageNodesFromJson(jsonString, 'dup')
       const parsed = JSON.parse(updated)
 
-      const imageNodes = parsed.content?.filter((node: any) => node.type === 'entryImage')
-      const paragraphNodes = parsed.content?.filter((node: any) => node.type === 'paragraph')
+      const imageNodes = getEntryImageNodes(parsed)
+      const paragraphNodes = (parsed.content ?? []).filter(
+        (node) => node.type === 'paragraph',
+      )
 
       expect(imageNodes).toHaveLength(0)
       expect(paragraphNodes).toHaveLength(3)
@@ -490,7 +503,7 @@ describe('Tiptap Image Helpers', () => {
       insertEntryVideo(editor, 'vid3', '/vid3.webm')
 
       const json = editor.getJSON()
-      const videoNodes = json.content?.filter((node: any) => node.type === 'entryVideo')
+      const videoNodes = getEntryVideoNodes(json)
       expect(videoNodes).toHaveLength(3)
       expect(videoNodes?.[0]?.attrs?.entryMediaId).toBe('vid1')
       expect(videoNodes?.[1]?.attrs?.entryMediaId).toBe('vid2')

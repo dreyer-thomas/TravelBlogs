@@ -523,12 +523,9 @@ describe("POST /api/entries", () => {
     const parsed = JSON.parse(createdEntry?.text ?? "{}");
 
     expect(parsed.type).toBe("doc");
-    expect(parsed.content.some((node: any) => node.type === "heading")).toBe(
-      true,
-    );
-    expect(parsed.content.some((node: any) => node.type === "bulletList")).toBe(
-      true,
-    );
+    const contentNodes = parsed.content as Array<{ type?: string }>;
+    expect(contentNodes.some((node) => node.type === "heading")).toBe(true);
+    expect(contentNodes.some((node) => node.type === "bulletList")).toBe(true);
   });
 
   it("allows setting the entry date explicitly", async () => {

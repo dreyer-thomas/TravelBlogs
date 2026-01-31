@@ -70,6 +70,8 @@ const FullScreenPhotoViewer = ({
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
   const [videoDuration, setVideoDuration] = useState<number | null>(null);
   const [previousIndex, setPreviousIndex] = useState<number | null>(null);
+  const [previousMedia, setPreviousMedia] =
+    useState<PhotoViewerImage | null>(null);
   const [transitionPhase, setTransitionPhase] = useState<
     "idle" | "preparing" | "active"
   >("idle");
@@ -89,8 +91,6 @@ const FullScreenPhotoViewer = ({
     null,
   );
   const activeIndexRef = useRef(activeIndex);
-  const previousIndexRef = useRef<number | null>(null);
-  const previousMediaRef = useRef<PhotoViewerImage | null>(null);
   const ignoreClickRef = useRef(false);
   const wasPausedRef = useRef(false);
   const preloadTimeoutRef = useRef<number | null>(null);
@@ -164,9 +164,8 @@ const FullScreenPhotoViewer = ({
     setZoomScale(1);
     setIsPaused(false);
     setPreviousIndex(null);
+    setPreviousMedia(null);
     setTransitionPhase("idle");
-    previousIndexRef.current = null;
-    previousMediaRef.current = null;
     pauseActiveVideo();
   }, [clearTransitionTimers, isOpen, pauseActiveVideo, safeIndex]);
 
@@ -227,14 +226,20 @@ const FullScreenPhotoViewer = ({
       url,
     }));
 
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsPreloading(true);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setPreloadComplete(false);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setPreloadProgress({ loaded: 0, total: totalImages });
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setFailedPreloadUrls(new Set());
 
     if (totalImages === 0) {
       preloadActiveRef.current = false;
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setIsPreloading(false);
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setPreloadComplete(true);
       return;
     }
@@ -279,9 +284,8 @@ const FullScreenPhotoViewer = ({
       if (!isSlideshow || images.length <= 1) {
         clearTransitionTimers();
         setPreviousIndex(null);
+        setPreviousMedia(null);
         setTransitionPhase("idle");
-        previousIndexRef.current = null;
-        previousMediaRef.current = null;
         return false;
       }
       const currentMedia = images[currentIndex];
@@ -289,9 +293,8 @@ const FullScreenPhotoViewer = ({
       if (!currentMedia || !nextMedia) {
         clearTransitionTimers();
         setPreviousIndex(null);
+        setPreviousMedia(null);
         setTransitionPhase("idle");
-        previousIndexRef.current = null;
-        previousMediaRef.current = null;
         return false;
       }
       const currentType =
@@ -301,21 +304,18 @@ const FullScreenPhotoViewer = ({
       if (currentType !== "image" || nextType !== "image") {
         clearTransitionTimers();
         setPreviousIndex(null);
+        setPreviousMedia(null);
         setTransitionPhase("idle");
-        previousIndexRef.current = null;
-        previousMediaRef.current = null;
         return false;
       }
       clearTransitionTimers();
       setPreviousIndex(currentIndex);
-      previousIndexRef.current = currentIndex;
-      previousMediaRef.current = currentMedia;
+      setPreviousMedia(currentMedia);
       setTransitionPhase("preparing");
       transitionTimeoutRef.current = window.setTimeout(() => {
         setTransitionPhase("idle");
         setPreviousIndex(null);
-        previousIndexRef.current = null;
-        previousMediaRef.current = null;
+        setPreviousMedia(null);
         transitionTimeoutRef.current = null;
       }, 1000);
       return true;
@@ -505,17 +505,19 @@ const FullScreenPhotoViewer = ({
     ? images.length > 1
     : activeIndex < images.length - 1;
   const activeImage = activeMedia ?? images[activeIndex];
-  const effectivePreviousIndex =
-    previousIndex !== null ? previousIndex : previousIndexRef.current;
-  const previousMedia =
-    previousMediaRef.current ??
+  const effectivePreviousIndex = previousIndex;
+  const previousMediaResolved =
+    previousMedia ??
     (effectivePreviousIndex !== null
       ? images[effectivePreviousIndex] ?? null
       : null);
   const isTransitioning = transitionPhase !== "idle";
   const isTransitionActive = transitionPhase === "active";
   const shouldCrossfade =
-    isSlideshow && !isActiveVideo && previousMedia !== null && isTransitioning;
+    isSlideshow &&
+    !isActiveVideo &&
+    previousMediaResolved !== null &&
+    isTransitioning;
   const effectiveZoomScale = isActiveVideo ? 1 : zoomScale;
 
   const handlePrevious = () => {
@@ -834,7 +836,7 @@ const FullScreenPhotoViewer = ({
             style={{ touchAction: "none" }}
           >
             <div className="absolute inset-0">
-              {shouldCrossfade && previousMedia ? (
+              {shouldCrossfade && previousMediaResolved ? (
                 <div
                   data-testid="photo-viewer-previous-layer"
                   className="absolute inset-0 flex items-center justify-center"
@@ -847,10 +849,10 @@ const FullScreenPhotoViewer = ({
                   }}
                 >
                   <div className="relative h-full w-full">
-                    {shouldShowFailedPlaceholder(previousMedia) ? (
+                    {shouldShowFailedPlaceholder(previousMediaResolved) ? (
                       <div
                         role="img"
-                        aria-label={previousMedia.alt}
+                        aria-label={previousMediaResolved.alt}
                         data-testid="slideshow-placeholder"
                         className="flex h-full w-full items-center justify-center"
                         style={{
@@ -860,15 +862,15 @@ const FullScreenPhotoViewer = ({
                       />
                     ) : (
                       <Image
-                        src={previousMedia.url}
-                        alt={previousMedia.alt}
+                        src={previousMediaResolved.url}
+                        alt={previousMediaResolved.alt}
                         fill
                         sizes="100vw"
                         className="object-contain"
                         style={{ objectFit: "contain", objectPosition: "center" }}
                         loading={isTransitioning ? "eager" : "lazy"}
                         priority={isTransitioning ? true : undefined}
-                        unoptimized={!isOptimizedImage(previousMedia.url)}
+                        unoptimized={!isOptimizedImage(previousMediaResolved.url)}
                       />
                     )}
                   </div>

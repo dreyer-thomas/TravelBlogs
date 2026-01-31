@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { useEffect } from "react";
 
 import CreateEntryForm from "../../src/components/entries/create-entry-form";
 import { uploadEntryMediaBatch } from "../../src/utils/entry-media";
@@ -24,9 +25,8 @@ vi.mock("../../src/utils/tiptap-image-helpers", () => ({
   insertEntryImage: vi.fn(),
 }));
 
-// Mock TiptapEditor to avoid complex Tiptap setup in tests
-vi.mock("../../src/components/entries/tiptap-editor", () => ({
-  default: ({
+const MockTiptapEditor = vi.hoisted(() => {
+  const Component = ({
     onChange,
     onEditorReady,
     placeholder,
@@ -36,7 +36,6 @@ vi.mock("../../src/components/entries/tiptap-editor", () => ({
     onEditorReady?: (editor: unknown) => void;
     placeholder?: string;
   }) => {
-    const { useEffect } = require("react");
     const mockEditor = { commands: {} };
     useEffect(() => {
       onEditorReady?.(mockEditor);
@@ -69,7 +68,7 @@ vi.mock("../../src/components/entries/tiptap-editor", () => ({
                       content: [{ type: "text", text: value }],
                     },
                   ],
-                })
+                }),
               );
             } else {
               onChange(JSON.stringify({ type: "doc", content: [] }));
@@ -78,7 +77,13 @@ vi.mock("../../src/components/entries/tiptap-editor", () => ({
         />
       </div>
     );
-  },
+  };
+  return Component;
+});
+
+// Mock TiptapEditor to avoid complex Tiptap setup in tests
+vi.mock("../../src/components/entries/tiptap-editor", () => ({
+  default: MockTiptapEditor,
 }));
 
 describe("CreateEntryForm", () => {
@@ -656,17 +661,24 @@ describe("CreateEntryForm", () => {
       expect(parsedText.type).toBe("doc");
       expect(parsedText.content).toHaveLength(1);
 
-      const paragraph = parsedText.content[0];
+      const paragraph = parsedText.content[0] as {
+        type?: string;
+        content?: Array<{ text?: string; marks?: unknown[] }>;
+      };
       expect(paragraph.type).toBe("paragraph");
       expect(paragraph.content).toHaveLength(3);
 
       // Verify bold mark
-      const boldText = paragraph.content.find((node: any) => node.text === "Bold");
+      const boldText = paragraph.content?.find(
+        (node) => node.text === "Bold",
+      );
       expect(boldText).toBeDefined();
       expect(boldText.marks).toEqual([{ type: "bold" }]);
 
       // Verify link mark with href attribute
-      const linkText = paragraph.content.find((node: any) => node.text === "here");
+      const linkText = paragraph.content?.find(
+        (node) => node.text === "here",
+      );
       expect(linkText).toBeDefined();
       expect(linkText.marks).toEqual([{ type: "link", attrs: { href: "https://example.com" } }]);
     });
@@ -768,12 +780,14 @@ describe("CreateEntryForm", () => {
       // AC 3 validation: Verify the JSON structure contains entryImage nodes with entryMediaId
       const parsedText = JSON.parse(body.text);
       expect(parsedText.type).toBe("doc");
-      const entryImageNode = parsedText.content.find((node: any) => node.type === "entryImage");
+      const entryImageNode = (parsedText.content as Array<{ type?: string; attrs?: Record<string, unknown> }>).find(
+        (node) => node.type === "entryImage",
+      );
       expect(entryImageNode).toBeDefined();
-      expect(entryImageNode.attrs.entryMediaId).toBeDefined();
-      expect(entryImageNode.attrs.src).toBe("/uploads/photo.jpg");
+      expect(entryImageNode?.attrs?.entryMediaId).toBeDefined();
+      expect(entryImageNode?.attrs?.src).toBe("/uploads/photo.jpg");
       // In create flow, entryMediaId starts as URL placeholder until post-save patch
-      expect(entryImageNode.attrs.entryMediaId).toBe("/uploads/photo.jpg");
+      expect(entryImageNode?.attrs?.entryMediaId).toBe("/uploads/photo.jpg");
     });
   });
 });

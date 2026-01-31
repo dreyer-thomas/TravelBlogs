@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { useEffect, useState } from "react";
 
 import EditEntryForm from "../../src/components/entries/edit-entry-form";
 import { uploadEntryMediaBatch } from "../../src/utils/entry-media";
@@ -23,16 +24,21 @@ vi.mock("../../src/utils/entry-media", async (importOriginal) => {
   };
 });
 
-vi.mock("../../src/components/entries/tiptap-editor", () => ({
-  default: ({
+const MockTiptapEditor = vi.hoisted(() => {
+  const Component = ({
     initialContent,
     onChange,
     onEditorReady,
     placeholder,
     className,
-  }: any) => {
-    const [value, setValue] = require("react").useState(initialContent);
-    const { useEffect } = require("react");
+  }: {
+    initialContent: string;
+    onChange: (content: string) => void;
+    onEditorReady?: (editor: unknown) => void;
+    placeholder?: string;
+    className?: string;
+  }) => {
+    const [value, setValue] = useState(initialContent);
     const mockEditor = { commands: {} };
     useEffect(() => {
       onEditorReady?.(mockEditor);
@@ -59,7 +65,12 @@ vi.mock("../../src/components/entries/tiptap-editor", () => ({
         className={className}
       />
     );
-  },
+  };
+  return Component;
+});
+
+vi.mock("../../src/components/entries/tiptap-editor", () => ({
+  default: MockTiptapEditor,
 }));
 
 vi.mock("../../src/utils/tiptap-image-helpers", () => ({
@@ -687,10 +698,11 @@ describe("EditEntryForm", () => {
       );
 
       const editor = screen.getByTestId("tiptap-editor-mock");
+      fireEvent.change(editor, { target: { value: "Some content" } });
       fireEvent.change(editor, { target: { value: emptyTiptapJson } });
 
       const submitButton = screen.getByRole("button", { name: /save/i });
-      fireEvent.click(submitButton);
+      expect(submitButton).toBeDisabled();
 
       await waitFor(() => {
         expect(screen.getByText(/text is required/i)).toBeInTheDocument();
@@ -815,12 +827,13 @@ describe("EditEntryForm", () => {
         const body = JSON.parse(patchCalls[0][1]?.body as string);
         const parsedText = JSON.parse(body.text);
         expect(parsedText.type).toBe("doc");
-        const entryImageNode = parsedText.content.find(
-          (node: any) => node.type === "entryImage",
-        );
+        const entryImageNode = (parsedText.content as Array<{
+          type?: string;
+          attrs?: Record<string, unknown>;
+        }>).find((node) => node.type === "entryImage");
         expect(entryImageNode).toBeDefined();
-        expect(entryImageNode.attrs.entryMediaId).toBe("media-1");
-        expect(entryImageNode.attrs.src).toBe("/uploads/photo.jpg");
+        expect(entryImageNode?.attrs?.entryMediaId).toBe("media-1");
+        expect(entryImageNode?.attrs?.src).toBe("/uploads/photo.jpg");
       });
     });
   });
@@ -903,17 +916,24 @@ describe("EditEntryForm", () => {
       expect(parsedText.type).toBe("doc");
       expect(parsedText.content).toHaveLength(1);
 
-      const paragraph = parsedText.content[0];
+      const paragraph = parsedText.content[0] as {
+        type?: string;
+        content?: Array<{ text?: string; marks?: unknown[] }>;
+      };
       expect(paragraph.type).toBe("paragraph");
       expect(paragraph.content).toHaveLength(3);
 
       // Verify bold mark
-      const boldText = paragraph.content.find((node: any) => node.text === "Bold");
+      const boldText = paragraph.content?.find(
+        (node) => node.text === "Bold",
+      );
       expect(boldText).toBeDefined();
       expect(boldText.marks).toEqual([{ type: "bold" }]);
 
       // Verify italic mark
-      const italicText = paragraph.content.find((node: any) => node.text === "Italic");
+      const italicText = paragraph.content?.find(
+        (node) => node.text === "Italic",
+      );
       expect(italicText).toBeDefined();
       expect(italicText.marks).toEqual([{ type: "italic" }]);
     });
