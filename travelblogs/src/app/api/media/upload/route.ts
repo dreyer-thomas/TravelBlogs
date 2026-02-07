@@ -110,7 +110,7 @@ const uploadFile = async (
     if (!isVideo) {
       try {
         const compressed = await compressImage(buffer, { forceJpeg: isHeic });
-        finalBuffer = compressed.buffer;
+        finalBuffer = compressed.buffer as Buffer;
         if (compressed.wasCompressed) {
           console.log(
             `[Image Compression] ${file.name}: ${buffer.length} -> ${compressed.buffer.length}`,

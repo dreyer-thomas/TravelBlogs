@@ -111,7 +111,7 @@ export async function uploadMediaAction(formData: FormData): Promise<UploadResul
     if (!isVideo) {
       try {
         const compressed = await compressImage(buffer, { forceJpeg: isHeic });
-        finalBuffer = compressed.buffer;
+        finalBuffer = compressed.buffer as Buffer;
       } catch (error) {
         if (isHeic) {
           return {
