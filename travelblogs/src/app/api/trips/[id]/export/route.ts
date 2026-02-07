@@ -242,7 +242,7 @@ export const GET = async (
 
     const addEntry = (data: Buffer | NodeJS.ReadableStream, name: string) =>
       new Promise<void>((resolve, reject) => {
-        zip.entry(data, { name }, (error) => {
+        zip.entry(data, { name }, (error: Error | null | undefined) => {
           if (error) {
             reject(error);
             return;
