@@ -4,6 +4,7 @@ import { createWriteStream, promises as fs } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { Readable } from "node:stream";
+import type { ReadableStream as WebReadableStream } from "node:stream/web";
 import { pipeline } from "node:stream/promises";
 import StreamZip from "node-stream-zip";
 
@@ -136,7 +137,9 @@ export const POST = async (request: NextRequest) => {
   const zipPath = path.join(tempDir, "restore.zip");
 
   try {
-    const stream = Readable.fromWeb(file.stream() as ReadableStream);
+    const stream = Readable.fromWeb(
+      file.stream() as unknown as WebReadableStream<Uint8Array>,
+    );
     await pipeline(stream, createWriteStream(zipPath));
   } catch (error) {
     await fs.rm(tempDir, { recursive: true, force: true });
