@@ -106,12 +106,12 @@ export async function uploadMediaAction(formData: FormData): Promise<UploadResul
     const safeName = `${prefix}-${Date.now()}-${crypto.randomUUID()}.${extension}`;
     const filePath = path.join(uploadDir, safeName);
     const buffer = Buffer.from(await file.arrayBuffer());
-    let finalBuffer = buffer;
+    let finalBuffer: Buffer<ArrayBufferLike> = buffer;
 
     if (!isVideo) {
       try {
         const compressed = await compressImage(buffer, { forceJpeg: isHeic });
-        finalBuffer = compressed.buffer as Buffer;
+        finalBuffer = compressed.buffer;
       } catch (error) {
         if (isHeic) {
           return {

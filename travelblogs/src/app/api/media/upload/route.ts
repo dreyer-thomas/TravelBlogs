@@ -105,12 +105,12 @@ const uploadFile = async (
     const safeName = `${prefix}-${Date.now()}-${crypto.randomUUID()}.${extension}`;
     const filePath = path.join(uploadDir, safeName);
     const buffer = Buffer.from(await file.arrayBuffer());
-    let finalBuffer: Buffer = buffer;
+    let finalBuffer: Buffer<ArrayBufferLike> = buffer;
 
     if (!isVideo) {
       try {
         const compressed = await compressImage(buffer, { forceJpeg: isHeic });
-        finalBuffer = compressed.buffer as Buffer;
+        finalBuffer = compressed.buffer;
         if (compressed.wasCompressed) {
           console.log(
             `[Image Compression] ${file.name}: ${buffer.length} -> ${compressed.buffer.length}`,
