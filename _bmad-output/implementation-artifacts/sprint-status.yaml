@@ -189,3 +189,10 @@ development_status:
   14-7-enable-map-zoom-and-pan: done
   14-8-heic-upload-support: done
   epic-14-retrospective: optional
+
+  epic-15: in-progress
+  15-1-trip-export-admin-ui-api: done
+  15-2-trip-restore-admin-ui-api: backlog
+  15-3-export-compatibility-metadata: backlog
+  15-4-export-restore-ux-enhancements: backlog
+  epic-15-retrospective: optional

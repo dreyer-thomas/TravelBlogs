@@ -91,7 +91,7 @@ const TripsPageContent = ({
   return (
     <div className="min-h-screen bg-[#FBF7F1] px-6 py-12">
       <main className="mx-auto w-full max-w-4xl space-y-8">
-        <header className="flex flex-wrap items-center justify-between gap-4">
+        <header className="relative z-20 flex flex-wrap items-center justify-between gap-4">
           <div>
             <h1 className="text-3xl font-semibold text-[#2D2A26]">
               {isViewer ? t('trips.yourTrips') : t('trips.manageTrips')}
@@ -110,6 +110,12 @@ const TripsPageContent = ({
                   className="rounded-xl border border-[#1F6F78]/30 px-4 py-2 text-sm font-semibold text-[#1F6F78] transition hover:bg-[#1F6F78]/10"
                 >
                   {t('trips.manageUsers')}
+                </Link>
+                <Link
+                  href="/admin/trips-export"
+                  className="rounded-xl border border-[#1F6F78]/30 px-4 py-2 text-sm font-semibold text-[#1F6F78] transition hover:bg-[#1F6F78]/10"
+                >
+                  {t('trips.exportTrips')}
                 </Link>
                 <Link
                   href="/trips/new"

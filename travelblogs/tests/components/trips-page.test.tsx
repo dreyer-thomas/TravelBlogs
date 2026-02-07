@@ -34,6 +34,7 @@ const mockTranslations: Record<string, string> = {
   'trips.tripsInvitedMessage': 'Trips you have been invited to will appear here.',
   'trips.startNewTrip': 'Start a new trip or revisit your existing plans.',
   'trips.manageUsers': 'Manage users',
+  'trips.exportTrips': 'Export trips',
   'trips.createTrip': 'Create trip',
   'trips.noInvitedTripsYet': 'No invited trips yet',
   'trips.noTrips': 'No trips yet',

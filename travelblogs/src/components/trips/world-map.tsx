@@ -420,7 +420,7 @@ const WorldMap = (props: WorldMapProps) => {
   }, [getFeatureStyle, highlightSet]);
 
   return (
-    <div className="rounded-2xl border border-black/10 bg-white p-8">
+    <div className="relative z-0 rounded-2xl border border-black/10 bg-white p-8">
       <div
         ref={mapContainerRef}
         role="region"

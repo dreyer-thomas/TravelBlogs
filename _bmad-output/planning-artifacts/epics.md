@@ -4032,3 +4032,149 @@ Add a scratch-map style world map above the Trips list for country-based navigat
 **When** I click a country with visible trips  
 **Then** the trip popup still appears and links still work  
 **And** highlight styling remains unchanged
+
+---
+
+## Epic 15: Backup and Restore
+
+Export and restore trips for emergency recovery or system migration.
+
+**Business Value:** Ensure trip data can be recovered or transferred across systems.
+
+**Dependencies:** Epic 1 (Trips), Epic 2 (Entries), Epic 10 (Media)
+
+### Story 15.1: Trip Export (Admin UI + API)
+
+**As an** administrator  
+**I want to** export a trip to a portable archive  
+**So that** I can back it up or transfer it
+
+**Acceptance Criteria:**
+
+#### AC 1: Export Action Available
+**Given** I am an admin  
+**When** I view a trip in the admin area  
+**Then** I can trigger an export for that trip
+
+#### AC 2: Portable Export Format
+**Given** I export a trip  
+**When** the export completes  
+**Then** I receive a ZIP containing JSON data and all media files  
+**And** the export includes trip metadata, entries, tags, locations, GPS, and weather
+
+#### AC 3: Export Access Control
+**Given** I am not an admin  
+**When** I attempt to export a trip  
+**Then** the export is rejected
+
+**Technical Requirements:**
+- Create admin endpoint to export a single trip as ZIP
+- Include `trip.json`, `entries.json`, and `media/` files
+- Include `meta.json` with version + export time + counts
+- Stream the ZIP response (no hard size limit)
+
+**Testing Requirements:**
+- Export returns ZIP with required files
+- Non-admin access is rejected
+- Export includes expected media files and JSON content
+
+**Source:** User request for backup
+**Priority:** High
+**Story Points:** 5
+
+### Story 15.2: Trip Restore (Admin UI + API)
+
+**As an** administrator  
+**I want to** restore a trip from an export  
+**So that** I can recover it in a new or repaired system
+
+**Acceptance Criteria:**
+
+#### AC 1: Restore Action Available
+**Given** I am an admin  
+**When** I open the admin restore UI  
+**Then** I can upload a trip export ZIP
+
+#### AC 2: Validation and Import
+**Given** I upload a valid export ZIP  
+**When** the restore runs  
+**Then** trip data, entries, and media are imported  
+**And** I see a summary of what was created
+
+#### AC 3: Invalid Export Handling
+**Given** I upload an invalid or incompatible ZIP  
+**When** validation fails  
+**Then** no partial data is written  
+**And** I see a clear error message
+
+**Technical Requirements:**
+- Admin endpoint to import from ZIP
+- Validate `meta.json` and schema before write
+- Support dry-run summary before commit
+- Enforce admin-only access
+
+**Testing Requirements:**
+- Valid export restores and creates trip + entries + media
+- Invalid ZIP is rejected with no partial writes
+- Non-admin access is rejected
+
+**Source:** User request for restore
+**Priority:** High
+**Story Points:** 8
+
+### Story 15.3: Export Compatibility Metadata
+
+**As an** administrator  
+**I want** export metadata to enforce compatibility  
+**So that** I can detect incompatible restores early
+
+**Acceptance Criteria:**
+
+#### AC 1: Version Metadata
+**Given** I export a trip  
+**Then** the archive contains `meta.json` with schema version, app version, and export timestamp
+
+#### AC 2: Restore Guard
+**Given** I restore an export  
+**When** the version is incompatible  
+**Then** restore is blocked with a clear error
+
+**Technical Requirements:**
+- Define schema version for export format
+- Validate version compatibility on restore
+
+**Testing Requirements:**
+- `meta.json` present with expected fields
+- Incompatible version is rejected
+
+**Source:** Portability requirement
+**Priority:** Medium
+**Story Points:** 3
+
+### Story 15.4: Export/Restore UX Enhancements
+
+**As an** administrator  
+**I want** visibility into backup size and progress  
+**So that** long exports/restores are understandable
+
+**Acceptance Criteria:**
+
+#### AC 1: Size Estimate
+**Given** I select a trip to export  
+**Then** I see an estimated export size before starting
+
+#### AC 2: Progress Feedback
+**Given** an export or restore is running  
+**Then** I see a progress indicator
+
+**Technical Requirements:**
+- Calculate total media size and estimate ZIP size
+- Progress reporting for export and restore
+
+**Testing Requirements:**
+- Size estimate shown
+- Progress indicator updates during export/restore
+
+**Source:** Nice-to-have UI request
+**Priority:** Medium
+**Story Points:** 5
