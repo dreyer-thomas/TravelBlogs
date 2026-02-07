@@ -236,7 +236,7 @@ export const GET = async (
     }
 
     const zip = new ZipStream({ forceZip64: true });
-    zip.on("error", (error) => {
+    zip.on("error", (error: Error) => {
       console.error("Trip export zip error", error);
     });
 

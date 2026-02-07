@@ -1,17 +1,10 @@
 import type { Metadata } from "next";
 import { headers } from "next/headers";
-import { Source_Sans_3 } from "next/font/google";
 import "./globals.css";
 import "./leaflet.css";
 import { LocaleProvider } from "@/utils/locale-context";
 import { LocaleHtmlUpdater } from "@/components/layout/locale-html-updater";
 import { getLocaleFromAcceptLanguage } from "@/utils/i18n";
-
-const sourceSans = Source_Sans_3({
-  variable: "--font-source-sans-3",
-  subsets: ["latin"],
-  display: "swap",
-});
 
 export const metadata: Metadata = {
   title: "TravelBlogs",
@@ -30,7 +23,7 @@ export default async function RootLayout({
 
   return (
     <html lang={initialLocale}>
-      <body className={`${sourceSans.variable} antialiased`}>
+      <body className="antialiased">
         <LocaleProvider initialLocale={initialLocale}>
           <LocaleHtmlUpdater />
           {children}
