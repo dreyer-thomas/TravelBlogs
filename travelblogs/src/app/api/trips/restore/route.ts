@@ -51,13 +51,23 @@ const mapUploadUrlToRelativePath = (url: string) => {
   return url.replace(/^\/uploads\//, "");
 };
 
-const loadZipJson = async (zip: StreamZip.Async, name: string) => {
+type StreamZipAsync = {
+  entryData: (name: string) => Promise<Buffer>;
+  entries: () => Promise<Record<string, unknown>>;
+  stream: (
+    entryName: string,
+    callback: (error: Error | null, stream?: NodeJS.ReadableStream) => void,
+  ) => void;
+  close: () => Promise<void>;
+};
+
+const loadZipJson = async (zip: StreamZipAsync, name: string) => {
   const data = await zip.entryData(name);
   return JSON.parse(data.toString("utf-8")) as unknown;
 };
 
 const streamZipEntryToFile = async (
-  zip: StreamZip.Async,
+  zip: StreamZipAsync,
   entryName: string,
   destination: string,
 ) => {
@@ -74,7 +84,7 @@ const streamZipEntryToFile = async (
 };
 
 const writeZipEntryToFile = async (
-  zip: StreamZip.Async,
+  zip: StreamZipAsync,
   entryName: string,
   destination: string,
 ) => {
