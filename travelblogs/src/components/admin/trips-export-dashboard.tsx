@@ -216,7 +216,9 @@ const TripsExportDashboard = ({ trips, showOwner }: TripsExportDashboardProps) =
         }
       }
 
-      const blob = new Blob(chunks, { type: "application/zip" });
+      const blob = new Blob(chunks as BlobPart[], {
+        type: "application/zip",
+      });
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
