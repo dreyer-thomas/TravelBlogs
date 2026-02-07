@@ -1,4 +1,5 @@
 import path from "node:path";
+import { APP_VERSION } from "./app-version";
 
 export const EXPORT_SCHEMA_VERSION = 1;
 
@@ -15,6 +16,7 @@ const toIso = (value: Date | string | null | undefined) => {
 export type ExportMeta = {
   schemaVersion: number;
   tripId: string;
+  appVersion: string;
   exportedAt: string;
   counts: {
     trip: number;
@@ -32,6 +34,7 @@ export const buildExportMeta = (input: {
   return {
     schemaVersion: EXPORT_SCHEMA_VERSION,
     tripId: input.tripId,
+    appVersion: APP_VERSION,
     exportedAt: (input.exportedAt ?? new Date()).toISOString(),
     counts: {
       trip: 1,

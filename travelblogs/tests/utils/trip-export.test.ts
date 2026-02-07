@@ -7,6 +7,7 @@ import {
   serializeTrip,
   serializeEntries,
 } from "../../src/utils/trip-export";
+import { APP_VERSION } from "../../src/utils/app-version";
 
 describe("trip export helpers", () => {
   it("exposes a schema version", () => {
@@ -23,6 +24,7 @@ describe("trip export helpers", () => {
 
     expect(meta.schemaVersion).toBe(EXPORT_SCHEMA_VERSION);
     expect(meta.tripId).toBe("trip-1");
+    expect(meta.appVersion).toBe(APP_VERSION);
     expect(meta.counts.trip).toBe(1);
     expect(meta.counts.entries).toBe(2);
     expect(meta.counts.media).toBe(5);

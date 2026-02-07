@@ -192,7 +192,7 @@ development_status:
 
   epic-15: in-progress
   15-1-trip-export-admin-ui-api: done
-  15-2-trip-restore-admin-ui-api: backlog
-  15-3-export-compatibility-metadata: backlog
-  15-4-export-restore-ux-enhancements: backlog
+  15-2-trip-restore-admin-ui-api: done
+  15-3-export-compatibility-metadata: done
+  15-4-export-restore-ux-enhancements: done
   epic-15-retrospective: optional

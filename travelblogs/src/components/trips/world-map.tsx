@@ -148,6 +148,7 @@ const WorldMap = (props: WorldMapProps) => {
     y: number;
   } | null>(null);
   const hoveredCountryRef = useRef<string | null>(null);
+  const hoveredTripsRef = useRef<TripSummary[] | null>(null);
   const popupRef = useRef<HTMLDivElement | null>(null);
 
   // Final optimized settings for full world visibility
@@ -202,6 +203,10 @@ const WorldMap = (props: WorldMapProps) => {
   useEffect(() => {
     featureStyleRef.current = getFeatureStyle;
   }, [getFeatureStyle]);
+
+  useEffect(() => {
+    hoveredTripsRef.current = hoveredTrips;
+  }, [hoveredTrips]);
 
   const getHoverPosition = (event?: {
     originalEvent?: MouseEvent;
@@ -369,11 +374,10 @@ const WorldMap = (props: WorldMapProps) => {
   }, [mapLoaded]);
 
   useEffect(() => {
-    if (!hoveredTrips) {
-      return;
-    }
-
     const handleDocumentClick = (event: MouseEvent) => {
+      if (!hoveredTripsRef.current) {
+        return;
+      }
       const target = event.target as Node | null;
       if (!target) {
         return;
@@ -391,7 +395,7 @@ const WorldMap = (props: WorldMapProps) => {
     return () => {
       document.removeEventListener("mousedown", handleDocumentClick);
     };
-  }, [hoveredTrips]);
+  }, []);
 
   useEffect(() => {
     tripsByCountryRef.current = tripsByCountryMap;

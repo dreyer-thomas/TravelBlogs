@@ -67,11 +67,22 @@ const mapUploadUrlToPath = (url: string, uploadRoot: string) => {
   };
 };
 
+type ExportMediaFile = {
+  url: string;
+  mapping: {
+    relative: string;
+    absolute: string;
+  };
+  size: number;
+};
+
 export const GET = async (
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> | { id: string } },
 ) => {
   try {
+    const url = new URL(request.url);
+    const estimateOnly = url.searchParams.get("estimate") === "true";
     const user = await getUser(request);
     if (!user) {
       return jsonError(401, "UNAUTHORIZED", "Authentication required.");
@@ -128,14 +139,21 @@ export const GET = async (
 
     const mediaFiles = Array.from(mediaUrls)
       .map((url) => ({ url, mapping: mapUploadUrlToPath(url, uploadRoot) }))
-      .filter((item) => item.mapping);
+      .filter(
+        (
+          item,
+        ): item is {
+          url: string;
+          mapping: { relative: string; absolute: string };
+        } => Boolean(item.mapping),
+      );
+
+    const mediaWithStats: ExportMediaFile[] = [];
 
     for (const item of mediaFiles) {
-      if (!item.mapping) {
-        continue;
-      }
       try {
-        await fs.stat(item.mapping.absolute);
+        const stats = await fs.stat(item.mapping.absolute);
+        mediaWithStats.push({ ...item, size: stats.size });
       } catch {
         return jsonError(404, "MISSING_MEDIA", `Missing media file: ${item.url}`);
       }
@@ -178,8 +196,44 @@ export const GET = async (
     const exportMeta = buildExportMeta({
       tripId: trip.id,
       entryCount: trip.entries.length,
-      mediaCount: mediaFiles.length,
+      mediaCount: mediaWithStats.length,
     });
+
+    if (estimateOnly) {
+      const jsonBytes = Buffer.byteLength(
+        JSON.stringify({
+          meta: exportMeta,
+          trip: {
+            trip: serializedTrip,
+            tags: trip.tags.map((tag) => ({
+              id: tag.id,
+              name: tag.name,
+              normalizedName: tag.normalizedName,
+              createdAt: tag.createdAt.toISOString(),
+            })),
+          },
+          entries: { entries: serializedEntries },
+        }),
+      );
+      const mediaBytes = mediaWithStats.reduce(
+        (total, item) => total + item.size,
+        0,
+      );
+      return NextResponse.json(
+        {
+          data: {
+            estimate: {
+              totalBytes: jsonBytes + mediaBytes,
+              jsonBytes,
+              mediaBytes,
+              mediaCount: mediaWithStats.length,
+            },
+          },
+          error: null,
+        },
+        { status: 200 },
+      );
+    }
 
     const zip = new ZipStream({ forceZip64: true });
     zip.on("error", (error) => {
@@ -237,10 +291,7 @@ export const GET = async (
           "entries.json",
         );
 
-        for (const item of mediaFiles) {
-          if (!item.mapping) {
-            continue;
-          }
+        for (const item of mediaWithStats) {
           const entryName = path.posix.join(
             "media",
             item.mapping.relative.replace(/\\/g, "/"),

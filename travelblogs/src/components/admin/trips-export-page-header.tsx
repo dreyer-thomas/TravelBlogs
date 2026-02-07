@@ -16,12 +16,20 @@ const TripsExportPageHeader = () => {
           {t("admin.exportTripsDescription")}
         </p>
       </div>
-      <Link
-        href="/trips"
-        className="rounded-xl border border-[#1F6F78]/30 px-4 py-2 text-sm font-semibold text-[#1F6F78] transition hover:bg-[#1F6F78]/10"
-      >
-        {t("trips.backToTrips")}
-      </Link>
+      <div className="flex flex-wrap items-center gap-3">
+        <Link
+          href="/admin/trips-restore"
+          className="rounded-xl border border-[#1F6F78]/30 px-4 py-2 text-sm font-semibold text-[#1F6F78] transition hover:bg-[#1F6F78]/10"
+        >
+          {t("admin.restoreTrips")}
+        </Link>
+        <Link
+          href="/trips"
+          className="rounded-xl border border-[#1F6F78]/30 px-4 py-2 text-sm font-semibold text-[#1F6F78] transition hover:bg-[#1F6F78]/10"
+        >
+          {t("trips.backToTrips")}
+        </Link>
+      </div>
     </header>
   );
 };

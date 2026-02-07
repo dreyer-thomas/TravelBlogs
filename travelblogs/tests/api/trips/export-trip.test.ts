@@ -7,6 +7,7 @@ import { promises as fs } from "node:fs";
 import StreamZip from "node-stream-zip";
 
 import { EXPORT_SCHEMA_VERSION } from "../../../src/utils/trip-export";
+import packageJson from "../../../package.json";
 
 const getToken = vi.hoisted(() => vi.fn());
 
@@ -174,9 +175,17 @@ describe("GET /api/trips/[id]/export", () => {
 
     const meta = JSON.parse(
       (await zip.entryData("meta.json")).toString("utf-8"),
-    ) as { schemaVersion: number; tripId: string; counts: { trip: number; entries: number; media: number } };
+    ) as {
+      schemaVersion: number;
+      tripId: string;
+      appVersion: string;
+      exportedAt: string;
+      counts: { trip: number; entries: number; media: number };
+    };
     expect(meta.schemaVersion).toBe(EXPORT_SCHEMA_VERSION);
     expect(meta.tripId).toBe(trip.id);
+    expect(meta.appVersion).toBe(packageJson.version);
+    expect(new Date(meta.exportedAt).toISOString()).toBe(meta.exportedAt);
     expect(meta.counts.trip).toBe(1);
     expect(meta.counts.entries).toBe(1);
     expect(meta.counts.media).toBe(2);
@@ -202,6 +211,77 @@ describe("GET /api/trips/[id]/export", () => {
 
     await zip.close();
     await cleanup();
+  });
+
+  it("returns an export size estimate when requested", async () => {
+    const admin = await prisma.user.create({
+      data: {
+        id: "admin-2",
+        email: "admin2@example.com",
+        name: "Admin",
+        role: "administrator",
+        passwordHash: "hash",
+      },
+    });
+
+    const trip = await prisma.trip.create({
+      data: {
+        title: "Estimate Trip",
+        startDate: new Date("2025-06-01"),
+        endDate: new Date("2025-06-05"),
+        ownerId: "creator",
+      },
+    });
+
+    const coverUrl = "/uploads/trips/estimate-cover.jpg";
+    const mediaUrl = "/uploads/trips/estimate-photo.jpg";
+    const coverPath = path.join(uploadRoot, "trips", "estimate-cover.jpg");
+    const mediaPath = path.join(uploadRoot, "trips", "estimate-photo.jpg");
+
+    await fs.writeFile(coverPath, "cover-bytes");
+    await fs.writeFile(mediaPath, "photo-bytes");
+
+    await prisma.trip.update({
+      where: { id: trip.id },
+      data: { coverImageUrl: coverUrl },
+    });
+
+    const entry = await prisma.entry.create({
+      data: {
+        tripId: trip.id,
+        title: "Entry",
+        text: "Hello",
+        createdAt: new Date("2025-06-02"),
+        updatedAt: new Date("2025-06-02"),
+      },
+    });
+
+    await prisma.entryMedia.create({
+      data: {
+        entryId: entry.id,
+        url: mediaUrl,
+      },
+    });
+
+    getToken.mockResolvedValue({ sub: admin.id, role: "administrator" });
+
+    const request = new Request(
+      `http://localhost/api/trips/${trip.id}/export?estimate=true`,
+      { method: "GET" },
+    );
+
+    const response = await get(request, { params: { id: trip.id } });
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.error).toBeNull();
+    expect(body.data?.estimate?.mediaBytes).toBe(22);
+    expect(body.data?.estimate?.mediaCount).toBe(2);
+    expect(body.data?.estimate?.totalBytes).toBeGreaterThan(22);
+    expect(body.data?.estimate?.jsonBytes).toBeGreaterThan(0);
+    expect(body.data?.estimate?.totalBytes).toBe(
+      body.data?.estimate?.mediaBytes + body.data?.estimate?.jsonBytes,
+    );
   });
 
   it("allows trip owners to export", async () => {
