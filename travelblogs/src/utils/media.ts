@@ -7,10 +7,14 @@ export const COVER_IMAGE_ALLOWED_MIME_TYPES = [
   "image/jpeg",
   "image/png",
   "image/webp",
+  "image/heic",
+  "image/heif",
   "video/mp4",
   "video/webm",
   "video/quicktime", // MOV files
 ] as const;
+
+export const HEIC_MIME_TYPES = ["image/heic", "image/heif"] as const;
 
 const COVER_IMAGE_ALLOWED_TYPE_SET = new Set<string>(
   COVER_IMAGE_ALLOWED_MIME_TYPES,
@@ -25,6 +29,9 @@ export const getCoverImageExtension = (mimeType: string) => {
   }
   if (mimeType === "image/webp") {
     return "webp";
+  }
+  if (mimeType === "image/heic" || mimeType === "image/heif") {
+    return "jpg";
   }
   if (mimeType === "video/mp4") {
     return "mp4";
@@ -42,6 +49,10 @@ export const isVideoMimeType = (mimeType: string) => {
   return mimeType.startsWith("video/");
 };
 
+export const isHeicMimeType = (mimeType: string) => {
+  return (HEIC_MIME_TYPES as readonly string[]).includes(mimeType);
+};
+
 const VIDEO_FILE_EXTENSIONS = new Set<string>(["mp4", "webm", "mov"]);
 
 export const getMediaTypeFromUrl = (url: string): "image" | "video" => {
@@ -57,7 +68,7 @@ export const validateCoverImageFile = (
   if (!COVER_IMAGE_ALLOWED_TYPE_SET.has(file.type)) {
     return translate
       ? translate("trips.coverImageTypeError")
-      : "Cover image must be a JPG, PNG, WebP, MP4, WebM, or MOV file.";
+      : "Cover image must be a JPG, PNG, WebP, HEIC, HEIF, MP4, WebM, or MOV file.";
   }
   const isVideo = isVideoMimeType(file.type);
   const maxBytes = isVideo ? VIDEO_MAX_BYTES : COVER_IMAGE_MAX_BYTES;

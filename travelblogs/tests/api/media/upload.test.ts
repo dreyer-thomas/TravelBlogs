@@ -183,6 +183,40 @@ describe("POST /api/media/upload", () => {
     expect(metadata.format).toBe("png");
   });
 
+  it("accepts HEIC uploads and converts them to JPG", async () => {
+    const testImagePath = path.join(
+      __dirname,
+      "../../fixtures/test-image.heic",
+    );
+    const buffer = await fs.readFile(testImagePath);
+    const file = new File([buffer], "photo.heic", {
+      type: "image/heic",
+    });
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const request = new Request("http://localhost:3000/api/media/upload", {
+      method: "POST",
+      body: formData,
+    });
+
+    const response = await post(request);
+    const json = await response.json();
+
+    expect(response.status).toBe(201);
+    expect(json.error).toBeNull();
+    expect(json.data.url).toMatch(/\.jpg$/);
+    expect(json.data.mediaType).toBe("image");
+
+    const filename = json.data.url.split("/").pop();
+    const storedPath = path.join(uploadDir, filename ?? "");
+    const storedBuffer = await fs.readFile(storedPath);
+    const metadata = await sharp(storedBuffer).metadata();
+
+    expect(metadata.format).toBe("jpeg");
+  });
+
   it("accepts video uploads without GPS extraction", async () => {
     const file = new File([new Uint8Array(1024)], "clip.mp4", {
       type: "video/mp4",

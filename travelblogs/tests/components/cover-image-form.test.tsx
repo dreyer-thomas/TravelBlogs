@@ -39,7 +39,7 @@ describe("CreateTripForm cover image", () => {
 
     expect(
       await screen.findByText(
-        "Cover image must be a JPG, PNG, WebP, MP4, WebM, or MOV file.",
+        "Cover image must be a JPG, PNG, WebP, HEIC, HEIF, MP4, WebM, or MOV file.",
       ),
     ).toBeInTheDocument();
     expect(uploadCoverImage).not.toHaveBeenCalled();

@@ -47,7 +47,7 @@ export const validateEntryMediaFile = (
   if (!ENTRY_MEDIA_ALLOWED_TYPE_SET.has(file.type)) {
     return translate
       ? translate("entries.mediaTypeError")
-      : "Media files must be a JPG, PNG, WebP, MP4, WebM, or MOV file.";
+      : "Media files must be a JPG, PNG, WebP, HEIC, HEIF, MP4, WebM, or MOV file.";
   }
   const isVideo = isVideoMimeType(file.type);
   const maxBytes = isVideo ? VIDEO_MAX_BYTES : COVER_IMAGE_MAX_BYTES;
@@ -102,10 +102,14 @@ export const uploadEntryMedia = async (
     }
 
     const message =
-      result.error?.message ??
-      (translate
-        ? translate("entries.mediaUploadRetryError")
-        : "Unable to upload media file. Please try again.");
+      result.error?.code === "HEIC_UNSUPPORTED"
+        ? translate
+          ? translate("entries.heicUnsupportedError")
+          : "HEIC/HEIF images are not supported on this server yet."
+        : result.error?.message ??
+          (translate
+            ? translate("entries.mediaUploadRetryError")
+            : "Unable to upload media file. Please try again.");
     throw new Error(message);
   } catch (error) {
     if (error instanceof Error) {

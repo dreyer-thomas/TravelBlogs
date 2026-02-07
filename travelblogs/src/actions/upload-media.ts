@@ -8,12 +8,14 @@ import { promises as fs } from "node:fs";
 import {
   COVER_IMAGE_PUBLIC_PATH,
   getCoverImageExtension,
+  isHeicMimeType,
   isVideoMimeType,
   validateCoverImageFile,
 } from "../utils/media";
 import { extractGpsFromImage } from "../utils/entry-location";
 import { authOptions } from "../utils/auth-options";
 import { ensureActiveAccount, isAdminOrCreator } from "../utils/roles";
+import { compressImage } from "../utils/compress-image";
 
 const resolveUploadDir = () => {
   const configured = process.env.MEDIA_UPLOAD_DIR?.trim();
@@ -82,13 +84,15 @@ export async function uploadMediaAction(formData: FormData): Promise<UploadResul
     }
 
     const isVideo = isVideoMimeType(file.type);
+    const isHeic = isHeicMimeType(file.type);
     const extension = getCoverImageExtension(file.type);
     if (!extension) {
       return {
         success: false,
         error: {
           code: "VALIDATION_ERROR",
-          message: "Cover image must be a JPG, PNG, WebP, MP4, WebM, or MOV file.",
+          message:
+            "Cover image must be a JPG, PNG, WebP, HEIC, HEIF, MP4, WebM, or MOV file.",
         },
       };
     }
@@ -102,9 +106,30 @@ export async function uploadMediaAction(formData: FormData): Promise<UploadResul
     const safeName = `${prefix}-${Date.now()}-${crypto.randomUUID()}.${extension}`;
     const filePath = path.join(uploadDir, safeName);
     const buffer = Buffer.from(await file.arrayBuffer());
-    await fs.writeFile(filePath, buffer);
+    let finalBuffer = buffer;
 
-    const location = isVideo ? null : await extractGpsFromImage(buffer);
+    if (!isVideo) {
+      try {
+        const compressed = await compressImage(buffer, { forceJpeg: isHeic });
+        finalBuffer = compressed.buffer;
+      } catch (error) {
+        if (isHeic) {
+          return {
+            success: false,
+            error: {
+              code: "HEIC_UNSUPPORTED",
+              message:
+                "HEIC/HEIF images are not supported on this server yet.",
+            },
+          };
+        }
+        console.warn("[Image Compression] Upload compression failed:", error);
+      }
+    }
+
+    await fs.writeFile(filePath, finalBuffer);
+
+    const location = isVideo ? null : await extractGpsFromImage(finalBuffer);
 
     return {
       success: true,

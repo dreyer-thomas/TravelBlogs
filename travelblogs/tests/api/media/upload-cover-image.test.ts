@@ -135,6 +135,37 @@ describe("POST /api/media/upload", () => {
     expect(metadata.height).toBe(1280);
   });
 
+  it("accepts HEIC cover uploads and stores them as JPG", async () => {
+    getToken.mockResolvedValue({ sub: "creator" });
+
+    const testImagePath = path.join(
+      __dirname,
+      "../../fixtures/test-image.heic",
+    );
+    const buffer = await fs.readFile(testImagePath);
+    const formData = new FormData();
+    formData.append("file", new File([buffer], "cover.heic", { type: "image/heic" }));
+
+    const request = new Request("http://localhost/api/media/upload", {
+      method: "POST",
+      body: formData,
+    });
+
+    const response = await post(request);
+    const body = await response.json();
+
+    expect(response.status).toBe(201);
+    expect(body.error).toBeNull();
+    expect(body.data.url).toMatch(/\.jpg$/);
+
+    const filename = body.data.url.split("/").pop();
+    const storedPath = path.join(uploadRoot, "trips", filename ?? "");
+    const storedBuffer = await fs.readFile(storedPath);
+    const metadata = await sharp(storedBuffer).metadata();
+
+    expect(metadata.format).toBe("jpeg");
+  });
+
   it("rejects non-image uploads", async () => {
     getToken.mockResolvedValue({ sub: "creator" });
 
@@ -256,11 +287,40 @@ describe("POST /api/media/upload", () => {
     expect(body.data.uploads[0].mediaType).toBe("image");
     expect(body.data.failures[0].fileName).toBe("bad.txt");
     expect(body.data.failures[0].message).toBe(
-      "Cover image must be a JPG, PNG, WebP, MP4, WebM, or MOV file.",
+      "Cover image must be a JPG, PNG, WebP, HEIC, HEIF, MP4, WebM, or MOV file.",
     );
 
     const filename = body.data.uploads[0].url.split("/").pop();
     const storedPath = path.join(uploadRoot, "trips", filename ?? "");
     await expect(fs.stat(storedPath)).resolves.toBeDefined();
+  });
+
+  it("returns a validation error when HEIC decode is unsupported", async () => {
+    getToken.mockResolvedValue({ sub: "creator" });
+
+    vi.resetModules();
+    const compressModule = await import("../../../src/utils/compress-image");
+    vi.spyOn(compressModule, "compressImage").mockRejectedValue(
+      new Error("HEIC decode failed"),
+    );
+
+    const routeModule = await import(
+      "../../../src/app/api/media/upload/route"
+    );
+    const mockedPost = routeModule.POST;
+
+    const formData = new FormData();
+    formData.append("file", buildFile(512, "image/heic", "photo.heic"));
+
+    const request = new Request("http://localhost/api/media/upload", {
+      method: "POST",
+      body: formData,
+    });
+
+    const response = await mockedPost(request);
+    const body = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(body.error.code).toBe("HEIC_UNSUPPORTED");
   });
 });

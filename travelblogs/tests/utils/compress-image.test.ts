@@ -1,4 +1,6 @@
 import { describe, expect, it } from "vitest";
+import { promises as fs } from "node:fs";
+import path from "node:path";
 import sharp from "sharp";
 import exifr from "exifr";
 import { compressImage } from "../../src/utils/compress-image";
@@ -133,5 +135,19 @@ describe("compressImage", () => {
     expect(result.wasCompressed).toBe(true);
     expect(gps?.latitude).toBeCloseTo(latitude, 4);
     expect(gps?.longitude).toBeCloseTo(longitude, 4);
+  });
+
+  it("re-encodes HEIC inputs as JPEG even when below size threshold", async () => {
+    const fixturePath = path.join(
+      __dirname,
+      "../fixtures/test-image.heic",
+    );
+    const inputBuffer = await fs.readFile(fixturePath);
+
+    const result = await compressImage(inputBuffer, { forceJpeg: true });
+    const metadata = await sharp(result.buffer).metadata();
+
+    expect(result.wasCompressed).toBe(true);
+    expect(metadata.format).toBe("jpeg");
   });
 });

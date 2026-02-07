@@ -58,10 +58,14 @@ export const uploadCoverImage = (file: File, options: UploadOptions = {}) => {
       }
 
       const message =
-        response?.error?.message ??
-        (translate
-          ? translate("trips.coverUploadRetryError")
-          : "Unable to upload cover image. Please try again.");
+        response?.error?.code === "HEIC_UNSUPPORTED"
+          ? translate
+            ? translate("trips.heicUnsupportedError")
+            : "HEIC/HEIF images are not supported on this server yet."
+          : response?.error?.message ??
+            (translate
+              ? translate("trips.coverUploadRetryError")
+              : "Unable to upload cover image. Please try again.");
       reject(new Error(message));
     };
 

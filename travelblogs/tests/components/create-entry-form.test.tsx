@@ -188,7 +188,7 @@ describe("CreateEntryForm", () => {
     expect(await screen.findByText("worse.txt")).toBeInTheDocument();
     expect(
       await screen.findAllByText(
-        "Failed: Media files must be a JPG, PNG, WebP, MP4, WebM, or MOV file.",
+        "Failed: Media files must be a JPG, PNG, WebP, HEIC, HEIF, MP4, WebM, or MOV file.",
       ),
     ).toHaveLength(2);
     expect(uploadEntryMediaBatch).not.toHaveBeenCalled();

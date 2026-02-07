@@ -8,6 +8,7 @@ import {
   COVER_IMAGE_FIELD_NAME,
   COVER_IMAGE_PUBLIC_PATH,
   getCoverImageExtension,
+  isHeicMimeType,
   isVideoMimeType,
   validateCoverImageFile,
 } from "../../../../utils/media";
@@ -67,6 +68,7 @@ type UploadSuccess = {
 
 type UploadFailure = {
   fileName: string;
+  code?: string;
   message: string;
   isServerError?: boolean;
 };
@@ -86,12 +88,14 @@ const uploadFile = async (
   }
 
   const isVideo = isVideoMimeType(file.type);
+  const isHeic = isHeicMimeType(file.type);
   const extension = getCoverImageExtension(file.type);
   if (!extension) {
     return {
       failure: {
         fileName: file.name,
-        message: "Cover image must be a JPG, PNG, WebP, MP4, WebM, or MOV file.",
+        message:
+          "Cover image must be a JPG, PNG, WebP, HEIC, HEIF, MP4, WebM, or MOV file.",
       },
     };
   }
@@ -105,14 +109,24 @@ const uploadFile = async (
 
     if (!isVideo) {
       try {
-        const compressed = await compressImage(buffer);
+        const compressed = await compressImage(buffer, { forceJpeg: isHeic });
+        finalBuffer = compressed.buffer;
         if (compressed.wasCompressed) {
           console.log(
             `[Image Compression] ${file.name}: ${buffer.length} -> ${compressed.buffer.length}`,
           );
-          finalBuffer = compressed.buffer;
         }
       } catch (error) {
+        if (isHeic) {
+          return {
+            failure: {
+              fileName: file.name,
+              code: "HEIC_UNSUPPORTED",
+              message:
+                "HEIC/HEIF images are not supported on this server yet.",
+            },
+          };
+        }
         console.warn("[Image Compression] Upload compression failed:", error);
       }
     }
@@ -184,9 +198,11 @@ export const POST = async (request: NextRequest) => {
       const result = await uploadFile(files[0], uploadDir);
       if (result.failure) {
         const status = result.failure.isServerError ? 500 : 400;
-        const code = result.failure.isServerError
-          ? "INTERNAL_SERVER_ERROR"
-          : "VALIDATION_ERROR";
+        const code =
+          result.failure.code ??
+          (result.failure.isServerError
+            ? "INTERNAL_SERVER_ERROR"
+            : "VALIDATION_ERROR");
         return jsonError(status, code, result.failure.message);
       }
 
@@ -213,7 +229,7 @@ export const POST = async (request: NextRequest) => {
     const failures = results
       .map((result) => result.failure)
       .filter((failure): failure is UploadFailure => Boolean(failure))
-      .map(({ fileName, message }) => ({ fileName, message }));
+      .map(({ fileName, message, code }) => ({ fileName, message, code }));
 
     return NextResponse.json(
       {
