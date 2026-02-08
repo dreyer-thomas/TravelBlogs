@@ -238,7 +238,7 @@ const TripOverview = ({
           </header>
 
           {trip.coverImageUrl ? (
-            <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
+            <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2">
               <div className="relative h-64 w-full overflow-hidden rounded-2xl bg-[#F2ECE3]">
                 {tripCoverIsVideo ? (
                   <video
