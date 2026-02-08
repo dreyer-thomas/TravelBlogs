@@ -22,6 +22,24 @@ type UploadedMedia = {
   mediaType: "image" | "video";
 };
 
+const resolveI18nMessage = (
+  message: string | undefined,
+  translate?: (key: string) => string,
+) => {
+  if (!message) {
+    return undefined;
+  }
+  if (
+    translate &&
+    (message.startsWith("entries.") ||
+      message.startsWith("trips.") ||
+      message.startsWith("common."))
+  ) {
+    return translate(message);
+  }
+  return message;
+};
+
 type BatchUploadOptions = {
   onFileProgress?: (file: File, progress: number) => void;
   uploadFn?: (file: File, options?: UploadOptions) => Promise<UploadedMedia>;
@@ -87,7 +105,7 @@ export const uploadEntryMedia = async (
 
     const result = await uploadMediaAction(formData);
 
-    if (result.success && result.data?.url) {
+    if (result.data?.url) {
       // Report progress at completion
       options.onProgress?.(100);
 
@@ -106,7 +124,7 @@ export const uploadEntryMedia = async (
         ? translate
           ? translate("entries.heicUnsupportedError")
           : "HEIC/HEIF images are not supported on this server yet."
-        : result.error?.message ??
+        : resolveI18nMessage(result.error?.message, translate) ??
           (translate
             ? translate("entries.mediaUploadRetryError")
             : "Unable to upload media file. Please try again.");

@@ -149,7 +149,9 @@ describe("TripsRestoreDashboard", () => {
     };
     xhr.onload?.(new ProgressEvent("load"));
 
-    expect(await screen.findByText("Restore successful.")).toBeInTheDocument();
+    expect(
+      await screen.findByText("Trip restored successfully."),
+    ).toBeInTheDocument();
     expect(await screen.findByText("Restore summary")).toBeInTheDocument();
   });
 

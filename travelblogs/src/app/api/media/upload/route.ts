@@ -64,6 +64,7 @@ type UploadSuccess = {
   url: string;
   mediaType: "image" | "video";
   location: { latitude: number; longitude: number } | null;
+  filePath: string;
 };
 
 type UploadFailure = {
@@ -72,6 +73,9 @@ type UploadFailure = {
   message: string;
   isServerError?: boolean;
 };
+
+const HEIC_UNSUPPORTED_CODE = "HEIC_UNSUPPORTED";
+const HEIC_UNSUPPORTED_MESSAGE = "trips.heicUnsupportedError";
 
 const uploadFile = async (
   file: File,
@@ -100,9 +104,6 @@ const uploadFile = async (
     };
   }
 
-  const fallbackHeicExtension =
-    file.type === "image/heif" ? "heif" : "heic";
-
   try {
     const prefix = isVideo ? "video" : "photo";
     let finalExtension = extension;
@@ -123,8 +124,13 @@ const uploadFile = async (
         }
       } catch (error) {
         if (isHeic) {
-          finalBuffer = buffer;
-          finalExtension = fallbackHeicExtension;
+          return {
+            failure: {
+              fileName: file.name,
+              code: HEIC_UNSUPPORTED_CODE,
+              message: HEIC_UNSUPPORTED_MESSAGE,
+            },
+          };
         } else {
           console.warn("[Image Compression] Upload compression failed:", error);
         }
@@ -143,6 +149,7 @@ const uploadFile = async (
         url: `${COVER_IMAGE_PUBLIC_PATH}/${safeName}`,
         mediaType: isVideo ? "video" : "image",
         location,
+        filePath,
       },
     };
   } catch (error) {
@@ -232,6 +239,16 @@ export const POST = async (request: NextRequest) => {
       .map((result) => result.failure)
       .filter((failure): failure is UploadFailure => Boolean(failure))
       .map(({ fileName, message, code }) => ({ fileName, message, code }));
+
+    const heicFailure = failures.find(
+      (failure) => failure.code === HEIC_UNSUPPORTED_CODE,
+    );
+    if (heicFailure) {
+      await Promise.all(
+        uploads.map((upload) => fs.rm(upload.filePath, { force: true })),
+      );
+      return jsonError(400, heicFailure.code, heicFailure.message);
+    }
 
     return NextResponse.json(
       {

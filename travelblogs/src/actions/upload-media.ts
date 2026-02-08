@@ -17,6 +17,9 @@ import { authOptions } from "../utils/auth-options";
 import { ensureActiveAccount, isAdminOrCreator } from "../utils/roles";
 import { compressImage } from "../utils/compress-image";
 
+const HEIC_UNSUPPORTED_CODE = "HEIC_UNSUPPORTED";
+const HEIC_UNSUPPORTED_MESSAGE = "entries.heicUnsupportedError";
+
 const resolveUploadDir = () => {
   const configured = process.env.MEDIA_UPLOAD_DIR?.trim();
   if (configured) {
@@ -26,17 +29,16 @@ const resolveUploadDir = () => {
 };
 
 type UploadResult = {
-  success: boolean;
-  data?: {
+  data: {
     fileName: string;
     url: string;
     mediaType: "image" | "video";
     location: { latitude: number; longitude: number } | null;
-  };
-  error?: {
+  } | null;
+  error: {
     code: string;
     message: string;
-  };
+  } | null;
 };
 
 export async function uploadMediaAction(formData: FormData): Promise<UploadResult> {
@@ -45,14 +47,14 @@ export async function uploadMediaAction(formData: FormData): Promise<UploadResul
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
       return {
-        success: false,
+        data: null,
         error: { code: "UNAUTHORIZED", message: "Authentication required." },
       };
     }
 
     if (!isAdminOrCreator(session.user.role)) {
       return {
-        success: false,
+        data: null,
         error: { code: "FORBIDDEN", message: "Creator access required." },
       };
     }
@@ -60,7 +62,7 @@ export async function uploadMediaAction(formData: FormData): Promise<UploadResul
     const isActive = await ensureActiveAccount(session.user.id);
     if (!isActive) {
       return {
-        success: false,
+        data: null,
         error: { code: "FORBIDDEN", message: "Account is inactive." },
       };
     }
@@ -69,7 +71,7 @@ export async function uploadMediaAction(formData: FormData): Promise<UploadResul
     const file = formData.get("file") as File | null;
     if (!file) {
       return {
-        success: false,
+        data: null,
         error: { code: "VALIDATION_ERROR", message: "File is required." },
       };
     }
@@ -78,7 +80,7 @@ export async function uploadMediaAction(formData: FormData): Promise<UploadResul
     const validationError = validateCoverImageFile(file);
     if (validationError) {
       return {
-        success: false,
+        data: null,
         error: { code: "VALIDATION_ERROR", message: validationError },
       };
     }
@@ -88,7 +90,7 @@ export async function uploadMediaAction(formData: FormData): Promise<UploadResul
     const extension = getCoverImageExtension(file.type);
     if (!extension) {
       return {
-        success: false,
+        data: null,
         error: {
           code: "VALIDATION_ERROR",
           message:
@@ -103,8 +105,7 @@ export async function uploadMediaAction(formData: FormData): Promise<UploadResul
     await fs.mkdir(uploadDir, { recursive: true });
 
     const prefix = isVideo ? "video" : "photo";
-    const safeName = `${prefix}-${Date.now()}-${crypto.randomUUID()}.${extension}`;
-    const filePath = path.join(uploadDir, safeName);
+    let finalExtension = extension;
     const buffer = Buffer.from(await file.arrayBuffer());
     let finalBuffer: Buffer<ArrayBufferLike> = buffer;
 
@@ -112,38 +113,43 @@ export async function uploadMediaAction(formData: FormData): Promise<UploadResul
       try {
         const compressed = await compressImage(buffer, { forceJpeg: isHeic });
         finalBuffer = compressed.buffer;
+        if (isHeic) {
+          finalExtension = "jpg";
+        }
       } catch (error) {
         if (isHeic) {
           return {
-            success: false,
+            data: null,
             error: {
-              code: "HEIC_UNSUPPORTED",
-              message:
-                "HEIC/HEIF images are not supported on this server yet.",
+              code: HEIC_UNSUPPORTED_CODE,
+              message: HEIC_UNSUPPORTED_MESSAGE,
             },
           };
+        } else {
+          console.warn("[Image Compression] Upload compression failed:", error);
         }
-        console.warn("[Image Compression] Upload compression failed:", error);
       }
     }
 
+    const safeName = `${prefix}-${Date.now()}-${crypto.randomUUID()}.${finalExtension}`;
+    const filePath = path.join(uploadDir, safeName);
     await fs.writeFile(filePath, finalBuffer);
 
     const location = isVideo ? null : await extractGpsFromImage(finalBuffer);
 
     return {
-      success: true,
       data: {
         fileName: file.name,
         url: `${COVER_IMAGE_PUBLIC_PATH}/${safeName}`,
         mediaType: isVideo ? "video" : "image",
         location,
       },
+      error: null,
     };
   } catch (error) {
     console.error("Failed to upload media:", error);
     return {
-      success: false,
+      data: null,
       error: {
         code: "INTERNAL_SERVER_ERROR",
         message: "Unable to upload file.",

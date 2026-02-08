@@ -195,4 +195,5 @@ development_status:
   15-2-trip-restore-admin-ui-api: done
   15-3-export-compatibility-metadata: done
   15-4-export-restore-ux-enhancements: done
+  15-5-heic-server-conversion: done
   epic-15-retrospective: optional
