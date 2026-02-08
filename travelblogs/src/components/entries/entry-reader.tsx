@@ -11,7 +11,7 @@ import { extractEntryImageNodesFromJson } from "../../utils/tiptap-image-helpers
 import type { EntryReaderData } from "../../utils/entry-reader";
 import type { EntryLocation } from "../../utils/entry-location";
 import { formatEntryLocationDisplay } from "../../utils/entry-location";
-import { getMediaTypeFromUrl } from "../../utils/media";
+import { getMediaTypeFromUrl, shouldOptimizeImageUrl } from "../../utils/media";
 import { generateVideoThumbnail } from "../../utils/video-thumbnail";
 import FullScreenPhotoViewer from "./full-screen-photo-viewer";
 import { useTranslation } from "../../utils/use-translation";
@@ -31,7 +31,7 @@ type EntryReaderProps = {
   heroMapLocations?: EntryLocation[];
 };
 
-const isOptimizedImage = (url: string) => url.startsWith("/");
+const isOptimizedImage = (url: string) => shouldOptimizeImageUrl(url);
 
 const EntryReader = ({
   entry,

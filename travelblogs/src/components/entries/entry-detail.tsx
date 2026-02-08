@@ -22,7 +22,7 @@ import { countryCodeToFlag, countryCodeToName } from "../../utils/country-flag";
 import { detectEntryFormat, plainTextToTiptapJson } from "../../utils/entry-format";
 import type { EntryReaderMedia } from "../../utils/entry-reader";
 import { extractEntryImageNodesFromJson } from "../../utils/tiptap-image-helpers";
-import { getMediaTypeFromUrl } from "../../utils/media";
+import { getMediaTypeFromUrl, shouldOptimizeImageUrl } from "../../utils/media";
 import { formatWeatherDisplay } from "../../utils/weather-display";
 import { useTranslation } from "../../utils/use-translation";
 import EntryReaderRichText from "./entry-reader-rich-text";
@@ -61,7 +61,7 @@ type EntryDetailProps = {
   tripLocations?: EntryMapLocation[];
 };
 
-const isOptimizedImage = (url: string) => url.startsWith("/");
+const isOptimizedImage = (url: string) => shouldOptimizeImageUrl(url);
 
 const EntryDetail = ({
   entry,

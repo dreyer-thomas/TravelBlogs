@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { DEFAULT_INLINE_ALT } from "../../utils/entry-content";
-import { getMediaTypeFromUrl } from "../../utils/media";
+import { getMediaTypeFromUrl, shouldOptimizeImageUrl } from "../../utils/media";
 import { useTranslation } from "../../utils/use-translation";
 import { generateVideoThumbnail } from "../../utils/video-thumbnail";
 
@@ -23,7 +23,7 @@ type MediaGalleryProps = {
 
 const SCROLL_AMOUNT = 320;
 
-const isOptimizedImage = (url: string) => url.startsWith("/");
+const isOptimizedImage = (url: string) => shouldOptimizeImageUrl(url);
 
 const VideoThumbnail = ({
   url,

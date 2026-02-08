@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import {
   COVER_IMAGE_ALLOWED_MIME_TYPES,
   createCoverPreviewUrl,
+  shouldOptimizeImageUrl,
   validateCoverImageFile,
 } from "../../utils/media";
 import { uploadCoverImage } from "../../utils/cover-upload";
@@ -148,7 +149,7 @@ const EditTripForm = ({ tripId, initialValues }: EditTripFormProps) => {
       !coverUploading,
   );
 
-  const isOptimizedImage = (url: string) => url.startsWith("/");
+  const isOptimizedImage = (url: string) => shouldOptimizeImageUrl(url);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();

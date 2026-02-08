@@ -54,11 +54,22 @@ export const isHeicMimeType = (mimeType: string) => {
 };
 
 const VIDEO_FILE_EXTENSIONS = new Set<string>(["mp4", "webm", "mov"]);
+const HEIC_FILE_EXTENSIONS = new Set<string>(["heic", "heif"]);
 
 export const getMediaTypeFromUrl = (url: string): "image" | "video" => {
   const sanitized = url.split("?")[0]?.split("#")[0] ?? "";
   const extension = sanitized.split(".").pop()?.toLowerCase() ?? "";
   return VIDEO_FILE_EXTENSIONS.has(extension) ? "video" : "image";
+};
+
+export const isHeicUrl = (url: string) => {
+  const sanitized = url.split("?")[0]?.split("#")[0] ?? "";
+  const extension = sanitized.split(".").pop()?.toLowerCase() ?? "";
+  return HEIC_FILE_EXTENSIONS.has(extension);
+};
+
+export const shouldOptimizeImageUrl = (url: string) => {
+  return url.startsWith("/") && !isHeicUrl(url);
 };
 
 export const validateCoverImageFile = (

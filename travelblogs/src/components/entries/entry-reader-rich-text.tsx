@@ -8,7 +8,7 @@ import type { NodeViewProps } from "@tiptap/react";
 
 import type { EntryReaderMedia } from "../../utils/entry-reader";
 import { getTiptapExtensions } from "../../utils/tiptap-config";
-import { getMediaTypeFromUrl } from "../../utils/media";
+import { getMediaTypeFromUrl, shouldOptimizeImageUrl } from "../../utils/media";
 import EntryImage from "../../utils/tiptap-entry-image-extension";
 import EntryVideo from "../../utils/tiptap-entry-video-extension";
 
@@ -34,7 +34,7 @@ type EntryReaderRichTextProps = {
   resolveAltText: (alt?: string | null) => string | null;
 };
 
-const isOptimizedImage = (url: string) => url.startsWith("/");
+const isOptimizedImage = (url: string) => shouldOptimizeImageUrl(url);
 
 const EntryImageNodeView = (props: NodeViewProps) => {
   const { entryMediaId, src, alt } = props.node.attrs as {

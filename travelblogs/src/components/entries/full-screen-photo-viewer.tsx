@@ -5,7 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import Image from "next/image";
 import { useTranslation } from "../../utils/use-translation";
-import { getMediaTypeFromUrl } from "../../utils/media";
+import { getMediaTypeFromUrl, shouldOptimizeImageUrl } from "../../utils/media";
 
 type PhotoViewerImage = {
   url: string;
@@ -38,7 +38,7 @@ const clampIndex = (index: number, length: number) => {
   return Math.min(Math.max(index, 0), length - 1);
 };
 
-const isOptimizedImage = (url: string) => url.startsWith("/");
+const isOptimizedImage = (url: string) => shouldOptimizeImageUrl(url);
 const SEEK_SECONDS = 5;
 
 const getTouchDistance = (touches: TouchListLike) => {

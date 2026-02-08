@@ -8,7 +8,7 @@ import TripMap from "./trip-map";
 import { useTranslation } from "../../utils/use-translation";
 import { filterEntriesWithLocation } from "../../utils/entry-location";
 import { getDistinctTagList, normalizeTagName } from "../../utils/entry-tags";
-import { getMediaTypeFromUrl } from "../../utils/media";
+import { getMediaTypeFromUrl, shouldOptimizeImageUrl } from "../../utils/media";
 import { countryCodeToFlag } from "../../utils/country-flag";
 import { getTripCountries } from "../../utils/trip-countries";
 import type { TripOverviewEntry, TripOverviewTrip } from "../../types/trip-overview";
@@ -22,7 +22,7 @@ type TripOverviewProps = {
   mapHref?: string;
 };
 
-const isOptimizedImage = (url: string) => url.startsWith("/");
+const isOptimizedImage = (url: string) => shouldOptimizeImageUrl(url);
 
 const getPreviewImage = (entry: TripOverviewEntry) => {
   return (

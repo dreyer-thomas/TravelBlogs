@@ -6,7 +6,11 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import DeleteTripModal from "./delete-trip-modal";
 import TripMap from "./trip-map";
-import { isCoverImageUrl, getMediaTypeFromUrl } from "../../utils/media";
+import {
+  getMediaTypeFromUrl,
+  isCoverImageUrl,
+  shouldOptimizeImageUrl,
+} from "../../utils/media";
 import { extractInlineImageUrls, stripInlineImages } from "../../utils/entry-content";
 import { useTranslation } from "../../utils/use-translation";
 import { filterEntriesWithLocation } from "../../utils/entry-location";
@@ -103,7 +107,7 @@ type TripOverviewData = {
   }[];
 };
 
-const isOptimizedImage = (url: string) => url.startsWith("/");
+const isOptimizedImage = (url: string) => shouldOptimizeImageUrl(url);
 
 const TripDetail = ({
   tripId,

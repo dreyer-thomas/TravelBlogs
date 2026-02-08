@@ -11,7 +11,11 @@ import {
   uploadEntryMediaBatch,
   validateEntryMediaFile,
 } from "../../utils/entry-media";
-import { getMediaTypeFromUrl, isVideoMimeType } from "../../utils/media";
+import {
+  getMediaTypeFromUrl,
+  isVideoMimeType,
+  shouldOptimizeImageUrl,
+} from "../../utils/media";
 import { insertEntryImage } from "../../utils/tiptap-image-helpers";
 import { useTranslation } from "../../utils/use-translation";
 import { formatEntryLocationDisplay } from "../../utils/entry-location";
@@ -685,7 +689,7 @@ const EditEntryForm = ({
   );
   const maxCharactersLabel = `${t("entries.maxCharacters")} ${maxTitleLength} ${t("entries.characters")}`;
 
-  const isOptimizedImage = (url: string) => url.startsWith("/");
+  const isOptimizedImage = (url: string) => shouldOptimizeImageUrl(url);
   const formatUploadStatus = (item: UploadItem) => {
     if (item.status === "uploading") {
       return `${t("entries.uploading")} ${item.progress}%`;

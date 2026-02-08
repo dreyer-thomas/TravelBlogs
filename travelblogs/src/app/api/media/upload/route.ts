@@ -100,10 +100,12 @@ const uploadFile = async (
     };
   }
 
+  const fallbackHeicExtension =
+    file.type === "image/heif" ? "heif" : "heic";
+
   try {
     const prefix = isVideo ? "video" : "photo";
-    const safeName = `${prefix}-${Date.now()}-${crypto.randomUUID()}.${extension}`;
-    const filePath = path.join(uploadDir, safeName);
+    let finalExtension = extension;
     const buffer = Buffer.from(await file.arrayBuffer());
     let finalBuffer: Buffer<ArrayBufferLike> = buffer;
 
@@ -111,6 +113,9 @@ const uploadFile = async (
       try {
         const compressed = await compressImage(buffer, { forceJpeg: isHeic });
         finalBuffer = compressed.buffer;
+        if (isHeic) {
+          finalExtension = "jpg";
+        }
         if (compressed.wasCompressed) {
           console.log(
             `[Image Compression] ${file.name}: ${buffer.length} -> ${compressed.buffer.length}`,
@@ -118,19 +123,16 @@ const uploadFile = async (
         }
       } catch (error) {
         if (isHeic) {
-          return {
-            failure: {
-              fileName: file.name,
-              code: "HEIC_UNSUPPORTED",
-              message:
-                "HEIC/HEIF images are not supported on this server yet.",
-            },
-          };
+          finalBuffer = buffer;
+          finalExtension = fallbackHeicExtension;
+        } else {
+          console.warn("[Image Compression] Upload compression failed:", error);
         }
-        console.warn("[Image Compression] Upload compression failed:", error);
       }
     }
 
+    const safeName = `${prefix}-${Date.now()}-${crypto.randomUUID()}.${finalExtension}`;
+    const filePath = path.join(uploadDir, safeName);
     await fs.writeFile(filePath, finalBuffer);
 
     const location = isVideo ? null : await extractGpsFromImage(finalBuffer);

@@ -10,7 +10,7 @@ import {
   uploadEntryMediaBatch,
   validateEntryMediaFile,
 } from "../../utils/entry-media";
-import { isVideoMimeType } from "../../utils/media";
+import { isVideoMimeType, shouldOptimizeImageUrl } from "../../utils/media";
 import { insertEntryImage } from "../../utils/tiptap-image-helpers";
 import { useTranslation } from "../../utils/use-translation";
 import EntryTagInput from "./entry-tag-input";
@@ -627,7 +627,7 @@ const CreateEntryForm = ({ tripId, onEntryCreated }: CreateEntryFormProps) => {
     return `${mediaPreviews.length} ${t("entries.mediaPreviews")}`;
   }, [mediaPreviews.length, t]);
 
-  const isOptimizedImage = (url: string) => url.startsWith("/");
+  const isOptimizedImage = (url: string) => shouldOptimizeImageUrl(url);
   const formatUploadStatus = (item: UploadItem) => {
     if (item.status === "uploading") {
       return `${t("entries.uploading")} ${item.progress}%`;
