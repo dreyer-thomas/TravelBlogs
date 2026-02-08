@@ -1,12 +1,15 @@
-export const tripOrderBy = [
+import type { Prisma } from "@prisma/client";
+
+export const tripOrderBy: Prisma.TripOrderByWithRelationInput[] = [
   { startDate: "desc" },
   { title: "asc" },
   { id: "desc" },
-] as const;
+];
 
-export const tripAccessOrderBy = tripOrderBy.map((order) => ({
-  trip: order,
-}));
+export const tripAccessOrderBy: Prisma.TripAccessOrderByWithRelationInput[] =
+  tripOrderBy.map((order) => ({
+    trip: order,
+  }));
 
 type TripOrderable = {
   id: string;
