@@ -61,6 +61,7 @@ const TripsRestoreDashboard = () => {
       const xhr = new XMLHttpRequest();
       xhrRef.current = xhr;
       xhr.open("POST", "/api/trips/restore");
+      xhr.timeout = 10 * 60 * 1000;
       xhr.responseType = "json";
       xhr.upload.onprogress = (event) => {
         if (!event.lengthComputable) {
@@ -73,17 +74,28 @@ const TripsRestoreDashboard = () => {
         onUploadComplete();
       };
       xhr.onload = () => {
-        const response =
-          xhr.response ??
-          (typeof xhr.responseText === "string"
-            ? JSON.parse(xhr.responseText)
-            : null);
+        let response = xhr.response;
+        if (!response && typeof xhr.responseText === "string" && xhr.responseText) {
+          try {
+            response = JSON.parse(xhr.responseText);
+          } catch {
+            response = null;
+          }
+        }
         xhrRef.current = null;
         resolve({ status: xhr.status, body: response });
       };
       xhr.onerror = () => {
         xhrRef.current = null;
         reject(new Error("Restore request failed."));
+      };
+      xhr.onabort = () => {
+        xhrRef.current = null;
+        reject(new Error("Restore request aborted."));
+      };
+      xhr.ontimeout = () => {
+        xhrRef.current = null;
+        reject(new Error("Restore request timed out."));
       };
       xhr.send(formData);
     });

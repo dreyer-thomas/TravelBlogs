@@ -67,34 +67,13 @@ const loadZipJson = async (zip: StreamZipAsync, name: string) => {
   return JSON.parse(data.toString("utf-8")) as unknown;
 };
 
-const streamZipEntryToFile = async (
-  zip: StreamZipAsync,
-  entryName: string,
-  destination: string,
-) => {
-  const stream = await new Promise<NodeJS.ReadableStream>((resolve, reject) => {
-    zip.stream(entryName, (error, zipStream) => {
-      if (error || !zipStream) {
-        reject(error ?? new Error("Unable to read zip entry."));
-        return;
-      }
-      resolve(zipStream);
-    });
-  });
-  await pipeline(stream, createWriteStream(destination));
-};
-
 const writeZipEntryToFile = async (
   zip: StreamZipAsync,
   entryName: string,
   destination: string,
 ) => {
-  if (process.env.NODE_ENV === "test") {
-    const data = await zip.entryData(entryName);
-    await fs.writeFile(destination, data);
-    return;
-  }
-  await streamZipEntryToFile(zip, entryName, destination);
+  const data = await zip.entryData(entryName);
+  await fs.writeFile(destination, data);
 };
 
 const toDate = (value: string | null | undefined) => {
@@ -341,12 +320,21 @@ export const POST = async (request: NextRequest) => {
     }
 
     const mediaToRestore = Array.from(expectedMedia);
+    const entryNameSet = new Set(entryNames);
     const writtenFiles: string[] = [];
     try {
       for (const mediaPath of mediaToRestore) {
         const destination = path.join(uploadRootResolved, mediaPath);
         await fs.mkdir(path.dirname(destination), { recursive: true });
-        await writeZipEntryToFile(zip, `media/${mediaPath}`, destination);
+        const zipEntryName = `media/${mediaPath}`;
+        if (!entryNameSet.has(zipEntryName)) {
+          return jsonError(
+            400,
+            "MISSING_MEDIA",
+            `Missing media entry for ${mediaPath}.`,
+          );
+        }
+        await writeZipEntryToFile(zip, zipEntryName, destination);
         writtenFiles.push(destination);
       }
     } catch (error) {
