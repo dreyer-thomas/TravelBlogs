@@ -247,7 +247,11 @@ export const POST = async (request: NextRequest) => {
       await Promise.all(
         uploads.map((upload) => fs.rm(upload.filePath, { force: true })),
       );
-      return jsonError(400, heicFailure.code, heicFailure.message);
+      return jsonError(
+        400,
+        heicFailure.code ?? HEIC_UNSUPPORTED_CODE,
+        heicFailure.message,
+      );
     }
 
     return NextResponse.json(
