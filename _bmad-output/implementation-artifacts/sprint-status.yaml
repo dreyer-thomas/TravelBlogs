@@ -196,4 +196,5 @@ development_status:
   15-3-export-compatibility-metadata: done
   15-4-export-restore-ux-enhancements: done
   15-5-heic-server-conversion: done
+  15-6-trip-list-ordered-by-start-date: review
   epic-15-retrospective: optional

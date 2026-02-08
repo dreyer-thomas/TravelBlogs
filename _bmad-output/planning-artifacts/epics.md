@@ -4178,3 +4178,40 @@ Export and restore trips for emergency recovery or system migration.
 **Source:** Nice-to-have UI request
 **Priority:** Medium
 **Story Points:** 5
+
+### Story 15.6: Trips List Ordered by Start Date
+
+**As a** user  
+**I want** trip lists ordered by start date (newest first)  
+**So that** I see the most recent trips at the top
+
+**Acceptance Criteria:**
+
+#### AC 1: Start Date Descending
+**Given** I view any trips list  
+**When** the list renders  
+**Then** trips are ordered by `startDate` descending (newest first)
+
+#### AC 2: Tie-break by Trip Name
+**Given** two trips share the same `startDate`  
+**When** the list is ordered  
+**Then** those trips are sorted by trip name ascending (A–Z)
+
+#### AC 3: Sorting After Visibility Filters
+**Given** trips are filtered by access or visibility  
+**When** the list is rendered  
+**Then** sorting is applied after filtering  
+**And** drafts/archived trips remain included and are sorted by the same rules
+
+**Technical Requirements:**
+- Use the trip `startDate` field displayed on trip cards
+- Apply the same ordering across all trips list views (including admin exports, if applicable)
+- Use deterministic ordering (fallback to `id` if needed after name tie-break)
+
+**Testing Requirements:**
+- Trips list endpoint returns sorted order for admin/creator/viewer
+- Tie-break by trip name is applied when `startDate` matches
+
+**Source:** User request for trips ordering
+**Priority:** Medium
+**Story Points:** 2

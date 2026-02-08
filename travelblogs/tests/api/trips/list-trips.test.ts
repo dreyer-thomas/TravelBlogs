@@ -214,6 +214,76 @@ describe("GET /api/trips", () => {
     ]);
   });
 
+  it("orders administrator trips by start date, title, then id", async () => {
+    await prisma.user.create({
+      data: {
+        id: "admin-1",
+        email: "admin@example.com",
+        name: "Admin",
+        role: "administrator",
+        passwordHash: "hash",
+      },
+    });
+
+    getToken.mockResolvedValue({ sub: "admin-1", role: "administrator" });
+
+    const oldestTrip = await prisma.trip.create({
+      data: {
+        id: "trip-1",
+        title: "Beta Trip",
+        startDate: new Date("2025-01-01T00:00:00.000Z"),
+        endDate: new Date("2025-01-03T00:00:00.000Z"),
+        ownerId: "creator",
+      },
+    });
+
+    const sameDateTripA = await prisma.trip.create({
+      data: {
+        id: "trip-2",
+        title: "Alpha Trip",
+        startDate: new Date("2025-06-01T00:00:00.000Z"),
+        endDate: new Date("2025-06-03T00:00:00.000Z"),
+        ownerId: "creator",
+      },
+    });
+
+    const sameDateTripB = await prisma.trip.create({
+      data: {
+        id: "trip-3",
+        title: "Alpha Trip",
+        startDate: new Date("2025-06-01T00:00:00.000Z"),
+        endDate: new Date("2025-06-02T00:00:00.000Z"),
+        ownerId: "creator",
+      },
+    });
+
+    const newestTrip = await prisma.trip.create({
+      data: {
+        id: "trip-4",
+        title: "Gamma Trip",
+        startDate: new Date("2025-07-01T00:00:00.000Z"),
+        endDate: new Date("2025-07-04T00:00:00.000Z"),
+        ownerId: "creator",
+      },
+    });
+
+    const request = new Request("http://localhost/api/trips", {
+      method: "GET",
+    });
+
+    const response = await get(request);
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.error).toBeNull();
+    expect(body.data.map((trip: { id: string }) => trip.id)).toEqual([
+      newestTrip.id,
+      sameDateTripB.id,
+      sameDateTripA.id,
+      oldestTrip.id,
+    ]);
+  });
+
   it("rejects unauthenticated requests", async () => {
     getToken.mockResolvedValue(null);
 
@@ -286,6 +356,138 @@ describe("GET /api/trips", () => {
       updatedAt: trip.updatedAt.toISOString(),
       canEditTrip: false,
     });
+  });
+
+  it("orders creator trips after merging owned and invited lists", async () => {
+    await prisma.user.create({
+      data: {
+        id: "creator",
+        email: "creator@example.com",
+        name: "Creator",
+        role: "creator",
+        passwordHash: "hash",
+      },
+    });
+
+    const ownedTrip = await prisma.trip.create({
+      data: {
+        id: "trip-owned",
+        title: "Owned Trip",
+        startDate: new Date("2025-05-01T00:00:00.000Z"),
+        endDate: new Date("2025-05-03T00:00:00.000Z"),
+        ownerId: "creator",
+      },
+    });
+
+    const invitedTripA = await prisma.trip.create({
+      data: {
+        id: "trip-1",
+        title: "Alpha Trip",
+        startDate: new Date("2025-06-01T00:00:00.000Z"),
+        endDate: new Date("2025-06-03T00:00:00.000Z"),
+        ownerId: "someone-else",
+      },
+    });
+
+    const invitedTripB = await prisma.trip.create({
+      data: {
+        id: "trip-2",
+        title: "Alpha Trip",
+        startDate: new Date("2025-06-01T00:00:00.000Z"),
+        endDate: new Date("2025-06-02T00:00:00.000Z"),
+        ownerId: "someone-else",
+      },
+    });
+
+    await prisma.tripAccess.createMany({
+      data: [
+        { tripId: invitedTripA.id, userId: "creator" },
+        { tripId: invitedTripB.id, userId: "creator" },
+      ],
+    });
+
+    getToken.mockResolvedValue({ sub: "creator", role: "creator" });
+
+    const request = new Request("http://localhost/api/trips", {
+      method: "GET",
+    });
+
+    const response = await get(request);
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.error).toBeNull();
+    expect(body.data.map((trip: { id: string }) => trip.id)).toEqual([
+      invitedTripB.id,
+      invitedTripA.id,
+      ownedTrip.id,
+    ]);
+  });
+
+  it("orders viewer trips by start date, title, then id", async () => {
+    const viewer = await prisma.user.create({
+      data: {
+        email: "viewer.sort@example.com",
+        name: "Viewer",
+        role: "viewer",
+        passwordHash: "hash",
+      },
+    });
+
+    const oldestTrip = await prisma.trip.create({
+      data: {
+        id: "trip-older",
+        title: "Old Trip",
+        startDate: new Date("2025-01-01T00:00:00.000Z"),
+        endDate: new Date("2025-01-03T00:00:00.000Z"),
+        ownerId: "creator",
+      },
+    });
+
+    const sameDateTripA = await prisma.trip.create({
+      data: {
+        id: "trip-a",
+        title: "Alpha Trip",
+        startDate: new Date("2025-02-01T00:00:00.000Z"),
+        endDate: new Date("2025-02-03T00:00:00.000Z"),
+        ownerId: "creator",
+      },
+    });
+
+    const sameDateTripB = await prisma.trip.create({
+      data: {
+        id: "trip-b",
+        title: "Alpha Trip",
+        startDate: new Date("2025-02-01T00:00:00.000Z"),
+        endDate: new Date("2025-02-02T00:00:00.000Z"),
+        ownerId: "creator",
+      },
+    });
+
+    await prisma.tripAccess.createMany({
+      data: [
+        { tripId: oldestTrip.id, userId: viewer.id },
+        { tripId: sameDateTripA.id, userId: viewer.id },
+        { tripId: sameDateTripB.id, userId: viewer.id },
+      ],
+    });
+
+    getToken.mockResolvedValue({ sub: viewer.id, role: "viewer" });
+
+    const request = new Request("http://localhost/api/trips", {
+      method: "GET",
+    });
+
+    const response = await get(request);
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.error).toBeNull();
+    expect(body.data.map((trip: { id: string }) => trip.id)).toEqual([
+      sameDateTripB.id,
+      sameDateTripA.id,
+      oldestTrip.id,
+    ]);
   });
 
   it("flags contributor access for invited trips", async () => {

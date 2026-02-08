@@ -1847,3 +1847,28 @@ So that no hidden trip information is exposed.
 **When** the map renders
 **Then** that country remains in the dark base state
 **And** no trips from that country appear in hover popups
+
+## Epic 15: Backup and Restore
+
+Export and restore trips for emergency recovery or system migration.
+
+### Story 15.6: Trips List Ordered by Start Date
+
+As a user,
+I want trip lists ordered by start date (newest first),
+So that I see the most recent trips at the top.
+
+**Acceptance Criteria:**
+
+**Given** I view any trips list
+**When** the list renders
+**Then** trips are ordered by start date descending
+
+**Given** two trips share the same start date
+**When** the list is ordered
+**Then** those trips are sorted by trip name ascending (A–Z)
+
+**Given** trips are filtered by access or visibility
+**When** the list is rendered
+**Then** sorting is applied after filtering
+**And** drafts/archived trips remain included and are sorted by the same rules

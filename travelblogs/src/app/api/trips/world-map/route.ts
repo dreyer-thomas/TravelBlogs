@@ -3,6 +3,11 @@ import { getToken } from "next-auth/jwt";
 
 import { prisma } from "../../../../utils/db";
 import { ensureActiveAccount } from "../../../../utils/roles";
+import {
+  compareTripsByStartDate,
+  tripAccessOrderBy,
+  tripOrderBy,
+} from "../../../../utils/trip-ordering";
 
 export const runtime = "nodejs";
 
@@ -42,12 +47,13 @@ const getVisibleTrips = async (user: { id: string; role: string | null }) => {
   const tripSelection = {
     id: true,
     title: true,
+    startDate: true,
   };
 
   if (user.role === "administrator") {
     const trips = await prisma.trip.findMany({
       select: tripSelection,
-      orderBy: [{ title: "asc" }, { id: "asc" }],
+      orderBy: tripOrderBy,
     });
     return trips;
   }
@@ -81,9 +87,7 @@ const getVisibleTrips = async (user: { id: string; role: string | null }) => {
       tripsById.set(access.trip.id, access.trip),
     );
 
-    return Array.from(tripsById.values()).sort(
-      (a, b) => a.title.localeCompare(b.title) || a.id.localeCompare(b.id),
-    );
+    return Array.from(tripsById.values()).sort(compareTripsByStartDate);
   }
 
   const invitedAccess = await prisma.tripAccess.findMany({
@@ -98,13 +102,10 @@ const getVisibleTrips = async (user: { id: string; role: string | null }) => {
         select: tripSelection,
       },
     },
+    orderBy: tripAccessOrderBy,
   });
 
-  return invitedAccess
-    .map((access) => access.trip)
-    .sort(
-      (a, b) => a.title.localeCompare(b.title) || a.id.localeCompare(b.id),
-    );
+  return invitedAccess.map((access) => access.trip);
 };
 
 export const GET = async (request: NextRequest) => {
@@ -153,7 +154,10 @@ export const GET = async (request: NextRequest) => {
       },
     });
 
-    const tripsByCountry = new Map<string, Map<string, { id: string; title: string }>>();
+    const tripsByCountry = new Map<
+      string,
+      Map<string, { id: string; title: string; startDate: Date }>
+    >();
     entries.forEach((entry) => {
       if (!entry.countryCode) {
         return;
@@ -168,8 +172,12 @@ export const GET = async (request: NextRequest) => {
       }
       const countryTrips =
         tripsByCountry.get(normalized) ??
-        new Map<string, { id: string; title: string }>();
-      countryTrips.set(trip.id, { id: trip.id, title: trip.title });
+        new Map<string, { id: string; title: string; startDate: Date }>();
+      countryTrips.set(trip.id, {
+        id: trip.id,
+        title: trip.title,
+        startDate: trip.startDate,
+      });
       tripsByCountry.set(normalized, countryTrips);
     });
 
@@ -182,9 +190,9 @@ export const GET = async (request: NextRequest) => {
       if (!trips) {
         return;
       }
-      tripsByCountryPayload[country] = Array.from(trips.values()).sort(
-        (a, b) => a.title.localeCompare(b.title) || a.id.localeCompare(b.id),
-      );
+      tripsByCountryPayload[country] = Array.from(trips.values())
+        .sort(compareTripsByStartDate)
+        .map(({ id, title }) => ({ id, title }));
     });
 
     return NextResponse.json(

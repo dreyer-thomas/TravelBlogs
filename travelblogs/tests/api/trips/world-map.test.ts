@@ -271,6 +271,90 @@ describe("GET /api/trips/world-map", () => {
     });
   });
 
+  it("orders trips within a country by start date, title, then id", async () => {
+    const admin = await prisma.user.create({
+      data: {
+        email: "admin.sort@example.com",
+        name: "Admin Sort",
+        role: "administrator",
+        passwordHash: "hash",
+      },
+    });
+
+    const oldestTrip = await prisma.trip.create({
+      data: {
+        id: "trip-1",
+        title: "Zulu Trip",
+        startDate: new Date("2025-01-01T00:00:00.000Z"),
+        endDate: new Date("2025-01-03T00:00:00.000Z"),
+        ownerId: "creator",
+      },
+    });
+
+    const sameDateTripA = await prisma.trip.create({
+      data: {
+        id: "trip-2",
+        title: "Alpha Trip",
+        startDate: new Date("2025-06-01T00:00:00.000Z"),
+        endDate: new Date("2025-06-03T00:00:00.000Z"),
+        ownerId: "creator",
+      },
+    });
+
+    const sameDateTripB = await prisma.trip.create({
+      data: {
+        id: "trip-3",
+        title: "Alpha Trip",
+        startDate: new Date("2025-06-01T00:00:00.000Z"),
+        endDate: new Date("2025-06-02T00:00:00.000Z"),
+        ownerId: "creator",
+      },
+    });
+
+    await prisma.entry.createMany({
+      data: [
+        {
+          tripId: oldestTrip.id,
+          title: "Old Entry",
+          text: "Story",
+          countryCode: "US",
+        },
+        {
+          tripId: sameDateTripA.id,
+          title: "Alpha Entry",
+          text: "Story",
+          countryCode: "US",
+        },
+        {
+          tripId: sameDateTripB.id,
+          title: "Alpha Entry 2",
+          text: "Story",
+          countryCode: "US",
+        },
+      ],
+    });
+
+    getToken.mockResolvedValue({ sub: admin.id, role: "administrator" });
+
+    const request = new Request("http://localhost/api/trips/world-map", {
+      method: "GET",
+    });
+
+    const response = await get(request);
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.error).toBeNull();
+    expect(body.data.countries).toEqual(["US"]);
+    expect(body.data.tripsByCountry).toEqual({
+      US: [
+        { id: sameDateTripB.id, title: "Alpha Trip" },
+        { id: sameDateTripA.id, title: "Alpha Trip" },
+        { id: oldestTrip.id, title: "Zulu Trip" },
+      ],
+    });
+  });
+
   it("rejects unauthenticated requests", async () => {
     getToken.mockResolvedValue(null);
 
