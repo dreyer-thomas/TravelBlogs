@@ -3,7 +3,8 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
-  --font-source-sans-3: "Segoe UI", "Calibri", "Arial", sans-serif;
+  --font-source-sans-3: "Segoe UI", "Calibri", "Arial", sans-serif, "Segoe UI Emoji",
+    "Segoe UI Symbol", "Apple Color Emoji", "Noto Color Emoji";
 }
 
 @theme inline {
