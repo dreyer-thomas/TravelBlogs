@@ -114,6 +114,7 @@ Claude Sonnet 5
 - `npm run test` — 108 test files / 839 passed, 1 pre-existing skip, no regressions
 - `npm run typecheck` — zero errors
 - `npm run build` — zero errors; new routes `/trips/share/[token]/opengraph-image` and `/trips/share/[token]/entries/[entryId]/opengraph-image` present in route manifest
+- **Post-deploy prod bug found and fixed:** after deploying, real link-preview crawlers still got a generic gray box (no compass fallback, no custom image/title) on every trip. Root cause: `src/proxy.ts`'s `publicTripEntryView` allowlist never accounted for the two new `opengraph-image` path shapes, so the auth middleware classified them as protected routes and redirected anonymous crawler requests to `/sign-in` instead of serving the image. Fixed by extending `publicTripEntryView` to allow `/trips/share/{token}/opengraph-image` and `/trips/share/{token}/entries/{entryId}/opengraph-image`; added 2 regression tests to `tests/api/auth/proxy.test.ts` (14 tests total, all passing). Full suite/typecheck/build re-verified clean after this fix.
 
 ### Completion Notes List
 
@@ -136,11 +137,13 @@ Claude Sonnet 5
 - Modified: `travelblogs/src/app/trips/share/[token]/page.tsx`
 - Modified: `travelblogs/src/app/trips/share/[token]/entries/[entryId]/page.tsx`
 - Modified: `travelblogs/src/utils/i18n.ts`
+- Modified: `travelblogs/src/proxy.ts`
 - New: `travelblogs/src/components/brand/og-fallback.tsx`
 - New: `travelblogs/src/app/trips/share/[token]/opengraph-image.tsx`
 - New: `travelblogs/src/app/trips/share/[token]/entries/[entryId]/opengraph-image.tsx`
 - Modified: `travelblogs/tests/utils/entry-media.test.ts`
 - Modified: `travelblogs/tests/utils/entry-reader-mapper.test.ts`
+- Modified: `travelblogs/tests/api/auth/proxy.test.ts`
 - New: `travelblogs/tests/components/trip-share-opengraph-image.test.tsx`
 - New: `travelblogs/tests/components/entry-share-opengraph-image.test.tsx`
 - New: `travelblogs/tests/components/trip-share-metadata.test.tsx`

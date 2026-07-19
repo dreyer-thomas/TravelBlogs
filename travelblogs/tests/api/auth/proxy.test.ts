@@ -62,6 +62,22 @@ describe("middleware", () => {
     expect(response?.headers.get("x-middleware-next")).toBe("1");
   });
 
+  it("allows public access to the trip share preview image", async () => {
+    getToken.mockResolvedValue(null);
+    const response = await middleware(
+      makeRequest("/trips/share/abc123/opengraph-image"),
+    );
+    expect(response?.headers.get("x-middleware-next")).toBe("1");
+  });
+
+  it("allows public access to the entry share preview image", async () => {
+    getToken.mockResolvedValue(null);
+    const response = await middleware(
+      makeRequest("/trips/share/abc123/entries/entry-1/opengraph-image"),
+    );
+    expect(response?.headers.get("x-middleware-next")).toBe("1");
+  });
+
   it("redirects unauthenticated users from trip management routes", async () => {
     getToken.mockResolvedValue(null);
     const response = await middleware(makeRequest("/trips/abc123"));

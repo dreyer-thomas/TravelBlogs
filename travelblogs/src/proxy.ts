@@ -13,12 +13,23 @@ const publicTripEntryView = (pathname: string) => {
     if (segments.length === 3) {
       return true;
     }
-    // Allow /trips/share/{token}/map
-    if (segments.length === 4 && segments[3] === "map") {
+    // Allow /trips/share/{token}/map and /trips/share/{token}/opengraph-image
+    if (
+      segments.length === 4 &&
+      (segments[3] === "map" || segments[3] === "opengraph-image")
+    ) {
       return true;
     }
     // Allow /trips/share/{token}/entries/{entryId}
-    return segments.length === 5 && segments[3] === "entries";
+    if (segments.length === 5 && segments[3] === "entries") {
+      return true;
+    }
+    // Allow /trips/share/{token}/entries/{entryId}/opengraph-image
+    return (
+      segments.length === 6 &&
+      segments[3] === "entries" &&
+      segments[5] === "opengraph-image"
+    );
   }
 
   if (pathname.startsWith("/trips/view/")) {
