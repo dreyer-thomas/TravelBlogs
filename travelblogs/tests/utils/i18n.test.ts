@@ -24,6 +24,17 @@ describe('i18n utilities', () => {
       expect(enResult).toBe('Create Trip');
       expect(deResult).toBe('Reise erstellen');
     });
+
+    it('should translate the site title and description used in share metadata', () => {
+      expect(getTranslation('site.title', 'en')).toBe('TravelBlogs');
+      expect(getTranslation('site.title', 'de')).toBe('TravelBlogs');
+      expect(getTranslation('site.description', 'en')).toBe(
+        'Media-first travel stories with private sharing.',
+      );
+      expect(getTranslation('site.description', 'de')).toBe(
+        'Reisegeschichten mit Fotos und Videos, privat geteilt.',
+      );
+    });
   });
 
   describe('formatDate', () => {

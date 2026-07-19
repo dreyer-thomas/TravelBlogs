@@ -13,3 +13,7 @@
 - No dedicated unit test file for `travelblogs/src/utils/trip-ordering.ts`'s comparator — edge cases (millisecond-identical dates, identical titles differing only by id) are only indirectly exercised via API integration tests.
 - No test proves "sorting is applied after filtering" (AC3) behaviorally [travelblogs/tests/api/trips/list-trips.test.ts, travelblogs/tests/api/trips/world-map.test.ts] — every ordering test uses trips that are all already visible to the requester; nothing confirms a trip excluded by an access rule doesn't corrupt the ordering of the remaining ones.
 - `compareTripsByStartDate` ties on exact millisecond `getTime()`, not calendar-date equality [travelblogs/src/utils/trip-ordering.ts:21] — a restored/imported trip with a non-midnight timestamp compared against a freshly created trip defaulting to midnight UTC on the same calendar day will never hit the title/id tie-break, even though both display the same date.
+
+## Deferred from: compass favicon & OG image (2026-07-19)
+
+- No PWA/Android home-screen manifest or icons added alongside the favicon/OG overhaul [travelblogs/src/app/] — `apple-icon.tsx` covers iOS "Add to Home Screen", but there's no `manifest.json`/`site.webmanifest` or 192×192/512×512 PNGs for Android/Chrome home-screen installs. Add if/when PWA installability becomes a real ask.

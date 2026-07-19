@@ -3,6 +3,10 @@ export type Locale = 'en' | 'de';
 // Translation dictionary
 const translations = {
   en: {
+    site: {
+      title: 'TravelBlogs',
+      description: 'Media-first travel stories with private sharing.',
+    },
     common: {
       trips: 'Trips',
       entries: 'Entries',
@@ -505,6 +509,10 @@ const translations = {
     },
   },
   de: {
+    site: {
+      title: 'TravelBlogs',
+      description: 'Reisegeschichten mit Fotos und Videos, privat geteilt.',
+    },
     common: {
       trips: 'Reisen',
       entries: 'Einträge',
