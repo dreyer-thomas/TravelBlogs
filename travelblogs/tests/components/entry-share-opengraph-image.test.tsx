@@ -2,6 +2,7 @@ import os from "node:os";
 import path from "node:path";
 import { promises as realFs } from "node:fs";
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
+import { mockAppFetch } from "./mock-app-fetch";
 
 const headersMock = vi.hoisted(() => vi.fn());
 const readFileMock = vi.hoisted(() => vi.fn());
@@ -78,7 +79,7 @@ describe("entry share opengraph-image", () => {
 
   it("renders the entry's cover photo as a PNG at the declared size", async () => {
     mockHeaders();
-    const fetchMock = vi.fn().mockImplementation((url: string) => {
+    const fetchMock = mockAppFetch((url) => {
       if (url.includes("/entries/")) {
         return Promise.resolve(
           new Response(
@@ -119,7 +120,7 @@ describe("entry share opengraph-image", () => {
 
   it("falls back to the first image-type media item when there's no cover image", async () => {
     mockHeaders();
-    const fetchMock = vi.fn().mockImplementation((url: string) => {
+    const fetchMock = mockAppFetch((url) => {
       if (url.includes("/entries/")) {
         return Promise.resolve(
           new Response(
@@ -161,7 +162,7 @@ describe("entry share opengraph-image", () => {
 
   it("tries the next image candidate when an earlier one can't be read", async () => {
     mockHeaders();
-    const fetchMock = vi.fn().mockImplementation((url: string) => {
+    const fetchMock = mockAppFetch((url) => {
       if (url.includes("/entries/")) {
         return Promise.resolve(
           new Response(
@@ -206,7 +207,7 @@ describe("entry share opengraph-image", () => {
 
   it("falls back to the generic compass design when there's no usable image", async () => {
     mockHeaders();
-    const fetchMock = vi.fn().mockImplementation((url: string) => {
+    const fetchMock = mockAppFetch((url) => {
       if (url.includes("/entries/")) {
         return Promise.resolve(
           new Response(
@@ -246,7 +247,9 @@ describe("entry share opengraph-image", () => {
 
   it("falls back to the generic compass design when the entry fetch rejects", async () => {
     mockHeaders();
-    const fetchMock = vi.fn().mockRejectedValue(new Error("network error"));
+    const fetchMock = mockAppFetch(() =>
+      Promise.reject(new Error("network error")),
+    );
     vi.stubGlobal("fetch", fetchMock);
 
     const { default: EntryShareOpengraphImage } = await import(
@@ -264,13 +267,15 @@ describe("entry share opengraph-image", () => {
 
   it("falls back to the generic compass design when the token/entry is invalid", async () => {
     mockHeaders();
-    const fetchMock = vi.fn().mockResolvedValue(
-      new Response(
-        JSON.stringify({
-          data: null,
-          error: { code: "NOT_FOUND", message: "Share link not found." },
-        }),
-        { status: 404 },
+    const fetchMock = mockAppFetch(() =>
+      Promise.resolve(
+        new Response(
+          JSON.stringify({
+            data: null,
+            error: { code: "NOT_FOUND", message: "Share link not found." },
+          }),
+          { status: 404 },
+        ),
       ),
     );
     vi.stubGlobal("fetch", fetchMock);
@@ -290,7 +295,7 @@ describe("entry share opengraph-image", () => {
 
   it("falls back to the generic compass design when the cover image file can't be read", async () => {
     mockHeaders();
-    const fetchMock = vi.fn().mockImplementation((url: string) => {
+    const fetchMock = mockAppFetch((url) => {
       if (url.includes("/entries/")) {
         return Promise.resolve(
           new Response(

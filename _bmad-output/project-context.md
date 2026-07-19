@@ -17,7 +17,7 @@ _This file contains critical rules and patterns that AI agents must follow when 
 
 ## Technology Stack & Versions
 
-- Next.js (create-next-app latest) + App Router
+- Next.js 16.2.10 + App Router
 - React (via Next.js)
 - TypeScript (via Next.js)
 - Tailwind CSS (via Next.js setup)

@@ -2,6 +2,7 @@ import os from "node:os";
 import path from "node:path";
 import { promises as realFs } from "node:fs";
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
+import { mockAppFetch } from "./mock-app-fetch";
 
 const headersMock = vi.hoisted(() => vi.fn());
 const readFileMock = vi.hoisted(() => vi.fn());
@@ -63,19 +64,21 @@ describe("trip share opengraph-image", () => {
 
   it("renders the trip's cover photo as a PNG at the declared size", async () => {
     mockHeaders();
-    const fetchMock = vi.fn().mockResolvedValue(
-      new Response(
-        JSON.stringify({
-          data: {
-            trip: {
-              id: "trip-1",
-              title: "Alpine Adventure",
-              coverImageUrl: "/uploads/trips/1/cover.png",
+    const fetchMock = mockAppFetch(() =>
+      Promise.resolve(
+        new Response(
+          JSON.stringify({
+            data: {
+              trip: {
+                id: "trip-1",
+                title: "Alpine Adventure",
+                coverImageUrl: "/uploads/trips/1/cover.png",
+              },
             },
-          },
-          error: null,
-        }),
-        { status: 200 },
+            error: null,
+          }),
+          { status: 200 },
+        ),
       ),
     );
     vi.stubGlobal("fetch", fetchMock);
@@ -98,19 +101,21 @@ describe("trip share opengraph-image", () => {
 
   it("falls back to the generic compass design when the trip has no cover image", async () => {
     mockHeaders();
-    const fetchMock = vi.fn().mockResolvedValue(
-      new Response(
-        JSON.stringify({
-          data: {
-            trip: {
-              id: "trip-2",
-              title: "No Cover Trip",
-              coverImageUrl: null,
+    const fetchMock = mockAppFetch(() =>
+      Promise.resolve(
+        new Response(
+          JSON.stringify({
+            data: {
+              trip: {
+                id: "trip-2",
+                title: "No Cover Trip",
+                coverImageUrl: null,
+              },
             },
-          },
-          error: null,
-        }),
-        { status: 200 },
+            error: null,
+          }),
+          { status: 200 },
+        ),
       ),
     );
     vi.stubGlobal("fetch", fetchMock);
@@ -130,13 +135,15 @@ describe("trip share opengraph-image", () => {
 
   it("falls back to the generic compass design when the share token is invalid", async () => {
     mockHeaders();
-    const fetchMock = vi.fn().mockResolvedValue(
-      new Response(
-        JSON.stringify({
-          data: null,
-          error: { code: "NOT_FOUND", message: "Share link not found." },
-        }),
-        { status: 404 },
+    const fetchMock = mockAppFetch(() =>
+      Promise.resolve(
+        new Response(
+          JSON.stringify({
+            data: null,
+            error: { code: "NOT_FOUND", message: "Share link not found." },
+          }),
+          { status: 404 },
+        ),
       ),
     );
     vi.stubGlobal("fetch", fetchMock);
@@ -156,7 +163,9 @@ describe("trip share opengraph-image", () => {
 
   it("falls back to the generic compass design when the share API fetch rejects", async () => {
     mockHeaders();
-    const fetchMock = vi.fn().mockRejectedValue(new Error("network error"));
+    const fetchMock = mockAppFetch(() =>
+      Promise.reject(new Error("network error")),
+    );
     vi.stubGlobal("fetch", fetchMock);
 
     const { default: TripShareOpengraphImage } = await import(
@@ -174,19 +183,21 @@ describe("trip share opengraph-image", () => {
 
   it("falls back to the generic compass design when the cover image file can't be read", async () => {
     mockHeaders();
-    const fetchMock = vi.fn().mockResolvedValue(
-      new Response(
-        JSON.stringify({
-          data: {
-            trip: {
-              id: "trip-3",
-              title: "Unreadable Cover Trip",
-              coverImageUrl: "/uploads/trips/1/cover.png",
+    const fetchMock = mockAppFetch(() =>
+      Promise.resolve(
+        new Response(
+          JSON.stringify({
+            data: {
+              trip: {
+                id: "trip-3",
+                title: "Unreadable Cover Trip",
+                coverImageUrl: "/uploads/trips/1/cover.png",
+              },
             },
-          },
-          error: null,
-        }),
-        { status: 200 },
+            error: null,
+          }),
+          { status: 200 },
+        ),
       ),
     );
     vi.stubGlobal("fetch", fetchMock);
