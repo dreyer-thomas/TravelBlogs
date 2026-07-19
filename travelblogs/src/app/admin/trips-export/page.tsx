@@ -10,7 +10,7 @@ import TripsExportDashboard, {
 } from "../../../components/admin/trips-export-dashboard";
 import TripsExportPageHeader from "../../../components/admin/trips-export-page-header";
 import { getLocaleFromAcceptLanguage, getTranslation } from "../../../utils/i18n";
-import { tripOrderBy } from "../../../utils/trip-ordering";
+import { compareTripsByStartDate } from "../../../utils/trip-ordering";
 
 export const dynamic = "force-dynamic";
 
@@ -41,8 +41,8 @@ const loadTripsForExport = async (
   const trips = await prisma.trip.findMany({
     ...(role === "administrator" ? {} : { where: { ownerId: userId } }),
     select,
-    orderBy: tripOrderBy,
   });
+  trips.sort(compareTripsByStartDate);
   const ownerIds = Array.from(new Set(trips.map((trip) => trip.ownerId)));
   const owners =
     ownerIds.length === 0

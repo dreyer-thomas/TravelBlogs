@@ -1,6 +1,6 @@
 # Story 15.6: Trips List Ordered by Start Date
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -42,6 +42,16 @@ so that I see the most recent trips at the top.
   - [x] API list tests for admin/creator/viewer ordering
   - [x] Admin export list ordering (if UI tests assert sequence)
   - [x] World map popup ordering test (if trip order is user-visible)
+
+### Review Findings
+
+- [x] [Review][Decision→Patch] Cross-role ordering inconsistency: admin/viewer sorted via DB-level Prisma `orderBy` (SQLite default collation), creator's merged list sorted via JS `localeCompare` (Intl "en" collation) — [travelblogs/src/app/api/trips/route.ts], [travelblogs/src/app/admin/trips-export/page.tsx]. Resolved: moved all surfaces to sort exclusively via the shared `compareTripsByStartDate` JS comparator after fetching, so tie-break collation is identical everywhere regardless of role or DB engine. `tripOrderBy`/`tripAccessOrderBy` Prisma orderBy clauses are no longer used for final response ordering (kept only as a documented, unused-for-sorting export in `trip-ordering.ts`).
+- [x] [Review][Patch] `compareTripsByStartDate` title tie-break omitted `{ sensitivity: "base" }`, contradicting the story's own Dev Notes [travelblogs/src/utils/trip-ordering.ts:25]. Fixed: added the option.
+- [x] [Review][Patch] No explanatory comment on the `id desc` tie-break direction, despite three review layers independently flagging it as a future "silent regression" risk if someone "corrects" it to ascending [travelblogs/src/utils/trip-ordering.ts]. Fixed: added comments explaining both the DB-vs-JS sorting split and the `id desc` rationale.
+- [x] [Review][Defer] Admin trips-export page's data-loading/ordering logic has zero test coverage [travelblogs/src/app/admin/trips-export/page.tsx] — deferred, pre-existing. `trips-export.test.tsx` only exercises the presentational `TripsExportDashboard` component with hand-built props; `loadTripsForExport` itself is never tested.
+- [x] [Review][Defer] No dedicated unit test file for `travelblogs/src/utils/trip-ordering.ts`'s comparator — deferred, pre-existing. Edge cases (millisecond-identical dates, identical titles differing only by id) are only indirectly exercised via API integration tests.
+- [x] [Review][Defer] No test proves "sorting is applied after filtering" (AC3) behaviorally [travelblogs/tests/api/trips/list-trips.test.ts, travelblogs/tests/api/trips/world-map.test.ts] — deferred, pre-existing. Every ordering test uses trips that are all already visible to the requester; nothing confirms a trip excluded by an access rule doesn't corrupt the ordering of the remaining ones.
+- [x] [Review][Defer] `compareTripsByStartDate` ties on exact millisecond `getTime()`, not calendar-date equality [travelblogs/src/utils/trip-ordering.ts:21] — deferred, pre-existing. A restored/imported trip with a non-midnight timestamp compared against a freshly created trip defaulting to midnight UTC on the same calendar day will never hit the title/id tie-break, even though both display the same date.
 
 ## Dev Notes
 
@@ -169,3 +179,4 @@ N/A
 ### Change Log
 
 - 2026-02-08: Updated trip ordering to startDate desc/title asc/id desc across list/map/export; added ordering tests.
+- 2026-07-19 (Code Review): Resolved cross-role ordering inconsistency by sorting all surfaces (admin/viewer/creator list, admin export) exclusively via the shared JS comparator instead of a DB-level Prisma orderBy; added missing `localeCompare` `sensitivity: "base"` option and tie-break rationale comments. Deferred 3 test-coverage gaps to deferred-work.md. Full suite: 814 passed, 1 pre-existing skip.

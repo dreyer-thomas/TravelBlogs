@@ -5,11 +5,7 @@ import { z } from "zod";
 import { prisma } from "../../../utils/db";
 import { isCoverImageUrl } from "../../../utils/media";
 import { ensureActiveAccount, isAdminOrCreator } from "../../../utils/roles";
-import {
-  compareTripsByStartDate,
-  tripAccessOrderBy,
-  tripOrderBy,
-} from "../../../utils/trip-ordering";
+import { compareTripsByStartDate } from "../../../utils/trip-ordering";
 
 export const runtime = "nodejs";
 
@@ -144,7 +140,6 @@ export const GET = async (request: NextRequest) => {
     if (isAdmin) {
       const trips = await prisma.trip.findMany({
         select: tripSelection,
-        orderBy: tripOrderBy,
       });
 
       tripList = trips.map((trip: (typeof trips)[number]) => ({
@@ -191,9 +186,7 @@ export const GET = async (request: NextRequest) => {
         }
         tripsById.set(access.trip.id, { trip: access.trip, canEditTrip });
       });
-      tripList = Array.from(tripsById.values()).sort(
-        (a, b) => compareTripsByStartDate(a.trip, b.trip),
-      );
+      tripList = Array.from(tripsById.values());
     } else {
       const invitedAccess = await prisma.tripAccess.findMany({
         where: {
@@ -208,7 +201,6 @@ export const GET = async (request: NextRequest) => {
           },
           canContribute: true,
         },
-        orderBy: tripAccessOrderBy,
       });
 
       tripList = invitedAccess.map((access) => ({
@@ -216,6 +208,8 @@ export const GET = async (request: NextRequest) => {
         canEditTrip: Boolean(access.canContribute),
       }));
     }
+
+    tripList.sort((a, b) => compareTripsByStartDate(a.trip, b.trip));
 
     return NextResponse.json(
       {
