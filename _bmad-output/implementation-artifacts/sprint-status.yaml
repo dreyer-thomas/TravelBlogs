@@ -47,7 +47,7 @@ development_status:
   0-4-dependency-vulnerability-gate: review
   0-5-upgrade-prisma-dev-tooling-to-resolve-vulnerable-dependencies: done
   0-6-upgrade-nextjs-to-resolve-vulnerable-dependencies: done
-  0-7-resolve-next-auths-vulnerable-uuid-dependency: ready-for-dev
+  0-7-resolve-next-auths-vulnerable-uuid-dependency: done
   epic-0-retrospective: done
 
   epic-1: done
