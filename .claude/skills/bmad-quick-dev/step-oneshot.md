@@ -18,6 +18,10 @@ Follow `./sync-sprint-status.md` with `{target_status}` = `in-progress`.
 
 Implement the clarified intent directly.
 
+### Build & Compile Verification
+
+Run the project's production build command (e.g. `npm run build`) and, if a dedicated typecheck script exists (e.g. `npm run typecheck`), that too. If either fails, fix the errors before proceeding — never hand off a one-shot change that fails to compile.
+
 ### Review
 
 Launch Blind Hunter without prior conversation context. If no subagents are available, generate one review prompt file in `{implementation_artifacts}` and HALT. Ask the human to run it in a separate session and paste back the findings.

@@ -8,6 +8,7 @@
     "start": "NODE_ENV=production node server.js",
     "start:https": "NODE_ENV=production node server.js",
     "lint": "eslint",
+    "typecheck": "tsc --noEmit",
     "test": "vitest run"
   },
   "dependencies": {

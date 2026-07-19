@@ -32,6 +32,10 @@ Hand `{spec_file}` to a subagent/task and let it implement. If no subagents are 
 
 **Path formatting rule:** Any markdown links written into `{spec_file}` must use paths relative to `{spec_file}`'s directory so they are clickable in VS Code. Any file paths displayed in terminal/conversation output must use CWD-relative format with `:line` notation (e.g., `src/path/file.ts:42`) for terminal clickability. No leading `/` in either case.
 
+### Build & Compile Verification
+
+Run the project's production build command (e.g. `npm run build`) and, if a dedicated typecheck script exists (e.g. `npm run typecheck`), that too. If either fails, fix the errors before proceeding — never leave this step with a spec that fails to compile. Dev-mode/test success is not a substitute for this check.
+
 ### Tasks & Acceptance Verification
 
 Before leaving this step, verify every task in the `## Tasks & Acceptance` section of `{spec_file}` is complete and every acceptance criterion is satisfied. Mark each finished task `[x]`. If any task is not done or any acceptance criterion is not satisfied, finish the missing work before proceeding.

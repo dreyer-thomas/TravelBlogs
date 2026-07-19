@@ -7,6 +7,7 @@ required-inputs:
   - 'Completed Tasks/Subtasks section with all items marked [x]'
   - 'Updated File List section with all changed files'
   - 'Updated Dev Agent Record with implementation notes'
+  - 'Production build output (project build command, e.g. `npm run build`) with zero errors'
 optional-inputs:
   - 'Test results output'
   - 'CI logs'
@@ -16,6 +17,7 @@ validation-rules:
   - 'All implementation requirements from story Dev Notes must be satisfied'
   - 'Definition of Done checklist must pass completely'
   - 'Enhanced story context must contain sufficient technical guidance'
+  - 'Production build (and typecheck, when a dedicated script exists) must succeed with zero errors before status may move to review'
 ---
 
 # 🎯 Enhanced Definition of Done Checklist
@@ -46,6 +48,8 @@ validation-rules:
 - [ ] **Regression Prevention:** ALL existing tests pass (no regressions introduced)
 - [ ] **Code Quality:** Linting and static checks pass when configured in project
 - [ ] **Test Framework Compliance:** Tests use project's testing frameworks and patterns from Dev Notes
+- [ ] **Production Build Passes:** The project's build command (e.g. `npm run build`) completes with zero errors — this is the authoritative check that catches compile/type errors before they reach production
+- [ ] **Type Check Passes:** The project's dedicated typecheck command (e.g. `npm run typecheck`), when one exists, reports zero errors
 
 ## 📝 Documentation & Tracking
 

@@ -352,9 +352,13 @@ Activation is complete. If `activation_steps_prepend` or `activation_steps_appen
     <action>Run all existing tests to ensure no regressions</action>
     <action>Run the new tests to verify implementation correctness</action>
     <action>Run linting and code quality checks if configured in project</action>
+    <action>Run the project's typecheck command if one exists (e.g. `npm run typecheck`)</action>
+    <action>Run the project's production build command (e.g. `npm run build`) — this is the authoritative check for compile errors that dev-mode/tests can miss</action>
     <action>Validate implementation meets ALL story acceptance criteria; enforce quantitative thresholds explicitly</action>
     <action if="regression tests fail">STOP and fix before continuing - identify breaking changes immediately</action>
     <action if="new tests fail">STOP and fix before continuing - ensure implementation correctness</action>
+    <action if="typecheck fails">STOP and fix before continuing - resolve type errors immediately</action>
+    <action if="production build fails">STOP and fix before continuing - resolve build/compile errors immediately, do not defer to a later story</action>
   </step>
 
   <step n="8" goal="Validate and mark task complete ONLY when fully done">
@@ -411,6 +415,7 @@ Activation is complete. If `activation_steps_prepend` or `activation_steps_appen
   <step n="9" goal="Story completion and mark for review" tag="sprint-status">
     <action>Verify ALL tasks and subtasks are marked [x] (re-scan the story document now)</action>
     <action>Run the full regression suite (do not skip)</action>
+    <action>Run the project's typecheck command if one exists, and the production build command (e.g. `npm run build`) — do not skip, even if step 7 already ran it earlier in the session</action>
     <action>Confirm File List includes every changed file</action>
     <action>Execute enhanced definition-of-done validation</action>
     <action>Update the story Status to: "review"</action>
@@ -424,6 +429,7 @@ Activation is complete. If `activation_steps_prepend` or `activation_steps_appen
       - End-to-end tests for critical flows added when story demands them
       - All tests pass (no regressions, new tests successful)
       - Code quality checks pass (linting, static analysis if configured)
+      - Production build succeeds with zero errors (project build command, e.g. `npm run build`); typecheck passes when a dedicated script exists
       - File List includes every new/modified/deleted file (relative paths)
       - Dev Agent Record contains implementation notes
       - Change Log includes summary of changes
@@ -455,6 +461,7 @@ Activation is complete. If `activation_steps_prepend` or `activation_steps_appen
     <!-- Final validation gates -->
     <action if="any task is incomplete">HALT - Complete remaining tasks before marking ready for review</action>
     <action if="regression failures exist">HALT - Fix regression issues before completing</action>
+    <action if="production build fails or typecheck fails">HALT - Fix build/type errors before marking ready for review; a story must never move to "review" with a broken production build</action>
     <action if="File List is incomplete">HALT - Update File List with all changed files</action>
     <action if="definition-of-done validation fails">HALT - Address DoD failures before completing</action>
   </step>
