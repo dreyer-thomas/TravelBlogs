@@ -6,6 +6,7 @@ import { Readable } from "node:stream";
 import ZipStream from "zip-stream";
 
 import { prisma } from "../../../../../utils/db";
+import { resolveUploadFilePath } from "../../../../../utils/media";
 import { ensureActiveAccount } from "../../../../../utils/roles";
 import {
   buildExportMeta,
@@ -57,13 +58,13 @@ const toZipName = (title: string, tripId: string) => {
 };
 
 const mapUploadUrlToPath = (url: string, uploadRoot: string) => {
-  if (!url.startsWith("/uploads/")) {
+  const absolute = resolveUploadFilePath(url);
+  if (!absolute) {
     return null;
   }
-  const relative = url.replace(/^\/uploads\//, "");
   return {
-    relative,
-    absolute: path.join(uploadRoot, relative),
+    relative: path.relative(uploadRoot, absolute),
+    absolute,
   };
 };
 

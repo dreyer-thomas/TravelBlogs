@@ -7,6 +7,10 @@ const translations = {
       title: 'TravelBlogs',
       description: 'Media-first travel stories with private sharing.',
     },
+    share: {
+      tripDescription: 'Explore {{title}} on TravelBlogs.',
+      entryDescription: '{{entryTitle}} — a story from {{tripTitle}} on TravelBlogs.',
+    },
     common: {
       trips: 'Trips',
       entries: 'Entries',
@@ -512,6 +516,10 @@ const translations = {
     site: {
       title: 'TravelBlogs',
       description: 'Reisegeschichten mit Fotos und Videos, privat geteilt.',
+    },
+    share: {
+      tripDescription: 'Entdecke {{title}} auf TravelBlogs.',
+      entryDescription: '{{entryTitle}} — eine Geschichte aus {{tripTitle}} auf TravelBlogs.',
     },
     common: {
       trips: 'Reisen',

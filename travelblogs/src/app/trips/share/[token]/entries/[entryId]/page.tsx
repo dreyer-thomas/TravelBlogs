@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { unstable_noStore as noStore } from "next/cache";
 import { headers } from "next/headers";
@@ -8,6 +9,10 @@ import SharedEntryError from "../../../../../../components/entries/shared-entry-
 import type { EntryApiData } from "../../../../../../utils/entry-reader";
 import { mapEntryToReader } from "../../../../../../utils/entry-reader";
 import { getRequestBaseUrl } from "../../../../../../utils/request-base-url";
+import {
+  getLocaleFromAcceptLanguage,
+  getTranslation,
+} from "../../../../../../utils/i18n";
 import type { EntryLocation } from "../../../../../../utils/entry-location";
 
 export const dynamic = "force-dynamic";
@@ -97,6 +102,76 @@ const loadSharedTripLocations = async (
     error: null,
   };
 };
+
+const loadSharedTripTitle = async (
+  baseUrl: string,
+  token: string,
+): Promise<string | null> => {
+  const response = await fetch(`${baseUrl}/api/trips/share/${token}`, {
+    method: "GET",
+    cache: "no-store",
+  });
+
+  const body = await response.json().catch(() => null);
+
+  if (!response.ok || body?.error || !body?.data?.trip) {
+    return null;
+  }
+
+  return (body.data.trip.title as string | undefined) ?? null;
+};
+
+export async function generateMetadata({
+  params,
+}: SharedEntryPageProps): Promise<Metadata> {
+  const { token, entryId } = await params;
+  const headersList = await headers();
+  const baseUrl = getRequestBaseUrl(headersList);
+  const locale = getLocaleFromAcceptLanguage(
+    headersList.get("accept-language"),
+  );
+  const fallbackTitle = getTranslation("site.title", locale);
+  const fallbackDescription = getTranslation("site.description", locale);
+
+  const { data } = baseUrl
+    ? await loadSharedEntry(baseUrl, token, entryId)
+    : { data: null };
+
+  if (!data) {
+    return {
+      title: fallbackTitle,
+      description: fallbackDescription,
+      openGraph: { title: fallbackTitle, description: fallbackDescription },
+      twitter: {
+        card: "summary_large_image",
+        title: fallbackTitle,
+        description: fallbackDescription,
+      },
+    };
+  }
+
+  const tripTitle = baseUrl ? await loadSharedTripTitle(baseUrl, token) : null;
+  const title = tripTitle ? `${data.title} — ${tripTitle}` : data.title;
+  const description = getTranslation("share.entryDescription", locale)
+    .replace("{{entryTitle}}", data.title)
+    .replace("{{tripTitle}}", tripTitle ?? fallbackTitle);
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      type: "article",
+      locale: locale === "de" ? "de_DE" : "en_US",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+    },
+  };
+}
 
 const SharedEntryPage = async ({ params }: SharedEntryPageProps) => {
   noStore();

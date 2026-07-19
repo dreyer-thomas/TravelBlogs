@@ -9,6 +9,7 @@ import { pipeline } from "node:stream/promises";
 import StreamZip from "node-stream-zip";
 
 import { prisma } from "../../../../utils/db";
+import { resolveUploadFilePath } from "../../../../utils/media";
 import { ensureActiveAccount, isAdminRole } from "../../../../utils/roles";
 import { resolveUploadRoot } from "../../../../utils/trip-export";
 import {
@@ -46,10 +47,11 @@ const getUser = async (request: NextRequest) => {
 };
 
 const mapUploadUrlToRelativePath = (url: string) => {
-  if (!url.startsWith("/uploads/")) {
+  const absolute = resolveUploadFilePath(url);
+  if (!absolute) {
     return null;
   }
-  return url.replace(/^\/uploads\//, "");
+  return path.relative(resolveUploadRoot(), absolute);
 };
 
 type StreamZipAsync = {

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { mapEntryToReader } from "../../src/utils/entry-reader";
+import { inferMediaType, mapEntryToReader } from "../../src/utils/entry-reader";
 
 describe("mapEntryToReader", () => {
   it("maps API entry fields to EntryReader props with camelCase fields", () => {
@@ -49,5 +49,23 @@ describe("mapEntryToReader", () => {
         nextEntryDate: null,
       },
     });
+  });
+});
+
+describe("inferMediaType", () => {
+  it("classifies known image extensions", () => {
+    expect(inferMediaType("/uploads/entries/1/photo.jpg")).toBe("image");
+    expect(inferMediaType("/uploads/entries/1/photo.png")).toBe("image");
+    expect(inferMediaType("/uploads/entries/1/photo.webp")).toBe("image");
+  });
+
+  it("classifies known video extensions", () => {
+    expect(inferMediaType("/uploads/entries/1/clip.mp4")).toBe("video");
+    expect(inferMediaType("/uploads/entries/1/clip.mov")).toBe("video");
+  });
+
+  it("returns null for unknown or missing extensions", () => {
+    expect(inferMediaType("/uploads/entries/1/no-extension")).toBeNull();
+    expect(inferMediaType("/uploads/entries/1/file.txt")).toBeNull();
   });
 });

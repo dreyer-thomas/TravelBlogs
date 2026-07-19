@@ -75,12 +75,13 @@ development_status:
   3-5-transfer-trip-ownership: done
   epic-3-retrospective: done
 
-  epic-4: done
+  epic-4: in-progress
   4-1-create-shareable-trip-link: done
   4-2-regenerate-shareable-link: done
   4-3-revoke-shareable-link: done
   4-4-discreet-share-ui: done
   4-5-invalidate-shared-entry-pages-on-revoke: done
+  4-6-contextual-share-link-preview-images: review
   epic-4-retrospective: done
 
   epic-5: done

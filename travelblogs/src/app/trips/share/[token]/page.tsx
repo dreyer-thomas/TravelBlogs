@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { unstable_noStore as noStore } from "next/cache";
 import { headers } from "next/headers";
@@ -8,6 +9,7 @@ import SharedTripGuard from "../../../../components/trips/shared-trip-guard";
 import SharedTripError from "../../../../components/trips/shared-trip-error";
 import { getRequestBaseUrl } from "../../../../utils/request-base-url";
 import { authOptions } from "../../../../utils/auth-options";
+import { getLocaleFromAcceptLanguage, getTranslation } from "../../../../utils/i18n";
 import type { TripOverviewEntry, TripOverviewTrip } from "../../../../types/trip-overview";
 
 export const dynamic = "force-dynamic";
@@ -51,6 +53,60 @@ const loadSharedTrip = async (
     error: null,
   };
 };
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ token: string }> | { token: string };
+}): Promise<Metadata> {
+  const { token } = await params;
+  const headersList = await headers();
+  const baseUrl = getRequestBaseUrl(headersList);
+  const locale = getLocaleFromAcceptLanguage(
+    headersList.get("accept-language"),
+  );
+  const fallbackTitle = getTranslation("site.title", locale);
+  const fallbackDescription = getTranslation("site.description", locale);
+
+  const { data } = baseUrl
+    ? await loadSharedTrip(baseUrl, token)
+    : { data: null };
+
+  if (!data) {
+    return {
+      title: fallbackTitle,
+      description: fallbackDescription,
+      openGraph: { title: fallbackTitle, description: fallbackDescription },
+      twitter: {
+        card: "summary_large_image",
+        title: fallbackTitle,
+        description: fallbackDescription,
+      },
+    };
+  }
+
+  const title = data.trip.title;
+  const description = getTranslation("share.tripDescription", locale).replace(
+    "{{title}}",
+    title,
+  );
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      type: "website",
+      locale: locale === "de" ? "de_DE" : "en_US",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+    },
+  };
+}
 
 const SharedTripPage = async ({
   params,

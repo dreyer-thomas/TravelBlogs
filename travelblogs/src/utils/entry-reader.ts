@@ -67,7 +67,7 @@ export type EntryReaderData = {
 const imageExtensions = new Set(["jpg", "jpeg", "png", "webp", "gif", "avif"]);
 const videoExtensions = new Set(["mp4", "webm", "mov", "m4v"]);
 
-const inferMediaType = (url: string): "image" | "video" | null => {
+export const inferMediaType = (url: string): "image" | "video" | null => {
   const extension = url.split(".").pop()?.toLowerCase();
   if (!extension) {
     return null;

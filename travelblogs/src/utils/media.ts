@@ -1,3 +1,7 @@
+import path from "node:path";
+
+import { resolveUploadRoot } from "./trip-export";
+
 export const COVER_IMAGE_MAX_BYTES = 15 * 1024 * 1024;
 export const VIDEO_MAX_BYTES = 100 * 1024 * 1024;
 export const COVER_IMAGE_FIELD_NAME = "file";
@@ -102,4 +106,25 @@ export const isCoverImageUrl = (value: string) => {
 
 export const createCoverPreviewUrl = (file: File) => {
   return URL.createObjectURL(file);
+};
+
+export const resolveUploadFilePath = (url: string): string | null => {
+  if (!url.startsWith("/uploads/")) {
+    return null;
+  }
+  const relative = url.replace(/^\/uploads\//, "");
+  return path.join(resolveUploadRoot(), relative);
+};
+
+const IMAGE_MIME_TYPES_BY_EXTENSION: Record<string, string> = {
+  jpg: "image/jpeg",
+  jpeg: "image/jpeg",
+  png: "image/png",
+  webp: "image/webp",
+};
+
+export const getImageMimeTypeFromUrl = (url: string): string | null => {
+  const sanitized = url.split("?")[0]?.split("#")[0] ?? "";
+  const extension = sanitized.split(".").pop()?.toLowerCase() ?? "";
+  return IMAGE_MIME_TYPES_BY_EXTENSION[extension] ?? null;
 };

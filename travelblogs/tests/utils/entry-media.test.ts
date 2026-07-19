@@ -1,8 +1,12 @@
-import { describe, expect, it } from "vitest";
+import path from "node:path";
+
+import { afterEach, describe, expect, it } from "vitest";
 
 import {
   COVER_IMAGE_MAX_BYTES,
   VIDEO_MAX_BYTES,
+  getImageMimeTypeFromUrl,
+  resolveUploadFilePath,
 } from "../../src/utils/media";
 import { validateEntryMediaFile } from "../../src/utils/entry-media";
 
@@ -70,5 +74,47 @@ describe("entry media validation", () => {
     const file = buildFile(1024, "video/quicktime");
 
     expect(validateEntryMediaFile(file)).toBeNull();
+  });
+});
+
+describe("resolveUploadFilePath", () => {
+  afterEach(() => {
+    delete process.env.MEDIA_UPLOAD_DIR;
+  });
+
+  it("returns null for URLs outside /uploads/", () => {
+    expect(resolveUploadFilePath("/static/logo.png")).toBeNull();
+    expect(resolveUploadFilePath("https://example.com/uploads/photo.jpg")).toBeNull();
+  });
+
+  it("joins the upload root with the URL's relative remainder", () => {
+    process.env.MEDIA_UPLOAD_DIR = "/tmp/uploads-root";
+
+    expect(resolveUploadFilePath("/uploads/trips/1/cover.jpg")).toBe(
+      path.join("/tmp/uploads-root", "trips/1/cover.jpg"),
+    );
+  });
+});
+
+describe("getImageMimeTypeFromUrl", () => {
+  it("maps known image extensions to mime types", () => {
+    expect(getImageMimeTypeFromUrl("/uploads/trips/1/cover.jpg")).toBe(
+      "image/jpeg",
+    );
+    expect(getImageMimeTypeFromUrl("/uploads/trips/1/cover.jpeg")).toBe(
+      "image/jpeg",
+    );
+    expect(getImageMimeTypeFromUrl("/uploads/trips/1/cover.png")).toBe(
+      "image/png",
+    );
+    expect(getImageMimeTypeFromUrl("/uploads/trips/1/cover.webp")).toBe(
+      "image/webp",
+    );
+  });
+
+  it("returns null for non-image or unknown extensions", () => {
+    expect(getImageMimeTypeFromUrl("/uploads/trips/1/clip.mp4")).toBeNull();
+    expect(getImageMimeTypeFromUrl("/uploads/trips/1/photo.heic")).toBeNull();
+    expect(getImageMimeTypeFromUrl("/uploads/trips/1/no-extension")).toBeNull();
   });
 });

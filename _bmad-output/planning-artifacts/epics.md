@@ -1205,6 +1205,49 @@ Enable sharing trips with others via links.
 **Priority:** High - Security and consistency requirement
 **Story Points:** 2
 
+### Story 4.6: Contextual Share-Link Preview Images
+
+**As a** creator sharing a trip or entry link
+**I want** the link preview (in WhatsApp/iMessage/Slack, etc.) to show the actual shared content's photo and title
+**So that** recipients see a meaningful preview instead of a generic site icon
+
+**Acceptance Criteria:**
+
+#### AC 1: Entry Share Preview Shows Entry Content
+**Given** a day entry has a cover image or media photo
+**When** someone pastes that entry's share link into a messaging app
+**Then** the link preview shows that entry's photo, with the entry's title and the trip's title as a byline
+
+#### AC 2: Trip Share Preview Shows Trip Content
+**Given** a trip has a cover image
+**When** someone pastes the trip's share link
+**Then** the link preview shows the trip's cover photo and the trip's title
+
+#### AC 3: Graceful Fallback When No Image Exists
+**Given** an entry or trip has no usable image (no cover image, and no image-type media)
+**When** someone pastes its share link
+**Then** the link preview falls back to the generic TravelBlogs compass design, with no error
+
+#### AC 4: Page Title Reflects Content
+**Given** either share page is loaded directly in a browser
+**When** the page head is inspected
+**Then** the tab title and meta description reflect the entry's/trip's own title, not the generic site-wide copy
+
+**Technical Requirements:**
+- Add `generateMetadata` + `opengraph-image.tsx` to `src/app/trips/share/[token]/entries/[entryId]/` and `src/app/trips/share/[token]/`
+- Reuse hero-image precedence (`coverImageUrl` else first image-type media item) via an exported `inferMediaType` from `src/utils/entry-reader.ts`
+- Add a `resolveUploadFilePath` helper to `src/utils/media.ts`, consolidating URL→filesystem-path logic currently duplicated inline in the trip export/restore routes
+- Read the resolved file from disk and embed as a base64 data URI in `ImageResponse` (`next/og`) — no new dependencies, no network fetch
+- Reuse the existing `CompassMark` component + brand palette for the fallback (built during this session's sitewide favicon/OG work)
+
+**Testing Requirements:**
+- Unit tests for both `opengraph-image` routes: valid image → PNG; no image → fallback; unreadable file → fallback (no 500)
+- Unit tests for the new `resolveUploadFilePath` and exported `inferMediaType`
+
+**Source:** User feedback following sitewide favicon/OG rollout (2026-07-19)
+**Priority:** Medium
+**Story Points:** 3
+
 ---
 
 ## Epic 5: Multi-User Access Control
