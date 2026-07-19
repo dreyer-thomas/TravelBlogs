@@ -1313,7 +1313,10 @@ describe("EntryReader", () => {
     expect(screen.queryByText("Location")).not.toBeInTheDocument();
   });
 
-  it("gracefully handles invalid Tiptap JSON with fallback rendering", async () => {
+  it("gracefully handles syntactically invalid JSON by rendering it as plain text, without dropping content", async () => {
+    // Malformed JSON syntax (unquoted key) fails JSON.parse, so
+    // detectEntryFormat falls back to 'plain' and the raw string is rendered
+    // verbatim via plainTextToTiptapJson rather than being silently dropped.
     const invalidJson = '{"type":"doc","content":[{invalid}]}';
 
     const { container } = render(
@@ -1341,9 +1344,50 @@ describe("EntryReader", () => {
     // Should render without crashing
     expect(screen.getByText("Invalid JSON Entry")).toBeInTheDocument();
 
-    // Should attempt to display content (either as plain text fallback or empty state)
-    // The exact behavior depends on implementation, but it shouldn't crash
+    // The raw text must actually be visible, not silently dropped — this
+    // would fail if the fallback ever rendered an empty/blank body.
     expect(container.querySelector(".ProseMirror")).toBeInTheDocument();
+    expect(container.textContent).toContain(invalidJson);
+  });
+
+  it("does not crash on structurally invalid Tiptap JSON (unknown node type), but currently drops the body content silently (known gap, see deferred-work.md)", async () => {
+    // Valid JSON syntax with a top-level {type:"doc", content:[...]} shape
+    // is enough for isTiptapJson() to classify this as 'tiptap', so unlike
+    // syntactically invalid JSON it is NOT routed through the plain-text
+    // fallback. Tiptap/ProseMirror then rejects the unrecognized node type
+    // internally (logs "[tiptap warn]: Invalid content") and renders an
+    // empty document instead of the plain-text-style raw fallback. The app
+    // does not crash, but the entry body is silently blank with no
+    // indication to the reader that content failed to render.
+    const structurallyInvalidJson = JSON.stringify({
+      type: "doc",
+      content: [{ type: "not-a-real-node", content: [{ type: "text", text: "Broken" }] }],
+    });
+
+    const { container } = render(
+      <LocaleProvider>
+        <EntryReader
+          entry={{
+            id: "entry-structurally-invalid-json",
+            title: "Structurally Invalid JSON Entry",
+            body: structurallyInvalidJson,
+            createdAt: "2025-05-03T12:00:00.000Z",
+            tags: [],
+            media: [],
+          }}
+        />
+      </LocaleProvider>,
+    );
+
+    // Does not crash the page.
+    expect(screen.getByText("Structurally Invalid JSON Entry")).toBeInTheDocument();
+    expect(container.querySelector(".ProseMirror")).toBeInTheDocument();
+
+    // Documents current (imperfect) behavior: the invalid node content is
+    // NOT shown to the reader in any form. If this ever starts failing
+    // because the editor renders *something* for unknown nodes, that's an
+    // improvement — update this assertion accordingly.
+    expect(container.textContent).not.toContain("Broken");
   });
 
   it("should render unified header above hero in shared view without dark overlay", () => {

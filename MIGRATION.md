@@ -303,6 +303,15 @@ pm2 restart travelblogs  # or your restart command
 - ✅ Existing entries display correctly
 - ✅ Tags feature still works (Epic 8)
 
+## Prior Epic Migrations (Archived Reference)
+
+Historical migration/rollback commands from earlier epics, kept for reference in case a multi-epic rollback is ever needed. Epic 9 itself requires no schema migration (see Database Changes above).
+
+- **Epic 7 (Location Features)** — migration `20260110183000_add_entry_location_fields`
+  Rollback: `npx prisma migrate resolve --rolled-back 20260110183000_add_entry_location_fields`
+- **Epic 8.1 (Entry Tags)** — migration `20260112233000_add_entry_tags`
+  Rollback: `npx prisma migrate resolve --rolled-back 20260112233000_add_entry_tags`
+
 ## Known Issues & Troubleshooting
 
 ### Issue 1: Editor Not Appearing
@@ -430,9 +439,9 @@ Should find: `travelblogs/src/app/api/entries/[id]/route.ts`
 
 ## Security Notes
 
-- ✅ **XSS Protection**: Tiptap sanitizes HTML output
+- ⚠️ **XSS Protection**: Tiptap's ProseMirror schema restricts output to known node/mark types, which limits arbitrary HTML injection risk. This has not been verified with an automated test in this codebase — treat as unconfirmed until covered.
 - ✅ **JSON Validation**: Format detection validates JSON structure
-- ✅ **No user-generated HTML**: Only Tiptap-generated markup allowed
+- ✅ **No raw HTML input**: Content is authored through Tiptap's structured editor, not a raw HTML field
 - ✅ **Link attributes**: Links open in same tab (no `target="_blank"` for security)
 
 ## Testing Checklist

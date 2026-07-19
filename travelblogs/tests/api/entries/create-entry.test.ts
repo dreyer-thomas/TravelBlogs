@@ -523,9 +523,30 @@ describe("POST /api/entries", () => {
     const parsed = JSON.parse(createdEntry?.text ?? "{}");
 
     expect(parsed.type).toBe("doc");
-    const contentNodes = parsed.content as Array<{ type?: string }>;
+    const contentNodes = parsed.content as Array<{
+      type?: string;
+      attrs?: { textAlign?: string };
+      content?: Array<{ text?: string; marks?: Array<{ type?: string; attrs?: { href?: string } }> }>;
+    }>;
     expect(contentNodes.some((node) => node.type === "heading")).toBe(true);
     expect(contentNodes.some((node) => node.type === "bulletList")).toBe(true);
+    expect(contentNodes.some((node) => node.type === "orderedList")).toBe(true);
+
+    const linkParagraph = contentNodes.find((node) =>
+      node.content?.some((inline) =>
+        inline.marks?.some((mark) => mark.type === "link"),
+      ),
+    );
+    const linkMark = linkParagraph?.content
+      ?.flatMap((inline) => inline.marks ?? [])
+      .find((mark) => mark.type === "link");
+    expect(linkMark?.attrs?.href).toBe("https://example.com");
+
+    const alignedParagraph = contentNodes.find(
+      (node) => node.attrs?.textAlign === "right",
+    );
+    expect(alignedParagraph).toBeDefined();
+    expect(alignedParagraph?.content?.[0]?.text).toBe("Aligned text");
   });
 
   it("allows setting the entry date explicitly", async () => {
