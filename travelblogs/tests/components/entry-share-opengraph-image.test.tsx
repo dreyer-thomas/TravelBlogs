@@ -159,6 +159,51 @@ describe("entry share opengraph-image", () => {
     expect(buffer.byteLength).toBeGreaterThan(0);
   });
 
+  it("tries the next image candidate when an earlier one can't be read", async () => {
+    mockHeaders();
+    const fetchMock = vi.fn().mockImplementation((url: string) => {
+      if (url.includes("/entries/")) {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              data: {
+                id: "entry-5",
+                tripId: "trip-1",
+                title: "Second candidate",
+                coverImageUrl: null,
+                media: [
+                  { id: "media-1", url: "/uploads/entries/1/missing.png" },
+                  { id: "media-2", url: "/uploads/entries/1/photo.png" },
+                ],
+              },
+              error: null,
+            }),
+            { status: 200 },
+          ),
+        );
+      }
+      return Promise.resolve(tripApiResponse());
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    readFileMock.mockRejectedValueOnce(new Error("ENOENT"));
+
+    const { default: EntryShareOpengraphImage } = await import(
+      "../../src/app/trips/share/[token]/entries/[entryId]/opengraph-image"
+    );
+
+    const response = await EntryShareOpengraphImage({
+      params: { token: "token-1", entryId: "entry-5" },
+    });
+
+    expect(response.headers.get("content-type")).toBe("image/png");
+    expect(readFileMock).toHaveBeenCalledTimes(2);
+    // second candidate resolved -> proceeds to fetch the trip title for the byline
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+
+    const buffer = await response.arrayBuffer();
+    expect(buffer.byteLength).toBeGreaterThan(0);
+  });
+
   it("falls back to the generic compass design when there's no usable image", async () => {
     mockHeaders();
     const fetchMock = vi.fn().mockImplementation((url: string) => {
@@ -195,6 +240,24 @@ describe("entry share opengraph-image", () => {
     // no image found -> falls back before ever fetching the trip title
     expect(fetchMock).toHaveBeenCalledTimes(1);
 
+    const buffer = await response.arrayBuffer();
+    expect(buffer.byteLength).toBeGreaterThan(0);
+  });
+
+  it("falls back to the generic compass design when the entry fetch rejects", async () => {
+    mockHeaders();
+    const fetchMock = vi.fn().mockRejectedValue(new Error("network error"));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { default: EntryShareOpengraphImage } = await import(
+      "../../src/app/trips/share/[token]/entries/[entryId]/opengraph-image"
+    );
+
+    const response = await EntryShareOpengraphImage({
+      params: { token: "token-1", entryId: "entry-1" },
+    });
+
+    expect(response.headers.get("content-type")).toBe("image/png");
     const buffer = await response.arrayBuffer();
     expect(buffer.byteLength).toBeGreaterThan(0);
   });

@@ -4,7 +4,7 @@ baseline_commit: 41f695cd93c65916d627b95c96bb10483fd539f3
 
 # Story 4.6: Contextual Share-Link Preview Images
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -54,6 +54,18 @@ so that recipients see a meaningful preview instead of a generic site icon.
 - [x] Verification (all ACs)
   - [x] Run the full test suite — no regressions
   - [x] Run `npm run typecheck` and `npm run build` — both must pass with zero errors before this story can move to review (project-wide gate added 2026-07-19)
+
+### Review Findings
+
+- [x] [Review][Patch] Path traversal in `resolveUploadFilePath` is now reachable via the two new unauthenticated public share-preview routes [travelblogs/src/utils/media.ts:111-117] — fixed: resolved path is now verified to stay within the upload root before being returned; added regression test in `tests/utils/entry-media.test.ts`.
+- [x] [Review][Patch] Unhandled `fetch()`/`ImageResponse` rejections can 500 instead of degrading to the fallback, violating the story's explicit "never throw/500" requirement [travelblogs/src/app/trips/share/[token]/opengraph-image.tsx:22, travelblogs/src/app/trips/share/[token]/entries/[entryId]/opengraph-image.tsx:29,44, travelblogs/src/app/trips/share/[token]/entries/[entryId]/page.tsx:110, travelblogs/src/app/trips/share/[token]/page.tsx:34] — fixed: all internal `fetch()` calls and the final `ImageResponse` render are now wrapped so any failure degrades to the generic fallback; added regression tests to all four affected test files.
+- [x] [Review][Patch] Entry share description falls back to a duplicated site name ("... a story from TravelBlogs on TravelBlogs") when the trip-title fetch fails [travelblogs/src/app/trips/share/[token]/entries/[entryId]/page.tsx:157] — fixed: added a `share.entryDescriptionNoTrip` translation key (EN/DE) used when the trip title is unavailable, mirroring the title field's existing byline-omission behavior; added regression test.
+- [x] [Review][Patch] `String.replace()` used with content-derived (title) replacement strings can corrupt descriptions for titles containing `$`-patterns (e.g. `$&`, `$$`) [travelblogs/src/app/trips/share/[token]/entries/[entryId]/page.tsx:155-157, travelblogs/src/app/trips/share/[token]/page.tsx:89-92] — fixed: switched to `.split(...).join(...)` instead of `.replace()` for template interpolation.
+- [x] [Review][Patch] Hero-image fallback abandons entirely on the first unreadable candidate instead of trying the next media item, understating AC1's "entry has a photo" intent [travelblogs/src/app/trips/share/[token]/entries/[entryId]/opengraph-image.tsx:55-63,96-97] — fixed: now builds an ordered candidate list (cover image, then image-type media) and tries each until one is readable; added regression test.
+- [x] [Review][Patch] `inferMediaType`'s image set (incl. gif/avif) is wider than `getImageMimeTypeFromUrl`'s renderable set (jpg/jpeg/png/webp) — currently dead code since uploads can't be gif/avif, but an inconsistency worth closing [travelblogs/src/utils/media.ts:119-124] — fixed: entry hero-candidate selection now filters by `getImageMimeTypeFromUrl` directly instead of the broader `inferMediaType`, so the selection and rendering sets are the same set by construction (also resolves the item above).
+- [x] [Review][Patch] Trip-fetch/type-shape logic duplicated near-verbatim across 4+ call sites instead of a shared helper, unlike the fallback/path-resolution logic this same story extracted [travelblogs/src/app/trips/share/[token]/opengraph-image.tsx:18-31, travelblogs/src/app/trips/share/[token]/entries/[entryId]/opengraph-image.tsx:40-53, travelblogs/src/app/trips/share/[token]/entries/[entryId]/page.tsx:106-122] — fixed: extracted `loadSharedTripSummary`/`loadImageDataUri`/`loadFirstAvailableImageDataUri` into new `travelblogs/src/utils/share-preview.ts`, and the duplicated photo+gradient+title JSX into new `travelblogs/src/components/brand/og-photo-card.tsx`; both new `opengraph-image.tsx` routes and the entry `page.tsx`'s trip-title lookup now use these shared helpers.
+- [x] [Review][Defer] Server-only imports (`node:path`, `resolveUploadRoot`) added to client-shared `media.ts` rely only on build-time tree-shaking, not a structural guard — deferred, pre-existing file-placement convention (no `server-only` package or `.server.ts` naming exists in this codebase yet); addressing it means establishing a new project-wide pattern, not a story-scoped fix [travelblogs/src/utils/media.ts:1-3]
+- [x] [Review][Defer] Proxy allowlist regression tests only unit-test the pure `publicTripEntryView` classifier, not the full middleware→route chain that actually caused the disclosed production incident — deferred, already fixed and regression-tested at the unit level; full end-to-end coverage is a testing-infra investment beyond this story [travelblogs/tests/api/auth/proxy.test.ts:65-78]
 
 ## Dev Notes
 
@@ -139,6 +151,8 @@ Claude Sonnet 5
 - Modified: `travelblogs/src/utils/i18n.ts`
 - Modified: `travelblogs/src/proxy.ts`
 - New: `travelblogs/src/components/brand/og-fallback.tsx`
+- New: `travelblogs/src/components/brand/og-photo-card.tsx` (added during review — shared photo/gradient/title card for both share opengraph-image routes)
+- New: `travelblogs/src/utils/share-preview.ts` (added during review — shared trip-summary/image-data-URI fetch helpers)
 - New: `travelblogs/src/app/trips/share/[token]/opengraph-image.tsx`
 - New: `travelblogs/src/app/trips/share/[token]/entries/[entryId]/opengraph-image.tsx`
 - Modified: `travelblogs/tests/utils/entry-media.test.ts`

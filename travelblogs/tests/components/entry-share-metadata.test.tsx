@@ -76,6 +76,64 @@ describe("entry share generateMetadata", () => {
     expect(metadata.twitter?.title).toBe("Rainy afternoon — Alpine Adventure");
   });
 
+  it("omits the trip byline (without duplicating the site name) when the trip-title fetch fails", async () => {
+    mockHeaders();
+    const fetchMock = vi.fn().mockImplementation((url: string) => {
+      if (url.includes("/entries/")) {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              data: {
+                id: "entry-1",
+                tripId: "trip-1",
+                title: "Rainy afternoon",
+                text: "Warm cafes.",
+                createdAt: "2025-06-02T00:00:00.000Z",
+                coverImageUrl: null,
+                media: [],
+              },
+              error: null,
+            }),
+            { status: 200 },
+          ),
+        );
+      }
+      return Promise.reject(new Error("network error"));
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { generateMetadata } = await import(
+      "../../src/app/trips/share/[token]/entries/[entryId]/page"
+    );
+
+    const metadata = await generateMetadata({
+      params: { token: "token-1", entryId: "entry-1" },
+    });
+
+    expect(metadata.title).toBe("Rainy afternoon");
+    expect(metadata.description).toContain("Rainy afternoon");
+    expect(metadata.description).not.toContain("TravelBlogs on TravelBlogs");
+  });
+
+  it("falls back to generic site metadata when the entry fetch rejects", async () => {
+    mockHeaders();
+    const fetchMock = vi.fn().mockRejectedValue(new Error("network error"));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { generateMetadata } = await import(
+      "../../src/app/trips/share/[token]/entries/[entryId]/page"
+    );
+
+    const metadata = await generateMetadata({
+      params: { token: "token-1", entryId: "entry-1" },
+    });
+
+    expect(metadata.title).toBe("TravelBlogs");
+    expect(metadata.description).toBe(
+      "Media-first travel stories with private sharing.",
+    );
+  });
+
   it("falls back to generic site metadata and leaks no data for an invalid token/entry", async () => {
     mockHeaders();
     const fetchMock = vi.fn().mockResolvedValue(

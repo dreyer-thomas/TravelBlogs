@@ -13,6 +13,7 @@ import {
   getLocaleFromAcceptLanguage,
   getTranslation,
 } from "../../../../../../utils/i18n";
+import { loadSharedTripSummary } from "../../../../../../utils/share-preview";
 import type { EntryLocation } from "../../../../../../utils/entry-location";
 
 export const dynamic = "force-dynamic";
@@ -103,24 +104,6 @@ const loadSharedTripLocations = async (
   };
 };
 
-const loadSharedTripTitle = async (
-  baseUrl: string,
-  token: string,
-): Promise<string | null> => {
-  const response = await fetch(`${baseUrl}/api/trips/share/${token}`, {
-    method: "GET",
-    cache: "no-store",
-  });
-
-  const body = await response.json().catch(() => null);
-
-  if (!response.ok || body?.error || !body?.data?.trip) {
-    return null;
-  }
-
-  return (body.data.trip.title as string | undefined) ?? null;
-};
-
 export async function generateMetadata({
   params,
 }: SharedEntryPageProps): Promise<Metadata> {
@@ -134,7 +117,10 @@ export async function generateMetadata({
   const fallbackDescription = getTranslation("site.description", locale);
 
   const { data } = baseUrl
-    ? await loadSharedEntry(baseUrl, token, entryId)
+    ? await loadSharedEntry(baseUrl, token, entryId).catch(() => ({
+        data: null,
+        error: null,
+      }))
     : { data: null };
 
   if (!data) {
@@ -150,11 +136,19 @@ export async function generateMetadata({
     };
   }
 
-  const tripTitle = baseUrl ? await loadSharedTripTitle(baseUrl, token) : null;
+  const tripTitle = baseUrl
+    ? (await loadSharedTripSummary(baseUrl, token))?.title ?? null
+    : null;
   const title = tripTitle ? `${data.title} — ${tripTitle}` : data.title;
-  const description = getTranslation("share.entryDescription", locale)
-    .replace("{{entryTitle}}", data.title)
-    .replace("{{tripTitle}}", tripTitle ?? fallbackTitle);
+  const description = tripTitle
+    ? getTranslation("share.entryDescription", locale)
+        .split("{{entryTitle}}")
+        .join(data.title)
+        .split("{{tripTitle}}")
+        .join(tripTitle)
+    : getTranslation("share.entryDescriptionNoTrip", locale)
+        .split("{{entryTitle}}")
+        .join(data.title);
 
   return {
     title,

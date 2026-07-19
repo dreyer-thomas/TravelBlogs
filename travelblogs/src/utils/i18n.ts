@@ -10,6 +10,7 @@ const translations = {
     share: {
       tripDescription: 'Explore {{title}} on TravelBlogs.',
       entryDescription: '{{entryTitle}} — a story from {{tripTitle}} on TravelBlogs.',
+      entryDescriptionNoTrip: '{{entryTitle}} — a travel story on TravelBlogs.',
     },
     common: {
       trips: 'Trips',
@@ -520,6 +521,7 @@ const translations = {
     share: {
       tripDescription: 'Entdecke {{title}} auf TravelBlogs.',
       entryDescription: '{{entryTitle}} — eine Geschichte aus {{tripTitle}} auf TravelBlogs.',
+      entryDescriptionNoTrip: '{{entryTitle}} — eine Reisegeschichte auf TravelBlogs.',
     },
     common: {
       trips: 'Reisen',

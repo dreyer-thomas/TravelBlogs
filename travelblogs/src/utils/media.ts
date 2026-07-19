@@ -113,7 +113,15 @@ export const resolveUploadFilePath = (url: string): string | null => {
     return null;
   }
   const relative = url.replace(/^\/uploads\//, "");
-  return path.join(resolveUploadRoot(), relative);
+  const uploadRoot = path.resolve(resolveUploadRoot());
+  const absolute = path.resolve(uploadRoot, relative);
+  const rootWithSep = uploadRoot.endsWith(path.sep)
+    ? uploadRoot
+    : `${uploadRoot}${path.sep}`;
+  if (!absolute.startsWith(rootWithSep)) {
+    return null;
+  }
+  return absolute;
 };
 
 const IMAGE_MIME_TYPES_BY_EXTENSION: Record<string, string> = {

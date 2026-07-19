@@ -94,6 +94,17 @@ describe("resolveUploadFilePath", () => {
       path.join("/tmp/uploads-root", "trips/1/cover.jpg"),
     );
   });
+
+  it("rejects URLs that traverse outside the upload root", () => {
+    process.env.MEDIA_UPLOAD_DIR = "/tmp/uploads-root";
+
+    expect(
+      resolveUploadFilePath("/uploads/../../etc/passwd"),
+    ).toBeNull();
+    expect(
+      resolveUploadFilePath("/uploads/trips/../../../etc/passwd"),
+    ).toBeNull();
+  });
 });
 
 describe("getImageMimeTypeFromUrl", () => {

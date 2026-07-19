@@ -154,6 +154,24 @@ describe("trip share opengraph-image", () => {
     expect(buffer.byteLength).toBeGreaterThan(0);
   });
 
+  it("falls back to the generic compass design when the share API fetch rejects", async () => {
+    mockHeaders();
+    const fetchMock = vi.fn().mockRejectedValue(new Error("network error"));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { default: TripShareOpengraphImage } = await import(
+      "../../src/app/trips/share/[token]/opengraph-image"
+    );
+
+    const response = await TripShareOpengraphImage({
+      params: { token: "token-4" },
+    });
+
+    expect(response.headers.get("content-type")).toBe("image/png");
+    const buffer = await response.arrayBuffer();
+    expect(buffer.byteLength).toBeGreaterThan(0);
+  });
+
   it("falls back to the generic compass design when the cover image file can't be read", async () => {
     mockHeaders();
     const fetchMock = vi.fn().mockResolvedValue(

@@ -69,7 +69,10 @@ export async function generateMetadata({
   const fallbackDescription = getTranslation("site.description", locale);
 
   const { data } = baseUrl
-    ? await loadSharedTrip(baseUrl, token)
+    ? await loadSharedTrip(baseUrl, token).catch(() => ({
+        data: null,
+        error: null,
+      }))
     : { data: null };
 
   if (!data) {
@@ -86,10 +89,9 @@ export async function generateMetadata({
   }
 
   const title = data.trip.title;
-  const description = getTranslation("share.tripDescription", locale).replace(
-    "{{title}}",
-    title,
-  );
+  const description = getTranslation("share.tripDescription", locale)
+    .split("{{title}}")
+    .join(title);
 
   return {
     title,

@@ -55,6 +55,23 @@ describe("trip share generateMetadata", () => {
     expect(metadata.twitter?.title).toBe("Alpine Adventure");
   });
 
+  it("falls back to generic site metadata when the share API fetch rejects", async () => {
+    mockHeaders();
+    const fetchMock = vi.fn().mockRejectedValue(new Error("network error"));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { generateMetadata } = await import(
+      "../../src/app/trips/share/[token]/page"
+    );
+
+    const metadata = await generateMetadata({ params: { token: "token-1" } });
+
+    expect(metadata.title).toBe("TravelBlogs");
+    expect(metadata.description).toBe(
+      "Media-first travel stories with private sharing.",
+    );
+  });
+
   it("falls back to generic site metadata and leaks no data for an invalid token", async () => {
     mockHeaders();
     const fetchMock = vi.fn().mockResolvedValue(

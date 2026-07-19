@@ -17,3 +17,8 @@
 ## Deferred from: compass favicon & OG image (2026-07-19)
 
 - No PWA/Android home-screen manifest or icons added alongside the favicon/OG overhaul [travelblogs/src/app/] — `apple-icon.tsx` covers iOS "Add to Home Screen", but there's no `manifest.json`/`site.webmanifest` or 192×192/512×512 PNGs for Android/Chrome home-screen installs. Add if/when PWA installability becomes a real ask.
+
+## Deferred from: code review of 4-6-contextual-share-link-preview-images (2026-07-19)
+
+- Server-only imports (`node:path`, `resolveUploadRoot`) added to client-shared `travelblogs/src/utils/media.ts` rely only on build-time tree-shaking, not a structural guard [travelblogs/src/utils/media.ts:1-3] — pre-existing file-placement convention across this codebase (no `server-only` package or `.server.ts` naming exists yet); fixing properly means establishing a new project-wide pattern, not a story-scoped change.
+- Proxy allowlist regression tests only unit-test the pure `publicTripEntryView` classifier, not the full middleware→route chain [travelblogs/tests/api/auth/proxy.test.ts:65-78] — this is what actually caused the disclosed production incident (crawlers redirected to sign-in). Already fixed and regression-tested at the unit level; full end-to-end coverage through the real middleware chain is a testing-infra investment beyond this story's scope.
