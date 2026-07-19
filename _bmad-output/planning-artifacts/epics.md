@@ -133,6 +133,151 @@ Initial platform setup, authentication, and security configuration.
 **Priority:** Medium - Administrative control feature
 **Story Points:** 2
 
+### Story 0.4: Dependency Vulnerability Gate
+
+**As a** creator
+**I want** every story to be blocked from review if its dependencies have known vulnerabilities
+**So that** vulnerable packages never reach the production build via the manual deploy process
+
+**Acceptance Criteria:**
+
+#### AC 1: Audit Runs Before Review
+**Given** a story's implementation is otherwise complete
+**When** bmad-dev-story or bmad-quick-dev attempts to mark it "review"
+**Then** `npm audit` is run against the project dependencies as part of the same pre-review gate that already checks typecheck and production build
+
+#### AC 2: HALT on Any Vulnerability
+**Given** `npm audit` reports one or more vulnerabilities of any severity (low, moderate, high, or critical)
+**Then** the workflow HALTs and reports the vulnerable package(s), and the story cannot be marked "review" until the vulnerability is resolved (upgrade, patch, or documented waiver)
+
+#### AC 3: Clean Audit Proceeds Normally
+**Given** `npm audit` reports zero vulnerabilities
+**Then** the existing typecheck/build gate proceeds unaffected and the story can be marked "review" as before
+
+**Technical Requirements:**
+- Add an `audit` npm script to `travelblogs/package.json` that runs `npm audit` with no `--audit-level` threshold (fails on any severity), matching the team's decision to gate on any known vulnerability
+- Wire the audit step into `.claude/skills/bmad-dev-story/SKILL.md` and `checklist.md` alongside the existing typecheck/build gate added for production-build failures
+- Wire the same audit step into `.claude/skills/bmad-quick-dev/step-03-implement.md` and `step-oneshot.md`
+- No CI/CD integration and no Dependabot/Renovate automation — the gate runs locally as part of the dev workflow only; resolving flagged vulnerabilities (version bumps) stays a manual step
+
+**Testing Requirements:**
+- Temporarily introduce a known-vulnerable dependency and confirm the gate HALTs with the package identified
+- Confirm a clean dependency tree allows the story to proceed to "review" as normal
+
+**Source:** PM request 2026-07-19 - recurring risk of known-vulnerable dependencies reaching prod through the manual deploy process (no CI/CD safety net)
+**Priority:** High - security risk mitigation
+**Story Points:** 1
+
+### Story 0.5: Upgrade Prisma Dev Tooling to Resolve Vulnerable Dependencies
+
+**As a** creator
+**I want** Prisma's dev-tooling dependency chain upgraded past its known vulnerabilities
+**So that** `npm audit` no longer reports findings from `@prisma/dev`, `hono`, `effect`, and their transitive dependencies
+
+**Acceptance Criteria:**
+
+#### AC 1: Vulnerable Chain Resolved
+**Given** the current dependency tree has `@hono/node-server`, `hono`, `effect`, `lodash` (via `@chevrotain/*` / `@mrleebo/prisma-ast`), `@prisma/dev`, and `@prisma/config` flagged by `npm audit`
+**When** the Prisma dev-tooling upgrade is applied
+**Then** none of these packages (or their vulnerable versions) appear in `npm audit` output
+
+#### AC 2: Prisma Functionality Unaffected
+**Given** the upgraded Prisma toolchain
+**When** existing Prisma-dependent flows are exercised (migrations, client generation, `better-sqlite3` adapter usage)
+**Then** all existing tests pass and the production build succeeds with no Prisma-related regressions
+
+#### AC 3: Net Reduction in Vulnerability Count
+**Given** `npm audit` is run after this story's changes
+**Then** the story's contribution to the story-0.4 waived baseline (documented in `_bmad-output/implementation-artifacts/0-4-dependency-vulnerability-gate.md`) is removed, and the overall vulnerability count decreases accordingly
+
+**Technical Requirements:**
+- Investigate the minimum Prisma version bump that clears the `@prisma/dev`/`@prisma/config` vulnerable chain (per `npm audit fix --force`, this points to `prisma@7.8.0`, outside the project's current stated `7.2.0` — confirm compatibility before committing to that exact version)
+- Update `travelblogs/package.json`/`package-lock.json` and re-run the full test suite, typecheck, and production build
+- Update `_bmad-output/project-context.md` technology stack line if the Prisma version pin changes
+
+**Testing Requirements:**
+- Full existing test suite passes with no regressions
+- `npm run typecheck` and `npm run build` succeed
+- `npm run audit` no longer reports the packages named in AC 1
+
+**Source:** Follow-up from Story 0.4 (Dependency Vulnerability Gate) — 15 vulnerabilities in the tree at story completion required breaking upgrades split across 3 stories
+**Priority:** High - security risk mitigation, unblocks the Story 0.4 gate for all future stories
+**Story Points:** 3
+
+### Story 0.6: Upgrade Next.js to Resolve Vulnerable Dependencies
+
+**As a** creator
+**I want** Next.js upgraded past its known vulnerabilities
+**So that** `npm audit` no longer reports findings from `next` and its bundled `postcss`
+
+**Acceptance Criteria:**
+
+#### AC 1: Vulnerable Chain Resolved
+**Given** the current dependency tree has `next` and `next`'s bundled `postcss` flagged by `npm audit`
+**When** the Next.js upgrade is applied
+**Then** neither package (nor their vulnerable versions) appears in `npm audit` output
+
+#### AC 2: Application Behavior Unaffected
+**Given** the upgraded Next.js version
+**When** the full application is exercised (dev server, all existing routes, the production build)
+**Then** all existing tests pass, the production build succeeds, and no App Router/middleware/proxy behavior regresses (see `13-4-migrate-middleware-to-proxy` for current proxy setup that must keep working)
+
+#### AC 3: Net Reduction in Vulnerability Count
+**Given** `npm audit` is run after this story's changes
+**Then** the story's contribution to the story-0.4 waived baseline is removed, and the overall vulnerability count decreases accordingly
+
+**Technical Requirements:**
+- Investigate the minimum Next.js version bump that clears the vulnerable chain (per `npm audit fix --force`, this points to `next@16.2.10`, outside the project's current stated `16.1.0` — confirm this is a patch/minor bump and not a breaking major version before committing)
+- Update `travelblogs/package.json`/`package-lock.json`, re-run the full test suite, typecheck, and production build
+- Manually verify proxy-gated routes (`src/proxy.ts`) and shared-link routes still behave correctly after the bump
+- Update `_bmad-output/project-context.md` technology stack line to reflect the new Next.js version
+
+**Testing Requirements:**
+- Full existing test suite passes with no regressions
+- `npm run typecheck` and `npm run build` succeed
+- Manual smoke test of sign-in, trip view, and shared-link routes
+- `npm run audit` no longer reports the packages named in AC 1
+
+**Source:** Follow-up from Story 0.4 (Dependency Vulnerability Gate) — 15 vulnerabilities in the tree at story completion required breaking upgrades split across 3 stories
+**Priority:** High - security risk mitigation, unblocks the Story 0.4 gate for all future stories
+**Story Points:** 3
+
+### Story 0.7: Resolve next-auth's Vulnerable uuid Dependency
+
+**As a** creator
+**I want** the vulnerable `uuid` dependency pulled in by `next-auth` resolved
+**So that** `npm audit` no longer reports this finding
+
+**Acceptance Criteria:**
+
+#### AC 1: Vulnerable Dependency Resolved Without a Version Downgrade
+**Given** `npm audit fix --force`'s suggested resolution is to downgrade `next-auth` from `4.24.13` to `3.29.10` (a major-version downgrade)
+**When** this story investigates the actual fix
+**Then** the vulnerability is resolved via an upgrade or patch that does **not** reduce `next-auth`'s major version (e.g. a newer `next-auth`/Auth.js release that drops the vulnerable `uuid` dependency, or a direct `uuid` override), unless investigation shows no such path exists — in which case the downgrade option is presented to the user for an explicit decision before implementation proceeds
+
+#### AC 2: Authentication Unaffected
+**Given** the resolved dependency
+**When** existing sign-in, session, and account-deactivation flows are exercised (Stories 0.1, 0.3, 5.2)
+**Then** all existing authentication tests pass with no regressions
+
+#### AC 3: Net Reduction in Vulnerability Count
+**Given** `npm audit` is run after this story's changes
+**Then** `uuid` no longer appears in `npm audit` output, and the story's contribution to the story-0.4 waived baseline is removed
+
+**Technical Requirements:**
+- Research whether a `next-auth` release exists that satisfies AC 1 without a major-version downgrade; if none exists, use `overrides` in `package.json` to pin a fixed `uuid` version if compatible, before considering the downgrade
+- Update `travelblogs/package.json`/`package-lock.json`, re-run the full test suite, typecheck, and production build
+- Do not change the authentication provider or session strategy — this is a dependency-version fix only
+
+**Testing Requirements:**
+- Full existing test suite passes with no regressions, including all auth-related tests
+- `npm run typecheck` and `npm run build` succeed
+- `npm run audit` no longer reports `uuid`/`next-auth`
+
+**Source:** Follow-up from Story 0.4 (Dependency Vulnerability Gate) — 15 vulnerabilities in the tree at story completion required breaking upgrades split across 3 stories
+**Priority:** High - security risk mitigation, unblocks the Story 0.4 gate for all future stories
+**Story Points:** 2
+
 ---
 
 ## Epic 1: Core Trip Management

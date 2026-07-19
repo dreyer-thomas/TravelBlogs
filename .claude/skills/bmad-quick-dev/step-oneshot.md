@@ -22,6 +22,8 @@ Implement the clarified intent directly.
 
 Run the project's production build command (e.g. `npm run build`) and, if a dedicated typecheck script exists (e.g. `npm run typecheck`), that too. If either fails, fix the errors before proceeding — never hand off a one-shot change that fails to compile.
 
+If a dedicated dependency audit script exists (e.g. `npm run audit`), run it too. If it reports any vulnerability, resolve or upgrade the vulnerable package(s) before proceeding — never hand off a one-shot change with a known vulnerability in the dependency tree.
+
 ### Review
 
 Launch Blind Hunter without prior conversation context. If no subagents are available, generate one review prompt file in `{implementation_artifacts}` and HALT. Ask the human to run it in a separate session and paste back the findings.

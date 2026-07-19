@@ -8,6 +8,7 @@ required-inputs:
   - 'Updated File List section with all changed files'
   - 'Updated Dev Agent Record with implementation notes'
   - 'Production build output (project build command, e.g. `npm run build`) with zero errors'
+  - 'Dependency audit output (project audit command, e.g. `npm run audit`) with zero vulnerabilities'
 optional-inputs:
   - 'Test results output'
   - 'CI logs'
@@ -18,6 +19,7 @@ validation-rules:
   - 'Definition of Done checklist must pass completely'
   - 'Enhanced story context must contain sufficient technical guidance'
   - 'Production build (and typecheck, when a dedicated script exists) must succeed with zero errors before status may move to review'
+  - 'Dependency audit (project audit command, e.g. `npm run audit`), when a dedicated script exists, must report zero vulnerabilities before status may move to review'
 ---
 
 # 🎯 Enhanced Definition of Done Checklist
@@ -50,6 +52,7 @@ validation-rules:
 - [ ] **Test Framework Compliance:** Tests use project's testing frameworks and patterns from Dev Notes
 - [ ] **Production Build Passes:** The project's build command (e.g. `npm run build`) completes with zero errors — this is the authoritative check that catches compile/type errors before they reach production
 - [ ] **Type Check Passes:** The project's dedicated typecheck command (e.g. `npm run typecheck`), when one exists, reports zero errors
+- [ ] **Dependency Audit Passes:** The project's dependency audit command (e.g. `npm run audit`), when one exists, reports zero vulnerabilities
 
 ## 📝 Documentation & Tracking
 

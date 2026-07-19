@@ -40,10 +40,14 @@ tracking_system: file-system
 story_location: /Users/tommy/Development/TravelBlogs/_bmad-output/implementation-artifacts
 
 development_status:
-  epic-0: done
+  epic-0: in-progress
   0-1-creator-sign-in-single-account: done
   0-2-enable-https: done
   0-3-deactivate-creator-account: done
+  0-4-dependency-vulnerability-gate: review
+  0-5-upgrade-prisma-dev-tooling-to-resolve-vulnerable-dependencies: done
+  0-6-upgrade-nextjs-to-resolve-vulnerable-dependencies: ready-for-dev
+  0-7-resolve-next-auths-vulnerable-uuid-dependency: ready-for-dev
   epic-0-retrospective: done
 
   epic-1: done

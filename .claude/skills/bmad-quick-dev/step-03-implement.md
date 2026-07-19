@@ -36,6 +36,8 @@ Hand `{spec_file}` to a subagent/task and let it implement. If no subagents are 
 
 Run the project's production build command (e.g. `npm run build`) and, if a dedicated typecheck script exists (e.g. `npm run typecheck`), that too. If either fails, fix the errors before proceeding — never leave this step with a spec that fails to compile. Dev-mode/test success is not a substitute for this check.
 
+If a dedicated dependency audit script exists (e.g. `npm run audit`), run it too. If it reports any vulnerability, resolve or upgrade the vulnerable package(s) before proceeding — never leave this step with a known vulnerability in the dependency tree.
+
 ### Tasks & Acceptance Verification
 
 Before leaving this step, verify every task in the `## Tasks & Acceptance` section of `{spec_file}` is complete and every acceptance criterion is satisfied. Mark each finished task `[x]`. If any task is not done or any acceptance criterion is not satisfied, finish the missing work before proceeding.

@@ -21,7 +21,7 @@ _This file contains critical rules and patterns that AI agents must follow when 
 - React (via Next.js)
 - TypeScript (via Next.js)
 - Tailwind CSS (via Next.js setup)
-- Prisma 7.2.0 (ORM + migrations)
+- Prisma 7.8.0 (ORM + migrations)
 - SQLite (primary DB)
 - Auth.js (NextAuth) 4.24.13 (JWT sessions)
 - Redux Toolkit 2.11.2 (state)
