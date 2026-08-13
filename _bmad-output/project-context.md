@@ -5,7 +5,7 @@ date: '2025-12-21T17:43:06Z'
 sections_completed: ['technology_stack', 'language_rules', 'framework_rules', 'testing_rules', 'quality_rules', 'workflow_rules', 'anti_patterns']
 existing_patterns_found: 5
 status: 'complete'
-rule_count: 36
+rule_count: 39
 optimized_for_llm: true
 ---
 
@@ -17,12 +17,14 @@ _This file contains critical rules and patterns that AI agents must follow when 
 
 ## Technology Stack & Versions
 
+- Node.js 24 LTS (runtime; pinned via root `.nvmrc` + `engines.node` in `travelblogs/package.json`)
 - Next.js 16.2.10 + App Router
 - React (via Next.js)
 - TypeScript (via Next.js)
 - Tailwind CSS (via Next.js setup)
 - Prisma 7.8.0 (ORM + migrations)
-- SQLite (primary DB)
+- SQLite (primary DB, via `better-sqlite3` ^12.6.0 — a native module; keep it on the same major
+  as `@prisma/adapter-better-sqlite3` requires so npm hoists a single copy)
 - Auth.js (NextAuth) 4.24.13 (JWT sessions)
 - Redux Toolkit 2.11.2 (state)
 - Zod 4.2.1 (validation)
@@ -69,6 +71,12 @@ _This file contains critical rules and patterns that AI agents must follow when 
 
 ### Critical Don't-Miss Rules
 
+- Keep `@types/node` on the same major as the Node runtime (currently `^24`); do not track npm's
+  `latest`.
+- Do not use the legacy `url.parse()` API; use the WHATWG `URL` API (`url.parse` is
+  runtime-deprecated as DEP0169). `server.js` exports `parseRequestUrl` for the request path.
+- After any `npm ci` (which wipes `node_modules`), run `npx prisma generate` before building —
+  there is no `postinstall` hook and the generated client lives in `node_modules`.
 - Do not use `snake_case` in JSON or API params.
 - Do not create singular REST endpoints (no `/trip`).
 - Do not bypass `{ data, error }` response wrapper.
@@ -93,4 +101,4 @@ _This file contains critical rules and patterns that AI agents must follow when 
 - Review quarterly for outdated rules
 - Remove rules that become obvious over time
 
-Last Updated: 2025-12-21T17:43:06Z
+Last Updated: 2026-08-13T00:00:00Z

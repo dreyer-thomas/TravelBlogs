@@ -278,6 +278,58 @@ Initial platform setup, authentication, and security configuration.
 **Priority:** High - security risk mitigation, unblocks the Story 0.4 gate for all future stories
 **Story Points:** 2
 
+### Story 0.8: Upgrade the Runtime to Node.js 24 LTS
+
+**As a** creator
+**I want** the application to run on Node.js 24 LTS in development and production
+**So that** the platform stays on a security-supported runtime instead of end-of-life Node.js 20
+
+**Acceptance Criteria:**
+
+#### AC 1: Application Runs on Node.js 24
+**Given** Node.js 24 LTS is the active runtime
+**When** `npm ci`, `npm run build`, `npm test`, `npm run typecheck`, and `npm run start` are executed
+**Then** every command succeeds with no runtime, native-module, or build errors
+
+#### AC 2: Required Node Version Is Declared and Enforced
+**Given** a developer or operator sets up the project
+**When** they check out the repository
+**Then** the required Node major version is declared in `travelblogs/package.json` (`engines`) and in a version-manager file, so an unsupported runtime is detectable rather than silently used
+
+#### AC 3: Native Dependencies Resolve Without Source Compilation
+**Given** the `better-sqlite3` native module is installed under Node.js 24
+**When** `npm ci` is run on a clean tree
+**Then** a prebuilt binary matching the Node.js 24 ABI is used (no fallback to compiling from source), and exactly one `better-sqlite3` copy exists in the resolved tree
+
+#### AC 4: No Functional Regressions
+**Given** the application running on Node.js 24
+**When** the full test suite and a manual smoke test of sign-in, trip/entry viewing, media upload, and shared-link routes are exercised
+**Then** all tests pass against the pre-upgrade baseline and no user-facing behavior changes
+
+#### AC 5: Production Runs the New Runtime
+**Given** the production deployment
+**When** the deploy procedure is executed
+**Then** the systemd-managed service starts under Node.js 24 and serves HTTPS traffic correctly, with the deploy steps documented
+
+**Technical Requirements:**
+- Bump the direct `better-sqlite3` dependency from the exact pin `11.6.0` (predates Node 24, no matching prebuilt binary) to a `12.x` range compatible with `@prisma/adapter-better-sqlite3@7.8.0`'s `^12.6.0` requirement, deduplicating the currently-doubled native module
+- Bump `@types/node` from `^20` to the Node 24 major line
+- Add `engines.node` to `travelblogs/package.json` and a version-manager file (`.nvmrc`) at the repo root
+- Verify no code path relies on Node 20-only behavior; address runtime deprecation warnings surfaced by the new runtime where they touch this project's own code
+- Update `README.md` setup/deployment notes and `_bmad-output/project-context.md`'s technology stack section with the runtime version
+- Do not change application behavior, framework versions, or the database schema — this is a runtime upgrade only
+
+**Testing Requirements:**
+- Full existing test suite passes with no regressions against the pre-upgrade baseline
+- `npm run typecheck` and `npm run build` succeed under Node 24
+- `npm ci` on a clean tree resolves native modules from prebuilt binaries
+- `npm run audit` reports no new vulnerabilities introduced by the dependency changes
+- Manual smoke test of sign-in, trip list/detail, entry media, and shared-link routes on the HTTPS entrypoint
+
+**Source:** Runtime lifecycle — Node.js 20 reached end-of-life April 2026 and no longer receives security patches; Node.js 24 is the current Active LTS line
+**Priority:** High - running an EOL runtime is an unpatched security exposure
+**Story Points:** 3
+
 ---
 
 ## Epic 1: Core Trip Management
