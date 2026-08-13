@@ -75,8 +75,12 @@ _This file contains critical rules and patterns that AI agents must follow when 
   `latest`.
 - Do not use the legacy `url.parse()` API; use the WHATWG `URL` API (`url.parse` is
   runtime-deprecated as DEP0169). `server.js` exports `parseRequestUrl` for the request path.
-- After any `npm ci` (which wipes `node_modules`), run `npx prisma generate` before building —
-  there is no `postinstall` hook and the generated client lives in `node_modules`.
+- Every package imported by `src/` must be declared in `package.json`. Do not rely on a transitive
+  or optional copy hoisted from another package — `sharp` was imported for months while undeclared
+  (it came in as an optional dep of `next`) and broke production the first time `node_modules` was
+  installed from a clean tree.
+- Production installs must run with Node 24 on `PATH` and `SHARP_IGNORE_GLOBAL_LIBVIPS=1`. Use
+  `travelblogs/scripts/deploy.sh` rather than running `npm ci` by hand; see the README for why.
 - Do not use `snake_case` in JSON or API params.
 - Do not create singular REST endpoints (no `/trip`).
 - Do not bypass `{ data, error }` response wrapper.

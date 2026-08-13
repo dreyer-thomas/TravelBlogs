@@ -219,6 +219,32 @@ ABI).
 
 **Two pre-existing issues found while verifying — both confirmed NOT caused by this story.**
 
+0. **`sharp` was imported but never declared — broke the production build (found during deploy).**
+   `src/utils/compress-image.ts` does `import sharp from "sharp"` (reached from 4 entry points), but
+   `sharp` appeared nowhere in `package.json`. It resolved only because it is an
+   **optionalDependency of `next`** (`next → sharp ^0.34.5`), hoisted to `node_modules/sharp` and
+   flagged `optional: true` in the lockfile. Production deploys had never wiped `node_modules`, so a
+   long-ago copy persisted; the `npm ci` this story introduces wiped it and the build failed with
+   `Module not found: Can't resolve 'sharp'`. Fixed by declaring `"sharp": "^0.34.5"` — now
+   `optional: false` in the lockfile, one deduped copy at `0.34.5` shared with Next, audit unchanged
+   at 11. Verified that even `npm ci --omit=optional` now keeps it.
+
+   A second, independent failure sat behind it on the production host (Debian 12, **linux/arm64**,
+   glibc 2.36): installing `sharp` still failed with `Attempting to build from source via node-gyp
+   … Please add node-addon-api`. The prebuilt binary was *not* missing and the registry was *not*
+   the problem — both `@img/sharp-linux-arm64@0.34.5` and `@img/sharp-libvips-linux-arm64@1.2.4`
+   installed cleanly from `registry.npmjs.org`. The cause is in `node_modules/sharp/install/check.js`,
+   which exits 1 (forcing the source build) when `useGlobalLibvips()` is true — and the host has a
+   **system libvips**, so sharp deliberately preferred it over its own prebuild. Fix:
+   `SHARP_IGNORE_GLOBAL_LIBVIPS=1` (`lib/libvips.js:177`), which makes sharp skip the global search
+   and use the `@img` binary.
+
+   That flag **cannot** be set from `.npmrc`. Verified empirically: both
+   `sharp-ignore-global-libvips=true` and `SHARP_IGNORE_GLOBAL_LIBVIPS=1` in `.npmrc` surface only as
+   `npm_config_sharp_ignore_global_libvips`, and sharp reads the bare `SHARP_IGNORE_GLOBAL_LIBVIPS`.
+   It must be a real environment variable, which is why the deploy is now scripted rather than
+   documented as a list of steps to remember.
+
 1. **`npm ci` leaves the Prisma client ungenerated.** Immediately after the clean `npm ci`,
    `npm run typecheck` reported 30 errors, all rooted in
    `Module '"@prisma/client"' has no exported member 'PrismaClient'`. Cause: `npm ci` wipes
@@ -227,8 +253,10 @@ ABI).
    matters directly for AC 5 because this story's deploy sequence introduces `npm ci` — following
    the story's stated order verbatim would have failed the production build. Documented as an
    explicit step in the README deploy section and as a project-context rule. Adding a `postinstall`
-   hook would fix it permanently but changes install behavior repo-wide, so it is left as a
-   recommendation rather than done unilaterally.
+   hook would fix it permanently but changes install behavior repo-wide, so it was initially left as
+   a recommendation. **Now done** at Tommy's request: `"postinstall": "prisma generate"` added, so a
+   clean `npm ci` regenerates the client automatically (verified — the generator runs during
+   `npm ci` and `npm run typecheck` passes straight afterwards).
 2. **Dead backfill block in `server.js`.** Startup logs `GPS backfill failed: Error: Cannot find
    module './src/utils/backfill-gps'`. The target is `src/utils/backfill-gps.ts`, and Node's CJS
    resolver does not try `.ts` for an extensionless `require` — verified MODULE_NOT_FOUND on **both**
@@ -380,7 +408,8 @@ Changes made, all within the story's stated scope:
 ### File List
 
 - `.nvmrc` — **new**, repository root, pins Node major `24`
-- `travelblogs/package.json` — added `engines.node`; `better-sqlite3` → `^12.6.0`; `@types/node` → `^24`
+- `travelblogs/package.json` — added `engines.node`; `better-sqlite3` → `^12.6.0`; `@types/node` → `^24`; declared the previously-undeclared `sharp` (`^0.34.5`); added `postinstall: prisma generate`
+- `travelblogs/scripts/deploy.sh` — **new**, production deploy script encoding the three mandatory settings (Node 24 on `PATH`, `SHARP_IGNORE_GLOBAL_LIBVIPS=1`, `prisma generate`) plus native-module assertions
 - `travelblogs/package-lock.json` — regenerated; stale nested `better-sqlite3` entry removed so the tree dedupes
 - `travelblogs/server.js` — dropped `require("url")`; added `parseRequestUrl` (WHATWG `URL`) and used it at both request-handler call sites; exported it for testing
 - `travelblogs/tests/setup.ts` — shim for jsdom's missing `Blob` `arrayBuffer()`/`bytes()`/`text()` readers
@@ -395,4 +424,5 @@ Changes made, all within the story's stated scope:
 - 2026-08-13: Story drafted. Runtime upgrade from end-of-life Node.js 20 to Node.js 24 LTS, including the `better-sqlite3` native-module bump (`11.6.0` → `^12.6.0`) that is the only hard blocker, `@types/node` alignment, `engines`/`.nvmrc` declaration, the `server.js` `url.parse` deprecation, and the production deploy.
 - 2026-08-13: Implemented on Node.js `v24.19.0` / npm `11.18.0` (npm unchanged from baseline). `better-sqlite3` `11.6.0` → `^12.6.0` (resolves `12.11.1`, now a single hoisted copy using a prebuilt binary — no `node-gyp` compilation); `@types/node` `^20` → `^24` (no new type errors); `engines.node` + root `.nvmrc` added; `url.parse` (`DEP0169`) replaced with a WHATWG-`URL`-based `parseRequestUrl` at both `server.js` call sites, with 8 new tests. Tests 856 passed / 1 skipped / 0 failed (baseline 848/1 + 8 new); typecheck clean; production build succeeds; HTTPS entrypoint boots and smoke-tests pass (sign-in/session/sign-out, trip list, entry detail, unauthenticated shared links, media upload with `sharp` compression). Fixed one genuine Node-24 test failure at the harness level: jsdom's `Blob` lacks `arrayBuffer()`, which Node 24 now exposes because `Response.blob()` returns the jsdom `Blob` — shimmed in `tests/setup.ts` with no assertion or application code changed. Corrected the story's stale "zero vulnerabilities" premise: the baseline commit itself audits at 13; this story introduces **0 new** and reduces the count to 11.
 - 2026-08-13: Deploy prerequisites clarified by Tommy — Node 24 is **already installed** on the production host at `/opt/node-24`, where the sibling TravelPlan service already runs from it, so AC 5 needs no runtime install. README deploy section and the deploy task updated with the concrete unit-file change (`ExecStart=/opt/node-24/bin/npm start` + matching `Environment="PATH=..."`) and with the ABI requirement that `npm ci` must run under Node 24 so the `better-sqlite3` prebuild matches the runtime the service uses (ABI 137).
+- 2026-08-13: Deploy attempt on the production host (Debian 12, linux/arm64) exposed two further defects that a clean `npm ci` surfaces but the old "build in place" deploy hid. (a) `sharp` was imported by `src/utils/compress-image.ts` yet declared nowhere in `package.json` — it had been resolving as an optional dependency of `next`; now declared explicitly (`^0.34.5`, `optional: false`, single deduped copy). (b) On that host sharp still refused to install, because `install/check.js` prefers a detected **system libvips** and falls back to a source build that fails without a toolchain; fixed with `SHARP_IGNORE_GLOBAL_LIBVIPS=1`, which cannot be set via `.npmrc` (verified: npm exposes config only as `npm_config_*`). Added `postinstall: prisma generate` and a new `travelblogs/scripts/deploy.sh` that encodes all three mandatory deploy settings and asserts both native modules load. Verified from a clean tree: `npm ci` → `prisma generate` (automatic) → `better-sqlite3` ABI 137 → `sharp` OK (libvips 8.17.3) → typecheck PASS → build PASS → 856 passed / 1 skipped → audit 11 (unchanged).
 - 2026-08-13: **Not complete.** Production deploy (AC 5) is outstanding and requires Tommy, and the DoD's "zero vulnerabilities" gate cannot be met without out-of-scope `next`/`prisma` upgrades. Status intentionally left at `in-progress` rather than `review`. Also surfaced two pre-existing, version-independent defects for follow-up: `npm ci` leaves the Prisma client ungenerated (no `postinstall` hook — now documented in the README deploy order, and it would have broken this story's own deploy sequence), and the backfill block at `server.js:57-82` is dead code that always throws `MODULE_NOT_FOUND` because it `require`s a `.ts` file (the backfills actually run via `src/instrumentation.ts`).

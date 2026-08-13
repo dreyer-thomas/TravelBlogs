@@ -67,16 +67,45 @@ installed at `/opt/node-24` — the same location the sibling TravelPlan service
 
 Deploy in this order:
 
+```bash
+sudo systemctl stop travelblogs
+git pull
+./scripts/deploy.sh                 # installs, verifies native modules, builds
+sudo systemctl start travelblogs
+journalctl -u travelblogs -n 40 --no-pager
+```
+
+`scripts/deploy.sh` exists because three settings are mandatory, easy to forget, and each has
+already caused a failed deploy. It puts Node 24 on `PATH`, exports
+`SHARP_IGNORE_GLOBAL_LIBVIPS=1`, runs `npm ci` (which now runs `prisma generate` via the
+`postinstall` hook), asserts both native modules load, and then builds. If you would rather run the
+steps by hand, they are:
+
 1. Stop the service — `sudo systemctl stop travelblogs`
 2. `git pull`
-3. `npm ci` — required whenever `package-lock.json` changed or a native module was bumped;
-   `npm run build` alone reuses a stale `node_modules`.
-4. `npx prisma generate` — `npm ci` wipes `node_modules`, and the generated Prisma client lives
-   there. There is no `postinstall` hook, so skipping this step makes the build fail with
-   `Module '"@prisma/client"' has no exported member 'PrismaClient'`.
-5. `npm run build`
-6. Start the service — `sudo systemctl start travelblogs` — then confirm it is active and serving
+3. `export PATH=/opt/node-24/bin:$PATH` — **before** installing, so the `better-sqlite3` prebuild
+   matches the ABI the service will run under (Node 24 = ABI 137). Installing under an older Node
+   and starting under Node 24 leaves a module that cannot be loaded.
+4. `export SHARP_IGNORE_GLOBAL_LIBVIPS=1` — the host has a system libvips, so sharp's install check
+   otherwise prefers it and tries to compile from source, which fails without a C++ toolchain and
+   `node-addon-api`. This forces the prebuilt `@img/sharp-linux-*` binary. It must be a real
+   environment variable: an `.npmrc` entry does **not** work, because npm exposes config keys as
+   `npm_config_*` and sharp only reads `SHARP_IGNORE_GLOBAL_LIBVIPS`.
+5. `npm ci` — required whenever `package-lock.json` changed or a native module was bumped;
+   `npm run build` alone reuses a stale `node_modules`. The `postinstall` hook runs
+   `prisma generate` for you, because `npm ci` wipes the generated client along with
+   `node_modules`.
+6. `npm run build`
+7. Start the service — `sudo systemctl start travelblogs` — then confirm it is active and serving
    HTTPS: `journalctl -u travelblogs -f`
+
+Sanity checks worth running after any reinstall:
+
+```bash
+node -e "require('better-sqlite3'); console.log('ABI', process.versions.modules)"   # expect 137
+node -e "require('sharp')({create:{width:8,height:8,channels:3,background:'#000'}}).jpeg().toBuffer().then(b=>console.log('sharp OK',b.length))"
+sudo readlink -f /proc/$(systemctl show -p MainPID --value travelblogs)/exe          # expect /opt/node-24/bin/node
+```
 
 ### systemd unit and the Node runtime
 
