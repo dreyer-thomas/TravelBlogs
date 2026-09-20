@@ -118,7 +118,17 @@ Environment="PATH=/opt/node-24/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr
 ExecStart=/opt/node-24/bin/npm start
 ```
 
-After editing the unit: `sudo systemctl daemon-reload`, then restart the service.
+After editing the unit: **`sudo systemctl daemon-reload`, then restart the service.** Do not skip the
+reload — systemd keeps serving the cached unit definition, so the app silently keeps running on the
+old interpreter. That failure mode is nasty to diagnose: `better-sqlite3` is built for the Node it was
+installed under, so a stale Node 20 unit produces
+`NODE_MODULE_VERSION 137 ... requires 115`, every Prisma call fails with `ERR_DLOPEN_FAILED`, and
+because auth failures and database failures look identical at the UI, it presents as *"my password
+stopped working"*.
+
+Note the unit is named `TravelBlogs.service` (capitalised) — `journalctl -u travelblogs` returns
+`-- No entries --` rather than an error. Journal access also needs `sudo`, since the `app` user is not
+in `adm`/`systemd-journal`.
 
 Unlike TravelPlan, TravelBlogs loads its configuration from `.env` via `dotenv` rather than from
 `Environment=` lines in the unit, so do not copy TravelPlan's `Environment=` block across. Note

@@ -23,11 +23,13 @@ type ApiResponse = {
 
 const loadOverview = async (
   baseUrl: string,
+  cookieHeader: string,
   tripId: string,
   t: (key: string) => string,
 ): Promise<ApiResponse> => {
   const response = await fetch(`${baseUrl}/api/trips/${tripId}/overview`, {
     method: "GET",
+    headers: cookieHeader ? { cookie: cookieHeader } : {},
     cache: "no-store",
   });
 
@@ -66,6 +68,7 @@ const TripOverviewPage = async ({
   const host = forwardedHost ?? headersList.get("host");
   const protocol = headersList.get("x-forwarded-proto") ?? "http";
   const baseUrl = host ? `${protocol}://${host}` : null;
+  const cookieHeader = headersList.get("cookie") ?? "";
 
   if (!baseUrl) {
     return (
@@ -81,7 +84,7 @@ const TripOverviewPage = async ({
     );
   }
 
-  const { data, error } = await loadOverview(baseUrl, tripId, t);
+  const { data, error } = await loadOverview(baseUrl, cookieHeader, tripId, t);
 
   if (error?.code === "NOT_FOUND") {
     notFound();

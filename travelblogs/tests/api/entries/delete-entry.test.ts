@@ -167,7 +167,7 @@ describe("DELETE /api/entries/[id]", () => {
     expect(body.error.code).toBe("FORBIDDEN");
   });
 
-  it("rejects contributor deletes even with access", async () => {
+  it("allows an invited contributor to delete an entry", async () => {
     getToken.mockResolvedValue({ sub: "viewer-1" });
 
     const trip = await prisma.trip.create({
@@ -215,8 +215,63 @@ describe("DELETE /api/entries/[id]", () => {
     const response = await del(request, { params: { id: entry.id } });
     const body = await response.json();
 
+    expect(response.status).toBe(200);
+    expect(body.error).toBeNull();
+    await expect(
+      prisma.entry.findUnique({ where: { id: entry.id } }),
+    ).resolves.toBeNull();
+  });
+
+  it("rejects deletes from an invited user without contribute access", async () => {
+    getToken.mockResolvedValue({ sub: "viewer-2" });
+
+    const trip = await prisma.trip.create({
+      data: {
+        title: "Read Only Trip",
+        startDate: new Date("2025-05-01"),
+        endDate: new Date("2025-05-02"),
+        ownerId: "creator",
+      },
+    });
+
+    await prisma.user.create({
+      data: {
+        id: "viewer-2",
+        email: "viewer-2@example.com",
+        name: "Viewer Two",
+        role: "viewer",
+        passwordHash: "hash",
+      },
+    });
+
+    await prisma.tripAccess.create({
+      data: {
+        tripId: trip.id,
+        userId: "viewer-2",
+        canContribute: false,
+      },
+    });
+
+    const entry = await prisma.entry.create({
+      data: {
+        tripId: trip.id,
+        title: "Read only entry",
+        text: "Read only entry.",
+      },
+    });
+
+    const request = new Request(`http://localhost/api/entries/${entry.id}`, {
+      method: "DELETE",
+    });
+
+    const response = await del(request, { params: { id: entry.id } });
+    const body = await response.json();
+
     expect(response.status).toBe(403);
     expect(body.error.code).toBe("FORBIDDEN");
+    await expect(
+      prisma.entry.findUnique({ where: { id: entry.id } }),
+    ).resolves.not.toBeNull();
   });
 
   it("returns not found when the entry does not exist", async () => {

@@ -1,5 +1,4 @@
 import { prisma } from "./db";
-import { isAdminOrCreator } from "./roles";
 
 const loadUserForAccess = async (userId: string) => {
   if (userId === "creator") {
@@ -12,24 +11,22 @@ const loadUserForAccess = async (userId: string) => {
   });
 };
 
-export const hasTripAccess = async (tripId: string, userId: string) => {
-  const user = await loadUserForAccess(userId);
-  if (!user || user.isActive === false) {
-    return false;
-  }
+const ownsTrip = async (tripId: string, userId: string) => {
+  const trip = await prisma.trip.findUnique({
+    where: { id: tripId },
+    select: { ownerId: true },
+  });
 
-  if (user.role === "administrator") {
-    return true;
-  }
+  return trip?.ownerId === userId;
+};
 
-  if (user.role === "creator") {
-    const trip = await prisma.trip.findUnique({
-      where: { id: tripId },
-      select: { ownerId: true },
-    });
-    return trip?.ownerId === user.id;
-  }
-
+/**
+ * Creators own their own trips, but they can also be invited to someone
+ * else's trip. Ownership is therefore only the first of two ways in — a
+ * creator who does not own the trip still falls through to the invitation
+ * lookup, the same as a viewer.
+ */
+const isInvited = async (tripId: string, userId: string) => {
   const access = await prisma.tripAccess.findUnique({
     where: {
       tripId_userId: {
@@ -50,6 +47,23 @@ export const hasTripAccess = async (tripId: string, userId: string) => {
   return Boolean(access?.id && access.user.isActive);
 };
 
+export const hasTripAccess = async (tripId: string, userId: string) => {
+  const user = await loadUserForAccess(userId);
+  if (!user || user.isActive === false) {
+    return false;
+  }
+
+  if (user.role === "administrator") {
+    return true;
+  }
+
+  if (user.role === "creator" && (await ownsTrip(tripId, user.id))) {
+    return true;
+  }
+
+  return isInvited(tripId, userId);
+};
+
 export const canContributeToTrip = async (tripId: string, userId: string) => {
   const user = await loadUserForAccess(userId);
   if (!user || user.isActive === false) {
@@ -60,12 +74,8 @@ export const canContributeToTrip = async (tripId: string, userId: string) => {
     return true;
   }
 
-  if (user.role === "creator") {
-    const trip = await prisma.trip.findUnique({
-      where: { id: tripId },
-      select: { ownerId: true },
-    });
-    return trip?.ownerId === user.id;
+  if (user.role === "creator" && (await ownsTrip(tripId, user.id))) {
+    return true;
   }
 
   const access = await prisma.tripAccess.findUnique({

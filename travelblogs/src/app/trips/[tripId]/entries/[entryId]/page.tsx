@@ -70,7 +70,9 @@ const EntryDetailPage = async ({ params }: EntryDetailPageProps) => {
   const canEdit = isOwner
     ? true
     : await canContributeToTrip(entry.tripId, session.user.id);
-  const canDelete = isOwner;
+  // Deleting an entry carries the same permission as editing one, so owners,
+  // administrators and invited contributors all see the button.
+  const canDelete = canEdit;
 
   const location =
     entry.latitude !== null && entry.longitude !== null

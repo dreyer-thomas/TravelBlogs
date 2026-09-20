@@ -4,11 +4,11 @@ baseline_commit: 2241c86bb53aac3dfed57551be704a8b4c8283db
 
 # Story 0.8: Upgrade the Runtime to Node.js 24 LTS
 
-Status: in-progress
+Status: review
 
-<!-- Implementation complete and verified on Node 24; NOT moved to "review" because the production
-     deploy (AC 5) requires Tommy and the DoD's zero-vulnerability gate cannot be met in scope.
-     See Dev Agent Record → Completion Notes. -->
+<!-- All tasks complete; production deployed and running on Node 24 (Tommy, 2026-08-13).
+     One DoD item is knowingly unmet and out of scope: 11 pre-existing vulnerabilities remain,
+     none introduced by this story (baseline was 13). See Dev Agent Record → Completion Notes. -->
 
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
@@ -80,14 +80,14 @@ so that the platform stays on a security-supported runtime instead of end-of-lif
 - [x] Update documentation (AC: 2, 5)
   - [x] `travelblogs/README.md`: add a prerequisites note stating Node.js 24 LTS is required and referencing the root `.nvmrc`. The README currently mentions no Node version at all
   - [x] `_bmad-output/project-context.md`: add the Node.js runtime version to the "Technology Stack & Versions" list (it currently lists no runtime), and update the `@types/node` expectation if any rule references it. Also refresh the `Last Updated` timestamp
-- [ ] Deploy to production (AC: 5) — **operator action, requires Tommy — NOT DONE, blocks AC 5**
-  - [ ] **This task cannot be completed by the dev agent alone** — it requires shell access to the production host. Coordinate with Tommy before proceeding; do not attempt remote access unprompted
-  - [x] ~~Install Node.js 24 LTS on the production host~~ — **already installed, no install needed.** Tommy confirmed the sibling TravelPlan service on the same host already runs Node 24 from `/opt/node-24` (`ExecStart=/opt/node-24/bin/npm start` with `Environment="PATH=/opt/node-24/bin:..."`). This removes the install step and the main risk from this task
-  - [ ] Update the `travelblogs` systemd unit to pin Node 24, mirroring the proven TravelPlan pattern — set `Environment="PATH=/opt/node-24/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"` and `ExecStart=/opt/node-24/bin/npm start`, then `sudo systemctl daemon-reload`. This matters because `npm start` runs `node server.js`, so the resolved `node` is what runs the app. Do **not** copy TravelPlan's `Environment=` config block: TravelBlogs loads config from `.env` via `dotenv`, and reads `HOSTNAME` rather than `HOST`
-  - [ ] **Put Node 24 first on the deploy shell's `PATH` before installing** (`export PATH=/opt/node-24/bin:$PATH`, confirm `node -v` reports `v24.x`). This is a hard requirement, not hygiene: `npm ci` makes `prebuild-install` fetch a `better-sqlite3` binary matching the ABI of whichever Node runs the install (Node 24 = ABI 137). Installing under Node 20 and then starting the service under Node 24 leaves an ABI-mismatched native module that fails to load at runtime
-  - [ ] Follow the established deploy order, with one addition: **stop the service → `git pull` → `npm ci` → `npx prisma generate` → `npm run build` → start the service**. The `npm ci` step is required because this story changes `package-lock.json` and the native module, so a plain `npm run build` on a stale `node_modules` is not sufficient. The `npx prisma generate` step is **not** in the original story instructions and is mandatory — `npm ci` wipes the generated Prisma client and there is no `postinstall` hook, so the build fails without it (see Debug Log item 1)
-  - [ ] After start, confirm the service is active, HTTPS traffic is served correctly, and the startup backfills completed — check `journalctl` for the unit
-  - [ ] Record the production Node version and the outcome in the Completion Notes
+- [x] Deploy to production (AC: 5) — **completed by Tommy on 2026-08-13; service running on Node 24**
+  - [x] **This task cannot be completed by the dev agent alone** — it requires shell access to the production host. Coordinated with Tommy, who ran every command on the host; no remote access was attempted from here
+  - [x] ~~Install Node.js 24 LTS on the production host~~ — **already installed, no install needed.** Tommy confirmed the sibling TravelPlan service on the same host already runs Node 24 from `/opt/node-24` (`ExecStart=/opt/node-24/bin/npm start` with `Environment="PATH=/opt/node-24/bin:..."`). This removed the install step and the main risk from this task
+  - [x] Update the `TravelBlogs.service` systemd unit to pin Node 24, mirroring the proven TravelPlan pattern — `Environment="PATH=/opt/node-24/bin:..."` and `ExecStart=/opt/node-24/bin/npm start`, then **`sudo systemctl daemon-reload`**. Note the unit name is capitalised (`TravelBlogs.service`), so `journalctl -u travelblogs` silently returns `-- No entries --`. Did **not** copy TravelPlan's `Environment=` config block: TravelBlogs loads config from `.env` via `dotenv` and reads `HOSTNAME`, not `HOST`
+  - [x] **Put Node 24 first on the deploy shell's `PATH` before installing** (`export PATH=/opt/node-24/bin:$PATH`). Confirmed necessary in practice: the first `npm ci` on the host ran under Node 20 and emitted the `EBADENGINE` warning from the new `engines` block — AC 2 doing exactly its job
+  - [x] Deploy order, as finally executed: **stop service → `git pull` → `bash scripts/deploy.sh` → start service**. The script encodes the three mandatory settings (Node 24 on `PATH`, `SHARP_IGNORE_GLOBAL_LIBVIPS=1`, `prisma generate` via `postinstall`) and asserts both native modules load before building
+  - [x] After start, confirm the service is active and the startup backfills completed — verified via `sudo journalctl -u TravelBlogs.service`. **Caveat on "HTTPS traffic":** production runs with `HTTPS_ENABLED` off and serves plain HTTP on `0.0.0.0:3000` (`HTTPS is disabled; starting HTTP server.` in the log), so TLS is terminated by something in front rather than by `server.js`. The HTTPS path in `server.js` is therefore **not** exercised in production — it was verified locally instead. What terminates TLS is not yet confirmed; flagged in Completion Notes
+  - [x] Record the production Node version and the outcome in the Completion Notes
 
 ## Dev Notes
 
@@ -359,8 +359,47 @@ AC 5, which requires a production deploy that cannot be done by the dev agent.
   baseline plus the 8 tests added here. No user-facing behavior changed. The one Node-24 test failure
   was diagnosed to a jsdom `Blob` gap and fixed in the test harness, with no assertion or application
   code altered.
-- **AC 5 — NOT satisfied. Blocked on Tommy.** Requires installing Node.js 24 on the production host
-  and running the deploy. See below.
+- **AC 5 — satisfied.** Deployed by Tommy on 2026-08-13. `TravelBlogs.service` now runs under Node 24
+  from `/opt/node-24` and the app is serving normally again. One deviation from the AC wording is
+  recorded honestly: production has `HTTPS_ENABLED` **off** and serves plain HTTP on `0.0.0.0:3000`,
+  so TLS is terminated by a front-end rather than by `server.js`. The HTTPS entrypoint was therefore
+  verified locally, not in production. **Confirmed 2026-08-13:** `nginx` is active and listens on
+  `0.0.0.0:443`, proxying to the app on HTTP `:3000`; prod `.env` contains no `TLS_*` paths at all, so
+  `HTTPS_ENABLED=false` is deliberate and correct for this topology. AC 5 is met at the proxy — the
+  service starts under Node 24 and HTTPS traffic is served correctly — but note that `server.js`'s own
+  TLS path is dead code in production.
+
+  Two follow-ups found while confirming this, both out of scope and neither caused by this story:
+  (a) the root crontab renews certs with
+  `certbot renew --deploy-hook "systemctl restart TravelBlogs"`, which restarts the **app** — but the
+  app does not read the certificates; nginx does. nginx is never reloaded on renewal, so it keeps
+  serving the previous certificate until something else reloads it. Tommy changed the crontab hook to
+  `systemctl reload nginx` on 2026-08-13, but that alone is **not sufficient**: the letsencrypt log
+  shows a *second* renewal path (`certbot -q --no-random-sleep-on-renew`, i.e. the packaged
+  timer/cron) which carries no deploy hook at all. Whichever path runs first when renewal falls due
+  wins, so the reliable fix is a script in `/etc/letsencrypt/renewal-hooks/deploy/`, which certbot
+  runs after every successful renewal regardless of invocation. Renewal is imminent — both certs had
+  31 days left on 2026-08-13 and certbot's threshold is 30. Currently served cert was verified to
+  match certbot's (`notAfter=Sep 13 23:04:59 2026`), so nothing is stale right now. The duplicate
+  renewal mechanism should also be reduced to one. (b) The app binds `0.0.0.0:3000`, so it is reachable directly, bypassing
+  TLS, wherever the firewall permits; the sibling TravelPlan unit binds `127.0.0.1` for this reason.
+  Worth noting for (b): `server.js` reads the bind address from `HOSTNAME`
+  (`process.env.HOSTNAME ?? "0.0.0.0"`), which is a fragile choice because interactive bash sets
+  `HOSTNAME` to the machine name — TravelPlan's `HOST` is the safer convention.
+
+  **The deploy was not clean, and the root cause is worth remembering: a forgotten
+  `systemctl daemon-reload`.** The unit had been updated to `/opt/node-24`, but systemd kept serving
+  the cached Node 20 definition. Because `better-sqlite3` had just been installed under Node 24
+  (ABI 137), it could not load on Node 20 (ABI 115): `ERR_DLOPEN_FAILED`, every Prisma call throwing,
+  all four startup backfills failing. It surfaced to Tommy as **"my credentials are no longer
+  valid"** — because `validateCredentials` queries Prisma immediately after matching
+  `CREATOR_EMAIL`/`CREATOR_PASSWORD` (`src/utils/auth.ts:57`), a database failure is
+  indistinguishable from a bad password at the UI. No data was ever at risk: the production database
+  was confirmed intact (956 KB, mtime Aug 2, all 5 users `isActive`, 7 trips) before anything was
+  changed. Diagnosis was also slowed by two incidental traps now documented in the README: the unit
+  is `TravelBlogs.service` (capitalised, so `journalctl -u travelblogs` returns `-- No entries --`
+  rather than an error), and journal access needs `sudo` because the `app` user is not in
+  `adm`/`systemd-journal`.
 
 Changes made, all within the story's stated scope:
 
@@ -425,4 +464,5 @@ Changes made, all within the story's stated scope:
 - 2026-08-13: Implemented on Node.js `v24.19.0` / npm `11.18.0` (npm unchanged from baseline). `better-sqlite3` `11.6.0` → `^12.6.0` (resolves `12.11.1`, now a single hoisted copy using a prebuilt binary — no `node-gyp` compilation); `@types/node` `^20` → `^24` (no new type errors); `engines.node` + root `.nvmrc` added; `url.parse` (`DEP0169`) replaced with a WHATWG-`URL`-based `parseRequestUrl` at both `server.js` call sites, with 8 new tests. Tests 856 passed / 1 skipped / 0 failed (baseline 848/1 + 8 new); typecheck clean; production build succeeds; HTTPS entrypoint boots and smoke-tests pass (sign-in/session/sign-out, trip list, entry detail, unauthenticated shared links, media upload with `sharp` compression). Fixed one genuine Node-24 test failure at the harness level: jsdom's `Blob` lacks `arrayBuffer()`, which Node 24 now exposes because `Response.blob()` returns the jsdom `Blob` — shimmed in `tests/setup.ts` with no assertion or application code changed. Corrected the story's stale "zero vulnerabilities" premise: the baseline commit itself audits at 13; this story introduces **0 new** and reduces the count to 11.
 - 2026-08-13: Deploy prerequisites clarified by Tommy — Node 24 is **already installed** on the production host at `/opt/node-24`, where the sibling TravelPlan service already runs from it, so AC 5 needs no runtime install. README deploy section and the deploy task updated with the concrete unit-file change (`ExecStart=/opt/node-24/bin/npm start` + matching `Environment="PATH=..."`) and with the ABI requirement that `npm ci` must run under Node 24 so the `better-sqlite3` prebuild matches the runtime the service uses (ABI 137).
 - 2026-08-13: Deploy attempt on the production host (Debian 12, linux/arm64) exposed two further defects that a clean `npm ci` surfaces but the old "build in place" deploy hid. (a) `sharp` was imported by `src/utils/compress-image.ts` yet declared nowhere in `package.json` — it had been resolving as an optional dependency of `next`; now declared explicitly (`^0.34.5`, `optional: false`, single deduped copy). (b) On that host sharp still refused to install, because `install/check.js` prefers a detected **system libvips** and falls back to a source build that fails without a toolchain; fixed with `SHARP_IGNORE_GLOBAL_LIBVIPS=1`, which cannot be set via `.npmrc` (verified: npm exposes config only as `npm_config_*`). Added `postinstall: prisma generate` and a new `travelblogs/scripts/deploy.sh` that encodes all three mandatory deploy settings and asserts both native modules load. Verified from a clean tree: `npm ci` → `prisma generate` (automatic) → `better-sqlite3` ABI 137 → `sharp` OK (libvips 8.17.3) → typecheck PASS → build PASS → 856 passed / 1 skipped → audit 11 (unchanged).
-- 2026-08-13: **Not complete.** Production deploy (AC 5) is outstanding and requires Tommy, and the DoD's "zero vulnerabilities" gate cannot be met without out-of-scope `next`/`prisma` upgrades. Status intentionally left at `in-progress` rather than `review`. Also surfaced two pre-existing, version-independent defects for follow-up: `npm ci` leaves the Prisma client ungenerated (no `postinstall` hook — now documented in the README deploy order, and it would have broken this story's own deploy sequence), and the backfill block at `server.js:57-82` is dead code that always throws `MODULE_NOT_FOUND` because it `require`s a `.ts` file (the backfills actually run via `src/instrumentation.ts`).
+- 2026-08-13: **Production deployed; AC 5 satisfied; story moved to `review`.** `TravelBlogs.service` runs under Node 24 from `/opt/node-24`. The cutover initially failed because `systemctl daemon-reload` was skipped after editing the unit, so systemd kept the cached Node 20 definition and the freshly installed ABI-137 `better-sqlite3` could not load (`NODE_MODULE_VERSION 137 … requires 115`), making every Prisma query throw. That presented as invalid login credentials, since an auth check and a database failure are indistinguishable at the UI. The production database was verified untouched throughout. `daemon-reload`, the capitalised unit name, and the `sudo`-for-journalctl requirement are now documented in the README, and the prod-deploy memory has been rewritten accordingly. Remaining known gap, out of scope and unchanged by this story: 11 pre-existing vulnerabilities (baseline 13).
+- 2026-08-13: _(superseded by the entry above)_ ~~**Not complete.** Production deploy (AC 5) is outstanding and requires Tommy, and the DoD's "zero vulnerabilities" gate cannot be met without out-of-scope `next`/`prisma` upgrades. Status intentionally left at `in-progress` rather than `review`. Also surfaced two pre-existing, version-independent defects for follow-up: `npm ci` leaves the Prisma client ungenerated (no `postinstall` hook — now documented in the README deploy order, and it would have broken this story's own deploy sequence), and the backfill block at `server.js:57-82` is dead code that always throws `MODULE_NOT_FOUND` because it `require`s a `.ts` file (the backfills actually run via `src/instrumentation.ts`).~~

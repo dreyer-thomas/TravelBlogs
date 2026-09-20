@@ -16,7 +16,7 @@ import {
 import { sortTagNames } from "../../../../utils/tag-sort";
 import { removeEntryImageNodesFromJson, removeEntryVideoNodesFromJson } from "../../../../utils/tiptap-image-helpers";
 import { canContributeToTrip, hasTripAccess } from "../../../../utils/trip-access";
-import { ensureActiveAccount, isAdminOrCreator } from "../../../../utils/roles";
+import { ensureActiveAccount } from "../../../../utils/roles";
 import { reverseGeocode } from "../../../../utils/reverse-geocode";
 import { fetchHistoricalWeather } from "../../../../utils/fetch-weather";
 
@@ -633,9 +633,6 @@ export const DELETE = async (
     if (!user) {
       return jsonError(401, "UNAUTHORIZED", "Authentication required.");
     }
-    if (!isAdminOrCreator(user.role)) {
-      return jsonError(403, "FORBIDDEN", "Creator access required.");
-    }
     const isAdmin = user.role === "administrator";
     const isActive = await ensureActiveAccount(user.id);
     if (!isActive) {
@@ -662,7 +659,14 @@ export const DELETE = async (
     }
 
     if (!isAdmin && entry.trip.ownerId !== user.id) {
-      return jsonError(403, "FORBIDDEN", "Not authorized to delete this entry.");
+      const canContribute = await canContributeToTrip(entry.tripId, user.id);
+      if (!canContribute) {
+        return jsonError(
+          403,
+          "FORBIDDEN",
+          "Not authorized to delete this entry.",
+        );
+      }
     }
 
     const deletedEntry = await prisma.entry.delete({
