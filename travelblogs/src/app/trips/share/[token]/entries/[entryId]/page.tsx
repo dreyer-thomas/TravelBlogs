@@ -6,6 +6,7 @@ import { headers } from "next/headers";
 import EntryReader from "../../../../../../components/entries/entry-reader";
 import SharedTripGuard from "../../../../../../components/trips/shared-trip-guard";
 import SharedEntryError from "../../../../../../components/entries/shared-entry-error";
+import ViewBeacon from "../../../../../../components/trips/view-beacon";
 import type { EntryApiData } from "../../../../../../utils/entry-reader";
 import { mapEntryToReader } from "../../../../../../utils/entry-reader";
 import { getRequestBaseUrl } from "../../../../../../utils/request-base-url";
@@ -213,6 +214,7 @@ const SharedEntryPage = async ({ params }: SharedEntryPageProps) => {
 
   return (
     <SharedTripGuard token={token}>
+      <ViewBeacon token={token} entryId={entryId} />
       <EntryReader
         entry={readerEntry}
         entryLinkBase={`/trips/share/${token}/entries`}

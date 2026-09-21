@@ -1872,3 +1872,110 @@ So that I see the most recent trips at the top.
 **When** the list is rendered
 **Then** sorting is applied after filtering
 **And** drafts/archived trips remain included and are sorted by the same rules
+
+## Epic 16: Visitor Counter
+
+Count page views of publicly shared trips and entries, and surface the numbers only to editors. No unique-visitor tracking, no cookies, no third-party analytics.
+
+### Story 16.1: Count Page Views for Shared Trips and Entries
+
+As a trip owner,
+I want page views of my shared trip and its entries to be counted,
+So that I can tell whether anyone is reading my blog.
+
+**Acceptance Criteria:**
+
+**Given** an anonymous visitor opens a shared trip or entry page
+**When** the page has rendered
+**Then** the counter for that target and the current UTC day is incremented by exactly 1
+**And** a single page view never counts twice
+
+**Given** views arrive for the same target on the same UTC day
+**When** they are counted
+**Then** they accumulate in one row
+**And** the next UTC day starts a new row
+
+**Given** a request carries a valid session, or its User-Agent matches the bot list
+**When** the beacon endpoint is called
+**Then** nothing is incremented
+
+**Given** any number of views have been counted
+**When** the stored rows are inspected
+**Then** each row holds only a target reference, a UTC day and an integer
+**And** no IP address, User-Agent, referrer or device identifier is persisted anywhere
+
+### Story 16.2: Display View Counts in Edit Mode
+
+As a trip owner or contributor,
+I want to see view counts while working on a trip,
+So that I get the information without exposing it to readers.
+
+**Acceptance Criteria:**
+
+**Given** I am the owner, a contributor or an administrator
+**When** I open the trip detail page
+**Then** I see the trip total, the last 30 days, and a per-entry total on each entry card
+
+**Given** I am a read-only viewer or an anonymous visitor
+**When** the trip or the shared page renders
+**Then** no view count appears anywhere in the output
+
+**Given** a target has never been viewed
+**When** its count is displayed
+**Then** it reads 0
+**And** every label says "views"/"Aufrufe", never "visitors"/"Besucher", in both languages
+
+## Epic 17: Legal Notice and Privacy Policy
+
+Add a publicly reachable Impressum and Datenschutzerklärung, backed by a verified inventory of what the application actually processes. Independent of Epic 16.
+
+### Story 17.1: Add Impressum Page
+
+As the operator of the site,
+I want a publicly reachable Impressum page,
+So that readers can see who is responsible for the content.
+
+**Acceptance Criteria:**
+
+**Given** I am an anonymous visitor on any public page, including shared trip, entry and map pages
+**When** the page renders
+**Then** an Impressum link is reachable in one click
+**And** /impressum renders without redirecting me to sign-in
+
+**Given** the operator details are not yet filled in
+**When** the page renders
+**Then** it shows an explicit "not configured" state
+**And** it never displays a plausible-looking placeholder name, address or contact
+
+**Given** the UI language is English or German
+**When** the page renders
+**Then** all labels come from the translation catalog in both languages
+**And** the page loads no map, external font, external script or view beacon
+
+### Story 17.2: Add Privacy Policy Page (Datenschutzerklärung)
+
+As a reader of a shared trip,
+I want to see what data the site processes about me and who it goes to,
+So that I can make an informed decision before browsing.
+
+**Acceptance Criteria:**
+
+**Given** I am an anonymous visitor
+**When** I open /datenschutz or follow the footer link from any public page
+**Then** the page renders in English or German without requiring a login
+
+**Given** the page renders
+**Then** it covers account data, trip content, EXIF-derived location data, weather data, OpenStreetMap map tiles, share-link access, server access logs, and the page-view counter if Epic 16 has shipped
+
+**Given** any public page renders a map
+**When** the policy describes it
+**Then** it states that tiles are loaded directly by the visitor's browser from tile.openstreetmap.org
+**And** that this transmits the visitor's IP address and User-Agent to the OpenStreetMap Foundation
+
+**Given** the policy covers Nominatim geocoding and Open-Meteo weather
+**Then** it states these are called from the server and the visitor's IP is never sent to them
+**And** it does not invent transfers that do not happen — the web font is self-hosted by next/font at build time
+
+**Given** the operator has not approved the wording
+**When** the page renders
+**Then** it shows a "not yet published" state rather than boilerplate presented as the operator's own policy

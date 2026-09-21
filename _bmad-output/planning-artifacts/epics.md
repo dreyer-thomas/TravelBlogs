@@ -4455,3 +4455,205 @@ Export and restore trips for emergency recovery or system migration.
 **Source:** User request for trips ordering
 **Priority:** Medium
 **Story Points:** 2
+
+## Epic 16: Visitor Counter
+
+Count page views of publicly shared trips and entries, and surface the numbers only to editors.
+
+**Business Value:** Give trip owners evidence that their blog is being read, without creating any data-protection exposure.
+
+**Dependencies:** Epic 4 (Shareable Links), Epic 5 (Roles and Contributor Access)
+
+**Explicit Non-Goals:**
+- No unique-visitor measurement (would require processing IP addresses or device fingerprints)
+- No cookies, `localStorage` or `sessionStorage` on the visitor's device
+- No third-party analytics service
+- No counter on the shared map page
+- No counts visible to readers or to read-only viewers
+
+### Story 16.1: Count Page Views for Shared Trips and Entries
+
+**As a** trip owner
+**I want to** have page views of my shared trip and its entries counted
+**So that** I can tell whether anyone is reading my blog
+
+**Acceptance Criteria:**
+
+#### AC 1: Anonymous Views Are Counted
+**Given** an anonymous visitor opens a shared trip or entry page
+**When** the page has rendered
+**Then** the counter for that target and the current UTC day is incremented by exactly 1
+
+#### AC 2: Counted Once, In Daily Buckets
+**Given** views arrive for the same target on the same UTC day
+**When** they are counted
+**Then** they accumulate in a single row, and the next UTC day starts a new row
+**And** a single page view never counts twice
+
+#### AC 3: Own and Bot Traffic Excluded
+**Given** a request carries a valid session, or its `User-Agent` matches the bot list
+**When** the beacon endpoint is called
+**Then** nothing is incremented
+
+#### AC 4: No Personal Data Stored
+**Given** any number of views have been counted
+**When** the stored rows are inspected
+**Then** each row holds only a target reference, a UTC day and an integer
+**And** no IP address, `User-Agent`, referrer or device identifier is persisted anywhere
+
+**Technical Requirements:**
+- `TripView` and `EntryView` models, unique on `(target, day)`, cascade-deleted with their target
+- `POST /api/trips/share/[token]/view` beacon endpoint, fired once per page view from the client
+- Counting must not live in `GET /api/trips/share/[token]`, which runs twice per request
+- Two separate models rather than one nullable column, because SQLite treats `NULL`s as distinct in unique indexes
+
+**Testing Requirements:**
+- Anonymous trip and entry views increment; same-day accumulates; next day is a new row
+- Signed-in and bot requests increment nothing
+- Invalid token and foreign `entryId` return `404` and increment nothing
+- Deleting a trip or entry removes its view rows
+
+**Source:** User request, 2026-09-21
+**Priority:** Medium
+**Story Points:** 5
+
+### Story 16.2: Display View Counts in Edit Mode
+
+**As a** trip owner or contributor
+**I want to** see view counts while working on a trip
+**So that** I get the information without exposing it to readers
+
+**Acceptance Criteria:**
+
+#### AC 1: Counts Visible to Editors
+**Given** I am the owner, a contributor or an administrator
+**When** I open the trip detail page
+**Then** I see the trip's total views, its views in the last 30 days, and a per-entry total on each entry card
+
+#### AC 2: Hidden From Everyone Else
+**Given** I am a read-only viewer or an anonymous visitor
+**When** the trip or the shared page renders
+**Then** no view count appears anywhere in the output
+
+#### AC 3: Honest Labels and Zero State
+**Given** a target has never been viewed
+**When** its count is displayed
+**Then** it reads `0`
+**And** every label says "views"/"Aufrufe", never "visitors"/"Besucher", in both English and German
+
+**Technical Requirements:**
+- Reuse the existing contributor permission gate; do not compute a second one
+- Aggregate per-entry counts in a single query — no N+1 across entry cards
+- Keep counts out of the shared render path; `TripOverview` is used by both the public and the authenticated view
+
+**Testing Requirements:**
+- Counts render with contribute permission and are absent without it
+- Explicit negative test asserting counts never appear in the shared-view rendered output
+- Zero state renders `0`
+- The count-returning endpoint rejects anonymous callers
+
+**Source:** User request, 2026-09-21
+**Priority:** Medium
+**Story Points:** 3
+
+## Epic 17: Legal Notice and Privacy Policy
+
+Add a publicly reachable Impressum and Datenschutzerklärung, backed by a verified inventory of what the application actually processes.
+
+**Business Value:** Close the project's largest open compliance gap. The application is publicly reachable via share links and already transmits reader IP addresses to a third party for map tiles, with no disclosure anywhere.
+
+**Dependencies:** None. Deliberately independent of Epic 16 — the visitor counter stores no personal data, so it does not wait on this epic.
+
+**Explicit Non-Goals:**
+- No legal advice and no authored legal wording from the project team; the operator supplies and approves the text
+- No cookie consent banner — nothing in the application currently requires consent
+- No change to how map tiles are loaded (disclosure first; avoidance recorded as a deferred option)
+
+### Story 17.1: Add Impressum Page
+
+**As the** operator of the site
+**I want** a publicly reachable Impressum page
+**So that** readers can see who is responsible for the content
+
+**Acceptance Criteria:**
+
+#### AC 1: Public and Linked
+**Given** I am an anonymous visitor on any public page, including shared trip, entry and map pages
+**When** the page renders
+**Then** an Impressum link is reachable in one click
+**And** `/impressum` renders without redirecting me to sign-in
+
+#### AC 2: Configured Content, Honest Empty State
+**Given** the operator details are not yet filled in
+**When** the page renders
+**Then** it shows an explicit "not configured" state
+**And** it never displays a plausible-looking placeholder name, address or contact
+
+#### AC 3: Bilingual and Self-Contained
+**Given** the UI language is English or German
+**When** the page renders
+**Then** all labels come from the translation catalog in both languages
+**And** the page loads no map, external font, external script or view beacon
+
+**Technical Requirements:**
+- `/impressum` is public by default; `config.matcher` in `src/proxy.ts` does not cover it — add a proxy test so a future matcher change cannot lock it away
+- Introduces the project's first shared public footer; no global footer exists today
+- Operator details live in one configured source, via `.env` (the project does not use `.env.local`)
+
+**Testing Requirements:**
+- Configured values render; unset state renders the notice and no placeholder data
+- Footer links appear on the shared trip, entry and map pages
+- `/impressum` is classified as public by the proxy
+
+**Source:** User request, 2026-09-21
+**Priority:** High
+**Story Points:** 3
+
+### Story 17.2: Add Privacy Policy Page (Datenschutzerklärung)
+
+**As a** reader of a shared trip
+**I want to** see what data the site processes about me and who it goes to
+**So that** I can make an informed decision before browsing
+
+**Acceptance Criteria:**
+
+#### AC 1: Public, Linked and Bilingual
+**Given** I am an anonymous visitor
+**When** I open `/datenschutz` or follow the footer link from any public page
+**Then** the page renders in English or German without requiring a login
+
+#### AC 2: Complete Inventory
+**Given** the page renders
+**Then** it covers account data, trip content, EXIF-derived location data, weather data, OpenStreetMap map tiles, share-link access, server access logs, and the page-view counter if Epic 16 has shipped
+
+#### AC 3: The Map Tile Transfer Is Disclosed
+**Given** any public page renders a map
+**When** the policy describes it
+**Then** it states that tiles are loaded directly by the visitor's browser from `tile.openstreetmap.org`
+**And** that this transmits the visitor's IP address and User-Agent to the OpenStreetMap Foundation
+**And** it names the affected shared pages
+
+#### AC 4: Server-Side Services Described Accurately
+**Given** the policy covers Nominatim geocoding and Open-Meteo weather
+**Then** it states these are called from the server and the visitor's IP is never sent to them
+**And** it does not invent transfers that do not happen — the web font is self-hosted by `next/font` at build time
+
+#### AC 5: Honest Empty State
+**Given** the operator has not approved the wording
+**When** the page renders
+**Then** it shows a "not yet published" state rather than boilerplate presented as the operator's own policy
+
+**Technical Requirements:**
+- Inventory verified against the code, not copied from the story
+- Static server component; the page itself must trigger no third-party request
+- Reuses the footer and the config-plus-empty-state pattern from Story 17.1
+
+**Testing Requirements:**
+- All inventory sections present in rendered output
+- The OpenStreetMap disclosure asserted on rendered output, so removing it fails the suite
+- Empty state renders instead of boilerplate
+- `/datenschutz` is classified as public by the proxy
+
+**Source:** User request, 2026-09-21
+**Priority:** High
+**Story Points:** 5

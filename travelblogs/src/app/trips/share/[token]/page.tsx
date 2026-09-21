@@ -7,6 +7,7 @@ import { getServerSession } from "next-auth";
 import TripOverview from "../../../../components/trips/trip-overview";
 import SharedTripGuard from "../../../../components/trips/shared-trip-guard";
 import SharedTripError from "../../../../components/trips/shared-trip-error";
+import ViewBeacon from "../../../../components/trips/view-beacon";
 import { getRequestBaseUrl } from "../../../../utils/request-base-url";
 import { authOptions } from "../../../../utils/auth-options";
 import { getLocaleFromAcceptLanguage, getTranslation } from "../../../../utils/i18n";
@@ -141,6 +142,7 @@ const SharedTripPage = async ({
 
   return (
     <SharedTripGuard token={token}>
+      <ViewBeacon token={token} />
       <TripOverview
         trip={data.trip}
         entries={data.entries}
