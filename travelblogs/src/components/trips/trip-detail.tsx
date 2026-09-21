@@ -16,6 +16,7 @@ import { useTranslation } from "../../utils/use-translation";
 import { filterEntriesWithLocation } from "../../utils/entry-location";
 import { countryCodeToFlag } from "../../utils/country-flag";
 import type { EntryLocation } from "../../utils/entry-location";
+import type { TripViewCounts } from "../../utils/view-counter";
 
 type TripDetail = {
   id: string;
@@ -162,6 +163,7 @@ const TripDetail = ({
   const [overviewData, setOverviewData] = useState<TripOverviewData | null>(null);
   const [overviewLoading, setOverviewLoading] = useState(true);
   const [overviewError, setOverviewError] = useState<string | null>(null);
+  const [viewCounts, setViewCounts] = useState<TripViewCounts | null>(null);
   const [selectedEntryId, setSelectedEntryId] = useState<string | null>(null);
   const [isMapVisible, setIsMapVisible] = useState(false);
   const inviteeMenuRef = useRef<HTMLDivElement | null>(null);
@@ -285,6 +287,64 @@ const TripDetail = ({
       isActive = false;
     };
   }, [tripId]);
+
+  // View counts are an editor's metric. The request is skipped entirely for a
+  // read-only viewer so the numbers never reach the browser, and a failure is
+  // swallowed: a missing counter must not break the trip page.
+  useEffect(() => {
+    let isActive = true;
+
+    if (!canEditTrip) {
+      setViewCounts(null);
+      return () => {
+        isActive = false;
+      };
+    }
+
+    const loadViewCounts = async () => {
+      try {
+        const response = await fetch(`/api/trips/${tripId}/view-counts`, {
+          method: "GET",
+          credentials: "include",
+          cache: "no-store",
+        });
+        const body = await response.json().catch(() => null);
+
+        if (!response.ok || body?.error) {
+          throw new Error(body?.error?.message ?? "Unable to load view counts.");
+        }
+
+        const counts = body?.data as TripViewCounts | null;
+        // Every element is checked, not just the array: a single malformed
+        // row would otherwise throw while building `entryViewTotals` during
+        // render, which no try/catch out here could contain.
+        const isFiniteCount = (value: unknown): value is number =>
+          typeof value === "number" && Number.isFinite(value);
+        const isUsable =
+          isFiniteCount(counts?.trip?.total) &&
+          isFiniteCount(counts?.trip?.last30Days) &&
+          Array.isArray(counts?.entries) &&
+          counts.entries.every(
+            (entry) =>
+              typeof entry?.entryId === "string" && isFiniteCount(entry?.total),
+          );
+
+        if (isActive) {
+          setViewCounts(isUsable ? counts : null);
+        }
+      } catch {
+        if (isActive) {
+          setViewCounts(null);
+        }
+      }
+    };
+
+    loadViewCounts();
+
+    return () => {
+      isActive = false;
+    };
+  }, [tripId, canEditTrip]);
 
   useEffect(() => {
     let isActive = true;
@@ -597,6 +657,18 @@ const TripDetail = ({
     [entriesWithLocation],
   );
   const mapActionLabel = t("trips.viewFullMap");
+  const entryViewTotals = useMemo(() => {
+    if (!viewCounts) {
+      return null;
+    }
+    return new Map(
+      viewCounts.entries.map((entry) => [entry.entryId, entry.total]),
+    );
+  }, [viewCounts]);
+
+  const formatViewCount = (total: number) =>
+    `${total} ${total === 1 ? t("entries.view") : t("entries.views")}`;
+
   const mapHref = `/trips/${tripId}/map`;
 
   const mapContent = isMapVisible ? (
@@ -1134,6 +1206,28 @@ const TripDetail = ({
               <span className="font-semibold text-[#2D2A26]">{t('trips.owner')}:</span>
               <span>{trip.ownerName ?? t("admin.creator")}</span>
             </div>
+            {canEditTrip && viewCounts ? (
+              <>
+                <div
+                  className="flex items-center gap-2"
+                  data-testid="trip-views-total"
+                >
+                  <span className="font-semibold text-[#2D2A26]">
+                    {t("trips.viewsTotal")}:
+                  </span>
+                  <span>{viewCounts.trip.total}</span>
+                </div>
+                <div
+                  className="flex items-center gap-2"
+                  data-testid="trip-views-last-30-days"
+                >
+                  <span className="font-semibold text-[#2D2A26]">
+                    {t("trips.viewsLast30Days")}:
+                  </span>
+                  <span>{viewCounts.trip.last30Days}</span>
+                </div>
+              </>
+            ) : null}
             {canManageShare ? (
               <button
                 type="button"
@@ -1523,6 +1617,12 @@ const TripDetail = ({
                 );
 
                 const isSelected = entry.id === selectedEntryId;
+                // `null` means "not shown": either the caller may not see the
+                // counts, or they could not be loaded. A loaded entry with no
+                // views resolves to 0 and is rendered as 0.
+                const entryViewTotal = canEditTrip && entryViewTotals
+                  ? entryViewTotals.get(entry.id) ?? 0
+                  : null;
                 return (
                   <Link
                     key={entry.id}
@@ -1565,9 +1665,17 @@ const TripDetail = ({
                       </div>
                     ) : null}
                     <div className="min-w-0 flex-1">
-                      <p className="text-xs uppercase tracking-[0.2em] text-[#6B635B]">
-                        {formatDateLocalized(new Date(entry.createdAt))}
-                      </p>
+                      <div className="flex flex-wrap items-center gap-2 text-xs uppercase tracking-[0.2em] text-[#6B635B]">
+                        <p>{formatDateLocalized(new Date(entry.createdAt))}</p>
+                        {entryViewTotal !== null ? (
+                          <>
+                            <span aria-hidden="true">·</span>
+                            <span data-testid={`entry-views-${entry.id}`}>
+                              {formatViewCount(entryViewTotal)}
+                            </span>
+                          </>
+                        ) : null}
+                      </div>
                       <div className="mt-1 flex min-w-0 items-center gap-2">
                         {countryFlag ? (
                           <span className="text-sm leading-none" aria-hidden="true">

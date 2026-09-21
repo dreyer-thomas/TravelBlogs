@@ -34,7 +34,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-01-15T00:00:00Z
-last_updated: 2026-09-21T00:00:00Z
+last_updated: 2026-09-21T22:50:00Z
 project: TravelBlogs
 project_key: travelblogs
 tracking_system: file-system
@@ -208,7 +208,7 @@ development_status:
 
   epic-16: in-progress
   16-1-count-page-views-for-shared-trips-and-entries: done
-  16-2-display-view-counts-in-edit-mode: ready-for-dev
+  16-2-display-view-counts-in-edit-mode: done
   epic-16-retrospective: optional
 
   epic-17: in-progress

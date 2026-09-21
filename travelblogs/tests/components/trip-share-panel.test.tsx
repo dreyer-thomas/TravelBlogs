@@ -48,6 +48,22 @@ const createOverviewMock = (tripId: string, entries: unknown[] = []) => {
   );
 };
 
+// Helper to create the view-counts response mock. TripDetail requests the
+// counters right after the overview whenever the caller may edit the trip, so
+// every ordered fetch chain below has to account for that call.
+const createViewCountsMock = () => {
+  return new Response(
+    JSON.stringify({
+      data: {
+        trip: { total: 0, last30Days: 0 },
+        entries: [],
+      },
+      error: null,
+    }),
+    { status: 200 },
+  );
+};
+
 describe("TripDetail share panel", () => {
   afterEach(() => {
     vi.unstubAllGlobals();
@@ -81,6 +97,7 @@ describe("TripDetail share panel", () => {
         ),
       )
       .mockResolvedValueOnce(createOverviewMock("trip-1"))
+      .mockResolvedValueOnce(createViewCountsMock())
       .mockResolvedValueOnce(new Response(null, { status: 404 }));
 
     vi.stubGlobal("fetch", fetchMock);
@@ -143,6 +160,7 @@ describe("TripDetail share panel", () => {
         ),
       )
       .mockResolvedValueOnce(createOverviewMock("trip-1"))
+      .mockResolvedValueOnce(createViewCountsMock())
       .mockResolvedValueOnce(new Response(null, { status: 404 }))
       .mockResolvedValueOnce(
         new Response(
@@ -254,6 +272,7 @@ describe("TripDetail share panel", () => {
         ),
       )
       .mockResolvedValueOnce(createOverviewMock("trip-1"))
+      .mockResolvedValueOnce(createViewCountsMock())
       .mockResolvedValueOnce(
         new Response(
           JSON.stringify({
@@ -342,6 +361,7 @@ describe("TripDetail share panel", () => {
         ),
       )
       .mockResolvedValueOnce(createOverviewMock("trip-1"))
+      .mockResolvedValueOnce(createViewCountsMock())
       .mockResolvedValueOnce(
         new Response(
           JSON.stringify({
@@ -458,6 +478,7 @@ describe("TripDetail share panel", () => {
         ),
       )
       .mockResolvedValueOnce(createOverviewMock("trip-1"))
+      .mockResolvedValueOnce(createViewCountsMock())
       .mockResolvedValueOnce(new Response(null, { status: 404 }))
       .mockResolvedValueOnce(
         new Response(
@@ -584,6 +605,7 @@ describe("TripDetail share panel", () => {
         ),
       )
       .mockResolvedValueOnce(createOverviewMock("trip-1"))
+      .mockResolvedValueOnce(createViewCountsMock())
       .mockResolvedValueOnce(new Response(null, { status: 404 }))
       .mockResolvedValueOnce(
         new Response(
@@ -693,6 +715,7 @@ describe("TripDetail share panel", () => {
         ),
       )
       .mockResolvedValueOnce(createOverviewMock("trip-1"))
+      .mockResolvedValueOnce(createViewCountsMock())
       .mockResolvedValueOnce(new Response(null, { status: 404 }))
       .mockResolvedValueOnce(
         new Response(
@@ -780,6 +803,7 @@ describe("TripDetail share panel", () => {
         ),
       )
       .mockResolvedValueOnce(createOverviewMock("trip-1"))
+      .mockResolvedValueOnce(createViewCountsMock())
       .mockResolvedValueOnce(new Response(null, { status: 404 }))
       .mockResolvedValueOnce(
         new Response(
@@ -861,6 +885,7 @@ describe("TripDetail share panel", () => {
         ),
       )
       .mockResolvedValueOnce(createOverviewMock("trip-1"))
+      .mockResolvedValueOnce(createViewCountsMock())
       .mockResolvedValueOnce(new Response(null, { status: 404 }))
       .mockResolvedValueOnce(
         new Response(
@@ -958,6 +983,7 @@ describe("TripDetail share panel", () => {
         ),
       )
       .mockResolvedValueOnce(createOverviewMock("trip-1"))
+      .mockResolvedValueOnce(createViewCountsMock())
       .mockResolvedValueOnce(new Response(null, { status: 404 }))
       .mockResolvedValueOnce(
         new Response(
