@@ -18,14 +18,14 @@ _This file contains critical rules and patterns that AI agents must follow when 
 ## Technology Stack & Versions
 
 - Node.js 24 LTS (runtime; pinned via root `.nvmrc` + `engines.node` in `travelblogs/package.json`)
-- Next.js 16.2.10 + App Router
+- Next.js 16.3.5 + App Router
 - React (via Next.js)
 - TypeScript (via Next.js)
 - Tailwind CSS (via Next.js setup)
-- Prisma 7.8.0 (ORM + migrations)
+- Prisma 7.10.0 (ORM + migrations)
 - SQLite (primary DB, via `better-sqlite3` ^12.6.0 — a native module; keep it on the same major
   as `@prisma/adapter-better-sqlite3` requires so npm hoists a single copy)
-- Auth.js (NextAuth) 4.24.13 (JWT sessions)
+- Auth.js (NextAuth) 4.24.15 (JWT sessions)
 - Redux Toolkit 2.11.2 (state)
 - Zod 4.2.1 (validation)
 
@@ -105,4 +105,4 @@ _This file contains critical rules and patterns that AI agents must follow when 
 - Review quarterly for outdated rules
 - Remove rules that become obvious over time
 
-Last Updated: 2026-08-13T00:00:00Z
+Last Updated: 2026-09-21T00:00:00Z
