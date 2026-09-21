@@ -37,6 +37,42 @@ describe('i18n utilities', () => {
     });
   });
 
+  describe('legal namespace', () => {
+    const legalKeys = [
+      'legal.impressum',
+      'legal.impressumIntro',
+      'legal.provider',
+      'legal.contact',
+      'legal.representative',
+      'legal.register',
+      'legal.vatId',
+      'legal.contentResponsible',
+      'legal.email',
+      'legal.phone',
+      'legal.notConfiguredTitle',
+      'legal.notConfiguredBody',
+      'legal.footerLabel',
+    ];
+
+    it.each(legalKeys)('resolves %s in both locales', (key) => {
+      for (const locale of ['en', 'de'] as Locale[]) {
+        const value = getTranslation(key, locale);
+        expect(value).not.toBe(key);
+        expect(value.trim().length).toBeGreaterThan(0);
+      }
+    });
+
+    it('keeps the page heading as Impressum in German', () => {
+      expect(getTranslation('legal.impressum', 'de')).toBe('Impressum');
+    });
+
+    it('translates the not-configured notice differently per locale', () => {
+      expect(getTranslation('legal.notConfiguredTitle', 'en')).not.toBe(
+        getTranslation('legal.notConfiguredTitle', 'de'),
+      );
+    });
+  });
+
   describe('formatDate', () => {
     const createLocalDate = (year: number, month: number, day: number) =>
       new Date(year, month - 1, day);

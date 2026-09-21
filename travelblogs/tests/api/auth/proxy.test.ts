@@ -7,7 +7,7 @@ vi.mock("next-auth/jwt", () => ({
   getToken,
 }));
 
-import { proxy as middleware } from "../../../src/proxy";
+import { proxy as middleware, config } from "../../../src/proxy";
 
 const makeRequest = (path: string) => {
   return new NextRequest(new Request(`http://localhost${path}`));
@@ -120,6 +120,27 @@ describe("middleware", () => {
       makeRequest("/api/users/user-1/password"),
     );
     expect(response?.headers.get("x-middleware-next")).toBe("1");
+  });
+
+  // Deliberately an exact snapshot rather than a hand-rolled model of Next's
+  // matcher syntax: any reimplementation here would understand only the
+  // `/:path*` form and silently mis-model object matchers, plain `:id` params
+  // or negative lookaheads. Pinning the list instead forces whoever changes it
+  // to come back and re-check that /impressum stays outside the proxy.
+  it("keeps the Impressum outside the proxy matcher", () => {
+    expect(config.matcher).toEqual([
+      "/trips/:path*",
+      "/entries/:path*",
+      "/account/:path*",
+      "/api/:path*",
+    ]);
+  });
+
+  it("treats the Impressum as public if a future matcher lets it through", async () => {
+    getToken.mockResolvedValue(null);
+    const response = await middleware(makeRequest("/impressum"));
+    expect(response?.headers.get("x-middleware-next")).toBe("1");
+    expect(response?.headers.get("location")).toBeNull();
   });
 
   it("preserves query params in callbackUrl", async () => {

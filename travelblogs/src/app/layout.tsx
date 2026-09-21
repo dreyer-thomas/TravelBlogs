@@ -5,6 +5,7 @@ import "./globals.css";
 import "./leaflet.css";
 import { LocaleProvider } from "@/utils/locale-context";
 import { LocaleHtmlUpdater } from "@/components/layout/locale-html-updater";
+import SiteFooter from "@/components/layout/site-footer";
 import { getLocaleFromAcceptLanguage, getTranslation } from "@/utils/i18n";
 import { getRequestBaseUrl } from "@/utils/request-base-url";
 
@@ -57,7 +58,10 @@ export default async function RootLayout({
       <body className={`${sourceSans3.variable} antialiased`}>
         <LocaleProvider initialLocale={initialLocale}>
           <LocaleHtmlUpdater />
-          {children}
+          <div className="flex min-h-screen flex-col">
+            <div className="app-content flex-1">{children}</div>
+            <SiteFooter />
+          </div>
         </LocaleProvider>
       </body>
     </html>

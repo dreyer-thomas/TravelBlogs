@@ -34,3 +34,19 @@ h5,
 h6 {
   font-family: var(--font-source-sans-3);
 }
+
+/*
+ * The root layout pins the site footer below the page content. Page shells
+ * across the app set `min-h-screen` (100vh) on their own root element, so
+ * without this the document is always 100vh + footer tall and every route
+ * gains a permanent scrollbar. Inside the content wrapper, "screen" therefore
+ * means the viewport minus the footer. `--site-footer-h` must match the fixed
+ * height set on the footer in `components/layout/site-footer.tsx`.
+ */
+:root {
+  --site-footer-h: 3.5rem;
+}
+
+.app-content .min-h-screen {
+  min-height: calc(100vh - var(--site-footer-h));
+}
