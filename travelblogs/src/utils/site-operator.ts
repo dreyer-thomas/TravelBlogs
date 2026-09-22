@@ -33,6 +33,22 @@ const REQUIRED_FIELDS = [
 ] as const satisfies readonly (keyof SiteOperator)[];
 
 /**
+ * The fields that identify the controller, without the contact address.
+ *
+ * Kept separate from `REQUIRED_FIELDS` because the two questions are different:
+ * "can we render a complete Impressum?" needs a working contact route, whereas
+ * "can we name who is responsible?" does not. Art. 13(1)(a) GDPR asks for the
+ * controller's identity first, so a malformed `SITE_OPERATOR_EMAIL` must not be
+ * able to hide the name and postal address as well.
+ */
+const IDENTITY_FIELDS = [
+  "name",
+  "street",
+  "postalCode",
+  "city",
+] as const satisfies readonly (keyof SiteOperator)[];
+
+/**
  * Deliberately strict: it rejects the characters that would break or inject
  * into a `mailto:` URL (whitespace, `?`, `&`, `#`, `,`, `;`, angle brackets) so
  * the address can be interpolated into an href without escaping.
@@ -97,3 +113,12 @@ export const isValidOperatorEmail = (email: string | null): boolean =>
 export const isSiteOperatorConfigured = (operator: SiteOperator): boolean =>
   REQUIRED_FIELDS.every((field) => operator[field] !== null) &&
   isValidOperatorEmail(operator.email);
+
+/**
+ * Whether the operator's identity can be stated, independent of the email.
+ *
+ * @param operator - Operator details, typically from `readSiteOperator`
+ * @returns True when name and postal address are set
+ */
+export const isOperatorIdentityConfigured = (operator: SiteOperator): boolean =>
+  IDENTITY_FIELDS.every((field) => operator[field] !== null);

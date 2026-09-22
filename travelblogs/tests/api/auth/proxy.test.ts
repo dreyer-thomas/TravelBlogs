@@ -126,8 +126,9 @@ describe("middleware", () => {
   // matcher syntax: any reimplementation here would understand only the
   // `/:path*` form and silently mis-model object matchers, plain `:id` params
   // or negative lookaheads. Pinning the list instead forces whoever changes it
-  // to come back and re-check that /impressum stays outside the proxy.
-  it("keeps the Impressum outside the proxy matcher", () => {
+  // to come back and re-check that /impressum and /datenschutz stay outside the
+  // proxy.
+  it("keeps the legal pages outside the proxy matcher", () => {
     expect(config.matcher).toEqual([
       "/trips/:path*",
       "/entries/:path*",
@@ -136,11 +137,27 @@ describe("middleware", () => {
     ]);
   });
 
-  it("treats the Impressum as public if a future matcher lets it through", async () => {
-    getToken.mockResolvedValue(null);
-    const response = await middleware(makeRequest("/impressum"));
-    expect(response?.headers.get("x-middleware-next")).toBe("1");
-    expect(response?.headers.get("location")).toBeNull();
+  it.each(["/impressum", "/datenschutz"])(
+    "treats %s as public if a future matcher lets it through",
+    async (path) => {
+      getToken.mockResolvedValue(null);
+      const response = await middleware(makeRequest(path));
+      expect(response?.headers.get("x-middleware-next")).toBe("1");
+      expect(response?.headers.get("location")).toBeNull();
+    },
+  );
+
+  // Documents a live gap rather than a guarantee: the matcher keeps the proxy
+  // off /datenschutz entirely, so this redirect never fires in production. If
+  // the matcher is ever widened, a signed-in user with mustChangePassword would
+  // be bounced off the privacy policy -- which anonymous readers, the people
+  // the page is for, would never notice. Whoever widens it should see this.
+  it("would bounce must-change users off the privacy policy if matched", async () => {
+    getToken.mockResolvedValue({ sub: "viewer", mustChangePassword: true });
+    const response = await middleware(makeRequest("/datenschutz"));
+    expect(normalizeLocation(response?.headers.get("location") ?? null)).toBe(
+      "/account/password?callbackUrl=%2Fdatenschutz",
+    );
   });
 
   it("preserves query params in callbackUrl", async () => {

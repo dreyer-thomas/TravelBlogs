@@ -47,6 +47,28 @@ describe("SiteFooter", () => {
     expect(link).toHaveAttribute("href", "/impressum");
   });
 
+  it("links to the privacy policy", () => {
+    render(
+      <LocaleProvider initialLocale="en">
+        <SiteFooter />
+      </LocaleProvider>,
+    );
+
+    const link = screen.getByRole("link", { name: "Privacy Policy" });
+    expect(link).toHaveAttribute("href", "/datenschutz");
+  });
+
+  it("keeps the route at /datenschutz in German", () => {
+    render(
+      <LocaleProvider initialLocale="de">
+        <SiteFooter />
+      </LocaleProvider>,
+    );
+
+    const link = screen.getByRole("link", { name: "Datenschutzerklärung" });
+    expect(link).toHaveAttribute("href", "/datenschutz");
+  });
+
   it("exposes a labelled navigation landmark", () => {
     render(
       <LocaleProvider initialLocale="en">
@@ -70,6 +92,7 @@ describe("root layout", () => {
     );
 
     expect(markup).toContain('href="/impressum"');
+    expect(markup).toContain('href="/datenschutz"');
     expect(markup).toContain("page body");
     expect(markup).toContain("<footer");
   });

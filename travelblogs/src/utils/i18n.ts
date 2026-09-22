@@ -383,6 +383,92 @@ const translations = {
       notConfiguredTitle: 'Operator details are not configured',
       notConfiguredBody: 'The person running this site has not entered their details yet. Until they do, no provider information can be shown here.',
       footerLabel: 'Legal',
+      privacy: {
+        title: 'Privacy Policy',
+        intro: 'What this site does with data, why, and where it goes.',
+        draftTitle: 'This privacy policy is not yet published',
+        draftBody:
+          "The person running this site has not yet completed and published the legal part of this policy. The overview below is a factual description of what the software does, taken from its source code — it is not a statement by the operator and does not replace one.",
+        effectiveDateLabel: 'In effect since',
+        controllerTitle: 'Who is responsible',
+        controllerIntro: 'The operator named in the legal notice decides how this site processes data.',
+        controllerPending: 'The operator has not entered their details yet, so no responsible party can be named here.',
+        impressumLink: 'Open the legal notice',
+        inventoryTitle: 'What this site processes',
+        inventoryIntro: 'Each activity below states what data is involved, why it is processed, and where it goes.',
+        whatLabel: 'What data',
+        whyLabel: 'Why',
+        whereLabel: 'Where it goes',
+        basisLabel: 'Legal basis',
+        basisPending: 'To be completed by the operator.',
+        hostingLabel: 'Hosting provider',
+        retentionTitle: 'How long data is kept',
+        retentionPending: 'To be completed by the operator.',
+        rightsTitle: 'Your rights',
+        rightsPending: 'To be completed by the operator.',
+        thirdPartyTitle: 'Data that leaves your browser',
+        thirdPartyBody: 'Map tiles are the only thing on this site that your browser loads from somebody else. Everything else is served by this site.',
+        serverSideTitle: 'Services this site calls from its own server',
+        serverSideBody:
+          "Place names come from OpenStreetMap's Nominatim service and historical weather from Open-Meteo. Both are called by this site's server, never by your browser, so your IP address is never sent to either of them.",
+        activities: {
+          account: {
+            title: 'Account data',
+            what: 'Email address, name, role, a bcrypt hash of the password, whether the account is active, and the times it was created and last changed.',
+            why: 'To sign editors in and to control who may read or change a trip. Only people the operator creates an account for have one; readers of a share link never do.',
+            where: "Held in this site's own database on its server. Not passed on to anyone else.",
+          },
+          tripContent: {
+            title: 'Trip content',
+            what: 'Trips, entries, tags, and the photos and videos uploaded to them, including the text their authors wrote.',
+            why: 'This is the content of the blog itself — publishing it is what the site is for.',
+            where: "Held in this site's own database and file storage. Visible to signed-in people with access to the trip, and to anyone holding an active share link.",
+          },
+          location: {
+            title: 'Location data',
+            what: 'GPS coordinates read from the EXIF metadata of uploaded photos, plus the place name and country code derived from them.',
+            why: 'To place entries on a map and label them with where they happened.',
+            where: "Stored with the entry. The coordinates are sent from this site's server to OpenStreetMap's Nominatim service to resolve a place name; your browser never contacts it.",
+          },
+          weather: {
+            title: 'Weather data',
+            what: 'Historical weather for the date and location of an entry: the condition, the temperature and an icon code.',
+            why: 'To show what the weather was like when the entry was written.',
+            where: "Retrieved by this site's server from Open-Meteo using the entry's coordinates and date, then stored with the entry. Your browser never contacts Open-Meteo.",
+          },
+          mapTiles: {
+            title: 'Map tiles from OpenStreetMap',
+            what: "Your IP address and your browser's User-Agent string.",
+            why: 'Maps are drawn from image tiles, and your browser has to request those tiles from the server that hosts them.',
+            where: 'Your browser loads the tiles directly from tile.openstreetmap.org. That sends your IP address and User-Agent to the OpenStreetMap Foundation, which is outside this site’s control. This site neither receives nor stores that data.',
+            pages: 'Affected pages: every page that draws a map. For readers of a share link that is the shared trip page, the shared entry page and the shared full-screen map; for signed-in editors it is additionally the trip and entry pages and the full-screen map inside the account.',
+          },
+          shareLinks: {
+            title: 'Share links',
+            what: 'A random token identifying one trip, and the time the link was created.',
+            why: 'To let the operator publish a trip to people who have no account, without a login.',
+            where: "Held in this site's own database. Anyone who has the link can read that trip, so treat the link itself as the key. Nothing about who opened it is recorded alongside the token.",
+          },
+          accessLogs: {
+            title: 'Server access logs',
+            what: 'The usual web-server request data, including your IP address, the page requested, the time, and your User-Agent.',
+            why: 'Technically unavoidable in delivering a web page, and needed to run the server and look into faults or abuse.',
+            where: 'Handled by the hosting infrastructure the operator runs this site on.',
+          },
+          viewCounts: {
+            title: 'Page-view counter',
+            what: 'A counter per shared trip or entry per calendar day. No personal data is stored: no IP address, no User-Agent, no cookie, no identifier of any kind.',
+            why: 'So the operator can see how often a published trip is read.',
+            where: "Held in this site's own database as a plain number per day. Your User-Agent is checked in memory to filter out crawlers and discarded immediately — it is never stored or logged. Views by signed-in people are not counted.",
+          },
+          cookies: {
+            title: 'Cookies and local storage',
+            what: "A session cookie, set only when somebody signs in. Separately, the display language you pick is remembered in your browser's local storage.",
+            why: 'The session cookie keeps an editor signed in. The language preference is written when you switch language; the site itself picks the language from the language setting your browser sends.',
+            where: "The session cookie goes to this site's server only. The language preference never leaves your browser. Neither is used for tracking or advertising, and reading a shared trip sets no cookie at all.",
+          },
+        },
+      },
     },
     manual: {
       helpGuidance: 'Help & Guidance',
@@ -913,6 +999,92 @@ const translations = {
       notConfiguredTitle: 'Betreiberangaben sind nicht hinterlegt',
       notConfiguredBody: 'Die betreibende Person hat ihre Angaben noch nicht eingetragen. Bis dahin können hier keine Anbieterangaben angezeigt werden.',
       footerLabel: 'Rechtliches',
+      privacy: {
+        title: 'Datenschutzerklärung',
+        intro: 'Welche Daten diese Seite verarbeitet, warum, und wohin sie gehen.',
+        draftTitle: 'Diese Datenschutzerklärung ist noch nicht veröffentlicht',
+        draftBody:
+          'Die betreibende Person hat den rechtlichen Teil dieser Erklärung noch nicht vervollständigt und veröffentlicht. Die folgende Übersicht beschreibt sachlich, was die Software tut, ermittelt aus ihrem Quellcode — sie ist keine Erklärung der betreibenden Person und ersetzt eine solche nicht.',
+        effectiveDateLabel: 'Gültig seit',
+        controllerTitle: 'Wer verantwortlich ist',
+        controllerIntro: 'Die im Impressum genannte betreibende Person entscheidet, wie diese Seite Daten verarbeitet.',
+        controllerPending: 'Die betreibende Person hat ihre Angaben noch nicht eingetragen, daher kann hier keine verantwortliche Stelle genannt werden.',
+        impressumLink: 'Impressum öffnen',
+        inventoryTitle: 'Was diese Seite verarbeitet',
+        inventoryIntro: 'Zu jeder Verarbeitung steht, welche Daten betroffen sind, warum sie verarbeitet werden und wohin sie gehen.',
+        whatLabel: 'Welche Daten',
+        whyLabel: 'Warum',
+        whereLabel: 'Wohin sie gehen',
+        basisLabel: 'Rechtsgrundlage',
+        basisPending: 'Von der betreibenden Person zu ergänzen.',
+        hostingLabel: 'Hosting-Anbieter',
+        retentionTitle: 'Wie lange Daten gespeichert werden',
+        retentionPending: 'Von der betreibenden Person zu ergänzen.',
+        rightsTitle: 'Ihre Rechte',
+        rightsPending: 'Von der betreibenden Person zu ergänzen.',
+        thirdPartyTitle: 'Daten, die Ihren Browser verlassen',
+        thirdPartyBody: 'Kartenkacheln sind das Einzige auf dieser Seite, das Ihr Browser von einem Dritten lädt. Alles andere liefert diese Seite selbst aus.',
+        serverSideTitle: 'Dienste, die diese Seite von ihrem eigenen Server aus aufruft',
+        serverSideBody:
+          'Ortsnamen stammen vom Nominatim-Dienst von OpenStreetMap, historische Wetterdaten von Open-Meteo. Beide werden vom Server dieser Seite aufgerufen, nie von Ihrem Browser. Ihre IP-Adresse wird daher an keinen der beiden Dienste übermittelt.',
+        activities: {
+          account: {
+            title: 'Kontodaten',
+            what: 'E-Mail-Adresse, Name, Rolle, ein bcrypt-Hash des Passworts, ob das Konto aktiv ist, sowie Erstellungs- und Änderungszeitpunkt.',
+            why: 'Um redaktionelle Personen anzumelden und zu steuern, wer eine Reise lesen oder ändern darf. Ein Konto hat nur, wem die betreibende Person eines anlegt; wer einen Freigabelink liest, hat keines.',
+            where: 'In der Datenbank dieser Seite auf ihrem Server. Keine Weitergabe an Dritte.',
+          },
+          tripContent: {
+            title: 'Reiseinhalte',
+            what: 'Reisen, Einträge, Schlagwörter sowie die hochgeladenen Fotos und Videos, einschließlich der verfassten Texte.',
+            why: 'Das sind die Inhalte des Blogs selbst — sie zu veröffentlichen ist der Zweck dieser Seite.',
+            where: 'In der Datenbank und im Dateispeicher dieser Seite. Sichtbar für angemeldete Personen mit Zugriff auf die Reise und für alle, die einen aktiven Freigabelink besitzen.',
+          },
+          location: {
+            title: 'Standortdaten',
+            what: 'GPS-Koordinaten aus den EXIF-Metadaten hochgeladener Fotos sowie der daraus ermittelte Ortsname und Ländercode.',
+            why: 'Um Einträge auf einer Karte zu verorten und mit dem Ort zu beschriften, an dem sie entstanden sind.',
+            where: 'Beim Eintrag gespeichert. Die Koordinaten werden vom Server dieser Seite an den Nominatim-Dienst von OpenStreetMap gesendet, um einen Ortsnamen zu ermitteln; Ihr Browser kontaktiert diesen Dienst nicht.',
+          },
+          weather: {
+            title: 'Wetterdaten',
+            what: 'Historisches Wetter zu Datum und Ort eines Eintrags: Zustand, Temperatur und ein Symbolcode.',
+            why: 'Um zu zeigen, wie das Wetter zum Zeitpunkt des Eintrags war.',
+            where: 'Vom Server dieser Seite bei Open-Meteo anhand der Koordinaten und des Datums abgerufen und beim Eintrag gespeichert. Ihr Browser kontaktiert Open-Meteo nicht.',
+          },
+          mapTiles: {
+            title: 'Kartenkacheln von OpenStreetMap',
+            what: 'Ihre IP-Adresse und die User-Agent-Kennung Ihres Browsers.',
+            why: 'Karten bestehen aus Bildkacheln, und Ihr Browser muss diese Kacheln bei dem Server anfordern, der sie bereitstellt.',
+            where: 'Ihr Browser lädt die Kacheln direkt von tile.openstreetmap.org. Dabei werden Ihre IP-Adresse und Ihr User-Agent an die OpenStreetMap Foundation übermittelt, worauf diese Seite keinen Einfluss hat. Diese Seite erhält und speichert diese Daten nicht.',
+            pages: 'Betroffene Seiten: jede Seite, die eine Karte darstellt. Beim Lesen über einen Freigabelink sind das die freigegebene Reise, der freigegebene Eintrag und die freigegebene Vollbildkarte; für angemeldete Redakteurinnen und Redakteure zusätzlich die Reise- und Eintragsseiten sowie die Vollbildkarte im Konto.',
+          },
+          shareLinks: {
+            title: 'Freigabelinks',
+            what: 'Ein zufälliges Token, das eine Reise identifiziert, sowie der Zeitpunkt, zu dem der Link erstellt wurde.',
+            why: 'Damit die betreibende Person eine Reise für Personen ohne Konto veröffentlichen kann, ohne Anmeldung.',
+            where: 'In der Datenbank dieser Seite. Wer den Link hat, kann diese Reise lesen — behandeln Sie den Link daher wie einen Schlüssel. Zum Token wird nicht erfasst, wer ihn geöffnet hat.',
+          },
+          accessLogs: {
+            title: 'Server-Zugriffsprotokolle',
+            what: 'Die üblichen Anfragedaten eines Webservers, darunter Ihre IP-Adresse, die aufgerufene Seite, der Zeitpunkt und Ihr User-Agent.',
+            why: 'Technisch unvermeidbar, um eine Webseite auszuliefern, und nötig, um den Server zu betreiben und Störungen oder Missbrauch nachzugehen.',
+            where: 'Bei der Hosting-Infrastruktur, auf der die betreibende Person diese Seite betreibt.',
+          },
+          viewCounts: {
+            title: 'Aufrufzähler',
+            what: 'Ein Zähler je freigegebener Reise oder je Eintrag und Kalendertag. Es werden keine personenbezogenen Daten gespeichert: keine IP-Adresse, kein User-Agent, kein Cookie, keine Kennung irgendeiner Art.',
+            why: 'Damit die betreibende Person sieht, wie oft eine veröffentlichte Reise gelesen wird.',
+            where: 'In der Datenbank dieser Seite als bloße Zahl pro Tag. Ihr User-Agent wird nur im Arbeitsspeicher geprüft, um Crawler herauszufiltern, und sofort verworfen — er wird nie gespeichert oder protokolliert. Aufrufe angemeldeter Personen werden nicht gezählt.',
+          },
+          cookies: {
+            title: 'Cookies und lokaler Speicher',
+            what: 'Ein Sitzungs-Cookie, das nur bei einer Anmeldung gesetzt wird. Unabhängig davon wird die gewählte Anzeigesprache im lokalen Speicher Ihres Browsers gemerkt.',
+            why: 'Das Sitzungs-Cookie hält angemeldete Personen angemeldet. Die Spracheinstellung wird gespeichert, wenn Sie die Sprache umschalten; die Seite selbst wählt die Sprache anhand der Spracheinstellung, die Ihr Browser übermittelt.',
+            where: 'Das Sitzungs-Cookie geht nur an den Server dieser Seite. Die Spracheinstellung verlässt Ihren Browser nie. Beides dient nicht der Nachverfolgung oder Werbung, und beim Lesen einer freigegebenen Reise wird überhaupt kein Cookie gesetzt.',
+          },
+        },
+      },
     },
     manual: {
       helpGuidance: 'Hilfe & Anleitung',
@@ -1070,6 +1242,16 @@ const translations = {
  * @param locale - Target locale ('en' or 'de')
  * @returns Translated string or key if not found
  */
+/**
+ * The raw catalog, exported so tests can compare the locales structurally.
+ *
+ * `getTranslation` returns the key itself on a miss, so a subtree present in
+ * one language and absent in the other renders `legal.privacy.activities.
+ * weather.what` to the reader rather than failing anywhere. A list of keys
+ * maintained by hand cannot catch that; walking both objects can.
+ */
+export const translationCatalog = translations;
+
 export function getTranslation(key: string, locale: Locale): string {
   const keys = key.split('.');
   let value: unknown = translations[locale];
