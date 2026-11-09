@@ -4657,3 +4657,200 @@ Add a publicly reachable Impressum and Datenschutzerklärung, backed by a verifi
 **Source:** User request, 2026-09-21
 **Priority:** High
 **Story Points:** 5
+
+## Epic 18: Email Foundation and Account Mails
+
+Give TravelBlogs outgoing email and use it for the three account moments that today run through the operator by hand: recovering a password, joining the site, and being added to a trip.
+
+**Business Value:** Users can onboard and recover their accounts on their own; the operator no longer creates, transmits or resets passwords.
+
+**Dependencies:** Epic 5 (Roles and Contributor Access), Epic 17 (Privacy Policy). Reuses the transport proven in TravelPlan Story 8.8.
+
+**Explicit Non-Goals:**
+- No anonymous subscriptions or new-entry notifications (dropped 2026-11-09)
+- No contact form
+- No HTML mail, no attachments, no digests
+- No mail for the environment-managed creator account (`CREATOR_EMAIL`)
+- No removal of the existing `mustChangePassword` mechanism (later cleanup)
+
+### Story 18.1: Email Transport and Preferred Language
+
+**As the** operator
+**I want** the application to send mail reliably in production and never in development
+**So that** account mails can be built on a transport that cannot lose mail silently
+
+**Acceptance Criteria:**
+
+#### AC 1: SMTP in Production
+**Given** `NODE_ENV=production` and all of `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `MAIL_FROM` set
+**When** `sendEmail` is called
+**Then** the mail is sent via SMTP with `MAIL_FROM` as the From header
+**And** port 465 uses implicit TLS, any other port requires STARTTLS, certificate verification stays on
+**And** connection, greeting and socket each time out after 15 s
+
+#### AC 2: Outbox Everywhere Else
+**Given** `NODE_ENV` is not `production`
+**When** `sendEmail` is called
+**Then** the mail goes into an in-memory outbox and no network connection is opened, even if SMTP variables are set
+
+#### AC 3: Refuse to Serve Without Configuration
+**Given** `NODE_ENV=production` and any SMTP variable missing or blank
+**When** the server starts
+**Then** startup fails with an error naming the missing variables and never their values
+**And** `next build` does not require the variables
+
+#### AC 4: Failures Are Thrown, Logged Safely
+**Given** an SMTP failure
+**When** `sendEmail` runs
+**Then** it throws, and any log line a caller writes contains only the error code, the server reply code and the message with mail addresses redacted — never the password, recipient, token, link or body
+
+#### AC 5: Preferred Language on the User
+**Given** the migration has run
+**Then** every user has `preferredLanguage` (`de` | `en`), existing users default to `de`
+**And** the admin user form shows a language selector defaulting to German, also when editing a user
+
+#### AC 6: Privacy Policy Discloses Mail
+**Given** the privacy policy renders
+**Then** it has an "Email" section stating that account mails go to the account's address via the operator's mail provider, with the legal basis from the new required `SITE_PRIVACY_LEGAL_BASIS_EMAIL`
+
+**Technical Requirements:**
+- Port `email.ts` and `smtpConfig.ts` from TravelPlan into `src/utils/` (project rule: no new `lib/`), keeping the "no `nodemailer` in the boot-check module" split
+- Boot check in `src/instrumentation.ts` inside the existing `NEXT_RUNTIME === "nodejs"` branch, before the backfills, skipped during `NEXT_PHASE=phase-production-build`
+- `nodemailer` ^10, no `@types/nodemailer`; `npm audit` clean per the dependency policy
+- Docs: `.env.example` (commented SMTP block, "production only"), README env and systemd sections with the Strato values, the "mailbox password, not customer login" note and a release note that the variables must be in the unit before deploying
+
+**Testing Requirements:**
+- Config: each variable missing / blank, several missing, bad port, value never in message, build phase and non-production skipped
+- Transport (`nodemailer` mocked): 465 vs 587 options, timeouts, From header, rejection propagates, outbox untouched in production; non-production never creates a transport
+- Migration default and admin form language selector
+- Privacy policy renders the Email section; missing `SITE_PRIVACY_LEGAL_BASIS_EMAIL` keeps the page unpublished
+
+**Source:** User request, 2026-11-09
+**Priority:** High
+**Story Points:** 5
+
+### Story 18.2: Password Reset by Email
+
+**As a** user who forgot my password
+**I want to** request a reset link on the sign-in page
+**So that** I can get back into my account without asking the operator
+
+**Acceptance Criteria:**
+
+#### AC 1: Request Without Enumeration
+**Given** I am on the sign-in page
+**When** I click "Forgot password?" and submit an email address
+**Then** I always see the same confirmation, whether or not the address has an account
+**And** the response does not wait for the mail to be sent
+
+#### AC 2: Who Gets a Mail
+**Given** the address belongs to an active account other than the environment-managed creator
+**Then** one mail with a reset link is sent in that account's `preferredLanguage`
+**And** for unknown, deactivated or creator addresses no mail is sent
+
+#### AC 3: The Link
+**Given** I open the reset link within 1 hour
+**When** I enter a new password (min. 8 characters) twice
+**Then** the password is changed, the link is consumed, any earlier unused reset links for my account are invalidated, and I am sent to sign-in
+**And** an expired, used or unknown link shows a clear "link no longer valid" page with a way to request a new one
+
+#### AC 4: Safe Logging
+**Given** sending fails
+**Then** the request still answers the same confirmation and the failure is logged per Story 18.1 AC 4
+
+**Technical Requirements:**
+- Single-use token table shared with Story 18.3 (type `reset` | `invite`); store only a hash of the token; 32 random bytes
+- Link built from `NEXTAUTH_URL`; the forgot-password and set-password pages and their APIs added to the proxy public allowlist with proxy tests
+- Setting the password clears `mustChangePassword`
+- All strings in English and German
+
+**Testing Requirements:**
+- Known `de` and `en` users get one outbox mail in their language with a correctly formed link
+- Unknown, deactivated and creator addresses: same response, empty outbox
+- Expired, reused and tampered tokens rejected; success consumes the token
+- Transport failure: same response, log contains no token, link, body or password
+
+**Source:** User request, 2026-11-09
+**Priority:** High
+**Story Points:** 3
+
+### Story 18.3: Invite New Users by Email
+
+**As an** administrator
+**I want to** create an account by entering only name, email, role and language
+**So that** the new user chooses their own password and I never handle it
+
+**Acceptance Criteria:**
+
+#### AC 1: Create Without Password
+**Given** I am an administrator creating a user
+**Then** the form has name, email, role and language (default German) and no password field
+**And** on save the account is created in a "invitation pending" state and an invitation mail is sent in the chosen language
+
+#### AC 2: Accept the Invitation
+**Given** I open the invitation link within 7 days
+**When** I choose a password (min. 8 characters) twice
+**Then** the account becomes active for sign-in, the link is consumed, and I am sent to sign-in
+**And** before that, the account cannot sign in with any password
+
+#### AC 3: Visible and Resendable
+**Given** an account has not yet accepted its invitation
+**Then** the admin user list marks it as "invitation pending"
+**And** the administrator can resend the invitation, which invalidates the previous link
+
+#### AC 4: Send Failure Is Visible to the Admin
+**Given** the invitation mail cannot be sent
+**Then** the account is still created, the administrator sees that the mail failed, and can use "resend"
+
+**Technical Requirements:**
+- Reuses the token table and set-password page from Story 18.2 (type `invite`, 7-day expiry)
+- Pending state must not allow sign-in; decide in the story between a nullable `passwordHash` and an explicit flag
+- Existing accounts and the environment-managed creator are unaffected
+- Unlike password reset, the admin-facing create call may await the send, because only an administrator can reach it and enumeration does not apply
+- All strings in English and German
+
+**Testing Requirements:**
+- Create sends exactly one outbox mail in the chosen language; no password accepted in the request
+- Pending account cannot sign in; after accepting it can
+- Resend invalidates the old link; expired link rejected
+- Transport failure: account exists, response reports the failed mail
+
+**Source:** User request, 2026-11-09
+**Priority:** High
+**Story Points:** 3
+
+### Story 18.4: Notify Users When Added to a Trip
+
+**As a** user
+**I want to** get a mail when someone gives me access to a trip
+**So that** I know the trip exists and can open it directly
+
+**Acceptance Criteria:**
+
+#### AC 1: Mail on Access Granted
+**Given** a trip owner or administrator adds me to a trip as viewer or contributor
+**Then** I receive one mail in my `preferredLanguage` naming the trip, who added me, and my role, with a link to the trip
+
+#### AC 2: No Noise
+**Given** my role on a trip changes later, or I am removed
+**Then** no mail is sent
+**And** adding myself (owner) sends nothing
+
+#### AC 3: Adding Never Fails Because of Mail
+**Given** sending fails
+**Then** the user is still added, the response is unchanged, and the failure is logged per Story 18.1 AC 4
+
+**Technical Requirements:**
+- Hook into `POST /api/trips/[id]/viewers` after the access row is created; send without awaiting
+- Link to the authenticated trip page, built from `NEXTAUTH_URL`; never include the public share token
+- If the user's invitation is still pending, the trip mail is still sent; the link leads to sign-in, which is expected
+- All strings in English and German
+
+**Testing Requirements:**
+- Adding a viewer or contributor puts one mail in the outbox with the right language, trip title and link
+- Role change and removal send nothing
+- Transport failure leaves the access row and the response unchanged
+
+**Source:** User request, 2026-11-09
+**Priority:** Medium
+**Story Points:** 2

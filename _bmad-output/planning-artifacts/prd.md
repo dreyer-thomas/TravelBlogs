@@ -20,7 +20,7 @@ date: '2025-12-21T13:01:11Z'
 
 **Author:** Tommy
 **Date:** 2025-12-21T13:01:11Z
-**Last Updated:** 2026-01-28
+**Last Updated:** 2026-11-09
 
 ## Executive Summary
 
@@ -206,7 +206,7 @@ TravelBlogs is a single‑page web application focused on private trip journalin
 ### Accounts & Roles (MVP + Post‑MVP)
 
 - FR0: Lightweight creator sign-in (single account) for trip/entry management; shareable links remain public. (Phase 1)
-- FR1: Admin can create user accounts. (Phase 2)
+- FR1: Admin can create user accounts. (Phase 2) — from Phase 4 via invitation email, see FR42.
 - FR2: Admin can assign a user role as creator or viewer. (Phase 2)
 - FR3: System can authenticate users with email and password. (Phase 2)
 - FR4: Creators can sign in and access their trips and entries. (Phase 2)
@@ -270,6 +270,14 @@ TravelBlogs is a single‑page web application focused on private trip journalin
 - FR32: Admin can manage user access and roles. (Phase 2)
 - FR33: Admin can deactivate users. (Phase 2)
 
+### Account Mails (Extension)
+
+- FR40: System can send email to account holders through a configured mail server; in development and tests mail is captured instead of sent. (Phase 4)
+- FR41: Users can request a password-reset link by email from the sign-in page and set a new password through it. (Phase 4)
+- FR42: Admin can create an account by entering name, email, role and language; the system emails an invitation link where the new user sets their own password. (Phase 4)
+- FR43: Admin can resend an invitation to an account that has not yet set a password. (Phase 4)
+- FR44: Users are notified by email when they are given access to a trip. (Phase 4)
+
 ## Non-Functional Requirements
 
 ### Performance
@@ -284,6 +292,8 @@ TravelBlogs is a single‑page web application focused on private trip journalin
 - Use HTTPS for all traffic.
 - When user management is introduced (Phase 2), passwords are stored using secure hashing.
 - Shareable links are unguessable.
+- Password-reset and invitation links are single-use, expire (reset: 1 hour, invitation: 7 days), and are stored only as a hash.
+- Mail-sending flows never reveal whether an email address has an account, and never write passwords, tokens, links or message bodies to logs.
 
 ### Scalability
 

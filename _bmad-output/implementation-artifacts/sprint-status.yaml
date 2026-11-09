@@ -215,3 +215,10 @@ development_status:
   17-1-add-impressum-page: done
   17-2-add-privacy-policy-page: done
   epic-17-retrospective: optional
+
+  epic-18: backlog
+  18-1-email-transport-and-preferred-language: backlog
+  18-2-password-reset-by-email: backlog
+  18-3-invite-new-users-by-email: backlog
+  18-4-notify-users-when-added-to-a-trip: backlog
+  epic-18-retrospective: optional
