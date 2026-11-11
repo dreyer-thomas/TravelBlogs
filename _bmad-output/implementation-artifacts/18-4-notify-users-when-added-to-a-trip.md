@@ -235,7 +235,7 @@ Claude Opus 5.5 (claude-opus-5-5)
 - i18n: `email.tripAccess.*` in EN and DE ("du", German quotes „…“). DE contributor sentence uses the gender-neutral variant suggested in Dev Notes: "Du kannst die Reise lesen und Einträge hinzufügen und bearbeiten." Tommy may reword.
 - README "Outgoing email" and privacy policy already cover the trip-access notice; no change needed.
 - Tests: 6 unit tests (`tests/utils/trip-access-notice.test.ts`), 11 route tests (`viewers-notification.test.ts`), 1 failure-path test (`viewers-notification-failure.test.ts`). Existing `viewers.test.ts` unchanged and green.
-- **AC 7 (production acceptance): pending Tommy.** No migration; a plain deploy is enough.
+- **AC 7 (production acceptance): passed 2026-11-11 (Tommy).** Trip-access mail arrived with trip, actor and role; link opened the trip after sign-in; no mail on contributor toggle or removal. Invitation and password-reset mails also confirmed in production.
 
 ### File List
 
@@ -253,3 +253,4 @@ Claude Opus 5.5 (claude-opus-5-5)
 
 - 2026-11-11: Story 18.4 implemented — trip-access notice mail on `POST /api/trips/[id]/viewers` (fire-and-forget, bilingual, pending-invitee paragraph), optional `canContribute` on add, safe error logging. Status → review.
 - 2026-11-11: Code review — 4 test-gap patches applied (owner-self status assertion, `sendEmail` call asserted in the failure test, admin-adds-self route test, German pending paragraph test), 1 pre-existing race deferred to `deferred-work.md`. Status → done (AC 7 production check still pending Tommy).
+- 2026-11-11: AC 7 production acceptance passed (Tommy).

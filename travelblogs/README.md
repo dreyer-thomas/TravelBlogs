@@ -68,17 +68,18 @@ installed at `/opt/node-24` — the same location the sibling TravelPlan service
 Deploy in this order:
 
 ```bash
-sudo systemctl stop travelblogs
+sudo systemctl stop TravelBlogs
 git pull
-./scripts/deploy.sh                 # installs, verifies native modules, builds
-sudo systemctl start travelblogs
-journalctl -u travelblogs -n 40 --no-pager
+./scripts/deploy.sh                 # installs, verifies native modules, migrates, builds
+sudo systemctl start TravelBlogs
+sudo journalctl -u TravelBlogs -n 40 --no-pager
 ```
 
-`scripts/deploy.sh` exists because three settings are mandatory, easy to forget, and each has
+`scripts/deploy.sh` exists because four steps are mandatory, easy to forget, and each has
 already caused a failed deploy. It puts Node 24 on `PATH`, exports
 `SHARP_IGNORE_GLOBAL_LIBVIPS=1`, runs `npm ci` (which now runs `prisma generate` via the
-`postinstall` hook), asserts both native modules load, and then builds. If you would rather run the
+`postinstall` hook), asserts both native modules load, applies pending database migrations
+(`npx prisma migrate deploy`), and then builds. If you would rather run the
 steps by hand, they are:
 
 1. Stop the service — `sudo systemctl stop travelblogs`
@@ -95,9 +96,11 @@ steps by hand, they are:
    `npm run build` alone reuses a stale `node_modules`. The `postinstall` hook runs
    `prisma generate` for you, because `npm ci` wipes the generated client along with
    `node_modules`.
-6. `npm run build`
-7. Start the service — `sudo systemctl start travelblogs` — then confirm it is active and serving
-   HTTPS: `journalctl -u travelblogs -f`
+6. `npx prisma migrate deploy` — nothing else applies migrations (not the build, not
+   `npm start`). It only applies pending ones, so it is harmless on a deploy without any.
+7. `npm run build`
+8. Start the service — `sudo systemctl start TravelBlogs` — then confirm it is active and serving:
+   `sudo journalctl -u TravelBlogs -f`
 
 Sanity checks worth running after any reinstall:
 

@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
 #
-# Production deploy for TravelBlogs (systemd unit: travelblogs).
+# Production deploy for TravelBlogs (systemd unit: TravelBlogs -- capitalised).
 #
 # Run from the travelblogs/ directory on the production host, after `git pull`:
 #
-#   sudo systemctl stop travelblogs
+#   sudo systemctl stop TravelBlogs
 #   ./scripts/deploy.sh
-#   sudo systemctl start travelblogs
+#   sudo systemctl start TravelBlogs
 #
-# This script exists because three settings are mandatory and easy to forget; each
+# This script exists because four steps are mandatory and easy to forget; each
 # one has already caused a failed deploy:
 #
 #  1. Node 24 must be on PATH for the *install*, not just for the service. `npm ci`
@@ -24,6 +24,11 @@
 #     and the generated client lives there. This is now wired to the `postinstall`
 #     hook in package.json, so it happens automatically -- but the build fails loudly
 #     if it is ever removed.
+#  4. `prisma migrate deploy`. Nothing else applies migrations -- not `npm start`, not
+#     the build. A new migration that is not applied leaves the running app querying
+#     columns that do not exist (Epic 18 added three). It reads DATABASE_URL from .env
+#     and only applies pending migrations, so it is a no-op on a deploy without any.
+#     It runs while the service is stopped, before the build.
 
 set -euo pipefail
 
@@ -65,10 +70,13 @@ require('sharp')({ create: { width: 8, height: 8, channels: 3, background: '#000
   .catch((e) => { console.error('    sharp FAILED: ' + e.message); process.exit(1); });
 "
 
+echo "==> prisma migrate deploy"
+npx prisma migrate deploy
+
 echo "==> npm run build"
 npm run build
 
 echo
 echo "Build complete. Now:"
-echo "  sudo systemctl start travelblogs"
-echo "  journalctl -u travelblogs -n 40 --no-pager"
+echo "  sudo systemctl start TravelBlogs"
+echo "  sudo journalctl -u TravelBlogs -n 40 --no-pager"
