@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { Suspense, useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -51,6 +52,8 @@ const SignInContent = () => {
     }
   };
   const authErrorMessage = formatAuthError(authError);
+  const passwordReset = searchParams.get("passwordReset") === "1";
+  const invitationAccepted = searchParams.get("invitationAccepted") === "1";
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -105,6 +108,24 @@ const SignInContent = () => {
           </p>
         </header>
 
+        {passwordReset ? (
+          <p
+            role="status"
+            className="mt-6 rounded-xl border border-[#1F6F78]/30 bg-[#1F6F78]/10 px-3 py-2 text-sm text-[#1F6F78]"
+          >
+            {t("auth.passwordResetSuccess")}
+          </p>
+        ) : null}
+
+        {invitationAccepted ? (
+          <p
+            role="status"
+            className="mt-6 rounded-xl border border-[#1F6F78]/30 bg-[#1F6F78]/10 px-3 py-2 text-sm text-[#1F6F78]"
+          >
+            {t("auth.invitationAccepted")}
+          </p>
+        ) : null}
+
         <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
           <label className="block text-sm text-[#2D2A26]">
             {t("auth.email")}
@@ -127,6 +148,11 @@ const SignInContent = () => {
               placeholder={t("auth.passwordPlaceholder")}
             />
           </label>
+          <p className="-mt-2 text-right text-sm">
+            <Link href="/forgot-password" className="text-[#1F6F78] hover:underline">
+              {t("auth.forgotPassword")}
+            </Link>
+          </p>
 
           {error ?? authErrorMessage ? (
             <p className="rounded-xl border border-[#B34A3C]/30 bg-[#B34A3C]/10 px-3 py-2 text-sm text-[#B34A3C]">

@@ -34,7 +34,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-01-15T00:00:00Z
-last_updated: '2026-09-22'
+last_updated: 2026-11-11
 project: TravelBlogs
 project_key: travelblogs
 tracking_system: file-system
@@ -216,9 +216,9 @@ development_status:
   17-2-add-privacy-policy-page: done
   epic-17-retrospective: optional
 
-  epic-18: backlog
-  18-1-email-transport-and-preferred-language: backlog
-  18-2-password-reset-by-email: backlog
-  18-3-invite-new-users-by-email: backlog
-  18-4-notify-users-when-added-to-a-trip: backlog
+  epic-18: in-progress
+  18-1-email-transport-and-preferred-language: done
+  18-2-password-reset-by-email: done
+  18-3-invite-new-users-by-email: done
+  18-4-notify-users-when-added-to-a-trip: done
   epic-18-retrospective: optional

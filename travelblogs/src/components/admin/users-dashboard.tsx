@@ -4,6 +4,7 @@ import { useState } from "react";
 
 import UserForm from "./user-form";
 import UserList from "./user-list";
+import type { Locale } from "../../utils/i18n";
 import { useTranslation } from "../../utils/use-translation";
 
 type UserListItem = {
@@ -12,6 +13,8 @@ type UserListItem = {
   name: string;
   role: "creator" | "administrator" | "viewer";
   isActive: boolean;
+  preferredLanguage: Locale;
+  invitationPending: boolean;
   createdAt: string;
 };
 
@@ -48,7 +51,7 @@ const UsersDashboard = ({ users, currentUserId }: UsersDashboardProps) => {
             {t('admin.createUser')}
           </h3>
           <p className="mt-2 text-sm text-[#6B635B]">
-            {t('admin.setTemporaryPassword')}
+            {t("admin.inviteUserDescription")}
           </p>
           <div className="mt-4">
             <UserForm />

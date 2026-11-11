@@ -66,7 +66,7 @@ An anonymous "subscribe to a trip, get mailed on new entries" feature was discus
 - **PRD:** No conflict with goals. Missing requirements for mail-based account flows → add FR40–FR44 and one security NFR (Section 4).
 - **Architecture / UX specs:** No formal documents exist in this project; nothing to update. Technical guidance lives in the stories.
 - **`project-context.md`:** Note: the TravelPlan code lives in `src/lib/notifications/`; the TravelBlogs rule "use `utils/`, avoid adding `lib/`" applies, so the port goes to `src/utils/`.
-- **Deployment:** Five new environment variables (`SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `MAIL_FROM`) in `.env.example`, the README and the production systemd unit. They must be in the unit **before** the 18.1 build is deployed, or the server refuses to serve.
+- **Deployment:** Five new environment variables (`SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `MAIL_FROM`) in `.env.example`, the README and the production `.env` (TravelBlogs loads configuration via dotenv, not from the systemd unit). They must be in the production `.env` **before** the 18.1 build is deployed, or the server refuses to serve.
 - **Privacy policy configuration:** One new required variable `SITE_PRIVACY_LEGAL_BASIS_EMAIL`. Following Story 17.2's rule, `/datenschutz` reverts to "not yet published" until it is set — intended, but a deploy-time step.
 
 ### Technical Impact
@@ -181,7 +181,7 @@ Give TravelBlogs outgoing email and use it for the three account moments that to
 - Port `email.ts` and `smtpConfig.ts` from TravelPlan into `src/utils/` (project rule: no new `lib/`), keeping the "no `nodemailer` in the boot-check module" split
 - Boot check in `src/instrumentation.ts` inside the existing `NEXT_RUNTIME === "nodejs"` branch, before the backfills, skipped during `NEXT_PHASE=phase-production-build`
 - `nodemailer` ^10, no `@types/nodemailer`; `npm audit` clean per the dependency policy
-- Docs: `.env.example` (commented SMTP block, "production only"), README env and systemd sections with the Strato values, the "mailbox password, not customer login" note and a release note that the variables must be in the unit before deploying
+- Docs: `.env.example` (commented SMTP block, "production only"), README deploy section with the Strato values, the "mailbox password, not customer login" note and a release note that the variables must be in the production `.env` before deploying (TravelBlogs reads `.env` via dotenv, not systemd `Environment=` lines)
 
 **Testing Requirements:**
 - Config: each variable missing / blank, several missing, bad port, value never in message, build phase and non-production skipped
@@ -334,7 +334,7 @@ Give TravelBlogs outgoing email and use it for the three account moments that to
 ### 4.4 Operator Steps (Tommy, outside the code)
 
 1. At Strato, create the alias `system@blogs.dreyer-travels.de` on the `webmaster@dreyer-travels.de` mailbox.
-2. Before deploying 18.1: add the five SMTP `Environment=` lines (and `SITE_PRIVACY_LEGAL_BASIS_EMAIL`) to the TravelBlogs systemd unit. `SMTP_PASS` is the mailbox password, the same one TravelPlan uses.
+2. Before deploying 18.1: add the five SMTP variables (and `SITE_PRIVACY_LEGAL_BASIS_EMAIL`) to the production `.env` of TravelBlogs. (Corrected during story creation: TravelBlogs reads `.env` via dotenv, not systemd `Environment=` lines.) `SMTP_PASS` is the mailbox password, the same one TravelPlan uses.
 3. After deploying 18.2: request a reset for a test account on `https://blogs.dreyer-travels.de` and confirm it arrives and the link works.
 
 ---

@@ -136,6 +136,65 @@ describe("processing inventory (AC 3)", () => {
   });
 });
 
+// Story 18.1: account mails pass through the operator's mail provider.
+describe("email disclosure (Story 18.1)", () => {
+  it("renders the Email section in English", () => {
+    renderPolicy();
+
+    const section = screen
+      .getByRole("heading", { level: 3, name: "Emails from this site" })
+      .closest("section")!;
+
+    expect(section.textContent).toContain("password-reset links");
+    expect(section.textContent).toContain("invitations");
+    expect(section.textContent).toContain("access to a trip");
+    expect(section.textContent).toContain("operator's mail provider");
+    expect(section.textContent).toContain("readers of a share link never do");
+    expect(section.textContent).toContain("Basis for email");
+  });
+
+  it("renders the Email section in German", () => {
+    renderPolicy({ locale: "de" });
+
+    const section = screen
+      .getByRole("heading", { level: 3, name: "E-Mails dieser Website" })
+      .closest("section")!;
+
+    expect(section.textContent).toContain("Zurücksetzen des Passworts");
+    expect(section.textContent).toContain("E-Mail-Anbieter der betreibenden Person");
+  });
+
+  it("no longer claims the account address is passed on to no one, and lists the language", () => {
+    for (const locale of ["en", "de"] as const) {
+      const { unmount } = renderPolicy({ locale });
+      const accountTitle = getTranslation("legal.privacy.activities.account.title", locale);
+      const section = screen
+        .getByRole("heading", { level: 3, name: accountTitle })
+        .closest("section")!;
+
+      expect(section.textContent).not.toContain("Not passed on to anyone else");
+      expect(section.textContent).not.toContain("Keine Weitergabe an Dritte");
+      expect(section.textContent).toContain(
+        locale === "en" ? "preferred language for emails" : "bevorzugte Sprache für E-Mails",
+      );
+      expect(section.textContent).toContain(
+        locale === "en" ? "mail provider" : "E-Mail-Anbieter",
+      );
+      unmount();
+    }
+  });
+
+  it("does not name a specific mail provider in the catalog", () => {
+    for (const locale of ["en", "de"] as const) {
+      for (const field of ["what", "why", "where"] as const) {
+        expect(
+          getTranslation(`legal.privacy.activities.email.${field}`, locale),
+        ).not.toMatch(/strato/i);
+      }
+    }
+  });
+});
+
 // AC 4: the one transfer that actually leaves the reader's browser.
 describe("OpenStreetMap tile disclosure (AC 4)", () => {
   it("discloses the tile host, what is transmitted, and to whom", () => {

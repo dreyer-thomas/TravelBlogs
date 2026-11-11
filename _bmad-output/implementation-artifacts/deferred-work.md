@@ -87,3 +87,20 @@
 - **Cookies section names neither the cookie, the storage key, nor any lifetime.** `src/utils/i18n.ts:465-468` / `:1081-1084` say "a session cookie" and "your browser's local storage" without naming `next-auth.session-token`, `travelblogs_locale` or any duration, and `SITE_PRIVACY_RETENTION` is a single free-text field with nowhere to carry per-store durations. §25 TDDDG disclosures normally name the entry and its lifetime. Legal-wording territory, explicitly outside this story's scope.
 - **AC-8 test asserts absent strings rather than the import graph.** `tests/components/privacy-policy-page.test.tsx:380-407` greps the two files' own source for `"use client"`, `ViewBeacon`, `leaflet` and `TripMap`. A transitively imported client component, a renamed beacon or an `<img>` added inside an imported subcomponent would all pass. The rendered-DOM half of the test is what actually carries AC 8.
 - **AC 2 is ticked off with no test that renders an actual share route.** `tests/components/site-footer.test.tsx:50-95` renders `SiteFooter` in isolation and greps a stubbed root-layout markup string. The footer does reach the share routes (root layout mounts it; those routes have no own layout), but nothing would catch a share route gaining its own layout that drops it.
+
+## Deferred from: code review of 18-2-password-reset-by-email (2026-11-10)
+
+- **Password trim mismatch.** Redeem, create-user and change-password `.trim()` the password before hashing, but `validateCredentials` (`src/utils/auth.ts:113`) and the sign-in page compare it untrimmed. A password with leading or trailing spaces locks the user out. Pick one rule (reject surrounding whitespace, or trim on sign-in too) and apply it everywhere.
+- **Emails stored without lowercasing.** `POST /api/users` (`src/app/api/users/route.ts:202`) trims but does not lowercase, while sign-in and password reset look up the lowercased address. Mixed-case accounts can neither sign in nor get a reset mail. Needs lowercasing on write plus a data migration.
+- **No bcrypt 72-byte cap.** No password route sets a max length; bcrypt silently ignores the bytes past 72.
+- **Set-password flow hard-codes reset wording.** `set-password-form.tsx` always redirects to `/sign-in?passwordReset=1` and always links to `/forgot-password`. 18.3 must branch on the returned `type`.
+- **Throttle race.** `requestPasswordReset` checks with `findFirst` and then calls `create` outside a transaction, so concurrent requests can send several mails. Low impact.
+- **Stale must-change JWT after a reset.** A signed-in must-change user who resets via the link keeps `mustChangePassword=true` in the JWT until signing in again. Part of the known stateless-JWT limit.
+
+## Deferred from: code review of 18-3-invite-new-users-by-email (2026-11-11)
+
+- **Sign-in timing reveals pending accounts.** `validateCredentials` (`src/utils/auth.ts`) returns `INVALID_CREDENTIALS` for a pending account before bcrypt `compare` runs, so the response is noticeably faster than a wrong password for an active account. A dummy `compare` would even this out. It should be fixed together with the existing `ACCOUNT_NOT_FOUND` / `INVALID_CREDENTIALS` enumeration on the sign-in page, which already reveals whether an account exists.
+
+## Deferred from: code review of 18-4-notify-users-when-added-to-a-trip (2026-11-11)
+
+- **Concurrent invite race returns 500.** Two concurrent `POST /api/trips/[id]/viewers` for the same trip and user (a double click, two admin tabs) both miss `findUnique`. The second `tripAccess.create` then hits the `tripId_userId` unique constraint (P2002), and the route answers 500 "Unable to invite viewer" instead of 200 with the existing row. This predates 18.4. Fix: catch P2002, re-read the row and return 200 (only the winning request sends the mail).

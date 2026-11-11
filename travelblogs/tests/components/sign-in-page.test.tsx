@@ -9,6 +9,8 @@ const push = vi.fn();
 const signIn = vi.fn();
 let searchValue = "";
 let authErrorValue = "";
+let passwordResetValue = "";
+let invitationAcceptedValue = "";
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({
@@ -21,6 +23,12 @@ vi.mock("next/navigation", () => ({
       }
       if (key === "error") {
         return authErrorValue || null;
+      }
+      if (key === "passwordReset") {
+        return passwordResetValue || null;
+      }
+      if (key === "invitationAccepted") {
+        return invitationAcceptedValue || null;
       }
       return null;
     },
@@ -40,6 +48,38 @@ describe("SignInPage", () => {
     push.mockReset();
     searchValue = "";
     authErrorValue = "";
+    passwordResetValue = "";
+    invitationAcceptedValue = "";
+  });
+
+  it("links to the forgot-password page", () => {
+    renderWithLocale(<SignInPage />);
+
+    expect(screen.getByRole("link", { name: "Forgot password?" })).toHaveAttribute(
+      "href",
+      "/forgot-password",
+    );
+    expect(screen.queryByRole("status")).toBeNull();
+  });
+
+  it("shows a success notice after a password reset", () => {
+    passwordResetValue = "1";
+
+    renderWithLocale(<SignInPage />);
+
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "Your password has been changed. Sign in with your new password.",
+    );
+  });
+
+  it("shows a notice after an invitation was accepted", () => {
+    invitationAcceptedValue = "1";
+
+    renderWithLocale(<SignInPage />);
+
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "Your account is ready. Sign in with your email and new password.",
+    );
   });
 
   it("shows an error when required fields are missing", async () => {

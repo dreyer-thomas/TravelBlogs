@@ -44,6 +44,10 @@ const publicTripEntryView = (pathname: string) => {
   return false;
 };
 
+/** Pages that must work without a session and for must-change users (Story 18.2): requesting and using an account link. */
+const isAccountLinkPage = (pathname: string) =>
+  pathname === "/forgot-password" || pathname === "/set-password";
+
 const isProtectedPath = (pathname: string) => {
   if (pathname.startsWith("/api/auth")) {
     return false;
@@ -54,6 +58,10 @@ const isProtectedPath = (pathname: string) => {
   }
 
   if (pathname === "/sign-in") {
+    return false;
+  }
+
+  if (isAccountLinkPage(pathname)) {
     return false;
   }
 
@@ -95,6 +103,13 @@ const isAllowedMustChangeApi = (pathname: string) => {
     return true;
   }
 
+  if (
+    pathname === "/api/password-resets" ||
+    pathname === "/api/account-tokens/redeem"
+  ) {
+    return true;
+  }
+
   return false;
 };
 
@@ -118,6 +133,7 @@ export const proxy = async (request: NextRequest) => {
     if (
       pathname !== "/account/password" &&
       pathname !== "/sign-in" &&
+      !isAccountLinkPage(pathname) &&
       !isAllowedMustChangeApi(pathname)
     ) {
       return buildRelativeRedirect("/account/password", request);

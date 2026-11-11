@@ -2,18 +2,32 @@ import { NextResponse, type NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
 import { z } from "zod";
 import { hash } from "bcryptjs";
+import { randomBytes } from "node:crypto";
 
 import { prisma } from "../../../utils/db";
+import { describeSendFailure } from "../../../utils/email";
+import { sendInvitation } from "../../../utils/invitation";
 import { isAdminUser } from "./admin-helpers";
 
 export const runtime = "nodejs";
 
-const createUserSchema = z.object({
-  email: z.string().trim().min(1, "Email is required.").email("Email must be valid."),
-  name: z.string().trim().min(1, "Name is required."),
-  role: z.enum(["creator", "administrator", "viewer"]),
-  password: z.string().trim().min(8, "Password must be at least 8 characters."),
-});
+// Story 18.3: accounts are created by invitation, so the body carries no password. `.strict()` turns a
+// stray `password` (or any unknown key) into a 400 instead of silently ignoring it.
+const createUserSchema = z
+  .object({
+    email: z
+      .string()
+      .trim()
+      .min(1, "Email is required.")
+      .email("Email must be valid.")
+      .transform((value) => value.toLowerCase()),
+    name: z.string().trim().min(1, "Name is required."),
+    role: z.enum(["creator", "administrator", "viewer"]),
+    preferredLanguage: z
+      .enum(["de", "en"], { message: "Preferred language must be de or en." })
+      .default("de"),
+  })
+  .strict();
 
 const jsonError = (status: number, code: string, message: string) => {
   return NextResponse.json(
@@ -134,6 +148,8 @@ export const GET = async (request: NextRequest) => {
         name: true,
         role: true,
         isActive: true,
+        invitationPending: true,
+        preferredLanguage: true,
         createdAt: true,
         updatedAt: true,
       },
@@ -147,6 +163,8 @@ export const GET = async (request: NextRequest) => {
           name: user.name,
           role: user.role,
           isActive: user.isActive,
+          invitationPending: user.invitationPending,
+          preferredLanguage: user.preferredLanguage,
           createdAt: user.createdAt.toISOString(),
           updatedAt: user.updatedAt.toISOString(),
         })),
@@ -183,6 +201,13 @@ export const POST = async (request: NextRequest) => {
       );
     }
 
+    // The env-managed creator may not exist as a row yet, and its address is matched
+    // case-insensitively elsewhere: an invitation to it could never be accepted.
+    const creatorEmail = process.env.CREATOR_EMAIL?.trim().toLowerCase();
+    if (creatorEmail && parsed.data.email === creatorEmail) {
+      return jsonError(409, "DUPLICATE_USER", "Email already exists.");
+    }
+
     const existing = await prisma.user.findUnique({
       where: { email: parsed.data.email },
     });
@@ -190,7 +215,9 @@ export const POST = async (request: NextRequest) => {
       return jsonError(409, "DUPLICATE_USER", "Email already exists.");
     }
 
-    const passwordHash = await hash(parsed.data.password, 12);
+    // Nobody ever sees this password: `passwordHash` is NOT NULL, and a random hash is a second
+    // barrier behind the `invitationPending` check in `validateCredentials`.
+    const passwordHash = await hash(randomBytes(32).toString("base64url"), 12);
 
     const user = await prisma.user.create({
       data: {
@@ -198,9 +225,22 @@ export const POST = async (request: NextRequest) => {
         name: parsed.data.name,
         role: parsed.data.role,
         passwordHash,
-        mustChangePassword: true,
+        invitationPending: true,
+        mustChangePassword: false,
+        preferredLanguage: parsed.data.preferredLanguage,
       },
     });
+
+    // Awaited on purpose: only an admin reaches this route and must see a failed send (AC 4). The
+    // user row is already committed, so a slow or failing SMTP server never loses the account.
+    // A Prisma error inside the send (e.g. creating the token) must not turn into "Unable to create
+    // user": the account exists, so report it as created but not invited and let the admin resend.
+    let sent = false;
+    try {
+      ({ sent } = await sendInvitation(user));
+    } catch (error) {
+      console.error("Failed to send invitation", describeSendFailure(error));
+    }
 
     return NextResponse.json(
       {
@@ -210,6 +250,9 @@ export const POST = async (request: NextRequest) => {
           name: user.name,
           role: user.role,
           isActive: user.isActive,
+          invitationPending: user.invitationPending,
+          invitationSent: sent,
+          preferredLanguage: user.preferredLanguage,
           createdAt: user.createdAt.toISOString(),
           updatedAt: user.updatedAt.toISOString(),
         },
@@ -223,7 +266,8 @@ export const POST = async (request: NextRequest) => {
         return jsonError(409, "DUPLICATE_USER", "Email already exists.");
       }
     }
-    console.error("Failed to create user", error);
+    // Not the raw error: a Prisma error's `meta` can carry the address.
+    console.error("Failed to create user", describeSendFailure(error));
     return jsonError(500, "INTERNAL_SERVER_ERROR", "Unable to create user.");
   }
 };

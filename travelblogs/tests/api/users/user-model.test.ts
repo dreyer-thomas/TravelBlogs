@@ -44,6 +44,7 @@ describe("User model", () => {
     expect(user.name).toBe("Viewer");
     expect(user.role).toBe("viewer");
     expect(user.isActive).toBe(true);
+    expect(user.invitationPending).toBe(false);
   });
 
   it("stores administrator role users", async () => {
@@ -57,5 +58,33 @@ describe("User model", () => {
     });
 
     expect(user.role).toBe("administrator");
+  });
+
+  it("defaults preferredLanguage to German", async () => {
+    const user = await prisma.user.create({
+      data: {
+        email: "language-default@example.com",
+        name: "Default language",
+        role: "viewer",
+        passwordHash: "hash",
+      },
+    });
+
+    expect(user.preferredLanguage).toBe("de");
+  });
+
+  it("stores English as preferredLanguage", async () => {
+    const created = await prisma.user.create({
+      data: {
+        email: "language-en@example.com",
+        name: "English",
+        role: "viewer",
+        passwordHash: "hash",
+        preferredLanguage: "en",
+      },
+    });
+
+    const reloaded = await prisma.user.findUniqueOrThrow({ where: { id: created.id } });
+    expect(reloaded.preferredLanguage).toBe("en");
   });
 });

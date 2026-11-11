@@ -2,13 +2,13 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import type { Locale } from "../../utils/i18n";
 import { useTranslation } from "../../utils/use-translation";
 
 type FieldErrors = {
   email?: string;
   name?: string;
   role?: string;
-  password?: string;
   form?: string;
 };
 
@@ -16,8 +16,16 @@ type FormValues = {
   email: string;
   name: string;
   role: "creator" | "administrator" | "viewer";
-  password: string;
 };
+
+type Notice = { tone: "success" | "warning"; text: string };
+
+const getLanguageOptions = (
+  t: (key: string) => string,
+): Array<{ value: Locale; label: string }> => [
+  { value: "de", label: t("admin.languageGerman") },
+  { value: "en", label: t("admin.languageEnglish") },
+];
 
 const getRoleOptions = (t: (key: string) => string): Array<{ value: FormValues["role"]; label: string }> => [
   { value: "creator", label: t('admin.creator') },
@@ -44,12 +52,6 @@ const getErrors = (values: FormValues, t: (key: string) => string) => {
     nextErrors.role = t("admin.roleRequired");
   }
 
-  if (!values.password.trim()) {
-    nextErrors.password = t("admin.passwordRequired");
-  } else if (values.password.trim().length < 8) {
-    nextErrors.password = t("admin.passwordMinLength");
-  }
-
   return nextErrors;
 };
 
@@ -59,39 +61,37 @@ const UserForm = () => {
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
   const [role, setRole] = useState<FormValues["role"]>("viewer");
-  const [password, setPassword] = useState("");
+  const [preferredLanguage, setLocale] =
+    useState<Locale>("de");
   const [errors, setErrors] = useState<FieldErrors>({});
   const [submitting, setSubmitting] = useState(false);
+  const [notice, setNotice] = useState<Notice | null>(null);
 
   const roleOptions = getRoleOptions(t);
+  const languageOptions = getLanguageOptions(t);
 
   const updateField = (field: keyof FormValues, value: string) => {
     const nextValues: FormValues = {
       email: field === "email" ? value : email,
       name: field === "name" ? value : name,
       role: field === "role" ? (value as FormValues["role"]) : role,
-      password: field === "password" ? value : password,
     };
 
+    setNotice(null);
     setErrors({ ...getErrors(nextValues, t) });
   };
 
-  const hasFieldErrors = Boolean(
-    errors.email || errors.name || errors.role || errors.password,
-  );
+  const hasFieldErrors = Boolean(errors.email || errors.name || errors.role);
   const canSubmit = Boolean(
-    email.trim() &&
-      name.trim() &&
-      password.trim() &&
-      !hasFieldErrors &&
-      !submitting,
+    email.trim() && name.trim() && !hasFieldErrors && !submitting,
   );
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setErrors({});
+    setNotice(null);
 
-    const nextErrors = getErrors({ email, name, role, password }, t);
+    const nextErrors = getErrors({ email, name, role }, t);
     if (Object.keys(nextErrors).length > 0) {
       setErrors(nextErrors);
       return;
@@ -109,7 +109,7 @@ const UserForm = () => {
           email: email.trim(),
           name: name.trim(),
           role,
-          password,
+          preferredLanguage,
         }),
       });
 
@@ -123,10 +123,19 @@ const UserForm = () => {
         return;
       }
 
+      const sentTo = typeof result.data?.email === "string" ? result.data.email : email.trim();
+      setNotice(
+        result.data?.invitationSent
+          ? {
+              tone: "success",
+              text: t("admin.invitationSentTo").replace("{{email}}", () => sentTo),
+            }
+          : { tone: "warning", text: t("admin.invitationCreatedNotSent") },
+      );
       setEmail("");
       setName("");
       setRole("viewer");
-      setPassword("");
+      setLocale("de");
       router.refresh();
     } catch {
       setErrors({
@@ -201,22 +210,22 @@ const UserForm = () => {
       </label>
 
       <label className="block text-sm text-[#2D2A26]">
-        {t('admin.temporaryPassword')}
-        <input
-          name="password"
-          type="password"
-          value={password}
+        {t("admin.language")}
+        <select
+          name="preferredLanguage"
+          value={preferredLanguage}
           onChange={(event) => {
-            const nextValue = event.target.value;
-            setPassword(nextValue);
-            updateField("password", nextValue);
+            setNotice(null);
+            setLocale(event.target.value as Locale);
           }}
-          className="mt-2 w-full rounded-xl border border-black/10 px-3 py-2 text-sm focus:border-[#1F6F78] focus:outline-none focus:ring-2 focus:ring-[#1F6F78]/20"
-          placeholder={t('admin.atLeast8Characters')}
-        />
-        {errors.password ? (
-          <p className="mt-2 text-xs text-[#B34A3C]">{errors.password}</p>
-        ) : null}
+          className="mt-2 w-full rounded-xl border border-black/10 bg-white px-3 py-2 text-sm focus:border-[#1F6F78] focus:outline-none focus:ring-2 focus:ring-[#1F6F78]/20"
+        >
+          {languageOptions.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
       </label>
 
       {errors.form ? (
@@ -225,12 +234,25 @@ const UserForm = () => {
         </p>
       ) : null}
 
+      {notice ? (
+        <p
+          role="status"
+          className={
+            notice.tone === "success"
+              ? "rounded-xl border border-[#1F6F78]/30 bg-[#1F6F78]/10 px-3 py-2 text-sm text-[#1F6F78]"
+              : "rounded-xl border border-[#C58B2A]/30 bg-[#C58B2A]/10 px-3 py-2 text-sm text-[#8A5A12]"
+          }
+        >
+          {notice.text}
+        </p>
+      ) : null}
+
       <button
         type="submit"
         disabled={!canSubmit}
         className="w-full rounded-xl bg-[#1F6F78] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#195C63] disabled:cursor-not-allowed disabled:opacity-70"
       >
-        {submitting ? t('admin.creatingUser') : t('admin.createUser')}
+        {submitting ? t("admin.invitingUser") : t("admin.inviteUser")}
       </button>
     </form>
   );

@@ -137,6 +137,77 @@ also that TravelBlogs reads `HOSTNAME` (not `HOST`) alongside `PORT`, `HTTPS_ENA
 
 Lets Encrypt certificates expire every 90 days. Plan regular renewals and update the files in place so the server can be restarted with fresh certs.
 
+### Outgoing email
+
+TravelBlogs sends account mails (password reset, invitation, trip-access notice) over SMTP in
+production. Any other `NODE_ENV` (development, test, staging, unset) never opens a connection: mail
+goes into an in-memory outbox instead, whatever SMTP variables are set.
+
+Set all five in the production `.env` — the same Strato mailbox TravelPlan uses on this host:
+
+| Variable | Production value |
+| --- | --- |
+| `SMTP_HOST` | `smtp.strato.de` |
+| `SMTP_PORT` | `465` (implicit TLS) |
+| `SMTP_USER` | `webmaster@dreyer-travels.de` |
+| `SMTP_PASS` | the mailbox password |
+| `MAIL_FROM` | `TravelBlogs <system@blogs.dreyer-travels.de>` |
+
+- **`SMTP_PASS` is the mailbox password** from Strato's "Postfach bearbeiten", **not** the Strato
+  customer login. It is a secret: keep the production `.env` at `chmod 600`, owned by the service
+  user. Never put it on a development machine.
+- **`MAIL_FROM` must be an alias on the `SMTP_USER` mailbox** — Strato rejects From addresses the
+  mailbox does not own. Create the alias in Strato first.
+- **Quoting in `.env`.** dotenv treats an unquoted `#` as the start of a comment, so quote
+  `MAIL_FROM` (it contains `<`, `>` and spaces) and any `SMTP_PASS` containing `#`, spaces or
+  quotes. Prefer single quotes, which disable escape processing:
+  `SMTP_PASS='p#ss w"rd'`. This differs from TravelPlan, whose values live in systemd
+  `Environment=` lines.
+- **Port 587 (STARTTLS) is the fallback** if 465 is unreachable from the host. Check with
+  `timeout 5 bash -c "</dev/tcp/smtp.strato.de/465" && echo open` (the host has no `nc`). On any
+  port other than 465 the app requires STARTTLS and refuses to continue in clear text; certificate
+  verification is always on.
+- **Startup check.** With `NODE_ENV=production`, the server checks the five variables when it starts
+  (`src/instrumentation.ts`). A missing or whitespace-only variable, or a `SMTP_PORT` that is not a
+  whole number from 1 to 65535, does not stop the process: **every request answers HTTP 500** and
+  the journal names the variables at fault (never their values). `npm run build` skips the check, so
+  building needs no SMTP settings.
+- **Privacy policy.** `/datenschutz` discloses account mails as its own activity and needs
+  `SITE_PRIVACY_LEGAL_BASIS_EMAIL`; until it is set the page shows "not yet published".
+- **Deliverability.** `dreyer-travels.de` publishes DMARC `p=reject` with no SPF record, so delivery
+  relies on Strato's DKIM signing. The optional SPF record is `v=spf1 include:_spf.strato.com -all`.
+
+> **Release note (Story 18.1).** Put the five SMTP variables **and**
+> `SITE_PRIVACY_LEGAL_BASIS_EMAIL` into the production `.env` **before** deploying this build. A
+> missing SMTP variable shows as HTTP 500 on every request with the reason in
+> `sudo journalctl -u TravelBlogs`; a missing legal basis turns `/datenschutz` back to "not yet
+> published". This build sends no mail yet — the first mail is the password reset (Story 18.2).
+
+**Password reset (Story 18.2).** "Forgot password?" on `/sign-in` mails a one-hour link to
+`/set-password`. The link is built from **`NEXTAUTH_URL`**, so in production it must be the public
+`https://blogs.dreyer-travels.de` — never `localhost` or the internal address. If it is unset, no
+reset mail is sent and the journal says `password-reset: NEXTAUTH_URL not set`. The request always
+answers the same confirmation, so a failed send shows only in the journal as one
+`password-reset: reset mail not sent` line (error code and redacted message, never the address or
+link). The env-managed creator account cannot reset its password this way. **Post-deploy check:**
+request a reset for a test account on `https://blogs.dreyer-travels.de`, confirm the mail arrives
+from `system@blogs.dreyer-travels.de` in that account's language, set a new password through the
+link and sign in with it.
+
+**Invitations (Story 18.3).** Administrators no longer type a password for new users. "Add user" on
+`/admin/users` takes email, name, role and language and mails the new user a link to
+`/set-password`, valid for **7 days** and built from `NEXTAUTH_URL` like the reset link. Until the
+invitee sets a password the account cannot sign in and the list shows "Invitation pending" with a
+**"Resend invitation"** button; a resend mails a fresh link in the user's current language and only
+then invalidates the old one. If the mail cannot be sent, the user is still created and the form
+says so; the journal gets one `invitation: invitation mail not sent` line (error code and redacted
+message, never address, name or link). An invitee whose link has expired can also use "Forgot
+password?" on `/sign-in`, which finishes the invitation the same way. Accounts created before this
+release keep their admin-set temporary password. **Post-deploy check:** invite a test address on
+`https://blogs.dreyer-travels.de`, confirm the mail arrives from `system@blogs.dreyer-travels.de` in
+the chosen language and that the list shows "Invitation pending", set a password through the link,
+sign in, and confirm the badge is gone.
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:

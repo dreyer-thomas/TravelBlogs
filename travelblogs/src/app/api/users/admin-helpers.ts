@@ -9,6 +9,8 @@ export const countActiveAdmins = async (excludeUserId?: string) => {
     where: {
       role: "administrator",
       isActive: true,
+      // A pending admin cannot sign in yet, so it must not satisfy the last-admin guard (Story 18.3).
+      invitationPending: false,
       ...(excludeUserId ? { id: { not: excludeUserId } } : {}),
     },
     select: { id: true },

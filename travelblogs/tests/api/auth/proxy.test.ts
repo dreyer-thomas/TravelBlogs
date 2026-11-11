@@ -160,6 +160,32 @@ describe("middleware", () => {
     );
   });
 
+  // Story 18.2: the account-link pages sit outside the matcher (like /sign-in), but are pinned public
+  // in case it is ever widened; the APIs are matched, so they must pass for anonymous and must-change users.
+  it.each([
+    "/forgot-password",
+    "/set-password",
+    "/api/password-resets",
+    "/api/account-tokens/redeem",
+  ])("lets an anonymous visitor reach %s", async (path) => {
+    getToken.mockResolvedValue(null);
+    const response = await middleware(makeRequest(path));
+    expect(response?.headers.get("x-middleware-next")).toBe("1");
+    expect(response?.headers.get("location")).toBeNull();
+  });
+
+  it.each([
+    "/forgot-password",
+    "/set-password",
+    "/api/password-resets",
+    "/api/account-tokens/redeem",
+  ])("lets a must-change user reach %s", async (path) => {
+    getToken.mockResolvedValue({ sub: "viewer", mustChangePassword: true });
+    const response = await middleware(makeRequest(path));
+    expect(response?.headers.get("x-middleware-next")).toBe("1");
+    expect(response?.headers.get("location")).toBeNull();
+  });
+
   it("preserves query params in callbackUrl", async () => {
     getToken.mockResolvedValue(null);
     const response = await middleware(makeRequest("/trips?source=share"));

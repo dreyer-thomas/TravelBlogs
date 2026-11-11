@@ -110,6 +110,16 @@ export const validateCredentials = async (
     };
   }
 
+  // Story 18.3: an invited account has no password of its own until the invitee sets one. Same code
+  // as a wrong password, so the sign-in form does not reveal that the invitation is still open.
+  if (user.invitationPending) {
+    return {
+      success: false,
+      errorCode: "INVALID_CREDENTIALS",
+      message: "Invalid email or password.",
+    };
+  }
+
   const isValid = await compare(password, user.passwordHash);
   if (!isValid) {
     return {

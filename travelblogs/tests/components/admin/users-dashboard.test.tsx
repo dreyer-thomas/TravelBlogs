@@ -24,6 +24,9 @@ describe("UsersDashboard", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Add user" }));
     expect(screen.getByRole("heading", { name: "Create a user" })).toBeInTheDocument();
+    expect(
+      screen.getByText("We'll email them a link to choose their own password."),
+    ).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Close form" }));
     expect(screen.queryByRole("heading", { name: "Create a user" })).not.toBeInTheDocument();

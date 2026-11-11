@@ -27,6 +27,7 @@ const publishedEnv: Record<string, string> = {
   SITE_PRIVACY_LEGAL_BASIS_ACCESS_LOGS: "Art. 6(1)(f) GDPR",
   SITE_PRIVACY_LEGAL_BASIS_VIEW_COUNTS: "Art. 6(1)(f) GDPR",
   SITE_PRIVACY_LEGAL_BASIS_COOKIES: "Sec. 25(2) TDDDG",
+  SITE_PRIVACY_LEGAL_BASIS_EMAIL: "Art. 6(1)(b) GDPR",
 };
 
 const operatorEnv: Record<string, string> = {
@@ -54,6 +55,7 @@ describe("privacy activity inventory", () => {
       "accessLogs",
       "viewCounts",
       "cookies",
+      "email",
     ]);
   });
 
@@ -90,6 +92,7 @@ describe("privacy activity inventory", () => {
     expect(legalBasisEnvKey("viewCounts")).toBe(
       "SITE_PRIVACY_LEGAL_BASIS_VIEW_COUNTS",
     );
+    expect(legalBasisEnvKey("email")).toBe("SITE_PRIVACY_LEGAL_BASIS_EMAIL");
   });
 });
 
@@ -292,6 +295,22 @@ describe("describePrivacyPolicyGaps", () => {
     for (const id of PRIVACY_ACTIVITY_IDS) {
       expect(gaps.some((gap) => gap.includes(legalBasisEnvKey(id)))).toBe(true);
     }
+  });
+
+  it("lists a missing email legal basis as a gap and keeps the page unpublished", () => {
+    const env: Record<string, string | undefined> = {
+      ...publishedEnv,
+      SITE_PRIVACY_LEGAL_BASIS_EMAIL: undefined,
+    };
+
+    const gaps = describePrivacyPolicyGaps(readPrivacyPolicy(env), operator);
+
+    expect(gaps).toHaveLength(1);
+    expect(gaps[0]).toContain("SITE_PRIVACY_LEGAL_BASIS_EMAIL");
+    expect(published(env)).toBe(false);
+    expect(
+      published({ ...env, SITE_PRIVACY_LEGAL_BASIS_EMAIL: "Art. 6(1)(b) GDPR" }),
+    ).toBe(true);
   });
 
   it("reports an unconfigured operator", () => {

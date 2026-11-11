@@ -4717,7 +4717,7 @@ Give TravelBlogs outgoing email and use it for the three account moments that to
 - Port `email.ts` and `smtpConfig.ts` from TravelPlan into `src/utils/` (project rule: no new `lib/`), keeping the "no `nodemailer` in the boot-check module" split
 - Boot check in `src/instrumentation.ts` inside the existing `NEXT_RUNTIME === "nodejs"` branch, before the backfills, skipped during `NEXT_PHASE=phase-production-build`
 - `nodemailer` ^10, no `@types/nodemailer`; `npm audit` clean per the dependency policy
-- Docs: `.env.example` (commented SMTP block, "production only"), README env and systemd sections with the Strato values, the "mailbox password, not customer login" note and a release note that the variables must be in the unit before deploying
+- Docs: `.env.example` (commented SMTP block, "production only"), README deploy section with the Strato values, the "mailbox password, not customer login" note and a release note that the variables must be in the production `.env` before deploying (TravelBlogs reads `.env` via dotenv, not systemd `Environment=` lines)
 
 **Testing Requirements:**
 - Config: each variable missing / blank, several missing, bad port, value never in message, build phase and non-production skipped

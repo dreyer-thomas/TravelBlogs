@@ -199,6 +199,34 @@ describe("PATCH /api/users/[id]", () => {
     expect(body.error.code).toBe("FORBIDDEN");
   });
 
+  it("does not count a pending administrator when demoting the last active admin", async () => {
+    getToken.mockResolvedValue({ sub: "creator" });
+
+    const admin = await prisma.user.create({
+      data: {
+        email: "active.admin@example.com",
+        name: "Active Admin",
+        role: "administrator",
+        passwordHash: "hash",
+      },
+    });
+    await prisma.user.create({
+      data: {
+        email: "pending.admin@example.com",
+        name: "Pending Admin",
+        role: "administrator",
+        passwordHash: "hash",
+        invitationPending: true,
+      },
+    });
+
+    const response = await patchUser(admin.id, { role: "viewer" });
+    const body = await response.json();
+
+    expect(response.status).toBe(403);
+    expect(body.error.message).toBe("Cannot remove the last active admin.");
+  });
+
   it("requires authentication", async () => {
     getToken.mockResolvedValue(null);
 
@@ -312,5 +340,197 @@ describe("PATCH /api/users/[id]", () => {
 
     expect(response.status).toBe(403);
     expect(body.error.code).toBe("FORBIDDEN");
+  });
+
+  const patchUser = (id: string, payload: unknown) =>
+    patch(
+      new Request(`http://localhost/api/users/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      }),
+      { params: { id } },
+    );
+
+  it("lets an administrator change another user's language only", async () => {
+    getToken.mockResolvedValue({ sub: "creator" });
+    const user = await prisma.user.create({
+      data: {
+        email: "language.other@example.com",
+        name: "Language Other",
+        role: "viewer",
+        passwordHash: "hash",
+      },
+    });
+
+    const response = await patchUser(user.id, { preferredLanguage: "en" });
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.error).toBeNull();
+    expect(body.data.preferredLanguage).toBe("en");
+    expect(body.data.role).toBe("viewer");
+    const reloaded = await prisma.user.findUniqueOrThrow({ where: { id: user.id } });
+    expect(reloaded.preferredLanguage).toBe("en");
+    expect(reloaded.role).toBe("viewer");
+  });
+
+  it("lets an administrator change their own language", async () => {
+    const admin = await prisma.user.create({
+      data: {
+        email: "self.admin@example.com",
+        name: "Self Admin",
+        role: "administrator",
+        passwordHash: "hash",
+      },
+    });
+    getToken.mockResolvedValue({ sub: admin.id, role: "administrator" });
+
+    const response = await patchUser(admin.id, { preferredLanguage: "en" });
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.data.preferredLanguage).toBe("en");
+    expect(body.data.role).toBe("administrator");
+  });
+
+  it("lets the language of the env-managed creator change", async () => {
+    getToken.mockResolvedValue({ sub: "creator" });
+    await prisma.user.create({
+      data: {
+        id: "creator",
+        email: "creator@example.com",
+        name: "Default creator",
+        role: "creator",
+        passwordHash: "hash",
+      },
+    });
+
+    const response = await patchUser("creator", { preferredLanguage: "en" });
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.data.preferredLanguage).toBe("en");
+    expect(body.data.role).toBe("creator");
+  });
+
+  it("still forbids an administrator changing their own role", async () => {
+    const admin = await prisma.user.create({
+      data: {
+        email: "self.role@example.com",
+        name: "Self Role",
+        role: "administrator",
+        passwordHash: "hash",
+      },
+    });
+    getToken.mockResolvedValue({ sub: admin.id, role: "administrator" });
+
+    const response = await patchUser(admin.id, { role: "viewer", preferredLanguage: "en" });
+    const body = await response.json();
+
+    expect(response.status).toBe(403);
+    expect(body.error.code).toBe("FORBIDDEN");
+    expect(body.error.message).toBe("Cannot change your own role.");
+    const reloaded = await prisma.user.findUniqueOrThrow({ where: { id: admin.id } });
+    expect(reloaded.preferredLanguage).toBe("de");
+  });
+
+  it("still forbids changing the creator's role", async () => {
+    getToken.mockResolvedValue({ sub: "admin-other", role: "administrator" });
+    await prisma.user.create({
+      data: {
+        id: "creator",
+        email: "creator@example.com",
+        name: "Default creator",
+        role: "creator",
+        passwordHash: "hash",
+      },
+    });
+
+    const response = await patchUser("creator", { role: "viewer" });
+    const body = await response.json();
+
+    expect(response.status).toBe(403);
+    expect(body.error.message).toBe("Cannot change creator role.");
+  });
+
+  it("rejects an empty body", async () => {
+    getToken.mockResolvedValue({ sub: "creator" });
+    const user = await prisma.user.create({
+      data: {
+        email: "empty.body@example.com",
+        name: "Empty Body",
+        role: "viewer",
+        passwordHash: "hash",
+      },
+    });
+
+    const response = await patchUser(user.id, {});
+    const body = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(body.data).toBeNull();
+    expect(body.error.code).toBe("VALIDATION_ERROR");
+  });
+
+  it("rejects an unknown language", async () => {
+    getToken.mockResolvedValue({ sub: "creator" });
+    const user = await prisma.user.create({
+      data: {
+        email: "bad.language@example.com",
+        name: "Bad Language",
+        role: "viewer",
+        passwordHash: "hash",
+      },
+    });
+
+    const response = await patchUser(user.id, { preferredLanguage: "fr" });
+    const body = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(body.error.code).toBe("VALIDATION_ERROR");
+  });
+  it("changes role and language together for another user", async () => {
+    getToken.mockResolvedValue({ sub: "creator" });
+    const user = await prisma.user.create({
+      data: {
+        email: "both.fields@example.com",
+        name: "Both Fields",
+        role: "viewer",
+        passwordHash: "hash",
+      },
+    });
+
+    const response = await patchUser(user.id, {
+      role: "creator",
+      preferredLanguage: "en",
+    });
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.data.role).toBe("creator");
+    expect(body.data.preferredLanguage).toBe("en");
+    const reloaded = await prisma.user.findUniqueOrThrow({ where: { id: user.id } });
+    expect(reloaded.role).toBe("creator");
+    expect(reloaded.preferredLanguage).toBe("en");
+  });
+
+  it("lets the language of the last active admin change", async () => {
+    getToken.mockResolvedValue({ sub: "creator" });
+    const admin = await prisma.user.create({
+      data: {
+        email: "last.admin.language@example.com",
+        name: "Last Admin",
+        role: "administrator",
+        passwordHash: "hash",
+      },
+    });
+
+    const response = await patchUser(admin.id, { preferredLanguage: "en" });
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.data.role).toBe("administrator");
+    expect(body.data.preferredLanguage).toBe("en");
   });
 });

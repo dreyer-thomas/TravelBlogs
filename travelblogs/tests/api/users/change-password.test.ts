@@ -41,6 +41,7 @@ describe("PATCH /api/users/[id]/password", () => {
 
   beforeEach(async () => {
     getToken.mockReset();
+    await prisma.accountToken.deleteMany();
     await prisma.user.deleteMany();
   });
 
@@ -86,6 +87,39 @@ describe("PATCH /api/users/[id]/password", () => {
     expect(updated?.mustChangePassword).toBe(false);
     expect(updated?.passwordHash).not.toBe(passwordHash);
     expect(await compare("NewPass456!", updated?.passwordHash ?? "")).toBe(true);
+  });
+
+  it("invalidates the user's outstanding account links", async () => {
+    const passwordHash = await hash("OldPass123!", 12);
+    const user = await prisma.user.create({
+      data: { email: "linked@example.com", name: "Linked", role: "viewer", passwordHash },
+    });
+    const other = await prisma.user.create({
+      data: { email: "other@example.com", name: "Other", role: "viewer", passwordHash },
+    });
+    const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
+    await prisma.accountToken.createMany({
+      data: [
+        { userId: user.id, type: "reset", tokenHash: "mine", expiresAt },
+        { userId: other.id, type: "reset", tokenHash: "theirs", expiresAt },
+      ],
+    });
+    getToken.mockResolvedValue({ sub: user.id });
+
+    const response = await patch(
+      new Request(`http://localhost/api/users/${user.id}/password`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ currentPassword: "OldPass123!", newPassword: "NewPass456!" }),
+      }),
+      { params: { id: user.id } },
+    );
+
+    expect(response.status).toBe(200);
+    const mine = await prisma.accountToken.findUniqueOrThrow({ where: { tokenHash: "mine" } });
+    const theirs = await prisma.accountToken.findUniqueOrThrow({ where: { tokenHash: "theirs" } });
+    expect(mine.usedAt).not.toBeNull();
+    expect(theirs.usedAt).toBeNull();
   });
 
   it("rejects invalid current passwords", async () => {

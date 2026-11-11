@@ -11,11 +11,21 @@ import {
 
 export const runtime = "nodejs";
 
-const updateUserSchema = z.object({
-  role: z.enum(["creator", "administrator", "viewer"], {
-    message: "Role must be creator, administrator, or viewer.",
-  }),
-});
+const updateUserSchema = z
+  .object({
+    role: z
+      .enum(["creator", "administrator", "viewer"], {
+        message: "Role must be creator, administrator, or viewer.",
+      })
+      .optional(),
+    preferredLanguage: z
+      .enum(["de", "en"], { message: "Preferred language must be de or en." })
+      .optional(),
+  })
+  .refine(
+    (value) => value.role !== undefined || value.preferredLanguage !== undefined,
+    { message: "Provide a role or a preferred language." },
+  );
 
 const jsonError = (status: number, code: string, message: string) => {
   return NextResponse.json(
@@ -76,9 +86,6 @@ export const PATCH = async (
     }
 
     const { id } = await params;
-    if (auth.userId === id) {
-      return jsonError(403, "FORBIDDEN", "Cannot change your own role.");
-    }
 
     let body: unknown;
     try {
@@ -96,6 +103,14 @@ export const PATCH = async (
       );
     }
 
+    const { role, preferredLanguage } = parsed.data;
+
+    // The role guards apply only to a role change. A language-only update is allowed for any user,
+    // the administrator's own account and the env-managed creator included.
+    if (role !== undefined && auth.userId === id) {
+      return jsonError(403, "FORBIDDEN", "Cannot change your own role.");
+    }
+
     const existing = await prisma.user.findUnique({
       where: { id },
     });
@@ -104,15 +119,16 @@ export const PATCH = async (
       return jsonError(404, "NOT_FOUND", "User not found.");
     }
 
-    if (id === "creator") {
+    if (role !== undefined && id === "creator") {
       return jsonError(403, "FORBIDDEN", "Cannot change creator role.");
     }
 
     const isTargetAdmin = isAdminRole(existing.role);
     if (
+      role !== undefined &&
       isTargetAdmin &&
       existing.isActive &&
-      !isAdminRole(parsed.data.role)
+      !isAdminRole(role)
     ) {
       const remainingAdmins = await countActiveAdmins(existing.id);
       if (remainingAdmins < 1) {
@@ -127,7 +143,8 @@ export const PATCH = async (
     const updated = await prisma.user.update({
       where: { id },
       data: {
-        role: parsed.data.role,
+        ...(role !== undefined ? { role } : {}),
+        ...(preferredLanguage !== undefined ? { preferredLanguage } : {}),
       },
     });
 
@@ -139,6 +156,7 @@ export const PATCH = async (
           name: updated.name,
           role: updated.role,
           isActive: updated.isActive,
+          preferredLanguage: updated.preferredLanguage,
           createdAt: updated.createdAt.toISOString(),
           updatedAt: updated.updatedAt.toISOString(),
         },
@@ -147,7 +165,7 @@ export const PATCH = async (
       { status: 200 },
     );
   } catch (error) {
-    console.error("Failed to update user role", error);
+    console.error("Failed to update user", error);
     return jsonError(500, "INTERNAL_SERVER_ERROR", "Unable to update user.");
   }
 };

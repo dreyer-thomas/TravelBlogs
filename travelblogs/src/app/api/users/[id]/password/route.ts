@@ -101,13 +101,20 @@ export const PATCH = async (
     }
 
     const passwordHash = await hash(parsed.data.newPassword, 12);
-    const updated = await prisma.user.update({
-      where: { id },
-      data: {
-        passwordHash,
-        mustChangePassword: false,
-      },
-    });
+    const [updated] = await prisma.$transaction([
+      prisma.user.update({
+        where: { id },
+        data: {
+          passwordHash,
+          mustChangePassword: false,
+        },
+      }),
+      // A password the user just chose outranks any reset/invite link still in a mailbox.
+      prisma.accountToken.updateMany({
+        where: { userId: id, usedAt: null },
+        data: { usedAt: new Date() },
+      }),
+    ]);
 
     return NextResponse.json(
       {

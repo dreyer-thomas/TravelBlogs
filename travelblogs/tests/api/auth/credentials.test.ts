@@ -190,4 +190,30 @@ describe("validateCredentials", () => {
       },
     });
   });
+  it("rejects a pending invitation even with the correct password", async () => {
+    const passwordHash = await hash("Password123!", 12);
+    const pending = await prisma.user.create({
+      data: {
+        email: "pending@example.com",
+        name: "Pending",
+        role: "viewer",
+        passwordHash,
+        invitationPending: true,
+      },
+    });
+
+    const rejected = await validateCredentials("pending@example.com", "Password123!");
+    expect(rejected).toEqual({
+      success: false,
+      errorCode: "INVALID_CREDENTIALS",
+      message: "Invalid email or password.",
+    });
+
+    await prisma.user.update({
+      where: { id: pending.id },
+      data: { invitationPending: false },
+    });
+    const accepted = await validateCredentials("pending@example.com", "Password123!");
+    expect(accepted.success).toBe(true);
+  });
 });

@@ -197,6 +197,38 @@ describe("DELETE /api/users/[id]", () => {
     expect(remaining).not.toBeNull();
   });
 
+  it("does not count a pending administrator when deleting the last active admin", async () => {
+    getToken.mockResolvedValue({ sub: "creator" });
+
+    const admin = await prisma.user.create({
+      data: {
+        email: "active.admin@example.com",
+        name: "Active Admin",
+        role: "administrator",
+        passwordHash: "hash",
+      },
+    });
+    await prisma.user.create({
+      data: {
+        email: "pending.admin@example.com",
+        name: "Pending Admin",
+        role: "administrator",
+        passwordHash: "hash",
+        invitationPending: true,
+      },
+    });
+
+    const response = await del(
+      new Request(`http://localhost/api/users/${admin.id}`, { method: "DELETE" }),
+      { params: { id: admin.id } },
+    );
+    const body = await response.json();
+
+    expect(response.status).toBe(403);
+    expect(body.error.message).toBe("Cannot delete the last active admin.");
+    expect(await prisma.user.findUnique({ where: { id: admin.id } })).not.toBeNull();
+  });
+
   it("requires authentication", async () => {
     getToken.mockResolvedValue(null);
 

@@ -3,7 +3,12 @@ import { getToken } from "next-auth/jwt";
 import { z } from "zod";
 
 import { prisma } from "../../../../../utils/db";
+import { describeSendFailure } from "../../../../../utils/email";
 import { ensureActiveAccount, isAdminOrCreator } from "../../../../../utils/roles";
+import {
+  shouldNotifyTripAccess,
+  startTripAccessNotice,
+} from "../../../../../utils/trip-access-notice";
 
 export const runtime = "nodejs";
 
@@ -51,6 +56,7 @@ const inviteSchema = z
       .transform((value) => value.toLowerCase())
       .optional(),
     userId: z.string().trim().min(1, "User id is required.").optional(),
+    canContribute: z.boolean().optional(),
   })
   .refine((data) => Boolean(data.email || data.userId), {
     message: "Invite details are invalid.",
@@ -90,6 +96,7 @@ const requireCreatorTrip = async (
     select: {
       id: true,
       ownerId: true,
+      title: true,
     },
   });
 
@@ -103,7 +110,7 @@ const requireCreatorTrip = async (
     };
   }
 
-  return { trip };
+  return { trip, user };
 };
 
 const formatAccess = (access: {
@@ -199,6 +206,15 @@ export const POST = async (
 
     const user = await prisma.user.findUnique({
       where: userLookup,
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        role: true,
+        isActive: true,
+        invitationPending: true,
+        preferredLanguage: true,
+      },
     });
 
     if (!user || !user.isActive) {
@@ -249,6 +265,7 @@ export const POST = async (
       data: {
         tripId: access.trip.id,
         userId: user.id,
+        canContribute: parsed.data.canContribute ?? false,
       },
       include: {
         user: {
@@ -261,6 +278,23 @@ export const POST = async (
       },
     });
 
+    // Fire and forget (Story 18.4): the mail never delays or changes this response.
+    if (
+      shouldNotifyTripAccess({
+        actorId: access.user.id,
+        ownerId: access.trip.ownerId,
+        recipient: user,
+      })
+    ) {
+      void startTripAccessNotice({
+        tripId: access.trip.id,
+        tripTitle: access.trip.title,
+        actorId: access.user.id,
+        recipient: user,
+        canContribute: created.canContribute,
+      });
+    }
+
     return NextResponse.json(
       {
         data: formatAccess(created),
@@ -269,7 +303,7 @@ export const POST = async (
       { status: 201 },
     );
   } catch (error) {
-    console.error("Failed to invite viewer", error);
+    console.error("Failed to invite viewer", describeSendFailure(error));
     return jsonError(
       500,
       "INTERNAL_SERVER_ERROR",

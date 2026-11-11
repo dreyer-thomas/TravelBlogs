@@ -6,7 +6,11 @@ import { headers } from "next/headers";
 import { authOptions } from "../../../utils/auth-options";
 import UsersDashboard from "../../../components/admin/users-dashboard";
 import UsersPageHeader from "../../../components/admin/users-page-header";
-import { getLocaleFromAcceptLanguage, getTranslation } from "../../../utils/i18n";
+import {
+  getLocaleFromAcceptLanguage,
+  getTranslation,
+  type Locale,
+} from "../../../utils/i18n";
 
 export const dynamic = "force-dynamic";
 
@@ -16,6 +20,8 @@ type UserListItem = {
   name: string;
   role: "creator" | "administrator" | "viewer";
   isActive: boolean;
+  preferredLanguage: Locale;
+  invitationPending: boolean;
   createdAt: string;
   updatedAt: string;
 };

@@ -18,7 +18,7 @@ _This file contains critical rules and patterns that AI agents must follow when 
 ## Technology Stack & Versions
 
 - Node.js 24 LTS (runtime; pinned via root `.nvmrc` + `engines.node` in `travelblogs/package.json`)
-- Next.js 16.3.5 + App Router
+- Next.js 16.4.5 + App Router
 - React (via Next.js)
 - TypeScript (via Next.js)
 - Tailwind CSS (via Next.js setup)
@@ -27,7 +27,7 @@ _This file contains critical rules and patterns that AI agents must follow when 
   as `@prisma/adapter-better-sqlite3` requires so npm hoists a single copy)
 - Auth.js (NextAuth) 4.24.15 (JWT sessions)
 - Redux Toolkit 2.11.2 (state)
-- Zod 4.2.1 (validation)
+- Zod 4.6.7 (validation)
 
 ## Critical Implementation Rules
 

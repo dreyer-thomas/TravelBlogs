@@ -29,6 +29,7 @@ export const PRIVACY_ACTIVITY_IDS = [
   "accessLogs",
   "viewCounts",
   "cookies",
+  "email",
 ] as const;
 
 export type PrivacyActivityId = (typeof PRIVACY_ACTIVITY_IDS)[number];
