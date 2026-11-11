@@ -94,34 +94,10 @@ const startHttpsServer = async () => {
   const app = next({ dev: false, hostname, port });
   const handle = app.getRequestHandler();
 
+  // Startup backfills (GPS, image compression, country codes, weather) run in
+  // src/instrumentation.ts, which Next compiles into the build. Do not call them from
+  // here: this file is plain Node and cannot require the TypeScript sources.
   await app.prepare();
-
-  // Backfill GPS data for existing entries on startup
-  try {
-    const { PrismaClient } = require("@prisma/client");
-    const { PrismaBetterSqlite3 } = require("@prisma/adapter-better-sqlite3");
-    const { backfillGpsData } = require("./src/utils/backfill-gps");
-    const { backfillImageCompression } = require("./src/utils/backfill-image-compression");
-    const { backfillCountryCodes } = require("./src/utils/backfill-country-codes");
-
-    const databaseUrl = process.env.DATABASE_URL ?? "file:./prisma/dev.db";
-    const databasePath = databaseUrl.replace(/^file:/, "");
-    const adapter = new PrismaBetterSqlite3({ url: databasePath });
-    const prisma = new PrismaClient({ adapter });
-
-    await backfillGpsData(prisma);
-    void backfillImageCompression(prisma)
-      .catch((compressionError) => {
-        console.error("Image compression backfill failed:", compressionError);
-      })
-      .then(() => backfillCountryCodes(prisma))
-      .catch((countryError) => {
-        console.error("Country code backfill failed:", countryError);
-      })
-      .finally(() => prisma.$disconnect());
-  } catch (error) {
-    console.error("GPS backfill failed:", error);
-  }
 
   if (isHttpsEnabled()) {
     const tlsConfig = loadTlsConfigFromEnv();
